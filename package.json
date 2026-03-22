@@ -1,0 +1,20 @@
+{
+  "name": "my-ats-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/backend",
+    "packages/frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=packages/backend\" \"npm run dev --workspace=packages/frontend\"",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "db:migrate": "psql postgresql://ats_user:ats_pass@localhost:5432/ats_db -f database/001-create-tables.sql -f database/003-alter-tables.sql",
+    "db:seed": "psql postgresql://ats_user:ats_pass@localhost:5432/ats_db -f database/002-seed-data.sql",
+    "db:reset": "psql postgresql://ats_user:ats_pass@localhost:5432/ats_db -f database/000-drop-tables.sql -f database/001-create-tables.sql -f database/003-alter-tables.sql -f database/002-seed-data.sql"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
