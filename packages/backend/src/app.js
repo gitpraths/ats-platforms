@@ -57,6 +57,9 @@ app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
 // ── Static uploads ────────────────────────────────────────────────────────────
 app.use("/uploads", express.static("uploads"));
 
+// ── Health check ─────────────────────────────────────────────────────────────
+app.get("/api/health", (_req, res) => res.json({ success: true, status: "ok" }));
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/auth",         authRouter);
 app.use("/api/jobs",         jobsRouter);
