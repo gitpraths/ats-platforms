@@ -62,7 +62,7 @@ UPDATE candidates SET
   address_line1   = '10 George St',
   postcode        = '2000',
   country         = 'Australia'
-WHERE id = '00000000-0000-0004-000000000001' OR id = '00000000-0000-0000-0004-000000000001';
+WHERE id = '00000000-0000-0000-0004-000000000001';
 
 UPDATE candidates SET
   provider_id     = '00000000-0000-0000-0005-000000000002',
