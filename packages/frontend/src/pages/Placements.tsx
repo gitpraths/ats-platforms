@@ -28,7 +28,7 @@ export default function Placements() {
   const canCreate = user?.role === "admin" || user?.role === "recruiter_admin" || user?.role === "recruiter";
 
   const [filterEmployer, setFilterEmployer] = useState("");
-  const [filterProvider, setFilterProvider] = useState("");
+  const [filterProvider, _setFilterProvider] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);

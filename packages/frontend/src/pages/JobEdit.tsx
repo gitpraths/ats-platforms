@@ -188,12 +188,10 @@ export default function JobEdit() {
         {/* Skills */}
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Required Skills</label>
-            <SkillsInput value={form.skills_required} onChange={(v) => set("skills_required", v)} />
+            <SkillsInput label="Required Skills" value={form.skills_required} onChange={(v) => set("skills_required", v)} />
           </div>
           <div>
-            <label className={labelCls}>Desired Skills</label>
-            <SkillsInput value={form.skills_desired} onChange={(v) => set("skills_desired", v)} />
+            <SkillsInput label="Desired Skills" value={form.skills_desired} onChange={(v) => set("skills_desired", v)} />
           </div>
         </div>
 

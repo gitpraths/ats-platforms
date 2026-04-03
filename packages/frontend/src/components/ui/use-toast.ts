@@ -117,7 +117,7 @@ function useToast() {
 
 // Wire up auto-removal on dismiss
 const originalDispatch = dispatch;
-function dispatchWithRemoval(action: Action) {
+function _dispatchWithRemoval(action: Action) {
   if (action.type === "DISMISS_TOAST") {
     const { toastId } = action;
     if (toastId) {
