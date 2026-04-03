@@ -1,19 +1,31 @@
-import express from "express";
+import { createServer } from "http";
+import { readFileSync, existsSync } from "fs";
+import { join, extname, dirname } from "path";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-import { existsSync } from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const app = express();
-const PORT = process.env.PORT || 3000;
 const dist = join(__dirname, "dist");
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static(dist));
+const MIME = {
+  ".html": "text/html",
+  ".js":   "application/javascript",
+  ".css":  "text/css",
+  ".json": "application/json",
+  ".png":  "image/png",
+  ".jpg":  "image/jpeg",
+  ".svg":  "image/svg+xml",
+  ".ico":  "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2":"font/woff2",
+};
 
-app.get("*", (_req, res) => {
-  res.sendFile(join(dist, "index.html"));
-});
-
-app.listen(PORT, "0.0.0.0", () => {
+createServer((req, res) => {
+  let filePath = join(dist, req.url === "/" ? "index.html" : req.url);
+  if (!existsSync(filePath)) filePath = join(dist, "index.html");
+  const ext = extname(filePath);
+  res.writeHead(200, { "Content-Type": MIME[ext] || "text/html" });
+  res.end(readFileSync(filePath));
+}).listen(PORT, "0.0.0.0", () => {
   console.log(`Frontend serving on port ${PORT}`);
 });
