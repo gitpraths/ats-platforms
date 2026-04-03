@@ -25,4 +25,4 @@ RUN npm install -g serve
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
-CMD ["sh", "-c", "serve -s dist -p ${PORT:-3000}"]
+CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"]
