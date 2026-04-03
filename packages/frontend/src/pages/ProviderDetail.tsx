@@ -1,0 +1,140 @@
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX } from "lucide-react";
+import { api } from "../lib/api";
+import type { Provider, Candidate } from "../types";
+import { useAuth } from "../contexts/AuthContext";
+import { format } from "date-fns";
+
+interface ProviderDetailData extends Provider {
+  recent_candidates: Pick<Candidate, "id" | "name" | "work_status" | "created_at">[];
+}
+
+const WORK_STATUS_BADGE: Record<string, string> = {
+  job_seeking: "bg-blue-100 text-blue-700",
+  employed:    "bg-green-100 text-green-700",
+  placed:      "bg-purple-100 text-purple-700",
+  inactive:    "bg-gray-100 text-gray-500",
+};
+
+export default function ProviderDetail() {
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+
+  const { data: provider, isLoading } = useQuery<ProviderDetailData>({
+    queryKey: ["provider", id],
+    queryFn: () => api.get<ProviderDetailData>(`/providers/${id}`),
+  });
+
+  if (isLoading) return <p className="p-6 text-gray-500">Loading...</p>;
+  if (!provider) return <p className="p-6 text-red-500">Provider not found.</p>;
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <Link to="/providers" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+          <ArrowLeft size={15} /> Back to Providers
+        </Link>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{provider.name}</h1>
+          <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+            provider.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+          }`}>
+            {provider.is_active ? "Active" : "Inactive"}
+          </span>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => navigate(`/providers/${id}/edit`)}
+            className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50"
+          >
+            <Edit2 size={14} /> Edit
+          </button>
+        )}
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {[
+          { label: "Total Candidates", value: provider.candidate_count ?? 0, icon: <Users size={16} /> },
+          { label: "Placed", value: "—", icon: <UserCheck size={16} /> },
+          { label: "Job Seeking", value: "—", icon: <Briefcase size={16} /> },
+          { label: "Inactive", value: "—", icon: <UserX size={16} /> },
+        ].map((s) => (
+          <div key={s.label} className="bg-white border rounded-xl p-4">
+            <div className="flex items-center gap-2 text-gray-400 mb-1">{s.icon}
+              <span className="text-xs font-medium">{s.label}</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Info card */}
+      <div className="bg-white border rounded-xl p-6 mb-6">
+        <h2 className="font-semibold text-gray-900 mb-4">Contact Information</h2>
+        <dl className="grid sm:grid-cols-2 gap-4 text-sm">
+          <div>
+            <dt className="text-xs font-medium text-gray-500 uppercase">Contact Name</dt>
+            <dd className="mt-0.5 text-gray-900">{provider.contact_name || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-gray-500 uppercase">Email</dt>
+            <dd className="mt-0.5 text-gray-900">{provider.email || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-gray-500 uppercase">Phone</dt>
+            <dd className="mt-0.5 text-gray-900">{provider.phone || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-gray-500 uppercase">Address</dt>
+            <dd className="mt-0.5 text-gray-900">{provider.address || "—"}</dd>
+          </div>
+        </dl>
+      </div>
+
+      {/* Recent candidates */}
+      <div className="bg-white border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Recent Candidates</h2>
+          <Link to={`/candidates?provider_id=${id}`} className="text-xs text-blue-600 hover:underline">
+            View all
+          </Link>
+        </div>
+        {!provider.recent_candidates?.length ? (
+          <p className="text-sm text-gray-400">No candidates linked yet.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 border-b">
+                <th className="pb-2">Name</th>
+                <th className="pb-2">Status</th>
+                <th className="pb-2">Added</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {provider.recent_candidates.map((c) => (
+                <tr key={c.id} className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => navigate(`/candidates/${c.id}`)}>
+                  <td className="py-2 font-medium text-gray-900">{c.name}</td>
+                  <td className="py-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${WORK_STATUS_BADGE[c.work_status ?? "job_seeking"]}`}>
+                      {c.work_status?.replace("_", " ") ?? "job seeking"}
+                    </span>
+                  </td>
+                  <td className="py-2 text-gray-500">{format(new Date(c.created_at), "MMM d, yyyy")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}

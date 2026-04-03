@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 
-interface DashboardStats {
+export interface DashboardStats {
   jobs: {
     total: number;
     draft: number;
@@ -24,12 +24,26 @@ interface DashboardStats {
   candidates: {
     total: number;
   };
+  placements: {
+    total: number;
+    confirmed: number;
+    this_month: number;
+    overdue_welfare: number;
+  };
+  providers: {
+    total: number;
+    active: number;
+  };
+  employers: {
+    total: number;
+    active: number;
+  };
 }
 
 export function useDashboardStats() {
   return useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn:  () => api.get<DashboardStats>("/stats"),
-    staleTime: 30_000, // refresh every 30s
+    staleTime: 30_000,
   });
 }

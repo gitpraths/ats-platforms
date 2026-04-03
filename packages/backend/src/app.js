@@ -12,9 +12,14 @@ import { departmentsRouter }  from "./routes/departments.js";
 import { locationsRouter }    from "./routes/locations.js";
 import { sessionRouter }      from "./routes/session.js";
 import { statsRouter }        from "./routes/stats.js";
+import { providersRouter }    from "./routes/providers.js";
+import { employersRouter }    from "./routes/employers.js";
+import { placementsRouter, welfareChecksRouter } from "./routes/placements.js";
+import { reportsRouter }      from "./routes/reports.js";
 import { errorHandler }       from "./middleware/errorHandler.js";
 import { requestLogger }      from "./middleware/requestLogger.js";
 import { requestId }          from "./middleware/requestId.js";
+import { startWelfareCheckCron } from "./services/welfare-check-cron.js";
 
 const app = express();
 
@@ -59,15 +64,36 @@ app.use("/api/candidates",   candidatesRouter);
 app.use("/api/applications", applicationsRouter);
 app.use("/api/users",        usersRouter);
 app.use("/api/ai",           aiRouter);
-app.use("/api/departments",  departmentsRouter);
-app.use("/api/locations",    locationsRouter);
-app.use("/api/session",      sessionRouter);
-app.use("/api/stats",        statsRouter);
+app.use("/api/departments",    departmentsRouter);
+app.use("/api/locations",      locationsRouter);
+app.use("/api/session",        sessionRouter);
+app.use("/api/stats",          statsRouter);
+app.use("/api/providers",      providersRouter);
+app.use("/api/employers",      employersRouter);
+app.use("/api/placements",     placementsRouter);
+app.use("/api/welfare-checks", welfareChecksRouter);
+app.use("/api/reports",        reportsRouter);
+
+// ── Admin: manual welfare check trigger ───────────────────────────────────────
+import { requireAuth, requireRole } from "./middleware/auth.js";
+import { runWelfareCheckJob } from "./services/welfare-check-cron.js";
+
+app.post("/api/admin/run-welfare-checks", requireAuth, requireRole("admin"), async (_req, res, next) => {
+  try {
+    const result = await runWelfareCheckJob();
+    res.json({ success: true, data: result });
+  } catch (err) { next(err); }
+});
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) =>
   res.json({ status: "ok", version: process.env.npm_package_version || "0.1.0" })
 );
+
+// ── Start cron ────────────────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== "test") {
+  startWelfareCheckCron();
+}
 
 // ── Error handler (must be last) ──────────────────────────────────────────────
 app.use(errorHandler);

@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "recruiter_admin" | "recruiter" | "hiring_manager";
+export type UserRole = "admin" | "recruiter_admin" | "recruiter" | "hiring_manager" | "provider";
 
 export interface User {
   id: string;
@@ -6,6 +6,87 @@ export interface User {
   email: string;
   role: UserRole;
   avatar_url?: string;
+  provider_id?: string | null;
+}
+
+export interface Provider {
+  id: string;
+  name: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  is_active: boolean;
+  candidate_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Employer {
+  id: string;
+  name: string;
+  industry?: string;
+  website?: string;
+  description?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: string;
+  is_active: boolean;
+  open_jobs_count?: number;
+  total_jobs_count?: number;
+  total_placements_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type WelfareCheckType = "day_1" | "week_1" | "month_1" | "month_3" | "month_6";
+
+export interface WelfareCheck {
+  id: string;
+  placement_id: string;
+  check_type: WelfareCheckType;
+  due_date: string;
+  completed_at?: string | null;
+  employer_response?: string | null;
+  email_sent_at?: string | null;
+  created_at: string;
+}
+
+export type CandidateWorkStatus = "job_seeking" | "employed" | "placed" | "inactive";
+
+export interface Placement {
+  id: string;
+  application_id: string;
+  candidate_id: string;
+  candidate_name?: string;
+  candidate_work_status?: CandidateWorkStatus;
+  job_id: string;
+  job_title?: string;
+  employer_id?: string;
+  employer_name?: string;
+  provider_id?: string;
+  provider_name?: string;
+  start_date: string;
+  confirmed_by_employer: boolean;
+  confirmation_sent_at?: string | null;
+  notes?: string;
+  welfare_checks?: WelfareCheck[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateDocument {
+  id: string;
+  candidate_id: string;
+  document_type: "cv" | "id" | "certificate" | "other";
+  file_name: string;
+  file_path: string;
+  file_size?: number;
+  mime_type?: string;
+  uploaded_by?: string;
+  uploaded_by_name?: string;
+  created_at: string;
 }
 
 export interface Department {
@@ -54,6 +135,10 @@ export interface Job {
   updated_by?: string;
   application_count?: number;
   recruiters?: { id: string; name: string; email: string }[];
+  employer_id?: string | null;
+  employer_name?: string;
+  positions_count?: number;
+  job_board_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +154,15 @@ export interface Candidate {
   linkedin?: string;
   notes?: string;
   application_count?: number;
+  provider_id?: string | null;
+  provider_name?: string;
+  address_line1?: string;
+  address_line2?: string;
+  postcode?: string;
+  country?: string;
+  benchmark_hours?: number | null;
+  work_status?: CandidateWorkStatus;
+  interested_job?: string;
   created_at: string;
 }
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings } from "lucide-react";
+import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon } from "lucide-react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import SessionExpiringDialog from "./components/SessionExpiringDialog";
 import { Toaster } from "./components/ui/toaster";
@@ -19,6 +19,15 @@ import AdminUsers       from "./pages/AdminUsers";
 import AdminDepartments from "./pages/AdminDepartments";
 import AdminLocations   from "./pages/AdminLocations";
 import NotFound         from "./pages/NotFound";
+import Providers        from "./pages/Providers";
+import ProviderDetail   from "./pages/ProviderDetail";
+import ProviderCreate   from "./pages/ProviderCreate";
+import Employers        from "./pages/Employers";
+import EmployerDetail   from "./pages/EmployerDetail";
+import EmployerCreate   from "./pages/EmployerCreate";
+import Placements       from "./pages/Placements";
+import PlacementDetail  from "./pages/PlacementDetail";
+import Reports          from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -100,8 +109,12 @@ function Layout({ children }: { children: React.ReactNode }) {
           <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Jobs</NavLink>
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Hiring Board</NavLink>
           <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
+          <NavLink to="/placements"   className={navClass}><UserCheck size={15} />Placements</NavLink>
+          <NavLink to="/providers"    className={navClass}><MapPinIcon size={15} />Providers</NavLink>
+          <NavLink to="/employers"    className={navClass}><Building2 size={15} />Employers</NavLink>
           {isAdmin && (
             <>
+              <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
               <span className="mx-1 text-gray-200 select-none">|</span>
               <NavLink to="/admin/users"       className={navClass}><Settings size={15} />Users</NavLink>
               <NavLink to="/admin/departments" className={navClass}>Departments</NavLink>
@@ -168,6 +181,21 @@ function AppRoutes() {
       <Route path="/candidates/new"   element={<ProtectedRoute><CandidateNew     /></ProtectedRoute>} />
       <Route path="/candidates/:id"   element={<ProtectedRoute><CandidateDetail  /></ProtectedRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
+
+      <Route path="/providers"          element={<ProtectedRoute><Providers       /></ProtectedRoute>} />
+      <Route path="/providers/new"      element={<AdminRoute><ProviderCreate     /></AdminRoute>} />
+      <Route path="/providers/:id"      element={<ProtectedRoute><ProviderDetail  /></ProtectedRoute>} />
+      <Route path="/providers/:id/edit" element={<AdminRoute><ProviderCreate      /></AdminRoute>} />
+
+      <Route path="/employers"          element={<ProtectedRoute><Employers       /></ProtectedRoute>} />
+      <Route path="/employers/new"      element={<AdminRoute><EmployerCreate      /></AdminRoute>} />
+      <Route path="/employers/:id"      element={<ProtectedRoute><EmployerDetail  /></ProtectedRoute>} />
+      <Route path="/employers/:id/edit" element={<AdminRoute><EmployerCreate      /></AdminRoute>} />
+
+      <Route path="/placements"         element={<ProtectedRoute><Placements      /></ProtectedRoute>} />
+      <Route path="/placements/:id"     element={<ProtectedRoute><PlacementDetail /></ProtectedRoute>} />
+
+      <Route path="/reports"            element={<AdminRoute><Reports             /></AdminRoute>} />
 
       <Route path="/admin/users"       element={<AdminRoute><AdminUsers       /></AdminRoute>} />
       <Route path="/admin/departments" element={<AdminRoute><AdminDepartments /></AdminRoute>} />

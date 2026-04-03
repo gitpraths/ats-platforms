@@ -1,14 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Briefcase, Users, ClipboardList, CheckCircle } from "lucide-react";
+import { Briefcase, Users, ClipboardList, CheckCircle, MapPin, Building2, AlertTriangle, UserCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useDashboardStats } from "../hooks/useDashboardStats";
+import { useAuth } from "../contexts/AuthContext";
 import type { Application } from "../types";
 
 const STAGE_ORDER = ["applied", "screening", "interview", "offer", "hired", "rejected"] as const;
 
+const STAGE_BADGE: Record<string, string> = {
+  applied:   "bg-blue-100 text-blue-700",
+  screening: "bg-purple-100 text-purple-700",
+  interview: "bg-yellow-100 text-yellow-700",
+  offer:     "bg-orange-100 text-orange-700",
+  hired:     "bg-green-100 text-green-700",
+  rejected:  "bg-red-100 text-red-600",
+};
+
 export default function Dashboard() {
+  const { user }        = useAuth();
   const { data: stats } = useDashboardStats();
 
   const { data: applications = [] } = useQuery<Application[]>({
@@ -16,59 +28,84 @@ export default function Dashboard() {
     queryFn:  () => api.get<Application[]>("/applications"),
   });
 
-  // Summary cards from stats API
-  const openJobs       = stats?.jobs.published       ?? 0;
-  const activeApps     = stats?.applications.active  ?? 0;
+  const openJobs       = stats?.jobs.published        ?? 0;
+  const activeApps     = stats?.applications.active   ?? 0;
   const hiredThisMonth = stats?.applications.hired_this_month ?? 0;
-  const totalJobs      = stats?.jobs.total            ?? 0;
+  const totalCandidates = stats?.candidates.total     ?? 0;
+  const totalPlacements = stats?.placements?.total    ?? 0;
+  const confirmedPlacements = stats?.placements?.confirmed ?? 0;
+  const placementsThisMonth = stats?.placements?.this_month ?? 0;
+  const overdueWelfare  = stats?.placements?.overdue_welfare ?? 0;
+  const activeProviders = stats?.providers?.active    ?? 0;
+  const activeEmployers = stats?.employers?.active    ?? 0;
 
-  // Jobs by status chart data from stats
   const statusCounts = ["draft", "published", "archived"].map((s) => ({
-    status: s,
+    status: s.charAt(0).toUpperCase() + s.slice(1),
     count:  stats?.jobs[s as "draft" | "published" | "archived"] ?? 0,
   }));
 
-  // Pipeline funnel from stats
   const pipelineCounts = STAGE_ORDER.map((stage) => ({
     stage,
     count: stats?.applications.by_stage[stage] ?? 0,
   }));
 
-  // Recent applications (last 10)
   const recent = [...applications]
     .sort((a, b) => new Date(b.applied_at).getTime() - new Date(a.applied_at).getTime())
     .slice(0, 10);
 
-  const STAGE_BADGE: Record<string, string> = {
-    applied:   "bg-blue-100 text-blue-700",
-    screening: "bg-purple-100 text-purple-700",
-    interview: "bg-yellow-100 text-yellow-700",
-    offer:     "bg-orange-100 text-orange-700",
-    hired:     "bg-green-100 text-green-700",
-    rejected:  "bg-red-100 text-red-600",
-  };
-
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.name}</p>
+      </div>
 
-      {/* Summary Cards */}
+      {/* Row 1: Core stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open Jobs",          value: openJobs,       icon: Briefcase,    color: "text-blue-600 bg-blue-50" },
-          { label: "Active Applications",value: activeApps,     icon: ClipboardList, color: "text-purple-600 bg-purple-50" },
-          { label: "Hired This Month",   value: hiredThisMonth, icon: CheckCircle,  color: "text-green-600 bg-green-50" },
-          { label: "Total Jobs",         value: totalJobs,      icon: Users,        color: "text-gray-600 bg-gray-100" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white border rounded-xl p-4 flex items-center gap-4">
+          { label: "Open Jobs",           value: openJobs,        icon: Briefcase,    color: "text-blue-600 bg-blue-50",   link: "/jobs" },
+          { label: "Active Applications", value: activeApps,      icon: ClipboardList,color: "text-purple-600 bg-purple-50", link: "/hiring-board" },
+          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  color: "text-green-600 bg-green-50", link: "/hiring-board" },
+          { label: "Total Candidates",    value: totalCandidates, icon: Users,        color: "text-gray-600 bg-gray-100",  link: "/candidates" },
+        ].map(({ label, value, icon: Icon, color, link }) => (
+          <Link key={label} to={link} className="bg-white border rounded-xl p-4 flex items-center gap-4 hover:shadow-sm transition">
             <div className={`p-3 rounded-xl ${color}`}><Icon size={20} /></div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{value}</p>
               <p className="text-xs text-gray-500">{label}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
+
+      {/* Row 2: Placements & Provider stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total Placements",    value: totalPlacements,    icon: UserCheck,       color: "text-indigo-600 bg-indigo-50",  link: "/placements" },
+          { label: "Placements This Month",value: placementsThisMonth,icon: CheckCircle,    color: "text-teal-600 bg-teal-50",     link: "/placements" },
+          { label: "Active Providers",    value: activeProviders,    icon: MapPin,          color: "text-orange-600 bg-orange-50", link: "/providers" },
+          { label: "Active Employers",    value: activeEmployers,    icon: Building2,       color: "text-cyan-600 bg-cyan-50",     link: "/employers" },
+        ].map(({ label, value, icon: Icon, color, link }) => (
+          <Link key={label} to={link} className="bg-white border rounded-xl p-4 flex items-center gap-4 hover:shadow-sm transition">
+            <div className={`p-3 rounded-xl ${color}`}><Icon size={20} /></div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Overdue welfare alert */}
+      {overdueWelfare > 0 && (
+        <Link to="/placements"
+          className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 hover:bg-yellow-100 transition">
+          <AlertTriangle size={18} className="text-yellow-600 flex-shrink-0" />
+          <p className="text-sm text-yellow-800 font-medium">
+            {overdueWelfare} welfare check{overdueWelfare > 1 ? "s" : ""} overdue or due today — action required.
+          </p>
+        </Link>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Jobs by Status Chart */}
@@ -86,7 +123,7 @@ export default function Dashboard() {
 
         {/* Pipeline Funnel */}
         <div className="bg-white border rounded-xl p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Pipeline Funnel</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">Application Pipeline</h2>
           <div className="space-y-2">
             {pipelineCounts.map(({ stage, count }) => {
               const max = Math.max(...pipelineCounts.map((p) => p.count), 1);
@@ -95,12 +132,9 @@ export default function Dashboard() {
                 <div key={stage} className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-20 capitalize">{stage}</span>
                   <div className="flex-1 bg-gray-100 rounded-full h-5 relative">
-                    <div
-                      className="bg-blue-500 h-5 rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
+                    <div className="bg-blue-500 h-5 rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="text-xs text-gray-600 w-6 text-right">{count}</span>
+                  <span className="text-xs font-medium text-gray-700 w-6 text-right">{count}</span>
                 </div>
               );
             })}
@@ -108,9 +142,36 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Placement Summary row */}
       <div className="bg-white border rounded-xl p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">Recent Applications</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Placement Summary</h2>
+          <Link to="/placements" className="text-xs text-blue-600 hover:underline">View all</Link>
+        </div>
+        <div className="grid grid-cols-3 gap-6 text-center">
+          <div>
+            <p className="text-3xl font-bold text-gray-900">{totalPlacements}</p>
+            <p className="text-xs text-gray-500 mt-1">Total Placements</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-green-600">{confirmedPlacements}</p>
+            <p className="text-xs text-gray-500 mt-1">Confirmed by Employer</p>
+          </div>
+          <div>
+            <p className={`text-3xl font-bold ${overdueWelfare > 0 ? "text-yellow-500" : "text-gray-900"}`}>
+              {overdueWelfare}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Overdue Welfare Checks</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Applications */}
+      <div className="bg-white border rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Recent Applications</h2>
+          <Link to="/hiring-board" className="text-xs text-blue-600 hover:underline">View board</Link>
+        </div>
         {recent.length === 0 ? (
           <p className="text-sm text-gray-400">No applications yet.</p>
         ) : (

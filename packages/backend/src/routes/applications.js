@@ -12,8 +12,9 @@ const VALID_STAGES = ["applied", "screening", "interview", "offer", "hired", "re
 applicationsRouter.get("/", async (req, res, next) => {
   try {
     const { candidate, job_title, job_id } = req.query;
-    const params = [req.user.id];
-    const conditions = [
+    const isAdmin = ["admin", "recruiter_admin"].includes(req.user.role);
+    const params = isAdmin ? [] : [req.user.id];
+    const conditions = isAdmin ? [] : [
       `(j.created_by = $1 OR EXISTS (
          SELECT 1 FROM job_recruiter jr WHERE jr.job_id = j.id AND jr.user_id = $1
        ))`
@@ -41,7 +42,7 @@ applicationsRouter.get("/", async (req, res, next) => {
        JOIN candidates c ON a.candidate_id = c.id
        LEFT JOIN departments d ON j.department_id = d.id
        LEFT JOIN locations   l ON j.location_id   = l.id
-       WHERE ${conditions.join(" AND ")}
+       ${conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""}
        ORDER BY a.applied_at DESC`,
       params
     );
@@ -83,6 +84,7 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     );
     if (!appRows[0]) return res.status(404).json({ success: false, error: "Application not found" });
 
+    const isAdmin = ["admin", "recruiter_admin"].includes(req.user.role);
     const isOwner = appRows[0].created_by === req.user.id;
     const { rows: recruiterRows } = await pool.query(
       "SELECT 1 FROM job_recruiter WHERE job_id = $1 AND user_id = $2",
@@ -90,7 +92,7 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     );
     const isRecruiter = recruiterRows.length > 0;
 
-    if (!isOwner && !isRecruiter)
+    if (!isAdmin && !isOwner && !isRecruiter)
       return res.status(403).json({ success: false, error: "You are not authorized to update this application" });
 
     if (stage && !VALID_STAGES.includes(stage))
