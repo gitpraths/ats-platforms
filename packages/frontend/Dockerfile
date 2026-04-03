@@ -27,4 +27,6 @@ COPY --from=builder /app/dist ./dist
 # Copy the static server (no dependencies needed — uses Node built-ins only)
 COPY --from=builder /app/server.js ./server.js
 
+EXPOSE 3000
+
 CMD ["node", "server.js"]
