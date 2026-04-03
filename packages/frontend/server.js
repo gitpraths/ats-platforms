@@ -4,6 +4,7 @@ import { join, extname, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const dist = join(__dirname, "dist");
 const PORT = process.env.PORT || 3000;
 
 const MIME = {
@@ -20,9 +21,9 @@ const MIME = {
 };
 
 createServer((req, res) => {
-  // server.js lives inside dist/ so __dirname IS the dist folder
-  let filePath = join(__dirname, req.url === "/" ? "index.html" : req.url);
-  if (!existsSync(filePath)) filePath = join(__dirname, "index.html");
+  const url = req.url.split("?")[0];
+  let filePath = join(dist, url === "/" ? "index.html" : url);
+  if (!existsSync(filePath)) filePath = join(dist, "index.html");
   const ext = extname(filePath);
   res.writeHead(200, { "Content-Type": MIME[ext] || "text/html" });
   res.end(readFileSync(filePath));

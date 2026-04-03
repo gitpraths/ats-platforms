@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "start": "node server.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^16.6.0",
