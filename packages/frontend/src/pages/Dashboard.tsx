@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Briefcase, Users, ClipboardList, CheckCircle, MapPin, Building2, AlertTriangle, UserCheck } from "lucide-react";
+import { Briefcase, Users, ClipboardList, CheckCircle, MapPin, Building2, AlertTriangle, UserCheck, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
@@ -17,6 +17,23 @@ const STAGE_BADGE: Record<string, string> = {
   offer:     "border border-orange-400 text-orange-600 bg-transparent",
   hired:     "border border-green-500 text-green-700 bg-transparent",
   rejected:  "border border-red-400 text-red-500 bg-transparent",
+};
+
+const STAGE_STEP: Record<string, string> = {
+  applied:   "border-blue-200 text-blue-700 bg-blue-50",
+  screening: "border-purple-200 text-purple-700 bg-purple-50",
+  interview: "border-amber-200 text-amber-700 bg-amber-50",
+  offer:     "border-orange-200 text-orange-700 bg-orange-50",
+  hired:     "border-green-200 text-green-700 bg-green-50",
+};
+
+const STAGE_DOT: Record<string, string> = {
+  applied:   "bg-blue-500",
+  screening: "bg-purple-500",
+  interview: "bg-amber-500",
+  offer:     "bg-orange-500",
+  hired:     "bg-green-500",
+  rejected:  "bg-red-500",
 };
 
 export default function Dashboard() {
@@ -56,23 +73,25 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Welcome back, {user?.name}</p>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
+          Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, {user?.name?.split(" ")[0]}
+        </h1>
+        <p className="text-sm text-slate-500 mt-0.5">Here's your recruiting overview</p>
       </div>
 
       {/* Row 1: Core stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open Jobs",           value: openJobs,        icon: Briefcase,    color: "text-blue-600 bg-slate-100",   link: "/jobs" },
-          { label: "Active Applications", value: activeApps,      icon: ClipboardList,color: "text-purple-600 bg-slate-100", link: "/hiring-board" },
-          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  color: "text-green-600 bg-slate-100", link: "/hiring-board" },
-          { label: "Total Candidates",    value: totalCandidates, icon: Users,        color: "text-gray-600 bg-slate-100",  link: "/candidates" },
-        ].map(({ label, value, icon: Icon, color, link }) => (
-          <Link key={label} to={link} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 hover:shadow-sm transition">
-            <div className={`p-3 rounded-xl ${color}`}><Icon size={20} /></div>
+          { label: "Open Jobs",           value: openJobs,        icon: Briefcase,    border: "border-l-4 border-blue-500",   iconCls: "text-blue-600",   link: "/jobs" },
+          { label: "Active Applications", value: activeApps,      icon: ClipboardList,border: "border-l-4 border-purple-500", iconCls: "text-purple-600", link: "/hiring-board" },
+          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  border: "border-l-4 border-green-500",  iconCls: "text-green-600",  link: "/hiring-board" },
+          { label: "Total Candidates",    value: totalCandidates, icon: Users,        border: "border-l-4 border-slate-400",  iconCls: "text-slate-500",  link: "/candidates" },
+        ].map(({ label, value, icon: Icon, border, iconCls, link }) => (
+          <Link key={label} to={link} className={`bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition ${border}`}>
+            <Icon size={22} className={iconCls} />
             <div>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="text-xs text-slate-500">{label}</p>
+              <p className="text-2xl font-bold text-slate-900">{value}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{label}</p>
             </div>
           </Link>
         ))}
@@ -81,16 +100,16 @@ export default function Dashboard() {
       {/* Row 2: Placements & Provider stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Placements",    value: totalPlacements,    icon: UserCheck,       color: "text-indigo-600 bg-slate-100",  link: "/placements" },
-          { label: "Placements This Month",value: placementsThisMonth,icon: CheckCircle,    color: "text-teal-600 bg-slate-100",     link: "/placements" },
-          { label: "Active Providers",    value: activeProviders,    icon: MapPin,          color: "text-orange-600 bg-slate-100", link: "/providers" },
-          { label: "Active Employers",    value: activeEmployers,    icon: Building2,       color: "text-cyan-600 bg-slate-100",     link: "/employers" },
-        ].map(({ label, value, icon: Icon, color, link }) => (
-          <Link key={label} to={link} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 hover:shadow-sm transition">
-            <div className={`p-3 rounded-xl ${color}`}><Icon size={20} /></div>
+          { label: "Total Placements",     value: totalPlacements,     icon: UserCheck,  border: "border-l-4 border-indigo-500", iconCls: "text-indigo-600", link: "/placements" },
+          { label: "Placements This Month",value: placementsThisMonth, icon: CheckCircle,border: "border-l-4 border-teal-500",   iconCls: "text-teal-600",   link: "/placements" },
+          { label: "Active Providers",     value: activeProviders,     icon: MapPin,     border: "border-l-4 border-orange-500", iconCls: "text-orange-600", link: "/providers" },
+          { label: "Active Employers",     value: activeEmployers,     icon: Building2,  border: "border-l-4 border-cyan-500",   iconCls: "text-cyan-600",   link: "/employers" },
+        ].map(({ label, value, icon: Icon, border, iconCls, link }) => (
+          <Link key={label} to={link} className={`bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition ${border}`}>
+            <Icon size={22} className={iconCls} />
             <div>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="text-xs text-slate-500">{label}</p>
+              <p className="text-2xl font-bold text-slate-900">{value}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{label}</p>
             </div>
           </Link>
         ))}
@@ -107,6 +126,28 @@ export default function Dashboard() {
         </Link>
       )}
 
+      {/* Hiring Pipeline — step flow */}
+      <div className="bg-white rounded-xl shadow-sm p-5">
+        <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Hiring Pipeline</h2>
+        <div className="flex items-center overflow-x-auto pb-1 gap-1">
+          {pipelineCounts.filter(({ stage }) => stage !== "rejected").map(({ stage, count }, i, arr) => (
+            <div key={stage} className="flex items-center gap-1 flex-1 min-w-[80px]">
+              <div className={`flex-1 text-center px-3 py-3 rounded-lg border ${STAGE_STEP[stage] ?? "border-slate-200 text-slate-600 bg-slate-50"}`}>
+                <p className="text-xl font-bold">{count}</p>
+                <p className="text-xs capitalize mt-0.5 opacity-80">{stage}</p>
+              </div>
+              {i < arr.length - 1 && <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />}
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+          <span className="text-xs text-slate-400">Rejected:</span>
+          <span className="text-xs px-2 py-0.5 rounded-full border border-red-400 text-red-500">
+            {pipelineCounts.find(({ stage }) => stage === "rejected")?.count ?? 0}
+          </span>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Jobs by Status Chart */}
         <div className="bg-white rounded-xl shadow-sm p-5">
@@ -121,65 +162,46 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Pipeline Funnel */}
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Application Pipeline</h2>
-          <div className="space-y-2">
-            {pipelineCounts.map(({ stage, count }) => {
-              const max = Math.max(...pipelineCounts.map((p) => p.count), 1);
-              const pct = Math.round((count / max) * 100);
-              return (
-                <div key={stage} className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 w-20 capitalize">{stage}</span>
-                  <div className="flex-1 bg-slate-100 rounded-full h-5 relative">
-                    <div className="bg-slate-700 h-5 rounded-full transition-all" style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="text-xs font-medium text-gray-700 w-6 text-right">{count}</span>
-                </div>
-              );
-            })}
+        {/* Placement Summary */}
+        <div className="bg-slate-900 rounded-xl shadow-sm p-5 text-white">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold tracking-tight">Placement Summary</h2>
+            <Link to="/placements" className="text-xs text-slate-400 hover:text-white transition">View all</Link>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-3xl font-bold">{totalPlacements}</p>
+              <p className="text-xs text-slate-400 mt-1">Total</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-green-400">{confirmedPlacements}</p>
+              <p className="text-xs text-slate-400 mt-1">Confirmed</p>
+            </div>
+            <div>
+              <p className={`text-3xl font-bold ${overdueWelfare > 0 ? "text-yellow-400" : "text-white"}`}>
+                {overdueWelfare}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">Overdue Checks</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Placement Summary row */}
+      {/* Recent Activity Feed */}
       <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-900 tracking-tight">Placement Summary</h2>
-          <Link to="/placements" className="text-xs text-slate-600 hover:underline">View all</Link>
-        </div>
-        <div className="grid grid-cols-3 gap-6 text-center">
-          <div>
-            <p className="text-3xl font-bold text-gray-900">{totalPlacements}</p>
-            <p className="text-xs text-slate-500 mt-1">Total Placements</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-green-600">{confirmedPlacements}</p>
-            <p className="text-xs text-slate-500 mt-1">Confirmed by Employer</p>
-          </div>
-          <div>
-            <p className={`text-3xl font-bold ${overdueWelfare > 0 ? "text-yellow-500" : "text-gray-900"}`}>
-              {overdueWelfare}
-            </p>
-            <p className="text-xs text-slate-500 mt-1">Overdue Welfare Checks</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Applications */}
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-900 tracking-tight">Recent Applications</h2>
-          <Link to="/hiring-board" className="text-xs text-slate-600 hover:underline">View board</Link>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-semibold text-slate-900 tracking-tight">Recent Activity</h2>
+          <Link to="/hiring-board" className="text-xs text-slate-500 hover:text-slate-900 transition">View board</Link>
         </div>
         {recent.length === 0 ? (
-          <p className="text-sm text-slate-400">No applications yet.</p>
+          <p className="text-sm text-slate-400 py-4">No applications yet.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="divide-y divide-slate-100">
             {recent.map((app) => (
-              <div key={app.id} className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{app.candidate_name}</p>
+              <div key={app.id} className="flex items-center gap-3 py-3">
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STAGE_DOT[app.stage] ?? "bg-slate-400"}`} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-900 truncate">{app.candidate_name}</p>
                   <p className="text-xs text-slate-500 truncate">{app.job_title}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
