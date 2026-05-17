@@ -163,7 +163,7 @@ export default function Dashboard() {
         </div>
 
         {/* Placement Summary */}
-        <div className="bg-slate-900 rounded-xl shadow-sm p-5 text-white">
+        <div className="bg-slate-700 rounded-xl shadow-sm p-5 text-white">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold tracking-tight">Placement Summary</h2>
             <Link to="/placements" className="text-xs text-slate-400 hover:text-white transition">View all</Link>
