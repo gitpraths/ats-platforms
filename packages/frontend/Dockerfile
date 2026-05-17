@@ -18,12 +18,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install serve globally — battle-tested static server for Railway
+RUN npm install -g serve
+
 # Copy built frontend files
 COPY --from=builder /app/dist ./dist
 
-# Copy the static server (no dependencies needed — uses Node built-ins only)
-COPY --from=builder /app/server.js ./server.js
+EXPOSE 3000
 
-EXPOSE 8080
-
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-3000}"]

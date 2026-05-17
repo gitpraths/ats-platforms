@@ -10,11 +10,11 @@ interface EmployerDetailData extends Employer {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  draft:     "bg-gray-100 text-gray-600",
-  open:      "bg-green-100 text-green-700",
-  published: "bg-green-100 text-green-700",
-  closed:    "bg-red-100 text-red-600",
-  archived:  "bg-gray-100 text-gray-500",
+  draft:     "border border-slate-400 text-slate-600 bg-transparent",
+  open:      "border border-green-500 text-green-700 bg-transparent",
+  published: "border border-green-500 text-green-700 bg-transparent",
+  closed:    "border border-red-400 text-red-500 bg-transparent",
+  archived:  "border border-slate-400 text-slate-600 bg-transparent",
 };
 
 export default function EmployerDetail() {
@@ -28,12 +28,12 @@ export default function EmployerDetail() {
     queryFn: () => api.get<EmployerDetailData>(`/employers/${id}`),
   });
 
-  if (isLoading) return <p className="p-6 text-gray-500">Loading...</p>;
+  if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
   if (!employer) return <p className="p-6 text-red-500">Employer not found.</p>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <Link to="/employers" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
+      <Link to="/employers" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-6">
         <ArrowLeft size={15} /> Back to Employers
       </Link>
 
@@ -41,18 +41,20 @@ export default function EmployerDetail() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">{employer.name}</h1>
+            <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">{employer.name}</h1>
             {employer.website && (
               <a href={employer.website} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                className="flex items-center gap-1 text-sm text-slate-600 hover:underline">
                 <ExternalLink size={13} /> Website
               </a>
             )}
           </div>
           <div className="flex items-center gap-2 mt-1">
-            {employer.industry && <span className="text-sm text-gray-500">{employer.industry}</span>}
+            {employer.industry && <span className="text-sm text-slate-500">{employer.industry}</span>}
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              employer.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+              employer.is_active
+                ? "border border-green-500 text-green-700 bg-transparent"
+                : "border border-slate-400 text-slate-600 bg-transparent"
             }`}>
               {employer.is_active ? "Active" : "Inactive"}
             </span>
@@ -60,7 +62,7 @@ export default function EmployerDetail() {
         </div>
         {isAdmin && (
           <button onClick={() => navigate(`/employers/${id}/edit`)}
-            className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">
+            className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-slate-50">
             <Edit2 size={14} /> Edit
           </button>
         )}
@@ -73,53 +75,53 @@ export default function EmployerDetail() {
           { label: "Total Jobs",      value: employer.total_jobs_count ?? 0 },
           { label: "Total Placements",value: employer.total_placements_count ?? 0 },
         ].map((s) => (
-          <div key={s.label} className="bg-white border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+          <div key={s.label} className="bg-white rounded-xl shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold text-slate-900">{s.value}</p>
+            <p className="text-xs text-slate-500 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Info card */}
-      <div className="bg-white border rounded-xl p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Details</h2>
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Details</h2>
         <dl className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="text-xs font-medium text-gray-500 uppercase">Contact Name</dt>
-            <dd className="mt-0.5 text-gray-900">{employer.contact_name || "—"}</dd>
+            <dt className="text-xs font-medium text-slate-500 uppercase">Contact Name</dt>
+            <dd className="mt-0.5 text-slate-900">{employer.contact_name || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-gray-500 uppercase">Contact Email</dt>
-            <dd className="mt-0.5 text-gray-900">{employer.contact_email || "—"}</dd>
+            <dt className="text-xs font-medium text-slate-500 uppercase">Contact Email</dt>
+            <dd className="mt-0.5 text-slate-900">{employer.contact_email || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-gray-500 uppercase">Contact Phone</dt>
-            <dd className="mt-0.5 text-gray-900">{employer.contact_phone || "—"}</dd>
+            <dt className="text-xs font-medium text-slate-500 uppercase">Contact Phone</dt>
+            <dd className="mt-0.5 text-slate-900">{employer.contact_phone || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-gray-500 uppercase">Address</dt>
-            <dd className="mt-0.5 text-gray-900">{employer.address || "—"}</dd>
+            <dt className="text-xs font-medium text-slate-500 uppercase">Address</dt>
+            <dd className="mt-0.5 text-slate-900">{employer.address || "—"}</dd>
           </div>
           {employer.description && (
             <div className="sm:col-span-2">
-              <dt className="text-xs font-medium text-gray-500 uppercase">Description</dt>
-              <dd className="mt-0.5 text-gray-900 whitespace-pre-wrap">{employer.description}</dd>
+              <dt className="text-xs font-medium text-slate-500 uppercase">Description</dt>
+              <dd className="mt-0.5 text-slate-900 whitespace-pre-wrap">{employer.description}</dd>
             </div>
           )}
         </dl>
       </div>
 
       {/* Jobs */}
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="font-semibold text-slate-900 tracking-tight mb-4 flex items-center gap-2">
           <Briefcase size={15} /> Jobs
         </h2>
         {!employer.jobs?.length ? (
-          <p className="text-sm text-gray-400">No jobs linked to this employer.</p>
+          <p className="text-sm text-slate-400">No jobs linked to this employer.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b">
+              <tr className="text-left text-xs text-slate-500 border-b">
                 <th className="pb-2">Title</th>
                 <th className="pb-2">Type</th>
                 <th className="pb-2">Positions</th>
@@ -128,13 +130,13 @@ export default function EmployerDetail() {
             </thead>
             <tbody className="divide-y">
               {employer.jobs.map((j) => (
-                <tr key={j.id} className="hover:bg-gray-50 cursor-pointer"
+                <tr key={j.id} className="hover:bg-slate-50 cursor-pointer"
                   onClick={() => navigate(`/jobs/${j.id}`)}>
-                  <td className="py-2 font-medium text-gray-900">{j.title}</td>
-                  <td className="py-2 text-gray-500">{j.job_type?.replace("_", " ") || "—"}</td>
-                  <td className="py-2 text-gray-500">{j.positions_count ?? 1}</td>
+                  <td className="py-2 font-medium text-slate-900">{j.title}</td>
+                  <td className="py-2 text-slate-500">{j.job_type?.replace("_", " ") || "—"}</td>
+                  <td className="py-2 text-slate-500">{j.positions_count ?? 1}</td>
                   <td className="py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[j.status] ?? "bg-gray-100 text-gray-500"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[j.status] ?? "border border-slate-400 text-slate-600 bg-transparent"}`}>
                       {j.status}
                     </span>
                   </td>

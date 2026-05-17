@@ -135,11 +135,11 @@ export default function Reports() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Provider, placement, and staff analytics</p>
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Reports</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Provider, placement, and staff analytics</p>
         </div>
         <button onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+          className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-50">
           <Download size={14} /> Export CSV
         </button>
       </div>
@@ -147,29 +147,29 @@ export default function Reports() {
       {/* Date filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">From</label>
+          <label className="block text-xs text-slate-500 mb-1">From</label>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">To</label>
+          <label className="block text-xs text-slate-500 mb-1">To</label>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
         </div>
         {tab === "placements" && (
           <>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Employer</label>
+              <label className="block text-xs text-slate-500 mb-1">Employer</label>
               <select value={filterEmployer} onChange={(e) => setFilterEmployer(e.target.value)}
-                className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                 <option value="">All Employers</option>
                 {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Provider</label>
+              <label className="block text-xs text-slate-500 mb-1">Provider</label>
               <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)}
-                className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                 <option value="">All Providers</option>
                 {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -179,11 +179,11 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 mb-6 bg-slate-100 rounded-xl p-1 w-fit">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              tab === t.key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
             }`}>
             {t.label}
           </button>
@@ -192,39 +192,39 @@ export default function Reports() {
 
       {/* Tab: Provider Report */}
       {tab === "providers" && (
-        <div className="bg-white border rounded-xl overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-slate-50 border-b">
               <tr>
                 {["Provider", "Total", "Active", "Placed", "Job Seeking", "Inactive", "Placement Rate"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingProviders ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
               ) : providerReport.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No data for this period.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No data for this period.</td></tr>
               ) : providerReport.map((r) => (
-                <tr key={r.provider_id} className="hover:bg-gray-50">
+                <tr key={r.provider_id} className="hover:bg-slate-50">
                   <td className="px-4 py-3">
-                    <Link to={`/providers/${r.provider_id}`} className="text-blue-600 hover:underline font-medium">
+                    <Link to={`/providers/${r.provider_id}`} className="text-slate-600 hover:underline font-medium">
                       {r.provider_name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{r.total_candidates}</td>
-                  <td className="px-4 py-3 text-gray-700">{r.active_candidates}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.total_candidates}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.active_candidates}</td>
                   <td className="px-4 py-3 text-purple-700 font-medium">{r.placed_candidates}</td>
                   <td className="px-4 py-3 text-blue-700">{r.job_seeking_candidates}</td>
-                  <td className="px-4 py-3 text-gray-400">{r.inactive_candidates}</td>
+                  <td className="px-4 py-3 text-slate-400">{r.inactive_candidates}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 w-20">
+                      <div className="flex-1 bg-slate-200 rounded-full h-1.5 w-20">
                         <div className="bg-green-500 h-1.5 rounded-full"
                           style={{ width: r.placement_rate }} />
                       </div>
-                      <span className="text-xs font-medium text-gray-700">{r.placement_rate}</span>
+                      <span className="text-xs font-medium text-slate-700">{r.placement_rate}</span>
                     </div>
                   </td>
                 </tr>
@@ -236,20 +236,20 @@ export default function Reports() {
 
       {/* Tab: Placement Tracking */}
       {tab === "placements" && (
-        <div className="bg-white border rounded-xl overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-slate-50 border-b">
               <tr>
                 {["Candidate", "Job", "Employer", "Provider", "Start Date", "Confirmed", "D1","W1","M1","M3","M6"].map((h) => (
-                  <th key={h} className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>
+                  <th key={h} className="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingPlacements ? (
-                <tr><td colSpan={11} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={11} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
               ) : placementReport.length === 0 ? (
-                <tr><td colSpan={11} className="px-4 py-8 text-center text-gray-400">No data for this period.</td></tr>
+                <tr><td colSpan={11} className="px-4 py-8 text-center text-slate-400">No data for this period.</td></tr>
               ) : placementReport.map((r) => {
                 const wcs = Object.entries(r.welfare_checks ?? {}).map(([check_type, v]) => ({
                   id: check_type,
@@ -261,17 +261,17 @@ export default function Reports() {
                 }));
                 return (
                   <tr key={r.placement_id}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-slate-50 cursor-pointer"
                     onClick={() => window.location.href = `/placements/${r.placement_id}`}>
-                    <td className="px-3 py-3 font-medium text-blue-600">{r.candidate_name}</td>
-                    <td className="px-3 py-3 text-gray-700">{r.job_title}</td>
-                    <td className="px-3 py-3 text-gray-600">{r.employer_name || "—"}</td>
-                    <td className="px-3 py-3 text-gray-600">{r.provider_name || "—"}</td>
-                    <td className="px-3 py-3 text-gray-700">{format(new Date(r.start_date), "MMM d, yyyy")}</td>
+                    <td className="px-3 py-3 font-medium text-slate-600">{r.candidate_name}</td>
+                    <td className="px-3 py-3 text-slate-700">{r.job_title}</td>
+                    <td className="px-3 py-3 text-slate-600">{r.employer_name || "—"}</td>
+                    <td className="px-3 py-3 text-slate-600">{r.provider_name || "—"}</td>
+                    <td className="px-3 py-3 text-slate-700">{format(new Date(r.start_date), "MMM d, yyyy")}</td>
                     <td className="px-3 py-3">
                       {r.confirmed_by_employer
                         ? <span className="text-green-600 text-xs font-medium">Yes</span>
-                        : <span className="text-gray-400 text-xs">No</span>}
+                        : <span className="text-slate-400 text-xs">No</span>}
                     </td>
                     <td className="px-3 py-3" colSpan={5}>
                       <WelfareCheckDots checks={wcs} />
@@ -286,31 +286,31 @@ export default function Reports() {
 
       {/* Tab: Staff Report */}
       {tab === "staff" && (
-        <div className="bg-white border rounded-xl overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-slate-50 border-b">
               <tr>
                 {["Staff Member", "Role", "Jobs Assigned", "Active Jobs", "Applications", "Placements"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingStaff ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
               ) : staffReport.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No data for this period.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No data for this period.</td></tr>
               ) : staffReport.map((r) => (
-                <tr key={r.user_id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{r.user_name}</td>
+                <tr key={r.user_id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-medium text-slate-900">{r.user_name}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full capitalize">
+                    <span className="text-xs px-2 py-0.5 border border-blue-400 text-blue-600 bg-transparent rounded-full capitalize">
                       {r.role.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{r.jobs_assigned}</td>
-                  <td className="px-4 py-3 text-gray-700">{r.active_jobs}</td>
-                  <td className="px-4 py-3 text-gray-700">{r.total_applications}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.jobs_assigned}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.active_jobs}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.total_applications}</td>
                   <td className="px-4 py-3 text-purple-700 font-medium">{r.total_placements}</td>
                 </tr>
               ))}

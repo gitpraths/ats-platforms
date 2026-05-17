@@ -10,12 +10,12 @@ import ScreenCandidateButton from "../components/ScreenCandidateButton";
 const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "offer", "hired", "rejected"];
 
 const STAGE_STYLES: Record<ApplicationStage, { col: string; badge: string }> = {
-  applied:   { col: "bg-blue-50 border-blue-200",   badge: "bg-blue-100 text-blue-700" },
-  screening: { col: "bg-purple-50 border-purple-200", badge: "bg-purple-100 text-purple-700" },
-  interview: { col: "bg-yellow-50 border-yellow-200", badge: "bg-yellow-100 text-yellow-700" },
-  offer:     { col: "bg-orange-50 border-orange-200", badge: "bg-orange-100 text-orange-700" },
-  hired:     { col: "bg-green-50 border-green-200",  badge: "bg-green-100 text-green-700" },
-  rejected:  { col: "bg-red-50 border-red-200",      badge: "bg-red-100 text-red-600" },
+  applied:   { col: "bg-blue-50 border-blue-200",   badge: "border border-blue-400 text-blue-600 bg-transparent" },
+  screening: { col: "bg-purple-50 border-purple-200", badge: "border border-purple-400 text-purple-600 bg-transparent" },
+  interview: { col: "bg-yellow-50 border-yellow-200", badge: "border border-amber-400 text-amber-600 bg-transparent" },
+  offer:     { col: "bg-orange-50 border-orange-200", badge: "border border-orange-400 text-orange-600 bg-transparent" },
+  hired:     { col: "bg-green-50 border-green-200",  badge: "border border-green-500 text-green-700 bg-transparent" },
+  rejected:  { col: "bg-red-50 border-red-200",      badge: "border border-red-400 text-red-500 bg-transparent" },
 };
 
 // ── Stage Change Dialog ───────────────────────────────────────────────────────
@@ -40,11 +40,11 @@ function StageDialog({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl p-6 w-96">
-        <h3 className="font-semibold text-gray-900 mb-4">Edit Application</h3>
+        <h3 className="font-semibold text-slate-900 mb-4">Edit Application</h3>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Stage</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Stage</label>
             <select
               value={stage}
               onChange={(e) => setStage(e.target.value as ApplicationStage)}
@@ -57,7 +57,7 @@ function StageDialog({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Score (0–10)</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Score (0–10)</label>
             <input
               type="number"
               min={0}
@@ -70,7 +70,7 @@ function StageDialog({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -82,8 +82,8 @@ function StageDialog({
         </div>
 
         <div className="flex gap-2 justify-end mt-5">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-          <button onClick={handleSave} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button onClick={handleSave} className="px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900">Save</button>
         </div>
       </div>
     </div>
@@ -105,7 +105,7 @@ function CardMenu({
     <div className="relative">
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className="p-1 rounded hover:bg-gray-100"
+        className="p-1 rounded hover:bg-slate-100"
       >
         <MoreHorizontal size={14} />
       </button>
@@ -113,13 +113,13 @@ function CardMenu({
         <div className="absolute right-0 top-6 bg-white border rounded-lg shadow-lg z-10 w-44 py-1">
           <button
             onClick={() => { setOpen(false); onChangeStage(); }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
           >
             Edit Application
           </button>
           <a
             href={`/candidates/${app.candidate_id}`}
-            className="block px-3 py-2 text-sm hover:bg-gray-50"
+            className="block px-3 py-2 text-sm hover:bg-slate-50"
           >
             View Candidate
           </a>
@@ -160,8 +160,8 @@ function PipelineView({
         {STAGES.map((stage) => (
           <div key={stage} className="min-w-[210px] flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{stage}</span>
-              <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2">{byStage(stage).length}</span>
+              <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{stage}</span>
+              <span className="text-xs text-slate-400 bg-slate-100 rounded-full px-2">{byStage(stage).length}</span>
             </div>
             <Droppable droppableId={stage}>
               {(provided, snapshot) => (
@@ -185,14 +185,14 @@ function PipelineView({
                         >
                           <div className="flex items-start justify-between gap-1">
                             <div className="min-w-0">
-                              <p className="font-medium text-gray-900 truncate">{app.candidate_name}</p>
-                              <p className="text-xs text-gray-500 truncate">{app.candidate_email}</p>
-                              <p className="text-xs text-gray-400 mt-1 truncate">{app.job_title}</p>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="font-medium text-slate-900 truncate">{app.candidate_name}</p>
+                              <p className="text-xs text-slate-500 truncate">{app.candidate_email}</p>
+                              <p className="text-xs text-slate-400 mt-1 truncate">{app.job_title}</p>
+                              <p className="text-xs text-slate-400 mt-1">
                                 {app.applied_at ? format(new Date(app.applied_at), "MMM d, yyyy") : ""}
                               </p>
                               {app.source && (
-                                <span className="inline-block mt-1 text-xs bg-gray-100 text-gray-500 rounded px-1">{app.source}</span>
+                                <span className="inline-block mt-1 text-xs border border-slate-400 text-slate-600 bg-transparent rounded px-1">{app.source}</span>
                               )}
                             </div>
                             <CardMenu app={app} onChangeStage={() => onOpenStageDialog(app)} onDelete={() => onDelete(app.id)} />
@@ -235,7 +235,7 @@ function ListView({
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b text-left text-xs text-gray-500 uppercase tracking-wide">
+          <tr className="border-b text-left text-xs text-slate-500 uppercase tracking-wide">
             <th className="py-3 pr-4">Applicant</th>
             <th className="py-3 pr-4">Job Posting</th>
             <th className="py-3 pr-4">Status</th>
@@ -247,27 +247,27 @@ function ListView({
         </thead>
         <tbody>
           {applications.map((app) => (
-            <tr key={app.id} className="border-b hover:bg-gray-50">
+            <tr key={app.id} className="border-b hover:bg-slate-50">
               <td className="py-3 pr-4">
-                <p className="font-medium text-gray-900">{app.candidate_name}</p>
-                <p className="text-xs text-gray-500">{app.candidate_email}</p>
+                <p className="font-medium text-slate-900">{app.candidate_name}</p>
+                <p className="text-xs text-slate-500">{app.candidate_email}</p>
               </td>
-              <td className="py-3 pr-4 text-gray-700">{app.job_title}</td>
+              <td className="py-3 pr-4 text-slate-700">{app.job_title}</td>
               <td className="py-3 pr-4">
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${STAGE_STYLES[app.stage].badge}`}>
                   {app.stage}
                 </span>
               </td>
-              <td className="py-3 pr-4 text-gray-600">{app.score ?? "—"}</td>
-              <td className="py-3 pr-4 text-gray-500 text-xs">{app.source || "—"}</td>
-              <td className="py-3 pr-4 text-gray-500 text-xs">
+              <td className="py-3 pr-4 text-slate-600">{app.score ?? "—"}</td>
+              <td className="py-3 pr-4 text-slate-500 text-xs">{app.source || "—"}</td>
+              <td className="py-3 pr-4 text-slate-500 text-xs">
                 {app.applied_at ? format(new Date(app.applied_at), "MMM d, yyyy") : "—"}
               </td>
               <td className="py-3">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onOpenStageDialog(app)}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-slate-600 hover:underline"
                   >
                     Edit
                   </button>
@@ -288,7 +288,7 @@ function ListView({
         </tbody>
       </table>
       {applications.length === 0 && (
-        <p className="text-center text-gray-400 py-8">No applications found.</p>
+        <p className="text-center text-slate-400 py-8">No applications found.</p>
       )}
     </div>
   );
@@ -324,7 +324,7 @@ export default function HiringBoard() {
     updateApp.mutate({ id, payload: { stage } });
   }
 
-  if (isLoading) return <p className="p-6 text-gray-500">Loading...</p>;
+  if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
 
   return (
     <div className="p-6">
@@ -334,12 +334,12 @@ export default function HiringBoard() {
         </div>
       )}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Hiring Board</h1>
-        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Hiring Board</h1>
+        <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
           <button
             onClick={() => setView("pipeline")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-              view === "pipeline" ? "bg-white shadow text-gray-900" : "text-gray-500"
+              view === "pipeline" ? "bg-white shadow text-slate-900" : "text-slate-500"
             }`}
           >
             <Columns size={14} /> Pipeline
@@ -347,7 +347,7 @@ export default function HiringBoard() {
           <button
             onClick={() => setView("list")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-              view === "list" ? "bg-white shadow text-gray-900" : "text-gray-500"
+              view === "list" ? "bg-white shadow text-slate-900" : "text-slate-500"
             }`}
           >
             <List size={14} /> List
@@ -363,7 +363,7 @@ export default function HiringBoard() {
           onDelete={(id) => { if (confirm("Remove this application?")) deleteApp.mutate(id); }}
         />
       ) : (
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-xl shadow-sm p-4">
           <ListView
             applications={applications}
             onOpenStageDialog={setStageDialogApp}
