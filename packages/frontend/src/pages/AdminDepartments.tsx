@@ -65,24 +65,24 @@ export default function AdminDepartments() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Departments</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage company departments</p>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Departments</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Manage company departments</p>
       </div>
 
       {/* Create form */}
-      <div className="bg-white border rounded-xl p-5 mb-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Add Department</h2>
+      <div className="bg-white rounded-xl shadow-sm p-5 mb-5">
+        <h2 className="text-sm font-semibold text-slate-700 tracking-tight mb-3">Add Department</h2>
         <form onSubmit={handleCreate} className="flex gap-2">
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Department name"
-            className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
           <button
             type="submit"
             disabled={createDept.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-900 disabled:opacity-50"
           >
             <Plus size={14} /> Add
           </button>
@@ -91,13 +91,13 @@ export default function AdminDepartments() {
       </div>
 
       {/* List */}
-      <div className="bg-white border rounded-xl overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <p className="p-6 text-gray-500">Loading...</p>
+          <p className="p-6 text-slate-500">Loading...</p>
         ) : departments.length === 0 ? (
-          <p className="p-6 text-center text-gray-400">No departments yet.</p>
+          <p className="p-6 text-center text-slate-400">No departments yet.</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-slate-100">
             {departments.map((d) => (
               <li key={d.id} className="flex items-center gap-3 px-5 py-3">
                 {editId === d.id ? (
@@ -105,7 +105,7 @@ export default function AdminDepartments() {
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                       autoFocus
                     />
                     {editError && <p className="text-xs text-red-600">{editError}</p>}
@@ -119,7 +119,7 @@ export default function AdminDepartments() {
                     </button>
                     <button
                       onClick={() => setEditId(null)}
-                      className="p-1.5 text-gray-400 hover:bg-gray-100 rounded"
+                      className="p-1.5 text-slate-400 hover:bg-slate-100 rounded"
                       title="Cancel"
                     >
                       <X size={14} />
@@ -127,10 +127,10 @@ export default function AdminDepartments() {
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-sm text-gray-900">{d.name}</span>
+                    <span className="flex-1 text-sm text-slate-900">{d.name}</span>
                     <button
                       onClick={() => startEdit(d)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                      className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded"
                       title="Edit"
                     >
                       <Pencil size={14} />
@@ -138,7 +138,7 @@ export default function AdminDepartments() {
                     <button
                       onClick={() => { if (confirm(`Delete "${d.name}"?`)) deleteDept.mutate(d.id); }}
                       disabled={deleteDept.isPending}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
                       title="Delete"
                     >
                       <Trash2 size={14} />

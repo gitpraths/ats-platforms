@@ -54,16 +54,16 @@ function ProfileMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1.5 transition"
+        className="flex items-center gap-2 hover:bg-slate-800 rounded-lg px-2 py-1.5 transition"
       >
         {avatarSrc ? (
           <img src={avatarSrc} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
         ) : (
-          <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+          <div className="w-7 h-7 rounded-full bg-slate-600 text-white flex items-center justify-center text-xs font-bold">
             {initials}
           </div>
         )}
-        <span className="text-sm text-gray-700 hidden sm:block">{user?.name}</span>
+        <span className="text-sm text-slate-200 hidden sm:block">{user?.name}</span>
         <ChevronDown size={14} className="text-gray-400" />
       </button>
 
@@ -97,14 +97,14 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-      isActive ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-100"
+      isActive ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
     }`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+    <div className="min-h-screen bg-slate-50">
+      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-none">
         <div className="flex items-center gap-1">
-          <span className="font-bold text-blue-600 mr-3 text-lg">MyATS</span>
+          <span className="font-bold text-white mr-3 text-lg">MyATS</span>
           <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
           <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Jobs</NavLink>
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Hiring Board</NavLink>
@@ -115,7 +115,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           {isAdmin && (
             <>
               <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
-              <span className="mx-1 text-gray-200 select-none">|</span>
+              <span className="mx-1 text-slate-600 select-none">|</span>
               <NavLink to="/admin/users"       className={navClass}><Settings size={15} />Users</NavLink>
               <NavLink to="/admin/departments" className={navClass}>Departments</NavLink>
               <NavLink to="/admin/locations"   className={navClass}>Locations</NavLink>

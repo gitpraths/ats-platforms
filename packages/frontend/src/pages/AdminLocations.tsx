@@ -86,44 +86,44 @@ export default function AdminLocations() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Locations</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage office and remote locations</p>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Locations</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Manage office and remote locations</p>
       </div>
 
       {/* Create form */}
-      <div className="bg-white border rounded-xl p-5 mb-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Add Location</h2>
+      <div className="bg-white rounded-xl shadow-sm p-5 mb-5">
+        <h2 className="text-sm font-semibold text-slate-700 tracking-tight mb-3">Add Location</h2>
         <form onSubmit={handleCreate} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">City *</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">City *</label>
               <input
                 value={form.city}
                 onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
                 placeholder="San Francisco"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">State / Region</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">State / Region</label>
               <input
                 value={form.state}
                 onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
                 placeholder="CA"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Country *</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Country *</label>
             <input
               value={form.country}
               onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
               placeholder="United States"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
             <input
               type="checkbox"
               checked={form.is_remote}
@@ -137,7 +137,7 @@ export default function AdminLocations() {
             <button
               type="submit"
               disabled={createLocation.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-900 disabled:opacity-50"
             >
               <Plus size={14} /> Add Location
             </button>
@@ -146,45 +146,45 @@ export default function AdminLocations() {
       </div>
 
       {/* List */}
-      <div className="bg-white border rounded-xl overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <p className="p-6 text-gray-500">Loading...</p>
+          <p className="p-6 text-slate-500">Loading...</p>
         ) : locations.length === 0 ? (
-          <p className="p-6 text-center text-gray-400">No locations yet.</p>
+          <p className="p-6 text-center text-slate-400">No locations yet.</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-slate-100">
             {locations.map((loc) => (
               <li key={loc.id} className="px-5 py-3">
                 {editId === loc.id ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-0.5">City *</label>
+                        <label className="block text-xs text-slate-500 mb-0.5">City *</label>
                         <input
                           value={editForm.city}
                           onChange={(e) => setEditForm((f) => ({ ...f, city: e.target.value }))}
-                          className="w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                           autoFocus
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-0.5">State</label>
+                        <label className="block text-xs text-slate-500 mb-0.5">State</label>
                         <input
                           value={editForm.state}
                           onChange={(e) => setEditForm((f) => ({ ...f, state: e.target.value }))}
-                          className="w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-0.5">Country *</label>
+                      <label className="block text-xs text-slate-500 mb-0.5">Country *</label>
                       <input
                         value={editForm.country}
                         onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))}
-                        className="w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={editForm.is_remote}
@@ -198,13 +198,13 @@ export default function AdminLocations() {
                       <button
                         onClick={saveEdit}
                         disabled={updateLocation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50"
                       >
                         <Check size={13} /> Save
                       </button>
                       <button
                         onClick={() => setEditId(null)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm border rounded-lg hover:bg-slate-50"
                       >
                         <X size={13} /> Cancel
                       </button>
@@ -212,16 +212,16 @@ export default function AdminLocations() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <MapPin size={14} className="text-gray-400 flex-shrink-0" />
+                    <MapPin size={14} className="text-slate-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{locationLabel(loc)}</p>
+                      <p className="text-sm text-slate-900">{locationLabel(loc)}</p>
                       {loc.is_remote && (
-                        <span className="text-xs text-blue-600">Remote</span>
+                        <span className="text-xs text-slate-600">Remote</span>
                       )}
                     </div>
                     <button
                       onClick={() => startEdit(loc)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                      className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded"
                       title="Edit"
                     >
                       <Pencil size={14} />
@@ -229,7 +229,7 @@ export default function AdminLocations() {
                     <button
                       onClick={() => { if (confirm(`Delete "${locationLabel(loc)}"?`)) deleteLocation.mutate(loc.id); }}
                       disabled={deleteLocation.isPending}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
                       title="Delete"
                     >
                       <Trash2 size={14} />

@@ -104,19 +104,19 @@ export default function JobEdit() {
     });
   }
 
-  if (isLoading) return <p className="p-6 text-gray-500">Loading...</p>;
+  if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
   if (!job)      return <p className="p-6 text-red-500">Job not found.</p>;
 
   const inputCls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-  const labelCls = "block text-sm font-medium text-gray-700 mb-1";
+  const labelCls = "block text-sm font-medium text-slate-700 mb-1";
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <Link to={`/jobs/${id}`} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4">
+      <Link to={`/jobs/${id}`} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4">
         <ArrowLeft size={15} /> Back to Job
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Job</h1>
+      <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Edit Job</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Title */}
@@ -259,7 +259,7 @@ export default function JobEdit() {
         </div>
 
         {/* Cover letter */}
-        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
           <input
             type="checkbox"
             checked={form.cover_letter_required}
@@ -277,13 +277,13 @@ export default function JobEdit() {
           <button
             type="submit"
             disabled={updateJob.isPending}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
           </button>
           <Link
             to={`/jobs/${id}`}
-            className="px-5 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50"
+            className="px-5 py-2 text-sm text-slate-700 border border-slate-300 rounded-lg hover:bg-gray-50"
           >
             Cancel
           </Link>

@@ -38,13 +38,13 @@ export default function Providers() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Providers</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Organisations that refer candidates</p>
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Providers</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Organisations that refer candidates</p>
         </div>
         {isAdmin && (
           <button
             onClick={() => navigate("/providers/new")}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 text-sm font-medium"
           >
             <Plus size={15} /> Add Provider
           </button>
@@ -53,49 +53,51 @@ export default function Providers() {
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search providers..."
-          className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-white border rounded-xl overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Contact</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Email</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Phone</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Candidates</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Contact</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Email</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Phone</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Candidates</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {isLoading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
             ) : providers.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No providers found.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No providers found.</td></tr>
             ) : (
               providers.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{p.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.contact_name || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.email || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.phone || "—"}</td>
+                <tr key={p.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-medium text-slate-900">{p.name}</td>
+                  <td className="px-4 py-3 text-slate-600">{p.contact_name || "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">{p.email || "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">{p.phone || "—"}</td>
                   <td className="px-4 py-3">
-                    <span className="flex items-center gap-1 text-gray-700">
+                    <span className="flex items-center gap-1 text-slate-700">
                       <Users size={13} />{p.candidate_count ?? 0}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      p.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      p.is_active
+                        ? "border border-green-500 text-green-700 bg-transparent"
+                        : "border border-slate-400 text-slate-600 bg-transparent"
                     }`}>
                       {p.is_active ? "Active" : "Inactive"}
                     </span>
@@ -103,12 +105,12 @@ export default function Providers() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
                       <Link to={`/providers/${p.id}`}
-                        className="flex items-center gap-1 text-xs text-gray-500 border rounded px-2 py-1 hover:bg-gray-50">
+                        className="flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
                         <Eye size={12} /> View
                       </Link>
                       {isAdmin && (
                         <Link to={`/providers/${p.id}/edit`}
-                          className="flex items-center gap-1 text-xs text-blue-600 border border-blue-200 rounded px-2 py-1 hover:bg-blue-50">
+                          className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50">
                           <Edit2 size={12} /> Edit
                         </Link>
                       )}
@@ -133,13 +135,13 @@ export default function Providers() {
 
       {/* Pagination */}
       {total > 20 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+        <div className="flex items-center justify-between mt-4 text-sm text-slate-500">
           <span>Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total}</span>
           <div className="flex gap-2">
             <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-gray-50">Prev</button>
+              className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-slate-50">Prev</button>
             <button disabled={page * 20 >= total} onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-gray-50">Next</button>
+              className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-slate-50">Next</button>
           </div>
         </div>
       )}

@@ -7,10 +7,10 @@ import type { Job } from "../types";
 import CreateJobDialog from "../components/CreateJobDialog";
 
 const STATUS_STYLE: Record<string, string> = {
-  draft:     "bg-gray-100 text-gray-600",
-  published: "bg-green-100 text-green-700",
-  closed:    "bg-red-100 text-red-600",
-  archived:  "bg-yellow-100 text-yellow-700",
+  draft:     "border border-slate-400 text-slate-600 bg-transparent",
+  published: "border border-green-500 text-green-700 bg-transparent",
+  closed:    "border border-red-400 text-red-500 bg-transparent",
+  archived:  "border border-amber-400 text-amber-600 bg-transparent",
 };
 
 export default function Jobs() {
@@ -24,22 +24,22 @@ export default function Jobs() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Jobs</h1>
         <button
           onClick={() => setDialogOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium"
         >
           <Plus size={16} /> New Job
         </button>
       </div>
 
       {isLoading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-slate-500">Loading...</p>
       ) : jobs.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-400 mb-4">No jobs yet.</p>
+          <p className="text-slate-400 mb-4">No jobs yet.</p>
           <button onClick={() => setDialogOpen(true)}
-            className="text-blue-600 hover:underline text-sm">
+            className="text-slate-600 hover:underline text-sm">
             Create your first job posting
           </button>
         </div>
@@ -47,27 +47,27 @@ export default function Jobs() {
         <div className="grid gap-3">
           {jobs.map((job) => (
             <Link key={job.id} to={`/jobs/${job.id}`}
-              className="bg-white border rounded-xl p-4 hover:shadow-md transition block">
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition block">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="font-semibold text-gray-900">{job.title}</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <h2 className="font-semibold text-slate-900 tracking-tight">{job.title}</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">
                     {job.department_name && <span>{job.department_name} · </span>}
                     {job.is_remote ? "Remote" : [job.city, job.state].filter(Boolean).join(", ")}
                     {job.job_type && <span> · {job.job_type.replace("_", " ")}</span>}
                   </p>
                   {job.min_annual_salary && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       {job.currency_code} {Number(job.min_annual_salary).toLocaleString()}
                       {job.max_annual_salary && ` – ${Number(job.max_annual_salary).toLocaleString()}`}
                     </p>
                   )}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_STYLE[job.status] ?? "bg-gray-100 text-gray-600"}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_STYLE[job.status] ?? "border border-slate-400 text-slate-600 bg-transparent"}`}>
                     {job.status}
                   </span>
-                  <span className="text-sm text-gray-400">{job.application_count ?? 0} applicants</span>
+                  <span className="text-sm text-slate-400">{job.application_count ?? 0} applicants</span>
                 </div>
               </div>
             </Link>

@@ -100,12 +100,12 @@ export default function Placements() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Placements</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track candidate placements and welfare checks</p>
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Placements</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Track candidate placements and welfare checks</p>
         </div>
         {canCreate && (
           <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 text-sm font-medium">
             <Plus size={15} /> New Placement
           </button>
         )}
@@ -115,52 +115,52 @@ export default function Placements() {
       <div className="flex flex-wrap gap-3 mb-4">
         <input value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }}
           type="date" placeholder="From"
-          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
         <input value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }}
           type="date" placeholder="To"
-          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
         <select value={filterEmployer} onChange={(e) => { setFilterEmployer(e.target.value); setPage(1); }}
-          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
           <option value="">All Employers</option>
           {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
       </div>
 
       {/* Table */}
-      <div className="bg-white border rounded-xl overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Candidate</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Employer</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Provider</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Start Date</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Welfare</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Confirmed</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Candidate</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Job</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Employer</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Provider</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Start Date</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Welfare</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Confirmed</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {isLoading ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
             ) : placements.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No placements found.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">No placements found.</td></tr>
             ) : (
               placements.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
+                <tr key={p.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <div>
-                      <p className="font-medium text-gray-900">{p.candidate_name}</p>
+                      <p className="font-medium text-slate-900">{p.candidate_name}</p>
                       {p.candidate_work_status && (
                         <span className="text-xs text-purple-600">{p.candidate_work_status.replace("_", " ")}</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{p.job_title}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.employer_name || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.provider_name || "—"}</td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-slate-700">{p.job_title}</td>
+                  <td className="px-4 py-3 text-slate-600">{p.employer_name || "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">{p.provider_name || "—"}</td>
+                  <td className="px-4 py-3 text-slate-700">
                     {format(new Date(p.start_date), "MMM d, yyyy")}
                   </td>
                   <td className="px-4 py-3">
@@ -169,16 +169,16 @@ export default function Placements() {
                   <td className="px-4 py-3">
                     {p.confirmed_by_employer
                       ? <CheckCircle size={15} className="text-green-600" />
-                      : <span className="text-xs text-gray-400">Pending</span>}
+                      : <span className="text-xs text-slate-400">Pending</span>}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
                       <Link to={`/placements/${p.id}`}
-                        className="text-xs text-gray-500 border rounded px-2 py-1 hover:bg-gray-50">View</Link>
+                        className="text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">View</Link>
                       {canCreate && !p.confirmed_by_employer && (
                         <button
                           onClick={() => sendConfirmation.mutate(p.id)}
-                          className="flex items-center gap-1 text-xs text-blue-600 border border-blue-200 rounded px-2 py-1 hover:bg-blue-50">
+                          className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50">
                           <Mail size={11} /> Send
                         </button>
                       )}
@@ -195,62 +195,62 @@ export default function Placements() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">New Placement</h2>
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">New Placement</h2>
             {createError && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3">{createError}</p>
             )}
             <form onSubmit={handleCreate} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Candidate *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Candidate *</label>
                 <select value={createForm.candidate_id}
                   onChange={(e) => setCreateForm((f) => ({ ...f, candidate_id: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                   <option value="">Select candidate...</option>
                   {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Job *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Job *</label>
                 <select value={createForm.job_id}
                   onChange={(e) => setCreateForm((f) => ({ ...f, job_id: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                   <option value="">Select job...</option>
                   {jobs.map((j) => <option key={j.id} value={j.id}>{j.title}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Application ID *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Application ID *</label>
                 <input value={createForm.application_id}
                   onChange={(e) => setCreateForm((f) => ({ ...f, application_id: e.target.value }))}
                   placeholder="UUID of the application record"
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Employer</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Employer</label>
                 <select value={createForm.employer_id}
                   onChange={(e) => setCreateForm((f) => ({ ...f, employer_id: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                   <option value="">No employer</option>
                   {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Start Date *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Start Date *</label>
                 <input type="date" value={createForm.start_date}
                   onChange={(e) => setCreateForm((f) => ({ ...f, start_date: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
                 <textarea value={createForm.notes} rows={2}
                   onChange={(e) => setCreateForm((f) => ({ ...f, notes: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
               </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">Cancel</button>
+                  className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50">Cancel</button>
                 <button type="submit" disabled={createPlacement.isPending}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                  className="px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50">
                   {createPlacement.isPending ? "Creating..." : "Create Placement"}
                 </button>
               </div>
