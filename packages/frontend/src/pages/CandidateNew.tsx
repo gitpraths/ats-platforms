@@ -35,9 +35,9 @@ export default function CandidateNew() {
   const [form, setForm] = useState<CandidateForm>(EMPTY);
   const [error, setError] = useState("");
 
-  const { data: providersData } = useQuery<{ data: Provider[] }>({
+  const { data: providersData } = useQuery({
     queryKey: ["providers-select"],
-    queryFn: () => api.get("/providers?limit=100"),
+    queryFn: () => api.list<Provider>("/providers?limit=100"),
   });
   const providers = providersData?.data ?? [];
 

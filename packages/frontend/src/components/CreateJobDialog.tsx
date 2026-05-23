@@ -432,12 +432,12 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
     enabled: isOpen,
   });
 
-  const { data: employersData } = useQuery<{ data: Employer[] }>({
+  const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
-    queryFn:  () => api.get("/employers?limit=100"),
+    queryFn:  () => api.list<Employer>("/employers?limit=100"),
     enabled: isOpen,
   });
-  const employers = employersData?.data ?? [];
+  const employers = employersResult?.data ?? [];
 
   const createJob = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.post<{ id: string }>("/jobs", body),

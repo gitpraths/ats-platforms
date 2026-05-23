@@ -30,11 +30,11 @@ export default function JobEdit() {
     queryFn:  () => api.get<Location[]>("/locations"),
   });
 
-  const { data: employersData } = useQuery<{ data: Employer[] }>({
+  const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
-    queryFn:  () => api.get("/employers?limit=100"),
+    queryFn:  () => api.list<Employer>("/employers?limit=100"),
   });
-  const employers = employersData?.data ?? [];
+  const employers = employersResult?.data ?? [];
 
   const [form, setForm] = useState({
     title: "",

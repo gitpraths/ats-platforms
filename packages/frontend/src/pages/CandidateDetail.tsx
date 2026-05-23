@@ -81,12 +81,12 @@ export default function CandidateDetail() {
       .then((r) => (r as unknown as { data?: CandidateDocument[] }).data ?? (r as unknown as CandidateDocument[])),
   });
 
-  const { data: providers = [] } = useQuery<Provider[]>({
+  const { data: providersResult } = useQuery({
     queryKey: ["providers-select"],
-    queryFn:  () => api.get<{ data: Provider[] }>("/providers?limit=100")
-      .then((r) => (r as unknown as { data: Provider[] }).data ?? []),
+    queryFn:  () => api.list<Provider>("/providers?limit=100"),
     enabled: isAdmin,
   });
+  const providers = providersResult?.data ?? [];
 
   const updateCandidate = useMutation({
     mutationFn: (body: Partial<Candidate>) => api.put<Candidate>(`/candidates/${id}`, body),
