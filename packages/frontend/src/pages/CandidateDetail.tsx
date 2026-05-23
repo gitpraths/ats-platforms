@@ -107,22 +107,24 @@ export default function CandidateDetail() {
   function startEdit() {
     if (!candidate) return;
     setForm({
-      name:           candidate.name,
-      email:          candidate.email,
-      phone:          candidate.phone ?? "",
-      city:           candidate.city ?? "",
-      state:          candidate.state ?? "",
-      resume_url:     candidate.resume_url ?? "",
-      linkedin:       candidate.linkedin ?? "",
-      notes:          candidate.notes ?? "",
-      address_line1:  candidate.address_line1 ?? "",
-      address_line2:  candidate.address_line2 ?? "",
-      postcode:       candidate.postcode ?? "",
-      country:        candidate.country ?? "Australia",
-      benchmark_hours:candidate.benchmark_hours ?? undefined,
-      work_status:    candidate.work_status ?? "job_seeking",
-      interested_job: candidate.interested_job ?? "",
-      provider_id:    candidate.provider_id ?? "",
+      name:                candidate.name,
+      email:               candidate.email,
+      phone:               candidate.phone ?? "",
+      city:                candidate.city ?? "",
+      state:               candidate.state ?? "",
+      resume_url:          candidate.resume_url ?? "",
+      linkedin:            candidate.linkedin ?? "",
+      notes:               candidate.notes ?? "",
+      address_line1:       candidate.address_line1 ?? "",
+      address_line2:       candidate.address_line2 ?? "",
+      postcode:            candidate.postcode ?? "",
+      country:             candidate.country ?? "Australia",
+      benchmark_hours:     candidate.benchmark_hours ?? undefined,
+      work_status:         candidate.work_status ?? "job_seeking",
+      interested_job:      candidate.interested_job ?? "",
+      provider_id:         candidate.provider_id ?? "",
+      wage_subsidy:        candidate.wage_subsidy ?? false,
+      wage_subsidy_amount: candidate.wage_subsidy_amount ?? undefined,
     });
     setSaveError("");
     setEditing(true);
@@ -283,6 +285,33 @@ export default function CandidateDetail() {
                 onChange={(e) => setForm((f) => ({ ...f, interested_job: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Wage Subsidy</label>
+                <select
+                  value={form.wage_subsidy ? "yes" : "no"}
+                  onChange={(e) => setForm((f) => ({ ...f, wage_subsidy: e.target.value === "yes", wage_subsidy_amount: e.target.value === "no" ? undefined : f.wage_subsidy_amount }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+              {form.wage_subsidy && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Amount ($)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.wage_subsidy_amount ?? ""}
+                    onChange={(e) => setForm((f) => ({ ...f, wage_subsidy_amount: e.target.value ? Number(e.target.value) : undefined }))}
+                    placeholder="e.g. 5000"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
               <textarea value={form.notes ?? ""}
@@ -360,7 +389,7 @@ export default function CandidateDetail() {
       </div>
 
       {/* Work & Placement Section */}
-      {!editing && (candidate.provider_id || candidate.benchmark_hours || candidate.interested_job) && (
+      {!editing && (candidate.provider_id || candidate.benchmark_hours || candidate.interested_job || candidate.wage_subsidy) && (
         <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
           <h2 className="font-semibold text-slate-900 tracking-tight mb-3">Work & Placement</h2>
           <dl className="grid sm:grid-cols-2 gap-3 text-sm">
@@ -386,6 +415,18 @@ export default function CandidateDetail() {
                 <dd className="mt-0.5 text-slate-900">{candidate.interested_job}</dd>
               </div>
             )}
+            <div>
+              <dt className="text-xs font-medium text-slate-500 uppercase">Wage Subsidy</dt>
+              <dd className="mt-0.5">
+                {candidate.wage_subsidy ? (
+                  <span className="text-green-700 font-medium">
+                    Yes{candidate.wage_subsidy_amount ? ` — $${Number(candidate.wage_subsidy_amount).toLocaleString()}` : ""}
+                  </span>
+                ) : (
+                  <span className="text-slate-500">No</span>
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
       )}

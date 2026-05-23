@@ -46,6 +46,7 @@ interface FormState {
   job_board_url: string;
   vacancy_type: string;
   staff_working_status: string;
+  end_date: string;
 }
 
 const EMPTY: FormState = {
@@ -56,7 +57,7 @@ const EMPTY: FormState = {
   experience_years_min: "", deadline: "", cover_letter_required: false,
   recruiter_ids: [],
   employer_id: "", positions_count: 1, job_board_url: "",
-  vacancy_type: "", staff_working_status: "active",
+  vacancy_type: "", staff_working_status: "active", end_date: "",
 };
 
 // ── Step indicator ────────────────────────────────────────────────────────────
@@ -204,6 +205,15 @@ function StepBasics({
               min={1}
               value={form.positions_count}
               onChange={(e) => set("positions_count", Number(e.target.value))}
+              className={cls}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={form.end_date}
+              onChange={(e) => set("end_date", e.target.value)}
               className={cls}
             />
           </div>
@@ -502,6 +512,7 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
       job_board_url:         form.job_board_url  || undefined,
       vacancy_type:          form.vacancy_type   || undefined,
       staff_working_status:  form.staff_working_status,
+      end_date:              form.end_date       || undefined,
     });
   }
 

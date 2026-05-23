@@ -143,6 +143,7 @@ export interface Job {
   job_board_url?: string;
   vacancy_type?: string;
   staff_working_status?: string;
+  end_date?: string;
   created_at: string;
   updated_at: string;
 }
@@ -167,6 +168,8 @@ export interface Candidate {
   benchmark_hours?: number | null;
   work_status?: CandidateWorkStatus;
   interested_job?: string;
+  wage_subsidy?: boolean;
+  wage_subsidy_amount?: number | null;
   created_at: string;
 }
 

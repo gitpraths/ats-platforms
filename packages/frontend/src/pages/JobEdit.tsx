@@ -57,6 +57,7 @@ export default function JobEdit() {
     job_board_url: "",
     vacancy_type: "",
     staff_working_status: "active",
+    end_date: "",
   });
 
   // Populate form once job loads
@@ -83,6 +84,7 @@ export default function JobEdit() {
       job_board_url:          job.job_board_url ?? "",
       vacancy_type:           job.vacancy_type ?? "",
       staff_working_status:   job.staff_working_status ?? "active",
+      end_date:               job.end_date ? job.end_date.split("T")[0] : "",
     });
   }, [job]);
 
@@ -122,6 +124,7 @@ export default function JobEdit() {
       job_board_url:          form.job_board_url || undefined,
       vacancy_type:           form.vacancy_type || undefined,
       staff_working_status:   form.staff_working_status,
+      end_date:               form.end_date || undefined,
     });
   }
 
@@ -318,6 +321,15 @@ export default function JobEdit() {
                 min={1}
                 value={form.positions_count ?? 1}
                 onChange={(e) => setForm((f) => ({ ...f, positions_count: Number(e.target.value) }))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>End Date</label>
+              <input
+                type="date"
+                value={form.end_date ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
                 className={inputCls}
               />
             </div>

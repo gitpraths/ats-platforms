@@ -277,7 +277,7 @@ export default function JobDetail() {
           </div>
 
           {/* Vacancy Details */}
-          {(job.vacancy_type || job.positions_count || job.job_board_url || job.staff_working_status) && (
+          {(job.vacancy_type || job.positions_count || job.job_board_url || job.staff_working_status || job.end_date) && (
             <div className="bg-white rounded-xl shadow-sm p-5 text-xs text-slate-500 space-y-2">
               <p className="text-sm font-semibold text-slate-700 mb-2">Vacancy Details</p>
               {job.vacancy_type && (
@@ -290,6 +290,12 @@ export default function JobDetail() {
                 <div className="flex justify-between">
                   <span>Positions</span>
                   <span className="text-slate-900">{job.positions_count}</span>
+                </div>
+              )}
+              {job.end_date && (
+                <div className="flex justify-between">
+                  <span>End Date</span>
+                  <span className="text-slate-900">{format(new Date(job.end_date), "MMM d, yyyy")}</span>
                 </div>
               )}
               {job.staff_working_status && (

@@ -20,6 +20,8 @@ interface CandidateForm {
   interested_job: string;
   address_line1: string;
   postcode: string;
+  wage_subsidy: boolean;
+  wage_subsidy_amount: string;
 }
 
 const EMPTY: CandidateForm = {
@@ -27,6 +29,7 @@ const EMPTY: CandidateForm = {
   resume_url: "", linkedin: "", notes: "",
   provider_id: "", work_status: "job_seeking", benchmark_hours: "",
   interested_job: "", address_line1: "", postcode: "",
+  wage_subsidy: false, wage_subsidy_amount: "",
 };
 
 export default function CandidateNew() {
@@ -45,8 +48,10 @@ export default function CandidateNew() {
     mutationFn: () =>
       api.post<Candidate>("/candidates", {
         ...form,
-        benchmark_hours: form.benchmark_hours ? Number(form.benchmark_hours) : undefined,
-        provider_id: form.provider_id || undefined,
+        benchmark_hours:     form.benchmark_hours ? Number(form.benchmark_hours) : undefined,
+        provider_id:         form.provider_id || undefined,
+        wage_subsidy:        form.wage_subsidy,
+        wage_subsidy_amount: form.wage_subsidy && form.wage_subsidy_amount ? Number(form.wage_subsidy_amount) : undefined,
       }),
     onSuccess: (candidate) => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
@@ -67,7 +72,7 @@ export default function CandidateNew() {
 
   function field(key: keyof CandidateForm) {
     return {
-      value: form[key],
+      value: form[key] as string,
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setForm((f) => ({ ...f, [key]: e.target.value })),
     };
@@ -225,6 +230,35 @@ export default function CandidateNew() {
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        {/* Wage Subsidy */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Wage Subsidy</label>
+            <select
+              value={form.wage_subsidy ? "yes" : "no"}
+              onChange={(e) => setForm((f) => ({ ...f, wage_subsidy: e.target.value === "yes", wage_subsidy_amount: e.target.value === "no" ? "" : f.wage_subsidy_amount }))}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          {form.wage_subsidy && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Wage Subsidy Amount ($)</label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.wage_subsidy_amount}
+                onChange={(e) => setForm((f) => ({ ...f, wage_subsidy_amount: e.target.value }))}
+                placeholder="e.g. 5000"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
         </div>
 
         {/* Address */}

@@ -122,7 +122,7 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
     const {
       name, email, phone, city, state, resume_url, linkedin, notes,
       provider_id, address_line1, address_line2, postcode, country,
-      benchmark_hours, work_status, interested_job,
+      benchmark_hours, work_status, interested_job, wage_subsidy, wage_subsidy_amount,
     } = req.body;
     if (!name)  return res.status(400).json({ success: false, error: "name is required" });
     if (!email) return res.status(400).json({ success: false, error: "email is required" });
@@ -131,14 +131,15 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
       `INSERT INTO candidates
          (name, email, phone, city, state, resume_url, linkedin, notes,
           provider_id, address_line1, address_line2, postcode, country,
-          benchmark_hours, work_status, interested_job)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+          benchmark_hours, work_status, interested_job, wage_subsidy, wage_subsidy_amount)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
       [
         name, email, phone || null, city || null, state || null,
         resume_url || null, linkedin || null, notes || null,
         provider_id || null, address_line1 || null, address_line2 || null,
         postcode || null, country || "Australia",
         benchmark_hours || null, work_status || "job_seeking", interested_job || null,
+        wage_subsidy ?? false, wage_subsidy_amount || null,
       ]
     );
     res.status(201).json({ success: true, data: rows[0] });
@@ -156,33 +157,37 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
     const {
       name, email, phone, city, state, resume_url, linkedin, notes,
       provider_id, address_line1, address_line2, postcode, country,
-      benchmark_hours, work_status, interested_job,
+      benchmark_hours, work_status, interested_job, wage_subsidy, wage_subsidy_amount,
     } = req.body;
 
     const { rows } = await pool.query(
       `UPDATE candidates
-       SET name           = COALESCE($1,  name),
-           email          = COALESCE($2,  email),
-           phone          = COALESCE($3,  phone),
-           city           = COALESCE($4,  city),
-           state          = COALESCE($5,  state),
-           resume_url     = COALESCE($6,  resume_url),
-           linkedin       = COALESCE($7,  linkedin),
-           notes          = COALESCE($8,  notes),
-           provider_id    = COALESCE($9,  provider_id),
-           address_line1  = COALESCE($10, address_line1),
-           address_line2  = COALESCE($11, address_line2),
-           postcode       = COALESCE($12, postcode),
-           country        = COALESCE($13, country),
-           benchmark_hours= COALESCE($14, benchmark_hours),
-           work_status    = COALESCE($15, work_status),
-           interested_job = COALESCE($16, interested_job),
-           updated_at     = NOW()
-       WHERE id = $17 RETURNING *`,
+       SET name                = COALESCE($1,  name),
+           email               = COALESCE($2,  email),
+           phone               = COALESCE($3,  phone),
+           city                = COALESCE($4,  city),
+           state               = COALESCE($5,  state),
+           resume_url          = COALESCE($6,  resume_url),
+           linkedin            = COALESCE($7,  linkedin),
+           notes               = COALESCE($8,  notes),
+           provider_id         = COALESCE($9,  provider_id),
+           address_line1       = COALESCE($10, address_line1),
+           address_line2       = COALESCE($11, address_line2),
+           postcode            = COALESCE($12, postcode),
+           country             = COALESCE($13, country),
+           benchmark_hours     = COALESCE($14, benchmark_hours),
+           work_status         = COALESCE($15, work_status),
+           interested_job      = COALESCE($16, interested_job),
+           wage_subsidy        = COALESCE($17, wage_subsidy),
+           wage_subsidy_amount = COALESCE($18, wage_subsidy_amount),
+           updated_at          = NOW()
+       WHERE id = $19 RETURNING *`,
       [
         name, email, phone, city, state, resume_url, linkedin, notes,
         provider_id, address_line1, address_line2, postcode, country,
         benchmark_hours, work_status, interested_job,
+        wage_subsidy !== undefined ? wage_subsidy : null,
+        wage_subsidy_amount || null,
         req.params.id,
       ]
     );
