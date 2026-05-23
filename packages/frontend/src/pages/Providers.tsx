@@ -23,7 +23,7 @@ export default function Providers() {
   const { data, isLoading } = useQuery<ProvidersResponse>({
     queryKey: ["providers", search, page],
     queryFn: () =>
-      api.get<ProvidersResponse>(`/providers?page=${page}&limit=20&search=${encodeURIComponent(search)}`),
+      api.list<Provider>(`/providers?page=${page}&limit=20&search=${encodeURIComponent(search)}`),
   });
 
   const deactivate = useMutation({

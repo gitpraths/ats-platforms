@@ -46,27 +46,24 @@ export default function Placements() {
     ...(to && { to }),
   });
 
-  const { data, isLoading } = useQuery<PlacementsData>({
+  const { data: placementsData, isLoading } = useQuery<{ data: Placement[] }>({
     queryKey: ["placements", filterEmployer, filterProvider, from, to, page],
-    queryFn: () => api.get<PlacementsData>(`/placements?${params}`),
+    queryFn: () => api.list<Placement>(`/placements?${params}`),
   });
 
   const { data: candidates = [] } = useQuery<Candidate[]>({
     queryKey: ["candidates-select"],
     queryFn: () => api.get<Candidate[]>("/candidates?limit=100"),
-    select: (d) => (d as unknown as { data: Candidate[] }).data ?? [],
   });
 
   const { data: jobs = [] } = useQuery<Job[]>({
     queryKey: ["jobs-select"],
     queryFn: () => api.get<Job[]>("/jobs?limit=100"),
-    select: (d) => (d as unknown as { data: Job[] }).data ?? [],
   });
 
   const { data: employers = [] } = useQuery<Employer[]>({
     queryKey: ["employers-select"],
     queryFn: () => api.get<Employer[]>("/employers?limit=100"),
-    select: (d) => (d as unknown as { data: Employer[] }).data ?? [],
   });
 
   const createPlacement = useMutation({
@@ -84,7 +81,7 @@ export default function Placements() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["placements"] }),
   });
 
-  const placements = data?.data ?? [];
+  const placements = placementsData?.data ?? [];
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();

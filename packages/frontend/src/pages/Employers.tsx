@@ -24,7 +24,7 @@ export default function Employers() {
   const { data, isLoading } = useQuery<EmployersResponse>({
     queryKey: ["employers", search, industry, page],
     queryFn: () =>
-      api.get<EmployersResponse>(
+      api.list<Employer>(
         `/employers?page=${page}&limit=20&search=${encodeURIComponent(search)}&industry=${encodeURIComponent(industry)}`
       ),
   });
