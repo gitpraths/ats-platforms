@@ -12,15 +12,8 @@ reportsRouter.get("/providers", async (req, res, next) => {
     const { from, to, page = 1, limit = 50 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
-    const params = [];
-    let idx = 1;
-    const dateFilter = [];
-
-    if (from) { dateFilter.push(`c.created_at >= $${idx}`); params.push(from); idx++; }
-    if (to)   { dateFilter.push(`c.created_at <= $${idx}`); params.push(to);   idx++; }
-
-    const where = dateFilter.length ? `WHERE ${dateFilter.join(" AND ")}` : "";
-
+    // Date filter goes into the JOIN condition so providers with zero candidates
+    // are still returned (not excluded by a WHERE on the LEFT-joined table).
     const { rows } = await pool.query(
       `SELECT
          pr.id AS provider_id,
@@ -32,11 +25,12 @@ reportsRouter.get("/providers", async (req, res, next) => {
          COUNT(c.id) FILTER (WHERE c.work_status = 'inactive')::int AS inactive_candidates
        FROM providers pr
        LEFT JOIN candidates c ON c.provider_id = pr.id
-       ${where}
+         AND ($1::date IS NULL OR c.created_at::date >= $1::date)
+         AND ($2::date IS NULL OR c.created_at::date <= $2::date)
        GROUP BY pr.id, pr.name
        ORDER BY pr.name
-       LIMIT $${idx} OFFSET $${idx + 1}`,
-      [...params, Number(limit), offset]
+       LIMIT $3 OFFSET $4`,
+      [from || null, to || null, Number(limit), offset]
     );
 
     const data = rows.map((r) => ({
@@ -60,10 +54,12 @@ reportsRouter.get("/placements", async (req, res, next) => {
     const params = [];
     let idx = 1;
 
-    if (from)        { conditions.push(`p.start_date >= $${idx}`);      params.push(from);        idx++; }
-    if (to)          { conditions.push(`p.start_date <= $${idx}`);      params.push(to);          idx++; }
-    if (employer_id) { conditions.push(`p.employer_id = $${idx}`);      params.push(employer_id); idx++; }
-    if (provider_id) { conditions.push(`c.provider_id = $${idx}`);      params.push(provider_id); idx++; }
+    // Cast both sides to ::date so a date string like '2026-05-23' matches
+    // records created any time on that day, not just before midnight.
+    if (from)        { conditions.push(`p.start_date >= $${idx}::date`);   params.push(from);        idx++; }
+    if (to)          { conditions.push(`p.start_date <= $${idx}::date`);   params.push(to);          idx++; }
+    if (employer_id) { conditions.push(`p.employer_id = $${idx}`);         params.push(employer_id); idx++; }
+    if (provider_id) { conditions.push(`c.provider_id = $${idx}`);         params.push(provider_id); idx++; }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
@@ -120,15 +116,8 @@ reportsRouter.get("/staff", async (req, res, next) => {
     const { from, to, page = 1, limit = 50 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
-    const conditions = ["u.role IN ('admin','recruiter_admin','recruiter')"];
-    const params = [];
-    let idx = 1;
-
-    if (from) { conditions.push(`j.created_at >= $${idx}`); params.push(from); idx++; }
-    if (to)   { conditions.push(`j.created_at <= $${idx}`); params.push(to);   idx++; }
-
-    const where = `WHERE ${conditions.join(" AND ")}`;
-
+    // Date filter on jobs goes into the JOIN condition so staff members with
+    // no jobs in the period still appear (not dropped by a WHERE on LEFT-joined jobs).
     const { rows } = await pool.query(
       `SELECT
          u.id AS user_id,
@@ -141,13 +130,15 @@ reportsRouter.get("/staff", async (req, res, next) => {
        FROM users u
        LEFT JOIN job_recruiter jr ON jr.user_id = u.id
        LEFT JOIN jobs j           ON j.id = jr.job_id
+         AND ($1::date IS NULL OR j.created_at::date >= $1::date)
+         AND ($2::date IS NULL OR j.created_at::date <= $2::date)
        LEFT JOIN applications a   ON a.job_id = j.id
        LEFT JOIN placements p     ON p.job_id = j.id
-       ${where}
+       WHERE u.role IN ('admin','recruiter_admin','recruiter')
        GROUP BY u.id, u.name, u.role
        ORDER BY u.name
-       LIMIT $${idx} OFFSET $${idx + 1}`,
-      [...params, Number(limit), offset]
+       LIMIT $3 OFFSET $4`,
+      [from || null, to || null, Number(limit), offset]
     );
 
     res.json({ success: true, data: rows });

@@ -15,16 +15,10 @@ export default function Providers() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["providers", search, page],
-    queryFn: async () => {
-      const result = await api.list<Provider>(`/providers?page=${page}&limit=20&search=${encodeURIComponent(search)}`);
-      console.log("[Providers] api.list result:", result);
-      return result;
-    },
+    queryFn:  () => api.list<Provider>(`/providers?page=${page}&limit=20&search=${encodeURIComponent(search)}`),
   });
-
-  console.log("[Providers] useQuery state — data:", data, "isLoading:", isLoading, "error:", error);
 
   const deactivate = useMutation({
     mutationFn: (id: string) => api.delete(`/providers/${id}`),
@@ -33,7 +27,6 @@ export default function Providers() {
 
   const providers = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
-  console.log("[Providers] providers array:", providers, "total:", total);
 
   return (
     <div className="p-6 max-w-6xl mx-auto">

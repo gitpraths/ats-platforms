@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { format, startOfMonth } from "date-fns";
 import { api } from "../lib/api";
 import type { Employer, Provider, WelfareCheckType } from "../types";
@@ -69,48 +69,63 @@ function downloadCsv(content: string, filename: string) {
 
 export default function Reports() {
   const [tab, setTab] = useState<Tab>("providers");
-  const [from, setFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
-  const [to, setTo]   = useState(format(new Date(), "yyyy-MM-dd"));
+
+  const defaultFrom = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const defaultTo   = format(new Date(), "yyyy-MM-dd");
+
+  // Live filter state — what the user is editing in the form
+  const [from, setFrom]                   = useState(defaultFrom);
+  const [to, setTo]                       = useState(defaultTo);
   const [filterEmployer, setFilterEmployer] = useState("");
   const [filterProvider, setFilterProvider] = useState("");
 
-  const dateParams = `from=${from}&to=${to}`;
+  // Applied state — drives queryKeys; only updates when Search is clicked
+  const [appliedFrom, setAppliedFrom]               = useState(defaultFrom);
+  const [appliedTo, setAppliedTo]                   = useState(defaultTo);
+  const [appliedEmployer, setAppliedEmployer]       = useState("");
+  const [appliedProvider, setAppliedProvider]       = useState("");
+
+  function applyFilters() {
+    setAppliedFrom(from);
+    setAppliedTo(to);
+    setAppliedEmployer(filterEmployer);
+    setAppliedProvider(filterProvider);
+  }
 
   const { data: providerReport = [], isLoading: loadingProviders } = useQuery<ProviderReport[]>({
-    queryKey: ["report-providers", from, to],
-    queryFn: () => api.get<{ data: ProviderReport[] }>(`/reports/providers?${dateParams}&limit=1000`)
-      .then((r) => (r as unknown as { data: ProviderReport[] }).data ?? r),
-    enabled: tab === "providers",
+    queryKey: ["report-providers", appliedFrom, appliedTo],
+    queryFn:  () => api.get<ProviderReport[]>(`/reports/providers?from=${appliedFrom}&to=${appliedTo}&limit=1000`),
+    enabled:  tab === "providers",
   });
 
   const { data: placementReport = [], isLoading: loadingPlacements } = useQuery<PlacementReport[]>({
-    queryKey: ["report-placements", from, to, filterEmployer, filterProvider],
-    queryFn: () => {
-      const p = new URLSearchParams({ from, to, limit: "1000" });
-      if (filterEmployer) p.set("employer_id", filterEmployer);
-      if (filterProvider) p.set("provider_id", filterProvider);
-      return api.get<{ data: PlacementReport[] }>(`/reports/placements?${p}`)
-        .then((r) => (r as unknown as { data: PlacementReport[] }).data ?? r);
+    queryKey: ["report-placements", appliedFrom, appliedTo, appliedEmployer, appliedProvider],
+    queryFn:  () => {
+      const p = new URLSearchParams({ from: appliedFrom, to: appliedTo, limit: "1000" });
+      if (appliedEmployer) p.set("employer_id", appliedEmployer);
+      if (appliedProvider) p.set("provider_id", appliedProvider);
+      return api.get<PlacementReport[]>(`/reports/placements?${p}`);
     },
     enabled: tab === "placements",
   });
 
   const { data: staffReport = [], isLoading: loadingStaff } = useQuery<StaffReport[]>({
-    queryKey: ["report-staff", from, to],
-    queryFn: () => api.get<{ data: StaffReport[] }>(`/reports/staff?${dateParams}&limit=1000`)
-      .then((r) => (r as unknown as { data: StaffReport[] }).data ?? r),
-    enabled: tab === "staff",
+    queryKey: ["report-staff", appliedFrom, appliedTo],
+    queryFn:  () => api.get<StaffReport[]>(`/reports/staff?from=${appliedFrom}&to=${appliedTo}&limit=1000`),
+    enabled:  tab === "staff",
   });
 
-  const { data: employers = [] } = useQuery<Employer[]>({
+  const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
-    queryFn: () => api.get<{ data: Employer[] }>("/employers?limit=100").then((r) => (r as unknown as { data: Employer[] }).data ?? r),
+    queryFn:  () => api.list<Employer>("/employers?limit=100"),
   });
+  const employers = employersResult?.data ?? [];
 
-  const { data: providers = [] } = useQuery<Provider[]>({
+  const { data: providersResult } = useQuery({
     queryKey: ["providers-select"],
-    queryFn: () => api.get<{ data: Provider[] }>("/providers?limit=100").then((r) => (r as unknown as { data: Provider[] }).data ?? r),
+    queryFn:  () => api.list<Provider>("/providers?limit=100"),
   });
+  const providers = providersResult?.data ?? [];
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -125,7 +140,10 @@ export default function Reports() {
     if (tab === "providers") {
       downloadCsv(jsonToCsv(providerReport as unknown as Record<string, unknown>[]), `report-providers-${dateStr}.csv`);
     } else if (tab === "placements") {
-      downloadCsv(jsonToCsv(placementReport.map((r) => ({ ...r, welfare_checks: JSON.stringify(r.welfare_checks) })) as unknown as Record<string, unknown>[]), `report-placements-${dateStr}.csv`);
+      downloadCsv(
+        jsonToCsv(placementReport.map((r) => ({ ...r, welfare_checks: JSON.stringify(r.welfare_checks) })) as unknown as Record<string, unknown>[]),
+        `report-placements-${dateStr}.csv`
+      );
     } else {
       downloadCsv(jsonToCsv(staffReport as unknown as Record<string, unknown>[]), `report-staff-${dateStr}.csv`);
     }
@@ -144,8 +162,8 @@ export default function Reports() {
         </button>
       </div>
 
-      {/* Date filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      {/* Filters */}
+      <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
           <label className="block text-xs text-slate-500 mb-1">From</label>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
@@ -176,6 +194,12 @@ export default function Reports() {
             </div>
           </>
         )}
+        <button
+          onClick={applyFilters}
+          className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900"
+        >
+          <Search size={14} /> Search
+        </button>
       </div>
 
       {/* Tabs */}
