@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX, UserCog } from "lucide-react";
 import { api } from "../lib/api";
 import type { Provider, Candidate } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -67,11 +67,12 @@ export default function ProviderDetail() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-5 gap-4 mb-6">
         {[
           { label: "Total Candidates",  value: provider.candidate_count ?? 0,   icon: <Users size={16} /> },
           { label: "Placed",            value: provider.placed_count ?? 0,       icon: <UserCheck size={16} /> },
           { label: "Job Seeking",       value: provider.job_seeking_count ?? 0,  icon: <Briefcase size={16} /> },
+          { label: "Employed",          value: provider.employed_count ?? 0,     icon: <UserCog size={16} /> },
           { label: "Inactive",          value: provider.inactive_count ?? 0,     icon: <UserX size={16} /> },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl shadow-sm p-4">
