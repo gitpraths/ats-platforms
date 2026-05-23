@@ -7,11 +7,13 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+// Enable SSL for any non-localhost database (Railway, Supabase, etc.)
+const isRemoteDb = !process.env.DATABASE_URL.includes("localhost") &&
+                   !process.env.DATABASE_URL.includes("127.0.0.1");
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production"
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: isRemoteDb ? { rejectUnauthorized: false } : false,
 });
 
 pool.on("error", (err) => {
