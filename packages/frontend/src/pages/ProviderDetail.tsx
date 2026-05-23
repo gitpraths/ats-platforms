@@ -7,6 +7,11 @@ import { useAuth } from "../contexts/AuthContext";
 import { format } from "date-fns";
 
 interface ProviderDetailData extends Provider {
+  candidate_count: number;
+  placed_count: number;
+  job_seeking_count: number;
+  employed_count: number;
+  inactive_count: number;
   recent_candidates: Pick<Candidate, "id" | "name" | "work_status" | "created_at">[];
 }
 
@@ -64,10 +69,10 @@ export default function ProviderDetail() {
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Total Candidates", value: provider.candidate_count ?? 0, icon: <Users size={16} /> },
-          { label: "Placed", value: "—", icon: <UserCheck size={16} /> },
-          { label: "Job Seeking", value: "—", icon: <Briefcase size={16} /> },
-          { label: "Inactive", value: "—", icon: <UserX size={16} /> },
+          { label: "Total Candidates",  value: provider.candidate_count ?? 0,   icon: <Users size={16} /> },
+          { label: "Placed",            value: provider.placed_count ?? 0,       icon: <UserCheck size={16} /> },
+          { label: "Job Seeking",       value: provider.job_seeking_count ?? 0,  icon: <Briefcase size={16} /> },
+          { label: "Inactive",          value: provider.inactive_count ?? 0,     icon: <UserX size={16} /> },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-2 text-slate-400 mb-1">{s.icon}

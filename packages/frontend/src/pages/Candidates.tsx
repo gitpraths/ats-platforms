@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, MapPin, Mail } from "lucide-react";
 import { api } from "../lib/api";
 import type { Candidate } from "../types";
@@ -9,10 +9,21 @@ export default function Candidates() {
   const navigate     = useNavigate();
   const [q, setQ]   = useState("");
   const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const initialProvider = searchParams.get("provider_id") ?? "";
+  const [providerFilter] = useState(initialProvider);
 
   const { data: candidates = [], isLoading } = useQuery<Candidate[]>({
-    queryKey: ["candidates", search],
-    queryFn:  () => api.get<Candidate[]>(`/candidates?q=${encodeURIComponent(search)}&limit=50`),
+    queryKey: ["candidates", search, providerFilter],
+    queryFn:  () => {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "20",
+        q: search,
+      });
+      if (providerFilter) params.set("provider_id", providerFilter);
+      return api.get<Candidate[]>(`/candidates?${params}`);
+    },
   });
 
   function handleSearch(e: React.FormEvent) {

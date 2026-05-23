@@ -38,7 +38,12 @@ providersRouter.get("/", async (req, res, next) => {
 providersRouter.get("/:id", async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, COUNT(DISTINCT c.id)::int AS candidate_count
+      `SELECT p.*,
+              COUNT(DISTINCT c.id)::int AS candidate_count,
+              COUNT(DISTINCT c.id) FILTER (WHERE c.work_status = 'placed')::int       AS placed_count,
+              COUNT(DISTINCT c.id) FILTER (WHERE c.work_status = 'job_seeking')::int  AS job_seeking_count,
+              COUNT(DISTINCT c.id) FILTER (WHERE c.work_status = 'employed')::int     AS employed_count,
+              COUNT(DISTINCT c.id) FILTER (WHERE c.work_status = 'inactive')::int     AS inactive_count
        FROM providers p
        LEFT JOIN candidates c ON c.provider_id = p.id
        WHERE p.id = $1
