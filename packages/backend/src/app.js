@@ -44,7 +44,25 @@ const swaggerSpec = swaggerJsdoc({
 });
 
 // ── Core middleware ───────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : [];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin === "http://localhost:5173" ||
+      origin.endsWith(".up.railway.app")
+    ) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestId);
