@@ -241,11 +241,11 @@ candidatesRouter.post("/:id/documents", requireRole("admin", "recruiter_admin", 
         ]
       );
 
-      await pool.query(
+      pool.query(
         `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
          VALUES ('candidate_document', $1, 'uploaded', $2, $3)`,
         [req.params.id, req.user.id, JSON.stringify({ document_type, file_name: req.file.originalname })]
-      );
+      ).catch(() => {});
 
       res.status(201).json({ success: true, data: rows[0] });
     } catch (dbErr) { next(dbErr); }

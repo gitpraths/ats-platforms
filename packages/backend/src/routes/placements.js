@@ -215,11 +215,11 @@ placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
 
     await client.query("COMMIT");
 
-    await pool.query(
+    pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by)
        VALUES ('placement', $1, 'updated', $2)`,
       [req.params.id, req.user.id]
-    );
+    ).catch(() => {});
 
     res.json({ success: true, data: rows[0] });
   } catch (err) {

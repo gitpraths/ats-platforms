@@ -75,11 +75,11 @@ providersRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, r
       [name, contact_name || null, email || null, phone || null, address || null, is_active]
     );
 
-    await pool.query(
+    pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
        VALUES ('provider', $1, 'created', $2, $3)`,
       [rows[0].id, req.user.id, JSON.stringify({ name })]
-    );
+    ).catch(() => {});
 
     res.status(201).json({ success: true, data: rows[0] });
   } catch (err) { next(err); }
@@ -104,11 +104,11 @@ providersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req,
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Provider not found" });
 
-    await pool.query(
+    pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by)
        VALUES ('provider', $1, 'updated', $2)`,
       [req.params.id, req.user.id]
-    );
+    ).catch(() => {});
 
     res.json({ success: true, data: rows[0] });
   } catch (err) { next(err); }
@@ -132,11 +132,11 @@ providersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Provider not found" });
 
-    await pool.query(
+    pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by)
        VALUES ('provider', $1, 'deactivated', $2)`,
       [req.params.id, req.user.id]
-    );
+    ).catch(() => {});
 
     res.json({ success: true });
   } catch (err) { next(err); }
