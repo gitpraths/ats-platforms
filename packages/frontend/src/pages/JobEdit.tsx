@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save } from "lucide-react";
 import { api } from "../lib/api";
-import type { Job, Department, Location } from "../types";
+import type { Job, Department, Location, Employer } from "../types";
 import SkillsInput from "../components/SkillsInput";
 
 const JOB_TYPES   = ["full_time", "part_time", "contract", "internship"] as const;
@@ -30,6 +30,12 @@ export default function JobEdit() {
     queryFn:  () => api.get<Location[]>("/locations"),
   });
 
+  const { data: employersData } = useQuery<{ data: Employer[] }>({
+    queryKey: ["employers-select"],
+    queryFn:  () => api.get("/employers?limit=100"),
+  });
+  const employers = employersData?.data ?? [];
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -46,6 +52,11 @@ export default function JobEdit() {
     experience_years_min: "",
     deadline: "",
     team: "",
+    employer_id: "",
+    positions_count: 1,
+    job_board_url: "",
+    vacancy_type: "",
+    staff_working_status: "active",
   });
 
   // Populate form once job loads
@@ -67,6 +78,11 @@ export default function JobEdit() {
       experience_years_min:   job.experience_years_min?.toString() ?? "",
       deadline:               job.deadline ? job.deadline.split("T")[0] : "",
       team:                   job.team ?? "",
+      employer_id:            job.employer_id ?? "",
+      positions_count:        job.positions_count ?? 1,
+      job_board_url:          job.job_board_url ?? "",
+      vacancy_type:           job.vacancy_type ?? "",
+      staff_working_status:   job.staff_working_status ?? "active",
     });
   }, [job]);
 
@@ -101,6 +117,11 @@ export default function JobEdit() {
       experience_years_min:   form.experience_years_min ? Number(form.experience_years_min) : undefined,
       deadline:               form.deadline || undefined,
       team:                   form.team || undefined,
+      employer_id:            form.employer_id || undefined,
+      positions_count:        form.positions_count,
+      job_board_url:          form.job_board_url || undefined,
+      vacancy_type:           form.vacancy_type || undefined,
+      staff_working_status:   form.staff_working_status,
     });
   }
 
@@ -255,6 +276,74 @@ export default function JobEdit() {
               onChange={(e) => set("deadline", e.target.value)}
               className={inputCls}
             />
+          </div>
+        </div>
+
+        {/* Vacancy Details */}
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">Vacancy Details</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Employer</label>
+              <select
+                value={form.employer_id ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, employer_id: e.target.value }))}
+                className={inputCls}
+              >
+                <option value="">No Employer</option>
+                {employers.map((e) => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Type of Vacancy</label>
+              <select
+                value={form.vacancy_type ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, vacancy_type: e.target.value }))}
+                className={inputCls}
+              >
+                <option value="">Select type</option>
+                <option value="full_time">Full Time</option>
+                <option value="part_time">Part Time</option>
+                <option value="casual">Casual</option>
+                <option value="contract">Contract</option>
+                <option value="temporary">Temporary</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>No. of Positions</label>
+              <input
+                type="number"
+                min={1}
+                value={form.positions_count ?? 1}
+                onChange={(e) => setForm((f) => ({ ...f, positions_count: Number(e.target.value) }))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Staff Working Status</label>
+              <select
+                value={form.staff_working_status ?? "active"}
+                onChange={(e) => setForm((f) => ({ ...f, staff_working_status: e.target.value }))}
+                className={inputCls}
+              >
+                <option value="active">Active</option>
+                <option value="on_leave">On Leave</option>
+                <option value="resigned">Resigned</option>
+                <option value="terminated">Terminated</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Job Board URL</label>
+              <input
+                type="url"
+                value={form.job_board_url ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, job_board_url: e.target.value }))}
+                placeholder="https://seek.com.au/job/12345"
+                className={inputCls}
+              />
+            </div>
           </div>
         </div>
 

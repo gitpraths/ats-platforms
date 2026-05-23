@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { api } from "../lib/api";
-import type { Department, Location, User } from "../types";
+import type { Department, Employer, Location, User } from "../types";
 import AISuggestTitles      from "./AISuggestTitles";
 import AIGenerateDescription from "./AIGenerateDescription";
 import SkillsInput           from "./SkillsInput";
@@ -41,6 +41,11 @@ interface FormState {
   deadline: string;
   cover_letter_required: boolean;
   recruiter_ids: string[];
+  employer_id: string;
+  positions_count: number;
+  job_board_url: string;
+  vacancy_type: string;
+  staff_working_status: string;
 }
 
 const EMPTY: FormState = {
@@ -50,6 +55,8 @@ const EMPTY: FormState = {
   min_annual_salary: "", max_annual_salary: "", currency_code: "USD",
   experience_years_min: "", deadline: "", cover_letter_required: false,
   recruiter_ids: [],
+  employer_id: "", positions_count: 1, job_board_url: "",
+  vacancy_type: "", staff_working_status: "active",
 };
 
 // ── Step indicator ────────────────────────────────────────────────────────────
@@ -86,12 +93,13 @@ function StepIndicator({ current }: { current: Step }) {
 
 // ── Step 1: Basics ────────────────────────────────────────────────────────────
 function StepBasics({
-  form, set, departments, locations,
+  form, set, departments, locations, employers,
 }: {
   form: FormState;
   set: (k: keyof FormState, v: unknown) => void;
   departments: Department[];
   locations: Location[];
+  employers: Employer[];
 }) {
   const cls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
   return (
@@ -163,6 +171,62 @@ function StepBasics({
           className={cls}
           placeholder="e.g. Platform"
         />
+      </div>
+
+      {/* Vacancy Details */}
+      <div className="border-t pt-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Vacancy Details</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Employer</label>
+            <select value={form.employer_id} onChange={(e) => set("employer_id", e.target.value)} className={cls}>
+              <option value="">No Employer</option>
+              {employers.map((e) => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Type of Vacancy</label>
+            <select value={form.vacancy_type} onChange={(e) => set("vacancy_type", e.target.value)} className={cls}>
+              <option value="">Select type</option>
+              <option value="full_time">Full Time</option>
+              <option value="part_time">Part Time</option>
+              <option value="casual">Casual</option>
+              <option value="contract">Contract</option>
+              <option value="temporary">Temporary</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">No. of Positions</label>
+            <input
+              type="number"
+              min={1}
+              value={form.positions_count}
+              onChange={(e) => set("positions_count", Number(e.target.value))}
+              className={cls}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Working Status</label>
+            <select value={form.staff_working_status} onChange={(e) => set("staff_working_status", e.target.value)} className={cls}>
+              <option value="active">Active</option>
+              <option value="on_leave">On Leave</option>
+              <option value="resigned">Resigned</option>
+              <option value="terminated">Terminated</option>
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Job Board URL</label>
+            <input
+              type="url"
+              value={form.job_board_url}
+              onChange={(e) => set("job_board_url", e.target.value)}
+              placeholder="https://seek.com.au/job/12345"
+              className={cls}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -368,6 +432,13 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
     enabled: isOpen,
   });
 
+  const { data: employersData } = useQuery<{ data: Employer[] }>({
+    queryKey: ["employers-select"],
+    queryFn:  () => api.get("/employers?limit=100"),
+    enabled: isOpen,
+  });
+  const employers = employersData?.data ?? [];
+
   const createJob = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.post<{ id: string }>("/jobs", body),
     onSuccess: async (data) => {
@@ -426,6 +497,11 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
       experience_years_min:  form.experience_years_min ? Number(form.experience_years_min) : undefined,
       deadline:              form.deadline       || undefined,
       cover_letter_required: form.cover_letter_required,
+      employer_id:           form.employer_id    || undefined,
+      positions_count:       form.positions_count,
+      job_board_url:         form.job_board_url  || undefined,
+      vacancy_type:          form.vacancy_type   || undefined,
+      staff_working_status:  form.staff_working_status,
     });
   }
 
@@ -451,7 +527,7 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
           )}
 
           {/* Step content */}
-          {step === 0 && <StepBasics form={form} set={set} departments={departments} locations={locations} />}
+          {step === 0 && <StepBasics form={form} set={set} departments={departments} locations={locations} employers={employers} />}
           {step === 1 && <StepDescription form={form} set={set} departments={departments} />}
           {step === 2 && <StepRequirements form={form} set={set} />}
           {step === 3 && <StepAssignment form={form} set={set} />}

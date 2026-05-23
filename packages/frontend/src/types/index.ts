@@ -141,6 +141,8 @@ export interface Job {
   employer_name?: string;
   positions_count?: number;
   job_board_url?: string;
+  vacancy_type?: string;
+  staff_working_status?: string;
   created_at: string;
   updated_at: string;
 }

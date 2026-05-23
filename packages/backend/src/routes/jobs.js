@@ -101,6 +101,7 @@ jobsRouter.post("/", async (req, res, next) => {
       job_type, work_model,
       cover_letter_required, min_annual_salary, max_annual_salary, currency_code,
       experience_years_min, deadline, team,
+      employer_id, positions_count, job_board_url, vacancy_type, staff_working_status,
     } = req.body;
 
     if (!title)      return res.status(400).json({ success: false, error: "title is required" });
@@ -121,18 +122,22 @@ jobsRouter.post("/", async (req, res, next) => {
          job_type, work_model,
          cover_letter_required, min_annual_salary, max_annual_salary, currency_code,
          experience_years_min, deadline, team,
+         employer_id, positions_count, job_board_url, vacancy_type, staff_working_status,
          status, created_by, updated_by
        ) VALUES (
          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
-         'draft', $16, $16
+         $16,$17,$18,$19,$20,
+         'draft', $21, $21
        ) RETURNING id, job_number, created_at`,
       [
         title, description, department_id || null, location_id || null,
         skills_required || [], skills_desired || [],
         job_type, work_model,
         cover_letter_required ?? false,
-        min_annual_salary || null, max_annual_salary || null, currency_code || "USD",
+        min_annual_salary || null, max_annual_salary || null, currency_code || "AUD",
         experience_years_min || null, deadline || null, team || null,
+        employer_id || null, positions_count || 1, job_board_url || null,
+        vacancy_type || null, staff_working_status || "active",
         req.user.id,
       ]
     );
@@ -148,6 +153,7 @@ jobsRouter.patch("/:id", async (req, res, next) => {
       "skills_required", "skills_desired", "job_type", "work_model",
       "cover_letter_required", "min_annual_salary", "max_annual_salary", "currency_code",
       "experience_years_min", "deadline", "team",
+      "employer_id", "positions_count", "job_board_url", "vacancy_type", "staff_working_status",
     ];
 
     const updates = [];
