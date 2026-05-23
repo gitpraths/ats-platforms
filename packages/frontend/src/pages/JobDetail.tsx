@@ -276,6 +276,43 @@ export default function JobDetail() {
             )}
           </div>
 
+          {/* Vacancy Details */}
+          {(job.vacancy_type || job.positions_count || job.job_board_url || job.staff_working_status) && (
+            <div className="bg-white rounded-xl shadow-sm p-5 text-xs text-slate-500 space-y-2">
+              <p className="text-sm font-semibold text-slate-700 mb-2">Vacancy Details</p>
+              {job.vacancy_type && (
+                <div className="flex justify-between">
+                  <span>Type</span>
+                  <span className="text-slate-900 capitalize">{job.vacancy_type.replace("_", " ")}</span>
+                </div>
+              )}
+              {job.positions_count && (
+                <div className="flex justify-between">
+                  <span>Positions</span>
+                  <span className="text-slate-900">{job.positions_count}</span>
+                </div>
+              )}
+              {job.staff_working_status && (
+                <div className="flex justify-between">
+                  <span>Staff Status</span>
+                  <span className="text-slate-900 capitalize">{job.staff_working_status.replace("_", " ")}</span>
+                </div>
+              )}
+              {job.job_board_url && (
+                <div className="pt-1">
+                  <a
+                    href={job.job_board_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline break-all"
+                  >
+                    View on Job Board ↗
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Meta */}
           <div className="bg-white rounded-xl shadow-sm p-5 text-xs text-slate-500 space-y-1">
             {job.created_by_name && <p>Owner: <span className="text-slate-700">{job.created_by_name}</span></p>}
