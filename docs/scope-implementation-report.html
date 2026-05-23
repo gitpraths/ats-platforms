@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recruitment Portal — Scope Implementation Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar nav ── */
+    aside {
+      width: 260px;
+      min-width: 260px;
+      background: #0f172a;
+      color: #cbd5e1;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 28px 0;
+    }
+
+    aside .logo {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      padding: 0 24px 20px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    aside nav { padding: 16px 0; }
+
+    aside nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 24px;
+      font-size: 13.5px;
+      color: #94a3b8;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+
+    aside nav a:hover,
+    aside nav a.active {
+      color: #f1f5f9;
+      background: #1e293b;
+      border-left-color: #3b82f6;
+    }
+
+    aside nav a .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    aside nav a .num {
+      font-size: 11px;
+      background: #1e293b;
+      color: #64748b;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      padding: 48px 56px;
+      max-width: 900px;
+    }
+
+    .page-header {
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -.02em;
+    }
+
+    .page-header p {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .summary-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .summary-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .pill-green { background: #dcfce7; color: #15803d; }
+    .pill-amber { background: #fef3c7; color: #92400e; }
+    .pill-slate { background: #f1f5f9; color: #475569; }
+
+    /* ── Section cards ── */
+    .section {
+      margin-bottom: 48px;
+      scroll-margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .section-number {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-title { flex: 1; }
+
+    .section-title h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -.01em;
+    }
+
+    .section-title p {
+      margin-top: 4px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .badge-done   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-pending{ background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .feature-list { list-style: none; }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13.5px;
+    }
+
+    .feature-item:last-child { border-bottom: none; }
+
+    .feature-item .icon {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .icon-done    { background: #dcfce7; color: #15803d; }
+    .icon-pending { background: #fef3c7; color: #92400e; }
+
+    .feature-item .text { flex: 1; }
+    .feature-item .text strong { display: block; color: #0f172a; font-weight: 600; }
+    .feature-item .text span   { color: #64748b; font-size: 12.5px; line-height: 1.5; }
+
+    .where-to-find {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 11.5px;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ── Completed banner ── */
+    .completed-banner {
+      margin-top: 16px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .completed-banner .check { font-size: 18px; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 40px 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────── -->
+<aside>
+  <div class="logo">Recruitment Portal</div>
+  <nav>
+    <a href="#overview">
+      <span class="dot"></span>
+      Overview
+    </a>
+    <a href="#s1">
+      <span class="dot"></span>
+      1. Staff Logins
+      <span class="num">✓</span>
+    </a>
+    <a href="#s2">
+      <span class="dot"></span>
+      2. Candidate Details
+      <span class="num">✓</span>
+    </a>
+    <a href="#s3">
+      <span class="dot"></span>
+      3. Provider Wise
+      <span class="num">✓</span>
+    </a>
+    <a href="#s4">
+      <span class="dot"></span>
+      4. Vacancy Details
+      <span class="num">✓</span>
+    </a>
+    <a href="#s5">
+      <span class="dot"></span>
+      5. Employer Details
+      <span class="num">✓</span>
+    </a>
+    <a href="#s6">
+      <span class="dot"></span>
+      6. Placement Details
+      <span class="num">✓</span>
+    </a>
+    <a href="#s7">
+      <span class="dot"></span>
+      7. Reports
+      <span class="num">✓</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- ── Main ────────────────────────────────────────── -->
+<main>
+
+  <div class="page-header" id="overview">
+    <h1>Scope Implementation Report</h1>
+    <p>Recruitment Portal &nbsp;·&nbsp; Prepared for management review &nbsp;·&nbsp; 23 May 2026</p>
+    <div class="summary-row">
+      <span class="summary-pill pill-green">✓ 7 of 7 sections complete</span>
+      <span class="summary-pill pill-green">✓ All scope points implemented</span>
+      <span class="summary-pill pill-slate">Live at comfortable-mindfulness-production.up.railway.app</span>
+    </div>
+  </div>
+
+  <!-- ── 1. Staff Logins ── -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div class="section-title">
+        <h2>Super Admin / Staff Logins</h2>
+        <p>Role-based access control with 5 distinct user types</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>5 User Roles</strong>
+            <span>Super Admin, Recruiter Admin, Recruiter, Hiring Manager, Provider — each with distinct permissions and access restrictions.</span>
+            <em class="where-to-find">→ Sidebar › Admin Users</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>JWT Login &amp; Session Management</strong>
+            <span>Secure email/password login with 8-hour session expiry. Session warning dialog with one-click refresh appears before timeout.</span>
+            <em class="where-to-find">→ Login page</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Create &amp; Manage Staff Accounts</strong>
+            <span>Admins can create new staff accounts, assign roles, and deactivate users from the Admin Users page.</span>
+            <em class="where-to-find">→ Sidebar › Admin Users</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Provider-Scoped Access</strong>
+            <span>Provider users can only view candidates linked to their own organisation. All other data is hidden.</span>
+            <em class="where-to-find">→ Log in as Provider role</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      All staff login and access control requirements are fully implemented and live.
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── 2. Candidate Details ── -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <div class="section-title">
+        <h2>Candidate Details</h2>
+        <p>Full candidate profiles with employment tracking and document management</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Name / Email / Phone / Address</strong>
+            <span>Full contact profile including Address Line 1 &amp; 2, Postcode, City, State, and Country.</span>
+            <em class="where-to-find">→ Candidates › Add Candidate</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Provider Link</strong>
+            <span>Each candidate can be linked to a provider organisation via dropdown. Drives provider-wise reporting and scoped access.</span>
+            <em class="where-to-find">→ Add/Edit Candidate › Provider field</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Interested Job</strong>
+            <span>Free-text field to capture the type of role the candidate is looking for (e.g. Forklift Operator, Warehouse Packer).</span>
+            <em class="where-to-find">→ Add/Edit Candidate › Interested Job</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Benchmark Hours / Week</strong>
+            <span>Numeric field capturing the candidate's target working hours per week.</span>
+            <em class="where-to-find">→ Add/Edit Candidate › Benchmark Hours</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Wage Subsidy (WS)</strong>
+            <span>Yes / No toggle. If Yes, an Amount ($) field appears to capture the subsidy value. Displayed on Candidate Detail under Work &amp; Placement.</span>
+            <em class="where-to-find">→ Add/Edit Candidate › Wage Subsidy</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Work Status</strong>
+            <span>Tracks candidate employment state: Job Seeking / Employed / Placed / Inactive. Updates automatically on placement.</span>
+            <em class="where-to-find">→ Add/Edit Candidate › Work Status</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>CV &amp; Document Upload</strong>
+            <span>Upload PDF, Word, or image files directly from the Candidate Detail page. Documents can be downloaded or deleted. Categorised as Resume, ID, Certificate, or Other.</span>
+            <em class="where-to-find">→ Candidate Detail › Documents section</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      All candidate detail requirements — including Wage Subsidy — are fully implemented and live.
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── 3. Provider Wise ── -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <div class="section-title">
+        <h2>Provider Wise — Candidates Pool &amp; Stats</h2>
+        <p>Per-provider candidate pools with live status breakdowns</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Candidates Pool per Provider</strong>
+            <span>Provider list page shows each provider with their total candidate count. Clicking a provider shows their full candidate pool.</span>
+            <em class="where-to-find">→ Sidebar › Providers</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Candidates' Stats</strong>
+            <span>Provider Detail page displays a real-time breakdown: Total / Placed / Job Seeking / Employed / Inactive candidates. "View all" button filters the Candidates list to that provider's pool.</span>
+            <em class="where-to-find">→ Providers › click any provider</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      Provider-wise candidate pool and stats are fully implemented and live.
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── 4. Vacancy Details ── -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <div class="section-title">
+        <h2>Vacancy Details</h2>
+        <p>Job vacancy fields beyond the standard job listing</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Job Board URL</strong>
+            <span>Link to the external job posting (e.g. Seek, Indeed). Displayed as a clickable link on the Job Detail page.</span>
+            <em class="where-to-find">→ Create Job / Edit Job › Vacancy Details › Job Board URL</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Type of Vacancy</strong>
+            <span>Full Time / Part Time / Casual / Contract / Temporary. Visible on Job Detail in the Vacancy Details panel.</span>
+            <em class="where-to-find">→ Create Job / Edit Job › Vacancy Details › Type of Vacancy</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>No. of Positions</strong>
+            <span>Number of open positions for the vacancy. Displayed on Job Detail.</span>
+            <em class="where-to-find">→ Create Job / Edit Job › Vacancy Details › No. of Positions</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>End Date</strong>
+            <span>The vacancy closing / end date. Displayed on Job Detail in the Vacancy Details panel.</span>
+            <em class="where-to-find">→ Create Job / Edit Job › Vacancy Details › End Date</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Staff Working Status</strong>
+            <span>Active / On Leave / Resigned / Terminated. Tracks the status of the staff member managing the vacancy.</span>
+            <em class="where-to-find">→ Create Job / Edit Job › Vacancy Details › Staff Working Status</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      All vacancy detail requirements — including End Date — are fully implemented and live.
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── 5. Employer Details ── -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <div class="section-title">
+        <h2>Employer Details</h2>
+        <p>Employer profiles with vacancy tracking and contact information</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>General Details</strong>
+            <span>Employer name, industry, website, and description. Searchable from the Employers list.</span>
+            <em class="where-to-find">→ Sidebar › Employers</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>No. of Vacancies</strong>
+            <span>Open job count and total job count displayed on both the employer card (list view) and the Employer Detail page.</span>
+            <em class="where-to-find">→ Employers › click any employer</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Type of Vacancies</strong>
+            <span>Vacancy types are captured per job and visible on each Job Detail page linked to the employer.</span>
+            <em class="where-to-find">→ Employer Detail › Jobs section</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Contact Details</strong>
+            <span>Contact Name, Contact Email, Contact Phone, and Address stored per employer and displayed on the detail page.</span>
+            <em class="where-to-find">→ Employers › click any employer</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Placement Count</strong>
+            <span>Total placements made with the employer shown on the Employer Detail page.</span>
+            <em class="where-to-find">→ Employer Detail › stats panel</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      All employer detail requirements are fully implemented and live.
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── 6. Placement Details ── -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <div class="section-title">
+        <h2>Placement Details</h2>
+        <p>One-click placement creation with automated welfare check tracking</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Employment Confirmation Email to Employer</strong>
+            <span>When a candidate is placed, an automated confirmation email is sent to the employer immediately.</span>
+            <em class="where-to-find">→ Job Detail › Applications tab › Place button</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>One-Click Placement + Job Start Date</strong>
+            <span>Any application can be converted to a placement in one click. A start date and optional notes are entered at the time of placement.</span>
+            <em class="where-to-find">→ Job Detail › Applications tab › Place</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Tracking from Job Start Date</strong>
+            <span>Welfare checks are automatically scheduled from the placement start date: Day 1, Week 1, Month 1, Month 3, and Month 6.</span>
+            <em class="where-to-find">→ Sidebar › Placements › click any placement</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Indicator / Email / Notifications at Required Timeline</strong>
+            <span>Colour-coded dot indicators show welfare check status (due / completed / overdue). Automated emails are sent to the employer at each milestone.</span>
+            <em class="where-to-find">→ Placements list › welfare check dots</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Job Welfare Checks — Automated Emails to Employer</strong>
+            <span>At each welfare check milestone, an automated email is sent to the employer requesting confirmation of the candidate's ongoing employment.</span>
+            <em class="where-to-find">→ Placement Detail › mark welfare check complete</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      All placement and welfare check requirements are fully implemented and live.
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- ── 7. Reports ── -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-number">7</div>
+      <div class="section-title">
+        <h2>Reports</h2>
+        <p>Date-filtered analytics with CSV export across three report types</p>
+      </div>
+      <span class="badge badge-done">✓ Completed</span>
+    </div>
+    <div class="card">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Provider Wise Report</strong>
+            <span>Shows all providers with total candidates, active, placed, job seeking, inactive counts, and placement rate. Filterable by date range. CSV export available.</span>
+            <em class="where-to-find">→ Sidebar › Reports › Provider Report tab</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Placement Tracking Report</strong>
+            <span>Lists all placements with candidate name, job, employer, provider, start date, employer confirmation status, and welfare check indicators. Filterable by date range, employer, and provider. CSV export available.</span>
+            <em class="where-to-find">→ Sidebar › Reports › Placement Tracking tab</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Staff Wise Report</strong>
+            <span>Shows each staff member's assigned jobs, active jobs, total applications managed, and total placements made. Filterable by date range. CSV export available.</span>
+            <em class="where-to-find">→ Sidebar › Reports › Staff Report tab</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>Search / Filter Button</strong>
+            <span>Date range and filter dropdowns only trigger a data refresh when the Search button is clicked — preventing accidental partial queries.</span>
+            <em class="where-to-find">→ Reports › Search button</em>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="icon icon-done">✓</div>
+          <div class="text">
+            <strong>CSV Export</strong>
+            <span>All three report tabs support one-click CSV download. Files open correctly in Excel and Numbers.</span>
+            <em class="where-to-find">→ Reports › Export CSV button (top right)</em>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="completed-banner">
+      <span class="check">✅</span>
+      All reporting requirements are fully implemented and live.
+    </div>
+  </div>
+
+  <footer>
+    <p>Recruitment Portal &nbsp;·&nbsp; All 7 scope sections implemented &nbsp;·&nbsp; Report generated 23 May 2026</p>
+    <p style="margin-top:6px;">Live URL: <strong>https://comfortable-mindfulness-production.up.railway.app</strong></p>
+  </footer>
+
+</main>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('.section, .page-header');
+  const navLinks  = document.querySelectorAll('aside nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const id = entry.target.id;
+        const active = document.querySelector(`aside nav a[href="#${id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
