@@ -51,20 +51,23 @@ export default function Placements() {
     queryFn: () => api.list<Placement>(`/placements?${params}`),
   });
 
-  const { data: candidates = [] } = useQuery<Candidate[]>({
+  const { data: candidatesResult } = useQuery({
     queryKey: ["candidates-select"],
-    queryFn: () => api.get<Candidate[]>("/candidates?limit=100"),
+    queryFn: () => api.list<Candidate>("/candidates?limit=100"),
   });
+  const candidates = candidatesResult?.data ?? [];
 
-  const { data: jobs = [] } = useQuery<Job[]>({
+  const { data: jobsResult } = useQuery({
     queryKey: ["jobs-select"],
-    queryFn: () => api.get<Job[]>("/jobs?limit=100"),
+    queryFn: () => api.list<Job>("/jobs?limit=100"),
   });
+  const jobs = jobsResult?.data ?? [];
 
-  const { data: employers = [] } = useQuery<Employer[]>({
+  const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
-    queryFn: () => api.get<Employer[]>("/employers?limit=100"),
+    queryFn: () => api.list<Employer>("/employers?limit=100"),
   });
+  const employers = employersResult?.data ?? [];
 
   const createPlacement = useMutation({
     mutationFn: (body: CreateForm) => api.post<Placement>("/placements", body),
