@@ -6,11 +6,6 @@ import { api } from "../lib/api";
 import type { Provider } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 
-interface ProvidersResponse {
-  data: Provider[];
-  meta: { total: number; page: number; limit: number };
-}
-
 export default function Providers() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -20,7 +15,7 @@ export default function Providers() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, error } = useQuery<ProvidersResponse>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["providers", search, page],
     queryFn: async () => {
       const result = await api.list<Provider>(`/providers?page=${page}&limit=20&search=${encodeURIComponent(search)}`);

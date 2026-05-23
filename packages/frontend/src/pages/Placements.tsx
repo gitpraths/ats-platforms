@@ -46,7 +46,7 @@ export default function Placements() {
     ...(to && { to }),
   });
 
-  const { data: placementsData, isLoading } = useQuery<{ data: Placement[] }>({
+  const { data: placementsData, isLoading } = useQuery({
     queryKey: ["placements", filterEmployer, filterProvider, from, to, page],
     queryFn: () => api.list<Placement>(`/placements?${params}`),
   });

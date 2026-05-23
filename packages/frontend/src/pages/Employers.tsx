@@ -6,11 +6,6 @@ import { api } from "../lib/api";
 import type { Employer } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 
-interface EmployersResponse {
-  data: Employer[];
-  meta: { total: number; page: number; limit: number };
-}
-
 export default function Employers() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,7 +16,7 @@ export default function Employers() {
   const [industry, setIndustry] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery<EmployersResponse>({
+  const { data, isLoading } = useQuery({
     queryKey: ["employers", search, industry, page],
     queryFn: () =>
       api.list<Employer>(
