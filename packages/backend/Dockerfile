@@ -8,7 +8,7 @@ COPY package.json ./
 # Install dependencies
 RUN npm install --production --legacy-peer-deps
 
-# Copy source code (v3 — staff placement KPI added)
+# Copy source code (v4 — trigger rebuild 2026-05-24)
 COPY src/ ./src/
 
 # Create uploads directory
