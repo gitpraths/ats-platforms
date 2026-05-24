@@ -56,6 +56,12 @@ export default function Dashboard() {
   const activeProviders = stats?.providers?.active    ?? 0;
   const activeEmployers = stats?.employers?.active    ?? 0;
 
+  const staffRows = stats?.placements_by_staff ?? [];
+  const isAdminRole = user?.role === "admin" || user?.role === "recruiter_admin";
+  const maxStaffTotal = staffRows.length > 0
+    ? Math.max(...staffRows.map((r) => r.total_placements), 1)
+    : 1;
+
   const statusCounts = ["draft", "published", "archived"].map((s) => ({
     status: s.charAt(0).toUpperCase() + s.slice(1),
     count:  stats?.jobs[s as "draft" | "published" | "archived"] ?? 0,
@@ -219,52 +225,47 @@ export default function Dashboard() {
       </div>
 
       {/* Placements by Staff */}
-      {(stats?.placements_by_staff?.length ?? 0) > 0 && (() => {
-        const staffRows = stats!.placements_by_staff!;
-        const isAdmin   = user?.role === "admin" || user?.role === "recruiter_admin";
-        const maxTotal  = Math.max(...staffRows.map((r) => r.total_placements), 1);
-        return (
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-semibold text-slate-900 tracking-tight mb-4">
-              {isAdmin ? "Placements by Staff" : "Your Placements"}
-            </h2>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                  <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">This Month</th>
-                  <th className="py-2 px-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {staffRows.map((row) => {
-                  const isMe = row.user_id === user?.id;
-                  return (
-                    <tr key={row.user_id} className={isMe ? "bg-blue-50" : ""}>
-                      <td className="py-2 px-3 text-slate-900 font-medium">
-                        {row.name}
-                        {isMe && <span className="ml-2 text-xs text-blue-500 font-normal">you</span>}
-                      </td>
-                      <td className="py-2 px-3 text-right text-slate-700">{row.placements_this_month}</td>
-                      <td className="py-2 px-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="flex-1 max-w-[80px] bg-slate-100 rounded-full h-1.5">
-                            <div
-                              className="bg-indigo-500 h-1.5 rounded-full"
-                              style={{ width: `${(row.total_placements / maxTotal) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-slate-700 font-semibold w-6 text-right">{row.total_placements}</span>
+      {staffRows.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <h2 className="font-semibold text-slate-900 tracking-tight mb-4">
+            {isAdminRole ? "Placements by Staff" : "Your Placements"}
+          </h2>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
+                <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">This Month</th>
+                <th className="py-2 px-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {staffRows.map((row) => {
+                const isMe = row.user_id === user?.id;
+                return (
+                  <tr key={row.user_id} className={isMe ? "bg-blue-50" : ""}>
+                    <td className="py-2 px-3 text-slate-900 font-medium">
+                      {row.name}
+                      {isMe && <span className="ml-2 text-xs text-blue-500 font-normal">you</span>}
+                    </td>
+                    <td className="py-2 px-3 text-right text-slate-700">{row.placements_this_month}</td>
+                    <td className="py-2 px-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="flex-1 max-w-[80px] bg-slate-100 rounded-full h-1.5">
+                          <div
+                            className="bg-indigo-500 h-1.5 rounded-full"
+                            style={{ width: `${(row.total_placements / maxStaffTotal) * 100}%` }}
+                          />
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        );
-      })()}
+                        <span className="text-slate-700 font-semibold w-6 text-right">{row.total_placements}</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
