@@ -8,7 +8,7 @@ COPY package.json ./
 # Install dependencies
 RUN npm install --production --legacy-peer-deps
 
-# Copy source code (v2 — candidate-pool route added)
+# Copy source code (v3 — staff placement KPI added)
 COPY src/ ./src/
 
 # Create uploads directory
