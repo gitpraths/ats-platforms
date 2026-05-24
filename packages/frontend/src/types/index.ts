@@ -201,3 +201,40 @@ export interface Application {
   applied_at: string;
   updated_at: string;
 }
+
+export interface CandidatePoolMeta {
+  total: number;
+  page: number;
+  limit: number;
+  tab_counts: {
+    all: number;
+    in_progress: number;
+    placed: number;
+    not_successful: number;
+    inactive: number;
+  };
+}
+
+export interface CandidatePoolRow {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  work_status?: CandidateWorkStatus;
+  notes?: string;
+  training_start_date?: string | null;
+  training_end_date?: string | null;
+  provider_name?: string;
+  provider_contact_name?: string;
+  provider_contact_email?: string;
+  placement_id?: string | null;
+  job_start_date?: string | null;
+  confirmed_by_employer?: boolean;
+  employer_name?: string;
+  job_title?: string;
+  latest_stage?: ApplicationStage | null;
+  latest_application_id?: string | null;
+  welfare_checks?: WelfareCheck[];
+}
