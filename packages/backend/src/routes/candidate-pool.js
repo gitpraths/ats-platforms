@@ -36,8 +36,10 @@ function tabCondition(tab) {
 // GET /api/candidate-pool
 candidatePoolRouter.get("/", async (req, res, next) => {
   try {
-    const { tab = "all", page = 1, limit = 20, q = "" } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+    const { tab = "all", page: rawPage = 1, limit: rawLimit = 20, q = "" } = req.query;
+    const page = Math.max(1, Number(rawPage));
+    const limit = Math.min(100, Math.max(1, Number(rawLimit)));
+    const offset = (page - 1) * limit;
 
     const params = [];
     let idx = 1;
@@ -84,7 +86,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
        WHERE ${tabCondition(tab)} ${searchCondition}
        ORDER BY c.name ASC
        LIMIT $${idx} OFFSET $${idx + 1}`,
-      [...params, Number(limit), offset]
+      [...params, limit, offset]
     );
 
     // Attach welfare checks for placed candidates
@@ -155,8 +157,8 @@ candidatePoolRouter.get("/", async (req, res, next) => {
       data,
       meta: {
         total: totalForTab,
-        page: Number(page),
-        limit: Number(limit),
+        page,
+        limit,
         tab_counts: tabCounts,
       },
     });

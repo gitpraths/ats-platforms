@@ -46,6 +46,18 @@ describe("GET /api/candidate-pool", () => {
     }
   });
 
+  it("in_progress tab returns only candidates with active applications", async () => {
+    const res = await request(app)
+      .get("/api/candidate-pool?tab=in_progress")
+      .set(auth());
+    expect(res.status).toBe(200);
+    // Every returned candidate must have an active latest_stage
+    const activeStages = ["applied", "screening", "interview", "offer"];
+    for (const row of res.body.data) {
+      expect(activeStages).toContain(row.latest_stage);
+    }
+  });
+
   it("filters by search query", async () => {
     const res = await request(app)
       .get("/api/candidate-pool?q=nonexistent_xyz_abc_999")
