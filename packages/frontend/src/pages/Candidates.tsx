@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
+import { useToast } from "../components/ui/use-toast";
 import type { CandidatePoolRow, CandidateWorkStatus, WelfareCheck, WelfareCheckType } from "../types";
 
 type Tab = "all" | "in_progress" | "placed" | "not_successful" | "inactive";
@@ -92,6 +93,7 @@ export default function Candidates() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [view, setView] = useState<View>(
     () => (localStorage.getItem("candidatesView") as View) || "list"
@@ -100,6 +102,7 @@ export default function Candidates() {
   const [q, setQ]           = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage]     = useState(1);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const canCreate = ["admin", "recruiter_admin", "recruiter"].includes(user?.role ?? "");
 
@@ -107,12 +110,23 @@ export default function Candidates() {
   const rows      = data?.data ?? [];
   const meta      = data?.meta;
   const tabCounts = meta?.tab_counts ?? { all: 0, in_progress: 0, placed: 0, not_successful: 0, inactive: 0 };
-  const totalPages = meta ? Math.ceil(meta.total / 20) : 1;
+  const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1;
 
   const sendConfirmation = useMutation({
     mutationFn: (placementId: string) =>
       api.post(`/placements/${placementId}/send-confirmation`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] }),
+    onSuccess: () => {
+      setConfirmingId(null);
+      queryClient.invalidateQueries({ queryKey: ["candidate-pool"] });
+    },
+    onError: () => {
+      setConfirmingId(null);
+      toast({
+        title: "Error",
+        description: "Failed to send confirmation email. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   function handleSearch(e: React.FormEvent) {
@@ -324,11 +338,14 @@ export default function Candidates() {
                     >
                       {row.placement_id && !row.confirmed_by_employer && canCreate && (
                         <button
-                          onClick={() => sendConfirmation.mutate(row.placement_id!)}
-                          disabled={sendConfirmation.isPending}
+                          onClick={() => {
+                            setConfirmingId(row.placement_id!);
+                            sendConfirmation.mutate(row.placement_id!);
+                          }}
+                          disabled={confirmingId === row.placement_id}
                           className="text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50 whitespace-nowrap disabled:opacity-50"
                         >
-                          Email to Confirm
+                          {confirmingId === row.placement_id ? "Sending..." : "Email to Confirm"}
                         </button>
                       )}
                     </td>
