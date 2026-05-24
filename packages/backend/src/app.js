@@ -16,6 +16,7 @@ import { providersRouter }    from "./routes/providers.js";
 import { employersRouter }    from "./routes/employers.js";
 import { placementsRouter, welfareChecksRouter } from "./routes/placements.js";
 import { reportsRouter }      from "./routes/reports.js";
+import { candidatePoolRouter } from "./routes/candidate-pool.js";
 import { errorHandler }       from "./middleware/errorHandler.js";
 import { requestLogger }      from "./middleware/requestLogger.js";
 import { requestId }          from "./middleware/requestId.js";
@@ -94,6 +95,7 @@ app.use("/api/employers",      employersRouter);
 app.use("/api/placements",     placementsRouter);
 app.use("/api/welfare-checks", welfareChecksRouter);
 app.use("/api/reports",        reportsRouter);
+app.use("/api/candidate-pool", candidatePoolRouter);
 
 // ── Admin: manual welfare check trigger ───────────────────────────────────────
 import { requireAuth, requireRole } from "./middleware/auth.js";
