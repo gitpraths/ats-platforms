@@ -8,7 +8,7 @@ COPY package.json ./
 # Install dependencies
 RUN npm install --production --legacy-peer-deps
 
-# Copy source code
+# Copy source code (v2 — candidate-pool route added)
 COPY src/ ./src/
 
 # Create uploads directory
