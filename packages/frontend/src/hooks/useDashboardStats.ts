@@ -38,6 +38,12 @@ export interface DashboardStats {
     total: number;
     active: number;
   };
+  placements_by_staff?: {
+    user_id: string;
+    name: string;
+    total_placements: number;
+    placements_this_month: number;
+  }[];
 }
 
 export function useDashboardStats() {
