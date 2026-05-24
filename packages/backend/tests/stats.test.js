@@ -2,15 +2,24 @@ import request from "supertest";
 import app from "../src/app.js";
 
 let token = "";
+let recruiterToken = "";
+let recruiterId = "";
 
 beforeAll(async () => {
-  const res = await request(app)
+  const adminRes = await request(app)
     .post("/api/auth/login")
     .send({ email: "admin@myats.com", password: "password123" });
-  token = res.body.data?.token || "";
+  token = adminRes.body.data?.token || "";
+
+  const recruiterRes = await request(app)
+    .post("/api/auth/login")
+    .send({ email: "jane@myats.dev", password: "password123" });
+  recruiterToken = recruiterRes.body.data?.token || "";
+  recruiterId = recruiterRes.body.data?.user?.id || "";
 });
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
+const recruiterAuth = () => ({ Authorization: `Bearer ${recruiterToken}` });
 
 describe("GET /api/stats", () => {
   it("returns 401 without token", async () => {
@@ -45,5 +54,15 @@ describe("GET /api/stats", () => {
     for (let i = 1; i < staff.length; i++) {
       expect(staff[i - 1].total_placements).toBeGreaterThanOrEqual(staff[i].total_placements);
     }
+  });
+
+  it("non-admin sees only their own row in placements_by_staff", async () => {
+    const res = await request(app).get("/api/stats").set(recruiterAuth());
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    const staff = res.body.data.placements_by_staff;
+    expect(Array.isArray(staff)).toBe(true);
+    expect(staff).toHaveLength(1);
+    expect(staff[0].user_id).toBe(recruiterId);
   });
 });
