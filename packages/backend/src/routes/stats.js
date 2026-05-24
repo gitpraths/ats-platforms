@@ -19,7 +19,10 @@ statsRouter.get("/", async (req, res, next) => {
 
     const appParams = isAdmin ? [] : [userId];
 
-    const [jobs, apps, candidates, placements, providers, employers] = await Promise.all([
+    const staffParams = isAdmin ? [] : [userId];
+    const staffScope  = isAdmin ? "" : "AND u.id = $1";
+
+    const [jobs, apps, candidates, placements, providers, employers, staffPlacements] = await Promise.all([
       pool.query(
         `SELECT
            COUNT(*)                                               AS total_jobs,
@@ -65,6 +68,22 @@ statsRouter.get("/", async (req, res, next) => {
            COUNT(*)                                          AS total_employers,
            COUNT(*) FILTER (WHERE is_active = true)         AS active_employers
          FROM employers`
+      ),
+      pool.query(
+        `SELECT
+           u.id          AS user_id,
+           u.name,
+           COUNT(p.id)::int AS total_placements,
+           COUNT(p.id) FILTER (
+             WHERE DATE_TRUNC('month', p.created_at) = DATE_TRUNC('month', NOW())
+           )::int AS placements_this_month
+         FROM users u
+         LEFT JOIN placements p ON p.created_by = u.id
+         WHERE u.role IN ('admin', 'recruiter_admin', 'recruiter')
+           ${staffScope}
+         GROUP BY u.id, u.name
+         ORDER BY total_placements DESC, u.name ASC`,
+        staffParams
       ),
     ]);
 
@@ -115,6 +134,12 @@ statsRouter.get("/", async (req, res, next) => {
           total:  Number(employers.rows[0].total_employers),
           active: Number(employers.rows[0].active_employers),
         },
+        placements_by_staff: staffPlacements.rows.map((r) => ({
+          user_id:               r.user_id,
+          name:                  r.name,
+          total_placements:      r.total_placements,
+          placements_this_month: r.placements_this_month,
+        })),
       },
     });
   } catch (err) { next(err); }
