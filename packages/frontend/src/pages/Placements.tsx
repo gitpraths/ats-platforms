@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, CheckCircle, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
-import type { Placement, Candidate, Job, Employer } from "../types";
+import type { Placement, Candidate, Employer, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import WelfareCheckDots from "../components/WelfareCheckDots";
 
@@ -57,17 +57,18 @@ export default function Placements() {
   });
   const candidates = candidatesResult?.data ?? [];
 
-  const { data: jobsResult } = useQuery({
-    queryKey: ["jobs-select"],
-    queryFn: () => api.list<Job>("/jobs?limit=100"),
-  });
-  const jobs = jobsResult?.data ?? [];
-
   const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
     queryFn: () => api.list<Employer>("/employers?limit=100"),
   });
   const employers = employersResult?.data ?? [];
+
+  const { data: candidateAppsResult } = useQuery({
+    queryKey: ["applications-for-candidate", createForm.candidate_id],
+    queryFn: () => api.list<Application>(`/applications?candidate_id=${createForm.candidate_id}`),
+    enabled: !!createForm.candidate_id,
+  });
+  const candidateApplications = candidateAppsResult?.data ?? [];
 
   const createPlacement = useMutation({
     mutationFn: (body: CreateForm) => api.post<Placement>("/placements", body),
@@ -88,8 +89,8 @@ export default function Placements() {
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!createForm.candidate_id || !createForm.job_id || !createForm.start_date || !createForm.application_id) {
-      setCreateError("Candidate, Job, Application ID, and Start Date are required.");
+    if (!createForm.candidate_id || !createForm.application_id || !createForm.start_date) {
+      setCreateError("Candidate, Application, and Start Date are required.");
       return;
     }
     setCreateError("");
@@ -203,27 +204,26 @@ export default function Placements() {
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Candidate *</label>
                 <select value={createForm.candidate_id}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, candidate_id: e.target.value }))}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, candidate_id: e.target.value, application_id: "", job_id: "" }))}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                   <option value="">Select candidate...</option>
                   {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Job *</label>
-                <select value={createForm.job_id}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, job_id: e.target.value }))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
-                  <option value="">Select job...</option>
-                  {jobs.map((j) => <option key={j.id} value={j.id}>{j.title}</option>)}
+                <label className="block text-xs font-medium text-slate-600 mb-1">Application *</label>
+                <select value={createForm.application_id}
+                  disabled={!createForm.candidate_id}
+                  onChange={(e) => {
+                    const app = candidateApplications.find((a) => a.id === e.target.value);
+                    setCreateForm((f) => ({ ...f, application_id: e.target.value, job_id: app?.job_id ?? f.job_id }));
+                  }}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-400">
+                  <option value="">{createForm.candidate_id ? "Select application..." : "Select a candidate first"}</option>
+                  {candidateApplications.map((a) => (
+                    <option key={a.id} value={a.id}>{a.job_title} — {a.stage}</option>
+                  ))}
                 </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Application ID *</label>
-                <input value={createForm.application_id}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, application_id: e.target.value }))}
-                  placeholder="UUID of the application record"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Employer</label>

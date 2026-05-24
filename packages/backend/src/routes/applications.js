@@ -11,7 +11,7 @@ const VALID_STAGES = ["applied", "screening", "interview", "offer", "hired", "re
 // Supports filters: job_id, candidate (name search), job_title (title search)
 applicationsRouter.get("/", async (req, res, next) => {
   try {
-    const { candidate, job_title, job_id } = req.query;
+    const { candidate, job_title, job_id, candidate_id } = req.query;
     const isAdmin = ["admin", "recruiter_admin"].includes(req.user.role);
     const params = isAdmin ? [] : [req.user.id];
     const conditions = isAdmin ? [] : [
@@ -20,9 +20,10 @@ applicationsRouter.get("/", async (req, res, next) => {
        ))`
     ];
 
-    if (job_id)    { params.push(job_id);             conditions.push(`a.job_id = $${params.length}`); }
-    if (candidate) { params.push(`%${candidate}%`);   conditions.push(`c.name ILIKE $${params.length}`); }
-    if (job_title) { params.push(`%${job_title}%`);   conditions.push(`j.title ILIKE $${params.length}`); }
+    if (job_id)      { params.push(job_id);             conditions.push(`a.job_id = $${params.length}`); }
+    if (candidate_id){ params.push(candidate_id);        conditions.push(`a.candidate_id = $${params.length}`); }
+    if (candidate)   { params.push(`%${candidate}%`);   conditions.push(`c.name ILIKE $${params.length}`); }
+    if (job_title)   { params.push(`%${job_title}%`);   conditions.push(`j.title ILIKE $${params.length}`); }
 
     const { rows } = await pool.query(
       `SELECT
