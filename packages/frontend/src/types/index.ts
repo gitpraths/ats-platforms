@@ -22,6 +22,34 @@ export interface Provider {
   candidate_count?: number;
   created_at: string;
   updated_at: string;
+  // Spreadsheet sync fields
+  ms_user_email?: string | null;
+  onedrive_file_id?: string | null;
+  onedrive_sheet_name?: string;
+  last_synced_at?: string | null;
+}
+
+export interface SyncLog {
+  id: string;
+  provider_id: string;
+  triggered_by: string | null;
+  triggered_by_name: string | null;
+  status: 'running' | 'success' | 'partial' | 'failed';
+  candidates_created: number;
+  candidates_updated: number;
+  rows_written_back: number;
+  rows_skipped: number;
+  error_message: string | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface SyncResult {
+  status: string;
+  candidates_created: number;
+  candidates_updated: number;
+  rows_written_back: number;
+  rows_skipped: number;
 }
 
 export interface Employer {
