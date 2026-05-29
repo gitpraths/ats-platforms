@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { runSync, resolveShareUrl } from '../services/spreadsheet.js';
+import { getValidAccessToken } from '../services/ms-auth.js';
 
 export const providersRouter = Router();
 providersRouter.use(requireAuth);
@@ -139,5 +141,66 @@ providersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
     ).catch(() => {});
 
     res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// ── PATCH /api/providers/:id/spreadsheet ─────────────────
+providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+  try {
+    const { onedrive_url, onedrive_sheet_name = 'Sheet1' } = req.body;
+    if (!onedrive_url) {
+      return res.status(400).json({ success: false, error: 'onedrive_url is required' });
+    }
+
+    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
+    const provider = rows[0];
+
+    if (!provider.ms_access_token) {
+      return res.status(409).json({ success: false, error: 'Connect OneDrive first before saving spreadsheet' });
+    }
+
+    const tokenResult = await getValidAccessToken(provider);
+    const fileId = await resolveShareUrl(tokenResult.accessToken, onedrive_url);
+
+    await pool.query(
+      `UPDATE providers SET onedrive_file_id=$1, onedrive_sheet_name=$2 WHERE id=$3`,
+      [fileId, onedrive_sheet_name, req.params.id]
+    );
+
+    res.json({ success: true, data: { onedrive_file_id: fileId, onedrive_sheet_name } });
+  } catch (err) { next(err); }
+});
+
+// ── POST /api/providers/:id/sync ─────────────────────────
+providersRouter.post('/:id/sync', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
+
+    const provider = rows[0];
+
+    if (!provider.ms_access_token || !provider.onedrive_file_id) {
+      return res.status(409).json({ success: false, error: 'Provider spreadsheet not connected' });
+    }
+
+    const result = await runSync(provider, req.user.id);
+    res.json({ success: true, data: result });
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/providers/:id/sync-logs ─────────────────────
+providersRouter.get('/:id/sync-logs', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT psl.*, u.name AS triggered_by_name
+       FROM provider_sync_logs psl
+       LEFT JOIN users u ON u.id = psl.triggered_by
+       WHERE psl.provider_id = $1
+       ORDER BY psl.started_at DESC
+       LIMIT 20`,
+      [req.params.id]
+    );
+    res.json({ success: true, data: rows });
   } catch (err) { next(err); }
 });
