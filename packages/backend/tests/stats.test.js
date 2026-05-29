@@ -8,7 +8,7 @@ let recruiterId = "";
 beforeAll(async () => {
   const adminRes = await request(app)
     .post("/api/auth/login")
-    .send({ email: "admin@myats.com", password: "password123" });
+    .send({ email: "admin@myats.dev", password: "password123" });
   token = adminRes.body.data?.token || "";
 
   const recruiterRes = await request(app)

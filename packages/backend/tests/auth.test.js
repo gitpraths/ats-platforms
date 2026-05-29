@@ -17,16 +17,16 @@ describe("POST /api/auth/login", () => {
   });
 
   it("returns token and user for valid credentials", async () => {
-    // Uses seed data: admin@ats.com / password123
+    // Uses seed data: admin@myats.dev / password123
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "admin@ats.com", password: "password123" });
+      .send({ email: "admin@myats.dev", password: "password123" });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty("token");
     expect(res.body.data).toHaveProperty("user");
     expect(res.body.data.user).toHaveProperty("id");
-    expect(res.body.data.user.email).toBe("admin@ats.com");
+    expect(res.body.data.user.email).toBe("admin@myats.dev");
   });
 });
 

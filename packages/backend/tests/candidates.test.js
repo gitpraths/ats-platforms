@@ -6,7 +6,7 @@ let token = "";
 beforeAll(async () => {
   const res = await request(app)
     .post("/api/auth/login")
-    .send({ email: "admin@ats.com", password: "password123" });
+    .send({ email: "admin@myats.dev", password: "password123" });
   token = res.body.data?.token || "";
 });
 
