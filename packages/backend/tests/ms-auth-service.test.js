@@ -31,6 +31,8 @@ describe('buildOAuthUrl', () => {
     expect(url).toContain('client_id=test-client-id');
     expect(url).toContain('response_type=code');
     expect(url).toContain('Files.ReadWrite');
+    expect(url).toContain('offline_access');
+    expect(url).toContain('User.Read');
     expect(url).toContain('state=');
   });
 });
