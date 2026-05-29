@@ -32,7 +32,6 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "setupFilesAfterFramework": [],
     "setupFiles": [
       "./jest.setup.js"
     ],

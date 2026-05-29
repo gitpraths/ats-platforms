@@ -42,6 +42,10 @@ msAuthRouter.get('/ms-auth/callback', async (req, res, next) => {
     return res.status(400).json({ success: false, error: 'Invalid or expired state token' });
   }
 
+  if (!code) {
+    return res.status(400).json({ success: false, error: 'Missing authorization code' });
+  }
+
   try {
     const tokenData = await exchangeCodeForTokens(code);
 
@@ -53,7 +57,7 @@ msAuthRouter.get('/ms-auth/callback', async (req, res, next) => {
 
     const expiry = new Date(Date.now() + tokenData.expires_in * 1000);
 
-    await pool.query(
+    const updateResult = await pool.query(
       `UPDATE providers SET
         ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3, ms_user_email=$4
        WHERE id=$5`,
@@ -65,6 +69,10 @@ msAuthRouter.get('/ms-auth/callback', async (req, res, next) => {
         parsed.providerId,
       ]
     );
+
+    if (updateResult.rowCount === 0) {
+      return res.redirect(`${frontendBase}/providers?ms_error=provider_not_found`);
+    }
 
     res.redirect(`${frontendBase}/providers/${parsed.providerId}?connected=true`);
   } catch (err) { next(err); }
