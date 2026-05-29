@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS provider_sync_logs (
   rows_written_back  INTEGER DEFAULT 0,
   rows_skipped       INTEGER DEFAULT 0,
   error_message      TEXT,
-  started_at         TIMESTAMPTZ DEFAULT NOW(),
+  started_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at       TIMESTAMPTZ
 );
 
