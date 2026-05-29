@@ -1,5 +1,5 @@
 import { pool } from '../config/db.js';
-import { getValidAccessToken, encryptToken } from './ms-auth.js';
+import { getValidAccessToken } from './ms-auth.js';
 
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 
@@ -293,10 +293,12 @@ export async function runSync(provider, triggeredById) {
         [provider.id]
       );
     }
-    await pool.query(
-      `UPDATE provider_sync_logs SET status='failed', error_message=$1, completed_at=NOW() WHERE id=$2`,
-      [err.message, logId]
-    );
+    try {
+      await pool.query(
+        `UPDATE provider_sync_logs SET status='failed', error_message=$1, completed_at=NOW() WHERE id=$2`,
+        [err.message, logId]
+      );
+    } catch { /* best-effort: don't mask original error */ }
     throw err;
   }
 }
