@@ -76,7 +76,11 @@ export async function refreshTokens(encryptedRefreshToken) {
     const err = Object.assign(new Error(`Token refresh failed: ${res.status}`), { status: res.status });
     throw err;
   }
-  return res.json();
+  const tokenData = await res.json();
+  if (!tokenData.access_token || !tokenData.refresh_token) {
+    throw new Error('Incomplete token response from Microsoft');
+  }
+  return tokenData;
 }
 
 // Returns a valid plaintext access token, refreshing if needed.
