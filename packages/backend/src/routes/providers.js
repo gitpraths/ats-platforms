@@ -161,7 +161,20 @@ providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'
     }
 
     const tokenResult = await getValidAccessToken(provider);
-    const fileId = await resolveShareUrl(tokenResult.accessToken, onedrive_url);
+
+    let fileId;
+    try {
+      fileId = await resolveShareUrl(tokenResult.accessToken, onedrive_url);
+    } catch {
+      return res.status(422).json({ success: false, error: 'Could not resolve OneDrive URL — check the link is valid and the file is accessible' });
+    }
+
+    if (tokenResult.refreshed) {
+      await pool.query(
+        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
+        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
+      );
+    }
 
     await pool.query(
       `UPDATE providers SET onedrive_file_id=$1, onedrive_sheet_name=$2 WHERE id=$3`,
