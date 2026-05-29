@@ -5,6 +5,7 @@ import { api } from "../lib/api";
 import type { Provider, Candidate } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { format } from "date-fns";
+import SpreadsheetSyncPanel from "../components/SpreadsheetSyncPanel";
 
 interface ProviderDetailData extends Provider {
   candidate_count: number;
@@ -143,6 +144,9 @@ export default function ProviderDetail() {
           </table>
         )}
       </div>
+
+      {/* Spreadsheet Sync */}
+      <SpreadsheetSyncPanel provider={provider} isAdmin={isAdmin} />
     </div>
   );
 }
