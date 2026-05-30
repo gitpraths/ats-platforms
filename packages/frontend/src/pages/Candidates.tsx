@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { displayEmail } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Search } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -278,7 +279,7 @@ export default function Candidates() {
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {row.phone || "—"}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{row.email}</td>
+                    <td className="px-4 py-3 text-slate-600">{displayEmail(row.email)}</td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {row.provider_name || "—"}
                     </td>
@@ -373,7 +374,7 @@ export default function Candidates() {
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 truncate">{row.name}</p>
-                  <p className="text-xs text-slate-500 truncate">{row.email}</p>
+                  <p className="text-xs text-slate-500 truncate">{displayEmail(row.email)}</p>
                 </div>
               </div>
               {(row.city || row.state) && (

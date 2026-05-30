@@ -188,9 +188,19 @@ export async function runSync(provider, triggeredById) {
       const candidate = mapRowToCandidate(headers, row, provider.id);
 
       if (!candidate.email) {
-        skipped++;
-        outboundRows.push(['', '', '', '']);
-        continue;
+        const namePart = candidate.name
+          ? candidate.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          : '';
+        const phonePart = candidate.phone
+          ? candidate.phone.replace(/\D/g, '')
+          : '';
+        if (namePart || phonePart) {
+          candidate.email = `${namePart || 'unknown'}-${phonePart || 'nophone'}@sync.local`;
+        } else {
+          skipped++;
+          outboundRows.push(['', '', '', '']);
+          continue;
+        }
       }
 
       // Check if candidate belongs to a different provider

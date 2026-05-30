@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { displayEmail } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, ExternalLink, Edit2, X, Check, Upload, Download, Trash2, FileText } from "lucide-react";
@@ -352,7 +353,7 @@ export default function CandidateDetail() {
               </div>
 
               <div className="flex flex-wrap gap-3 mt-2 text-sm text-slate-500">
-                <span className="flex items-center gap-1"><Mail size={13} />{candidate.email}</span>
+                <span className="flex items-center gap-1"><Mail size={13} />{displayEmail(candidate.email)}</span>
                 {candidate.phone && <span className="flex items-center gap-1"><Phone size={13} />{candidate.phone}</span>}
                 {(candidate.city || candidate.state) && (
                   <span className="flex items-center gap-1">
