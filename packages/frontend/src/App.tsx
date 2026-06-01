@@ -18,6 +18,8 @@ import Profile          from "./pages/Profile";
 import AdminUsers       from "./pages/AdminUsers";
 import AdminDepartments from "./pages/AdminDepartments";
 import AdminLocations   from "./pages/AdminLocations";
+import AdminTrainings   from "./pages/AdminTrainings";
+import Training         from "./pages/Training";
 import NotFound         from "./pages/NotFound";
 import Providers        from "./pages/Providers";
 import ProviderDetail   from "./pages/ProviderDetail";
@@ -94,6 +96,9 @@ function ProfileMenu() {
 function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdminOrRecruiter = user?.role === "admin"
+                          || user?.role === "recruiter_admin"
+                          || user?.role === "recruiter";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
@@ -109,6 +114,9 @@ function Layout({ children }: { children: React.ReactNode }) {
           <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Jobs</NavLink>
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Hiring Board</NavLink>
           <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
+          {isAdminOrRecruiter && (
+            <NavLink to="/training" className={navClass}>Training</NavLink>
+          )}
           <NavLink to="/placements"   className={navClass}><UserCheck size={15} />Placements</NavLink>
           <NavLink to="/providers"    className={navClass}><MapPinIcon size={15} />Providers</NavLink>
           <NavLink to="/employers"    className={navClass}><Building2 size={15} />Employers</NavLink>
@@ -119,6 +127,7 @@ function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/admin/users"       className={navClass}><Settings size={15} />Users</NavLink>
               <NavLink to="/admin/departments" className={navClass}>Departments</NavLink>
               <NavLink to="/admin/locations"   className={navClass}>Locations</NavLink>
+              <NavLink to="/admin/trainings"   className={navClass}>Trainings</NavLink>
             </>
           )}
         </div>
@@ -180,6 +189,7 @@ function AppRoutes() {
       <Route path="/candidates"        element={<ProtectedRoute><Candidates       /></ProtectedRoute>} />
       <Route path="/candidates/new"   element={<ProtectedRoute><CandidateNew     /></ProtectedRoute>} />
       <Route path="/candidates/:id"   element={<ProtectedRoute><CandidateDetail  /></ProtectedRoute>} />
+      <Route path="/training"         element={<ProtectedRoute><Training         /></ProtectedRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
 
       <Route path="/providers"          element={<ProtectedRoute><Providers       /></ProtectedRoute>} />
@@ -200,6 +210,7 @@ function AppRoutes() {
       <Route path="/admin/users"       element={<AdminRoute><AdminUsers       /></AdminRoute>} />
       <Route path="/admin/departments" element={<AdminRoute><AdminDepartments /></AdminRoute>} />
       <Route path="/admin/locations"   element={<AdminRoute><AdminLocations   /></AdminRoute>} />
+      <Route path="/admin/trainings"   element={<AdminRoute><AdminTrainings   /></AdminRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

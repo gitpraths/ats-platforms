@@ -5,10 +5,25 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, ExternalLink, Edit2, X, Check, Upload, Download, Trash2, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
-import type { Candidate, ApplicationStage, CandidateDocument, Provider, CandidateWorkStatus } from "../types";
+import type { Candidate, ApplicationStage, CandidateDocument, Provider, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  useCandidateTrainings,
+  useCreateEnrolment,
+  useUpdateEnrolment,
+  useDeleteEnrolment,
+} from "../hooks/useCandidateTrainings";
+import { useTrainings } from "../hooks/useTrainings";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+
+const TRAINING_BADGE: Record<TrainingStatus, string> = {
+  enrolled:    "border border-slate-400 text-slate-600 bg-transparent",
+  in_progress: "border border-blue-400 text-blue-600 bg-transparent",
+  completed:   "border border-green-500 text-green-700 bg-transparent",
+  withdrawn:   "border border-amber-400 text-amber-600 bg-transparent",
+  failed:      "border border-red-400 text-red-500 bg-transparent",
+};
 
 const STAGE_BADGE: Record<ApplicationStage, string> = {
   applied:   "border border-blue-400 text-blue-600 bg-transparent",
@@ -528,6 +543,13 @@ export default function CandidateDetail() {
         )}
       </div>
 
+      {/* Training history */}
+      {id && (
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <TrainingTab candidateId={id} canWrite={canWrite} />
+        </div>
+      )}
+
       {/* Upload dialog */}
       {showUpload && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -577,6 +599,215 @@ export default function CandidateDetail() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+export function TrainingTab({ candidateId, canWrite }: { candidateId: string; canWrite: boolean }) {
+  const { data: enrolments = [], isLoading } = useCandidateTrainings(candidateId);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingEnrolment, setEditingEnrolment] = useState<CandidateTraining | null>(null);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900 tracking-tight">
+          Training history
+          <span className="text-slate-400 font-normal ml-1">({enrolments.length})</span>
+        </h2>
+        {canWrite && (
+          <button
+            onClick={() => { setEditingEnrolment(null); setShowDialog(true); }}
+            className="px-3 py-1.5 text-xs rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+          >
+            + Enrol
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-slate-500">Loading...</p>
+      ) : enrolments.length === 0 ? (
+        <p className="text-sm text-slate-400">No training records.</p>
+      ) : (
+        <div className="overflow-hidden border border-slate-100 rounded-lg">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="text-left px-4 py-2.5">Course</th>
+                <th className="text-left px-4 py-2.5">Provider</th>
+                <th className="text-left px-4 py-2.5">Status</th>
+                <th className="text-left px-4 py-2.5">Start</th>
+                <th className="text-left px-4 py-2.5">End</th>
+                <th className="text-left px-4 py-2.5">Cert #</th>
+                <th className="px-4 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {enrolments.map((e) => (
+                <tr key={e.id}>
+                  <td className="px-4 py-2.5 text-slate-900">
+                    {e.training_name}
+                    {e.training_code && <span className="text-xs text-slate-400 ml-1">({e.training_code})</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-500">{e.provider_name || "—"}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs ${TRAINING_BADGE[e.status]}`}>
+                      {e.status.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-500">{e.start_date ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{e.end_date ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{e.certificate_no ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    {canWrite && (
+                      <button
+                        onClick={() => { setEditingEnrolment(e); setShowDialog(true); }}
+                        className="text-xs text-slate-500 hover:underline"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showDialog && (
+        <EnrolmentDialog
+          candidateId={candidateId}
+          enrolment={editingEnrolment}
+          onClose={() => { setShowDialog(false); setEditingEnrolment(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EnrolmentDialog({
+  candidateId,
+  enrolment,
+  onClose,
+}: { candidateId: string; enrolment: CandidateTraining | null; onClose: () => void }) {
+  const { data: catalogue } = useTrainings({ isActive: true, limit: 200 });
+  const trainings: Training[] = catalogue?.data ?? [];
+
+  const [trainingId, setTrainingId] = useState(enrolment?.training_id ?? "");
+  const [status, setStatus] = useState<TrainingStatus>(enrolment?.status ?? "enrolled");
+  const [startDate, setStartDate] = useState(enrolment?.start_date ?? "");
+  const [endDate, setEndDate] = useState(enrolment?.end_date ?? "");
+  const [certificateNo, setCertificateNo] = useState(enrolment?.certificate_no ?? "");
+  const [notes, setNotes] = useState(enrolment?.notes ?? "");
+  const [error, setError] = useState("");
+
+  const create = useCreateEnrolment();
+  const update = useUpdateEnrolment();
+  const remove = useDeleteEnrolment(candidateId);
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!trainingId) { setError("Please pick a course."); return; }
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      setError("End date must be on or after start date.");
+      return;
+    }
+
+    const payload = {
+      training_id: trainingId,
+      status,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      certificate_no: certificateNo || null,
+      notes: notes || null,
+    };
+
+    const promise = enrolment
+      ? update.mutateAsync({ id: enrolment.id, candidate_id: candidateId, body: payload })
+      : create.mutateAsync({ candidate_id: candidateId, ...payload });
+    promise.then(onClose).catch((err: Error) => setError(err.message));
+  }
+
+  function handleDelete() {
+    if (!enrolment) return;
+    if (!confirm("Remove this enrolment? This cannot be undone.")) return;
+    remove.mutate(enrolment.id, { onSuccess: onClose });
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          {enrolment ? "Edit Enrolment" : "Enrol in Training"}
+        </h2>
+        <form onSubmit={handleSave} className="space-y-3">
+          <div>
+            <label className="text-xs text-slate-500">Course *</label>
+            <select
+              value={trainingId}
+              onChange={(e) => setTrainingId(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              disabled={!!enrolment}
+            >
+              <option value="">— Pick a course —</option>
+              {trainings.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}{t.code ? ` (${t.code})` : ""}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-slate-500">Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value as TrainingStatus)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+              <option value="enrolled">Enrolled</option>
+              <option value="in_progress">In progress</option>
+              <option value="completed">Completed</option>
+              <option value="withdrawn">Withdrawn</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-500">Start date</label>
+              <input type="date" value={startDate ?? ""} onChange={(e) => setStartDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">End date</label>
+              <input type="date" value={endDate ?? ""} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          </div>
+          {status === "completed" && (
+            <div>
+              <label className="text-xs text-slate-500">Certificate #</label>
+              <input value={certificateNo ?? ""} onChange={(e) => setCertificateNo(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          )}
+          <div>
+            <label className="text-xs text-slate-500">Notes</label>
+            <textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          <div className="flex justify-between items-center pt-2">
+            <div>
+              {enrolment && (
+                <button type="button" onClick={handleDelete} className="text-xs text-red-600 hover:underline">
+                  Remove
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">Cancel</button>
+              <button type="submit" disabled={create.isPending || update.isPending} className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50">
+                {enrolment ? "Save" : "Enrol"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

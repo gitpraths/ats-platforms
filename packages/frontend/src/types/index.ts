@@ -266,3 +266,37 @@ export interface CandidatePoolRow {
   latest_application_id?: string | null;
   welfare_checks?: WelfareCheck[];
 }
+
+export type TrainingStatus = "enrolled" | "in_progress" | "completed" | "withdrawn" | "failed";
+
+export interface Training {
+  id: string;
+  name: string;
+  code: string | null;
+  description: string | null;
+  duration_days: number | null;
+  provider_id: string | null;
+  provider_name: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateTraining {
+  id: string;
+  candidate_id: string;
+  training_id: string;
+  status: TrainingStatus;
+  start_date: string | null;
+  end_date: string | null;
+  completed_at: string | null;
+  certificate_no: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  // Expanded fields returned by the API
+  training_name: string;
+  training_code: string | null;
+  provider_name: string | null;
+}
