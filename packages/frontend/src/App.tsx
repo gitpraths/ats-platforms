@@ -18,6 +18,7 @@ import Profile          from "./pages/Profile";
 import AdminUsers       from "./pages/AdminUsers";
 import AdminDepartments from "./pages/AdminDepartments";
 import AdminLocations   from "./pages/AdminLocations";
+import AdminTrainings   from "./pages/AdminTrainings";
 import NotFound         from "./pages/NotFound";
 import Providers        from "./pages/Providers";
 import ProviderDetail   from "./pages/ProviderDetail";
@@ -119,6 +120,7 @@ function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/admin/users"       className={navClass}><Settings size={15} />Users</NavLink>
               <NavLink to="/admin/departments" className={navClass}>Departments</NavLink>
               <NavLink to="/admin/locations"   className={navClass}>Locations</NavLink>
+              <NavLink to="/admin/trainings"   className={navClass}>Trainings</NavLink>
             </>
           )}
         </div>
@@ -200,6 +202,7 @@ function AppRoutes() {
       <Route path="/admin/users"       element={<AdminRoute><AdminUsers       /></AdminRoute>} />
       <Route path="/admin/departments" element={<AdminRoute><AdminDepartments /></AdminRoute>} />
       <Route path="/admin/locations"   element={<AdminRoute><AdminLocations   /></AdminRoute>} />
+      <Route path="/admin/trainings"   element={<AdminRoute><AdminTrainings   /></AdminRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
