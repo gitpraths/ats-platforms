@@ -7,6 +7,7 @@ import {
   updateEnrolment,
   deleteEnrolment,
   listEnrolments,
+  getEnrolmentStats,
 } from "../services/candidateTrainings.js";
 import { pool } from "../config/db.js";
 
@@ -52,6 +53,16 @@ candidateTrainingsRouter.get("/", async (req, res, next) => {
       data: result.rows,
       meta: { total: result.total, page: result.page, limit: result.limit },
     });
+  } catch (err) { next(err); }
+});
+
+candidateTrainingsRouter.get("/stats", async (req, res, next) => {
+  try {
+    const { training_id, provider_id, date_from, date_to, search } = req.query;
+    const stats = await getEnrolmentStats({
+      training_id, provider_id, date_from, date_to, search,
+    });
+    res.json({ success: true, data: stats });
   } catch (err) { next(err); }
 });
 

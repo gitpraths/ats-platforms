@@ -162,3 +162,27 @@ describe("GET /api/candidate-trainings (cross-candidate list)", () => {
     expect(found).toBeDefined();
   });
 });
+
+describe("GET /api/candidate-trainings/stats", () => {
+  it("returns counts grouped by status with all 5 keys", async () => {
+    const res = await request(app).get("/api/candidate-trainings/stats").set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(expect.objectContaining({
+      enrolled:    expect.any(Number),
+      in_progress: expect.any(Number),
+      completed:   expect.any(Number),
+      withdrawn:   expect.any(Number),
+      failed:      expect.any(Number),
+    }));
+  });
+
+  it("ignores the status filter when computing stats", async () => {
+    // Even when filtering by status, stats should report counts ACROSS all statuses
+    // (matching the active filters minus `status`).
+    const filtered = await request(app)
+      .get("/api/candidate-trainings/stats?status=completed")
+      .set(auth());
+    const all = await request(app).get("/api/candidate-trainings/stats").set(auth());
+    expect(filtered.body.data).toEqual(all.body.data);
+  });
+});
