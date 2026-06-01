@@ -2,6 +2,10 @@ import request from "supertest";
 import app from "../src/app.js";
 import { pool } from "../src/config/db.js";
 
+// Bulk inserts loop one INSERT per candidate plus a sync, so each test
+// makes several round-trips against the live DB — use a larger per-test budget.
+const BULK_TIMEOUT = 20000;
+
 let token = "";
 let trainingId = "";
 const candidateIds = [];
@@ -59,7 +63,7 @@ describe("POST /api/candidate-trainings/bulk", () => {
       expect(row.status).toBe("enrolled");
       createdEnrolmentIds.push(row.id);
     }
-  });
+  }, BULK_TIMEOUT);
 
   it("skips candidates already holding a non-terminal enrolment for the same course", async () => {
     // candidateIds[0] was enrolled in the previous test; candidateIds[2] is fresh.
@@ -80,7 +84,7 @@ describe("POST /api/candidate-trainings/bulk", () => {
       reason: "active_enrolment_exists",
     });
     createdEnrolmentIds.push(res.body.data.created[0].id);
-  });
+  }, BULK_TIMEOUT);
 
   it("rolls back when one insert fails (bad training_id)", async () => {
     const bogusTrainingId = "00000000-0000-0000-0000-000000000000";
