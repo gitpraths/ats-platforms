@@ -8,6 +8,7 @@ import {
   deleteEnrolment,
   listEnrolments,
   getEnrolmentStats,
+  bulkEnrol,
 } from "../services/candidateTrainings.js";
 import { pool } from "../config/db.js";
 
@@ -73,6 +74,39 @@ candidateTrainingsRouter.get("/:id", async (req, res, next) => {
     res.json({ success: true, data: row });
   } catch (err) { next(err); }
 });
+
+candidateTrainingsRouter.post(
+  "/bulk",
+  requireRole("admin", "recruiter_admin", "recruiter"),
+  async (req, res, next) => {
+    try {
+      const { training_id, start_date, end_date, candidate_ids } = req.body;
+      if (!training_id || !start_date) {
+        return res.status(400).json({ success: false, error: "training_id and start_date are required" });
+      }
+      if (!Array.isArray(candidate_ids) || candidate_ids.length === 0) {
+        return res.status(400).json({ success: false, error: "candidate_ids must be a non-empty array" });
+      }
+      if (end_date && new Date(end_date) < new Date(start_date)) {
+        return res.status(400).json({ success: false, error: "end_date must be on or after start_date" });
+      }
+
+      const result = await bulkEnrol({
+        training_id, start_date, end_date,
+        candidate_ids,
+        created_by: req.user.id,
+      });
+
+      for (const row of result.created) {
+        await logActivity(row.id, "created", req.user.id, {
+          candidate_id: row.candidate_id, training_id, bulk: true,
+        });
+      }
+
+      res.status(201).json({ success: true, data: result });
+    } catch (err) { next(err); }
+  }
+);
 
 candidateTrainingsRouter.post(
   "/",
