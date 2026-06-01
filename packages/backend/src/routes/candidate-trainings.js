@@ -6,6 +6,7 @@ import {
   createEnrolment,
   updateEnrolment,
   deleteEnrolment,
+  listEnrolments,
 } from "../services/candidateTrainings.js";
 import { pool } from "../config/db.js";
 
@@ -29,6 +30,30 @@ async function logActivity(entityId, action, performedBy, metadata) {
 // Mounted at /api/candidate-trainings
 export const candidateTrainingsRouter = Router();
 candidateTrainingsRouter.use(requireAuth);
+
+candidateTrainingsRouter.get("/", async (req, res, next) => {
+  try {
+    const { page, limit, status, training_id, provider_id, date_from, date_to, search } = req.query;
+    const statusList = !status
+      ? undefined
+      : Array.isArray(status) ? status : String(status).split(",").filter(Boolean);
+
+    const result = await listEnrolments({
+      page, limit,
+      status: statusList,
+      training_id,
+      provider_id,
+      date_from,
+      date_to,
+      search,
+    });
+    res.json({
+      success: true,
+      data: result.rows,
+      meta: { total: result.total, page: result.page, limit: result.limit },
+    });
+  } catch (err) { next(err); }
+});
 
 candidateTrainingsRouter.get("/:id", async (req, res, next) => {
   try {

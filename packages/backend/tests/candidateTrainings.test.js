@@ -114,3 +114,51 @@ describe("DELETE /api/candidate-trainings/:id", () => {
     expect(fetched.body.data.find((e) => e.id === id)).toBeUndefined();
   });
 });
+
+describe("GET /api/candidate-trainings (cross-candidate list)", () => {
+  beforeAll(async () => {
+    // Ensure at least one enrolment exists for the test candidate so the search test below
+    // can locate them. The earlier suites may have deleted it.
+    await pool.query(
+      `INSERT INTO candidate_trainings (candidate_id, training_id, status, start_date)
+       VALUES ($1, $2, 'enrolled', '2026-05-15')`,
+      [candidateId, trainingId]
+    );
+  });
+
+  it("returns 401 without token", async () => {
+    const res = await request(app).get("/api/candidate-trainings");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns paginated list with meta", async () => {
+    const res = await request(app)
+      .get("/api/candidate-trainings?limit=10")
+      .set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.meta).toMatchObject({ page: 1, limit: 10 });
+    expect(res.body.meta.total).toBeGreaterThanOrEqual(0);
+  });
+
+  it("filters by training_id and includes expanded candidate_name", async () => {
+    const res = await request(app)
+      .get(`/api/candidate-trainings?training_id=${trainingId}`)
+      .set(auth());
+    expect(res.status).toBe(200);
+    for (const row of res.body.data) {
+      expect(row.training_id).toBe(trainingId);
+      expect(row).toHaveProperty("candidate_name");
+    }
+  });
+
+  it("filters by search (candidate name, case-insensitive partial match)", async () => {
+    const res = await request(app)
+      .get(`/api/candidate-trainings?search=enrolment`)
+      .set(auth());
+    expect(res.status).toBe(200);
+    const found = res.body.data.find((r) => r.candidate_id === candidateId);
+    expect(found).toBeDefined();
+  });
+});
