@@ -104,7 +104,7 @@ describe("Training — Enrolments tab", () => {
 describe("Training — Cohort enrol tab", () => {
   it("disables the submit button until course, date, and a candidate are picked", async () => {
     const user = userEvent.setup();
-    const { container } = renderPage();
+    renderPage();
     await user.click(screen.getByRole("tab", { name: /cohort enrol/i }));
 
     const submit = await screen.findByRole("button", { name: /enrol 0 candidates/i });
@@ -114,11 +114,8 @@ describe("Training — Cohort enrol tab", () => {
     const courseSelect = await screen.findByRole("combobox", { name: undefined });
     fireEvent.change(courseSelect, { target: { value: "t2" } });
 
-    // Set start date — labels in CohortEnrolTab aren't associated via htmlFor,
-    // so query date inputs directly. First date input is "Start date".
-    const dateInputs = container.querySelectorAll<HTMLInputElement>('input[type="date"]');
-    expect(dateInputs.length).toBeGreaterThan(0);
-    fireEvent.change(dateInputs[0], { target: { value: "2026-07-01" } });
+    // Set start date via its associated label
+    fireEvent.change(screen.getByLabelText(/start date/i), { target: { value: "2026-07-01" } });
 
     // Select a candidate
     await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
@@ -137,14 +134,12 @@ describe("Training — Cohort enrol tab", () => {
     });
 
     const user = userEvent.setup();
-    const { container } = renderPage();
+    renderPage();
     await user.click(screen.getByRole("tab", { name: /cohort enrol/i }));
 
     const courseSelect = await screen.findByRole("combobox", { name: undefined });
     fireEvent.change(courseSelect, { target: { value: "t2" } });
-    const dateInputs = container.querySelectorAll<HTMLInputElement>('input[type="date"]');
-    expect(dateInputs.length).toBeGreaterThan(0);
-    fireEvent.change(dateInputs[0], { target: { value: "2026-07-01" } });
+    fireEvent.change(screen.getByLabelText(/start date/i), { target: { value: "2026-07-01" } });
 
     await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
     await user.click(screen.getByRole("checkbox", { name: /alice/i }));

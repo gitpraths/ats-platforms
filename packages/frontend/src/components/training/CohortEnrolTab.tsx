@@ -131,12 +131,12 @@ export function CohortEnrolTab({ onViewEnrolments }: { onViewEnrolments: (f: Pre
           <h3 className="text-sm font-semibold text-slate-700 mb-3">2. Set dates</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-500">Start date *</label>
-              <input type="date" value={startDate} onChange={(e) => handleStartDateChange(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="cohort-start-date" className="text-xs text-slate-500">Start date *</label>
+              <input id="cohort-start-date" type="date" value={startDate} onChange={(e) => handleStartDateChange(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-slate-500">End date</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="cohort-end-date" className="text-xs text-slate-500">End date</label>
+              <input id="cohort-end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
         </section>
