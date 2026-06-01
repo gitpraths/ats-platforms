@@ -234,3 +234,91 @@ export async function getEnrolmentStats(filters) {
   for (const r of rows) result[r.status] = r.count;
   return result;
 }
+
+/**
+ * Insert one enrolment per candidate in a single transaction.
+ * Skips candidates already holding a non-terminal enrolment (`enrolled` or `in_progress`)
+ * for the same `training_id`. Returns `{ created, skipped }`.
+ *
+ *  - `status` for each created row is `'enrolled'` (the bulk action is a cohort enrolment,
+ *    not a state transition).
+ *  - `completed_at` is null for created rows (status is `'enrolled'`).
+ *  - `syncCandidateActiveTraining` is called once per AFFECTED candidate (those actually
+ *    inserted) inside the same transaction.
+ */
+export async function bulkEnrol({ training_id, start_date, end_date, candidate_ids, created_by }) {
+  if (!training_id) throw new Error("training_id is required");
+  if (!start_date)  throw new Error("start_date is required");
+  if (!Array.isArray(candidate_ids) || candidate_ids.length === 0) {
+    throw new Error("candidate_ids must be a non-empty array");
+  }
+  if (end_date && new Date(end_date) < new Date(start_date)) {
+    throw new Error("end_date must be on or after start_date");
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Step 1: find which candidates already have a non-terminal enrolment for this course.
+    const { rows: blockedRows } = await client.query(
+      `SELECT DISTINCT candidate_id
+         FROM candidate_trainings
+        WHERE training_id = $1
+          AND status IN ('enrolled', 'in_progress')
+          AND candidate_id = ANY($2::uuid[])`,
+      [training_id, candidate_ids]
+    );
+    const blocked = new Set(blockedRows.map((r) => r.candidate_id));
+
+    const skipped = [];
+    const insertedIds = [];
+
+    // Step 2: insert one row per non-blocked candidate.
+    for (const candidateId of candidate_ids) {
+      if (blocked.has(candidateId)) {
+        skipped.push({ candidate_id: candidateId, reason: "active_enrolment_exists" });
+        continue;
+      }
+      const { rows } = await client.query(
+        `INSERT INTO candidate_trainings
+           (candidate_id, training_id, status, start_date, end_date, created_by)
+         VALUES ($1, $2, 'enrolled', $3, $4, $5)
+         RETURNING id`,
+        [candidateId, training_id, start_date, end_date || null, created_by || null]
+      );
+      insertedIds.push(rows[0].id);
+    }
+
+    // Step 3: sync the denormalised column for every affected candidate.
+    const affected = candidate_ids.filter((id) => !blocked.has(id));
+    for (const candidateId of affected) {
+      await syncCandidateActiveTraining(candidateId, client);
+    }
+
+    await client.query("COMMIT");
+
+    // Step 4: read back the inserted rows with their joined fields. Done outside the
+    // transaction since the txn is committed.
+    if (insertedIds.length === 0) return { created: [], skipped };
+    const { rows: created } = await pool.query(
+      `SELECT ct.*,
+              t.name AS training_name, t.code AS training_code,
+              p.name AS provider_name,
+              c.name AS candidate_name
+         FROM candidate_trainings ct
+         JOIN trainings t      ON t.id = ct.training_id
+         LEFT JOIN providers p ON p.id = t.provider_id
+         JOIN candidates c     ON c.id = ct.candidate_id
+        WHERE ct.id = ANY($1::uuid[])
+        ORDER BY ct.created_at ASC`,
+      [insertedIds]
+    );
+    return { created, skipped };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
