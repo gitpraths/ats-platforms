@@ -290,3 +290,47 @@ INSERT INTO applications (id, job_id, candidate_id, stage, source, score, notes)
   ('00000000-0000-0000-0005-000000000017', '00000000-0000-0000-0003-000000000010', '00000000-0000-0000-0004-000000000004', 'rejected',   'website',    5, 'Not the right fit for this role.')
 
 ON CONFLICT (id) DO NOTHING;
+
+-- ── Training catalogue ──────────────────────────────────────────────────────
+INSERT INTO trainings (name, code, description, duration_days, provider_id) VALUES
+  ('Cert III in Aged Care',     'CHC33015', 'Foundational aged-care qualification.', 180, (SELECT id FROM providers ORDER BY created_at LIMIT 1)),
+  ('Cert III in Individual Support', 'CHC33021', 'Disability and aged-care support cert.', 180, (SELECT id FROM providers ORDER BY created_at LIMIT 1)),
+  ('White Card',                'CPCWHS', 'Construction site safety induction.', 1, NULL),
+  ('First Aid Certificate',     'HLTAID011', 'Provide first aid.', 1, NULL),
+  ('Forklift Licence',          'TLILIC0003', 'High-risk work licence.', 5, NULL),
+  ('Food Handling',             'SITXFSA005', 'Use hygienic practices for food safety.', 1, NULL);
+
+-- ── Enrolments (mix of statuses) ────────────────────────────────────────────
+-- Pick the first 4 seeded candidates by created_at for deterministic seeding.
+WITH cands AS (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) AS rn FROM candidates
+), trs AS (
+  SELECT id, name FROM trainings WHERE code IN ('CHC33015','CHC33021','CPCWHS','HLTAID011','TLILIC0003','SITXFSA005')
+)
+INSERT INTO candidate_trainings (candidate_id, training_id, status, start_date, end_date, completed_at, certificate_no)
+SELECT c.id, t.id, 'completed'::training_status, DATE '2025-08-01', DATE '2026-01-31', DATE '2026-01-31', 'CERT-001'
+  FROM cands c JOIN trs t ON t.name = 'Cert III in Aged Care' WHERE c.rn = 1
+UNION ALL
+SELECT c.id, t.id, 'in_progress'::training_status, DATE '2026-04-01', DATE '2026-09-30', NULL, NULL
+  FROM cands c JOIN trs t ON t.name = 'Cert III in Individual Support' WHERE c.rn = 2
+UNION ALL
+SELECT c.id, t.id, 'completed'::training_status, DATE '2026-03-15', DATE '2026-03-15', DATE '2026-03-15', 'WC-2026-002'
+  FROM cands c JOIN trs t ON t.name = 'White Card' WHERE c.rn = 2
+UNION ALL
+SELECT c.id, t.id, 'enrolled'::training_status, DATE '2026-07-01', NULL, NULL, NULL
+  FROM cands c JOIN trs t ON t.name = 'Forklift Licence' WHERE c.rn = 3
+UNION ALL
+SELECT c.id, t.id, 'withdrawn'::training_status, DATE '2026-02-01', DATE '2026-02-14', NULL, NULL
+  FROM cands c JOIN trs t ON t.name = 'Food Handling' WHERE c.rn = 4
+UNION ALL
+SELECT c.id, t.id, 'failed'::training_status, DATE '2025-10-01', DATE '2025-10-01', NULL, NULL
+  FROM cands c JOIN trs t ON t.name = 'First Aid Certificate' WHERE c.rn = 4;
+
+-- Sync candidate.training_start_date/end_date for any in_progress enrolments we just inserted.
+UPDATE candidates c
+   SET training_start_date = ct.start_date,
+       training_end_date   = ct.end_date,
+       updated_at          = NOW()
+  FROM candidate_trainings ct
+ WHERE ct.candidate_id = c.id
+   AND ct.status = 'in_progress';
