@@ -18,6 +18,7 @@ import { employersRouter }    from "./routes/employers.js";
 import { placementsRouter, welfareChecksRouter } from "./routes/placements.js";
 import { reportsRouter }      from "./routes/reports.js";
 import { trainingsRouter }    from "./routes/trainings.js";
+import { candidateTrainingsRouter } from "./routes/candidate-trainings.js";
 import { candidatePoolRouter } from "./routes/candidate-pool.js";
 import { msAuthRouter }        from "./routes/ms-auth.js";
 import { errorHandler }       from "./middleware/errorHandler.js";
@@ -99,6 +100,7 @@ app.use("/api/placements",     placementsRouter);
 app.use("/api/welfare-checks", welfareChecksRouter);
 app.use("/api/reports",        reportsRouter);
 app.use("/api/trainings",      trainingsRouter);
+app.use("/api/candidate-trainings", candidateTrainingsRouter);
 app.use("/api/candidate-pool", candidatePoolRouter);
 app.use("/api", msAuthRouter);
 
