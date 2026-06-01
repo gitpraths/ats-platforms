@@ -141,3 +141,96 @@ export async function deleteEnrolment(id) {
     client.release();
   }
 }
+
+function buildEnrolmentFilters({ status, training_id, provider_id, date_from, date_to, search }) {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+
+  if (status && status.length) {
+    conditions.push(`ct.status = ANY($${idx}::training_status[])`);
+    params.push(status);
+    idx++;
+  }
+  if (training_id) {
+    conditions.push(`ct.training_id = $${idx}`);
+    params.push(training_id);
+    idx++;
+  }
+  if (provider_id) {
+    conditions.push(`t.provider_id = $${idx}`);
+    params.push(provider_id);
+    idx++;
+  }
+  if (date_from) {
+    conditions.push(`ct.start_date >= $${idx}`);
+    params.push(date_from);
+    idx++;
+  }
+  if (date_to) {
+    conditions.push(`ct.start_date <= $${idx}`);
+    params.push(date_to);
+    idx++;
+  }
+  if (search) {
+    conditions.push(`c.name ILIKE $${idx}`);
+    params.push(`%${search}%`);
+    idx++;
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  return { where, params, nextIdx: idx };
+}
+
+export async function listEnrolments(filters) {
+  const { where, params, nextIdx } = buildEnrolmentFilters(filters);
+  const page  = Math.max(1, Number(filters.page  || 1));
+  const limit = Math.min(100, Math.max(1, Number(filters.limit || 25)));
+  const offset = (page - 1) * limit;
+
+  const { rows } = await pool.query(
+    `SELECT ct.*,
+            t.name AS training_name, t.code AS training_code,
+            p.name AS provider_name,
+            c.name AS candidate_name
+       FROM candidate_trainings ct
+       JOIN trainings t      ON t.id = ct.training_id
+       LEFT JOIN providers p ON p.id = t.provider_id
+       JOIN candidates c     ON c.id = ct.candidate_id
+       ${where}
+       ORDER BY ct.start_date DESC NULLS LAST, ct.created_at DESC
+       LIMIT $${nextIdx} OFFSET $${nextIdx + 1}`,
+    [...params, limit, offset]
+  );
+
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM candidate_trainings ct
+       JOIN trainings t  ON t.id = ct.training_id
+       JOIN candidates c ON c.id = ct.candidate_id
+       ${where}`,
+    params
+  );
+
+  return { rows, total: countRows[0].total, page, limit };
+}
+
+export async function getEnrolmentStats(filters) {
+  // Drop `status` from the active filters — stats are GROUPED by status.
+  const { status: _ignored, ...rest } = filters;
+  const { where, params } = buildEnrolmentFilters(rest);
+
+  const { rows } = await pool.query(
+    `SELECT ct.status, COUNT(*)::int AS count
+       FROM candidate_trainings ct
+       JOIN trainings t  ON t.id = ct.training_id
+       JOIN candidates c ON c.id = ct.candidate_id
+       ${where}
+       GROUP BY ct.status`,
+    params
+  );
+
+  const result = { enrolled: 0, in_progress: 0, completed: 0, withdrawn: 0, failed: 0 };
+  for (const r of rows) result[r.status] = r.count;
+  return result;
+}
