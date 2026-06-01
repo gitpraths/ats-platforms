@@ -59,3 +59,79 @@ export function useDeleteEnrolment(candidateId: string | undefined) {
     },
   });
 }
+
+export interface EnrolmentListFilters {
+  status?: import("../types").TrainingStatus[];
+  training_id?: string;
+  provider_id?: string;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+function buildListQuery(f: EnrolmentListFilters): string {
+  const p = new URLSearchParams();
+  if (f.status && f.status.length) p.set("status", f.status.join(","));
+  if (f.training_id) p.set("training_id", f.training_id);
+  if (f.provider_id) p.set("provider_id", f.provider_id);
+  if (f.date_from)   p.set("date_from", f.date_from);
+  if (f.date_to)     p.set("date_to", f.date_to);
+  if (f.search)      p.set("search", f.search);
+  if (f.page)        p.set("page", String(f.page));
+  if (f.limit)       p.set("limit", String(f.limit));
+  const qs = p.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export function useCandidateTrainingsList(filters: EnrolmentListFilters) {
+  return useQuery({
+    queryKey: ["candidate-trainings-list", filters],
+    queryFn:  () => api.list<CandidateTraining & { candidate_name: string }>(
+      `/candidate-trainings${buildListQuery(filters)}`
+    ),
+    placeholderData: (prev) => prev, // smooth pagination
+  });
+}
+
+export interface TrainingStats {
+  enrolled: number;
+  in_progress: number;
+  completed: number;
+  withdrawn: number;
+  failed: number;
+}
+
+export function useTrainingStats(filters: Omit<EnrolmentListFilters, "status" | "page" | "limit">) {
+  return useQuery({
+    queryKey: ["training-stats", filters],
+    queryFn:  () => api.get<TrainingStats>(`/candidate-trainings/stats${buildListQuery(filters)}`),
+  });
+}
+
+export interface BulkEnrolPayload {
+  training_id: string;
+  start_date: string;
+  end_date?: string | null;
+  candidate_ids: string[];
+}
+
+export interface BulkEnrolResult {
+  created: (CandidateTraining & { candidate_name: string })[];
+  skipped: { candidate_id: string; reason: string }[];
+}
+
+export function useBulkEnrolment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BulkEnrolPayload) =>
+      api.post<BulkEnrolResult>("/candidate-trainings/bulk", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["candidate-trainings-list"] });
+      qc.invalidateQueries({ queryKey: ["training-stats"] });
+      // affected candidates' per-candidate lists are invalidated wholesale:
+      qc.invalidateQueries({ queryKey: ["candidate-trainings"] });
+    },
+  });
+}
