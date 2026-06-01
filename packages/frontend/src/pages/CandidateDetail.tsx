@@ -603,7 +603,7 @@ export default function CandidateDetail() {
   );
 }
 
-function TrainingTab({ candidateId, canWrite }: { candidateId: string; canWrite: boolean }) {
+export function TrainingTab({ candidateId, canWrite }: { candidateId: string; canWrite: boolean }) {
   const { data: enrolments = [], isLoading } = useCandidateTrainings(candidateId);
   const [showDialog, setShowDialog] = useState(false);
   const [editingEnrolment, setEditingEnrolment] = useState<CandidateTraining | null>(null);
