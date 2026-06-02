@@ -27,6 +27,8 @@ export interface Provider {
   onedrive_file_id?: string | null;
   onedrive_sheet_name?: string;
   last_synced_at?: string | null;
+  // Xero integration
+  xero_contact_id?: string | null;
 }
 
 export interface SyncLog {
