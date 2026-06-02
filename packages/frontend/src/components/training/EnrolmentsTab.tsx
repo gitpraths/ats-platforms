@@ -5,8 +5,10 @@ import { useCandidateTrainingsList, useTrainingStats } from "../../hooks/useCand
 import { useTrainings } from "../../hooks/useTrainings";
 import { api } from "../../lib/api";
 import { useQuery } from "@tanstack/react-query";
-import type { TrainingStatus } from "../../types";
+import type { CandidateTraining, TrainingStatus } from "../../types";
 import type { PrefilterToEnrolments } from "../../pages/Training";
+import { GenerateInvoiceDialog } from "./GenerateInvoiceDialog";
+import { useXeroInvoicesForEnrolment } from "../../hooks/useXero";
 
 const ALL_STATUSES: TrainingStatus[] = ["enrolled", "in_progress", "completed", "withdrawn", "failed"];
 
@@ -35,6 +37,7 @@ export function EnrolmentsTab({
   const [dateTo, setDateTo] = useState<string>("");
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
+  const [invoicingEnrolment, setInvoicingEnrolment] = useState<(CandidateTraining & { candidate_name: string }) | null>(null);
 
   // Apply prefilter from Cohort enrol "View enrolments" handoff
   useEffect(() => {
@@ -49,6 +52,7 @@ export function EnrolmentsTab({
   // ─── Catalogue + provider options for the comboboxes ──────────
   const { data: catalogueResult } = useTrainings({ isActive: true, limit: 200 });
   const trainings = catalogueResult?.data ?? [];
+  const priceByTrainingId = new Map(trainings.map((t) => [t.id, t.unit_price]));
 
   const { data: providersResult } = useQuery({
     queryKey: ["providers-select"],
@@ -166,6 +170,7 @@ export function EnrolmentsTab({
                 <th className="text-left px-4 py-2.5">End</th>
                 <th className="text-left px-4 py-2.5">Cert #</th>
                 <th className="px-4 py-2.5"></th>
+                <th className="px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -185,6 +190,9 @@ export function EnrolmentsTab({
                   <td className="px-4 py-2.5 text-slate-500">{e.start_date ?? "—"}</td>
                   <td className="px-4 py-2.5 text-slate-500">{e.end_date ?? "—"}</td>
                   <td className="px-4 py-2.5 text-slate-500">{e.certificate_no ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <InvoiceCell enrolment={e} onGenerate={setInvoicingEnrolment} />
+                  </td>
                   <td className="px-4 py-2.5 text-right">
                     <Link
                       to={`/candidates/${e.candidate_id}`}
@@ -223,6 +231,34 @@ export function EnrolmentsTab({
           </div>
         </div>
       )}
+
+      {invoicingEnrolment && (
+        <GenerateInvoiceDialog
+          enrolment={invoicingEnrolment}
+          candidateName={invoicingEnrolment.candidate_name}
+          defaultUnitPrice={priceByTrainingId.get(invoicingEnrolment.training_id) ?? null}
+          onClose={() => setInvoicingEnrolment(null)}
+          onSuccess={() => setInvoicingEnrolment(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function InvoiceCell<E extends CandidateTraining>({ enrolment, onGenerate }: { enrolment: E; onGenerate: (e: E) => void }) {
+  const { data } = useXeroInvoicesForEnrolment(enrolment.id);
+  const existing = data?.data?.[0];
+  if (existing) {
+    return (
+      <a href={`https://invoicing.xero.com/edit/${existing.xero_invoice_id}`} target="_blank" rel="noreferrer"
+         className="text-xs text-blue-600 hover:underline">
+        View in Xero
+      </a>
+    );
+  }
+  return (
+    <button onClick={() => onGenerate(enrolment)} className="text-xs text-slate-500 hover:underline">
+      Generate invoice
+    </button>
   );
 }
