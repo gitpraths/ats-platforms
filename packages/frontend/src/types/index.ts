@@ -301,3 +301,29 @@ export interface CandidateTraining {
   training_code: string | null;
   provider_name: string | null;
 }
+
+export interface XeroConnection {
+  tenant_id: string;
+  tenant_name: string | null;
+  connected_by_name: string | null;
+  connected_at: string;
+}
+
+export interface XeroContact {
+  contact_id: string;
+  name: string;
+  email: string | null;
+}
+
+export interface XeroInvoiceRow {
+  id: string;
+  candidate_training_id: string;
+  xero_invoice_id: string;
+  xero_invoice_number: string | null;
+  xero_contact_id: string;
+  status: string;
+  total_amount: string | null;     // pg numerics come back as strings
+  currency_code: string;
+  created_by: string | null;
+  created_at: string;
+}
