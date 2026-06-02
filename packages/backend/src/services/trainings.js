@@ -53,17 +53,17 @@ export async function getTraining(id) {
   return rows[0] || null;
 }
 
-export async function createTraining({ name, code, description, duration_days, provider_id, is_active }) {
+export async function createTraining({ name, code, description, duration_days, provider_id, is_active, unit_price }) {
   const { rows } = await pool.query(
-    `INSERT INTO trainings (name, code, description, duration_days, provider_id, is_active)
-     VALUES ($1, $2, $3, $4, $5, COALESCE($6, true))
+    `INSERT INTO trainings (name, code, description, duration_days, provider_id, is_active, unit_price)
+     VALUES ($1, $2, $3, $4, $5, COALESCE($6, true), $7)
      RETURNING *`,
-    [name, code || null, description || null, duration_days || null, provider_id || null, is_active]
+    [name, code || null, description || null, duration_days || null, provider_id || null, is_active, unit_price ?? null]
   );
   return rows[0];
 }
 
-export async function updateTraining(id, { name, code, description, duration_days, provider_id, is_active }) {
+export async function updateTraining(id, { name, code, description, duration_days, provider_id, is_active, unit_price }) {
   const { rows } = await pool.query(
     `UPDATE trainings
         SET name          = COALESCE($1, name),
@@ -72,10 +72,11 @@ export async function updateTraining(id, { name, code, description, duration_day
             duration_days = COALESCE($4, duration_days),
             provider_id   = COALESCE($5, provider_id),
             is_active     = COALESCE($6, is_active),
+            unit_price    = COALESCE($7, unit_price),
             updated_at    = NOW()
-      WHERE id = $7
+      WHERE id = $8
       RETURNING *`,
-    [name, code, description, duration_days, provider_id, is_active, id]
+    [name, code, description, duration_days, provider_id, is_active, unit_price, id]
   );
   return rows[0] || null;
 }

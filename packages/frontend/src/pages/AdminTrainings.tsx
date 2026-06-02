@@ -140,6 +140,7 @@ function TrainingFormDialog({ training, providers, onClose }: DialogProps) {
   const [durationDays, setDurationDays] = useState<string>(training?.duration_days?.toString() ?? "");
   const [providerId, setProviderId] = useState<string>(training?.provider_id ?? "");
   const [isActive, setIsActive] = useState<boolean>(training?.is_active ?? true);
+  const [unitPrice, setUnitPrice] = useState<string>(training?.unit_price?.toString() ?? "");
   const [error, setError] = useState("");
 
   const create = useCreateTraining();
@@ -157,6 +158,7 @@ function TrainingFormDialog({ training, providers, onClose }: DialogProps) {
       duration_days: durationDays ? Number(durationDays) : null,
       provider_id: providerId || null,
       is_active: isActive,
+      unit_price: unitPrice ? Number(unitPrice) : null,
     };
     const promise = training
       ? update.mutateAsync({ id: training.id, body })
@@ -190,6 +192,15 @@ function TrainingFormDialog({ training, providers, onClose }: DialogProps) {
               <label className="text-xs text-slate-500">Duration (days)</label>
               <input type="number" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
             </div>
+          </div>
+          <div>
+            <label className="text-xs text-slate-500">Unit price (AUD)</label>
+            <input
+              type="number" step="0.01" value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
+              placeholder="e.g. 150.00"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+            />
           </div>
           <div>
             <label className="text-xs text-slate-500">Provider</label>

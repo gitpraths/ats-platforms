@@ -90,7 +90,13 @@ providersRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, r
 // ── PUT /api/providers/:id ───────────────────────────────
 providersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
   try {
-    const { name, contact_name, email, phone, address, is_active } = req.body;
+    const { name, contact_name, email, phone, address, is_active, xero_contact_id } = req.body;
+
+    // xero_contact_id is a special case: callers may pass `null` to UNLINK,
+    // which COALESCE would treat as "keep existing". So we branch on whether
+    // the key is explicitly present in req.body.
+    const xeroProvided = Object.prototype.hasOwnProperty.call(req.body, "xero_contact_id");
+    const xeroSql      = xeroProvided ? "xero_contact_id = $8" : "xero_contact_id = xero_contact_id";
 
     const { rows } = await pool.query(
       `UPDATE providers
@@ -100,9 +106,12 @@ providersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req,
            phone       = COALESCE($4, phone),
            address     = COALESCE($5, address),
            is_active   = COALESCE($6, is_active),
+           ${xeroSql},
            updated_at  = NOW()
        WHERE id = $7 RETURNING *`,
-      [name, contact_name, email, phone, address, is_active, req.params.id]
+      xeroProvided
+        ? [name, contact_name, email, phone, address, is_active, req.params.id, xero_contact_id]
+        : [name, contact_name, email, phone, address, is_active, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Provider not found" });
 

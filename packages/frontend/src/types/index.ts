@@ -27,6 +27,8 @@ export interface Provider {
   onedrive_file_id?: string | null;
   onedrive_sheet_name?: string;
   last_synced_at?: string | null;
+  // Xero integration
+  xero_contact_id?: string | null;
 }
 
 export interface SyncLog {
@@ -278,6 +280,7 @@ export interface Training {
   provider_id: string | null;
   provider_name: string | null;
   is_active: boolean;
+  unit_price: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -299,4 +302,30 @@ export interface CandidateTraining {
   training_name: string;
   training_code: string | null;
   provider_name: string | null;
+}
+
+export interface XeroConnection {
+  tenant_id: string;
+  tenant_name: string | null;
+  connected_by_name: string | null;
+  connected_at: string;
+}
+
+export interface XeroContact {
+  contact_id: string;
+  name: string;
+  email: string | null;
+}
+
+export interface XeroInvoiceRow {
+  id: string;
+  candidate_training_id: string;
+  xero_invoice_id: string;
+  xero_invoice_number: string | null;
+  xero_contact_id: string;
+  status: string;
+  total_amount: string | null;     // pg numerics come back as strings
+  currency_code: string;
+  created_by: string | null;
+  created_at: string;
 }

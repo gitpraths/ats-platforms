@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX, UserCog } from "lucide-react";
 import { api } from "../lib/api";
-import type { Provider, Candidate } from "../types";
+import type { Provider, Candidate, XeroContact } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { useXeroContactSearch, useCreateXeroContact, useLinkProviderToXero } from "../hooks/useXero";
 import { format } from "date-fns";
 import SpreadsheetSyncPanel from "../components/SpreadsheetSyncPanel";
 
@@ -66,6 +68,13 @@ export default function ProviderDetail() {
           </button>
         )}
       </div>
+
+      {/* Xero contact link */}
+      {isAdmin && (
+        <div className="mb-6">
+          <XeroContactSection provider={{ id: provider.id, name: provider.name, xero_contact_id: provider.xero_contact_id ?? null }} />
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-5 gap-4 mb-6">
@@ -147,6 +156,68 @@ export default function ProviderDetail() {
 
       {/* Spreadsheet Sync */}
       <SpreadsheetSyncPanel provider={provider} isAdmin={isAdmin} />
+    </div>
+  );
+}
+
+function XeroContactSection({ provider }: { provider: { id: string; name: string; xero_contact_id: string | null } }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState(provider.name);
+  const link = useLinkProviderToXero();
+  const create = useCreateXeroContact();
+  const { data: searchResult, isFetching } = useXeroContactSearch(open ? search : "");
+  const matches = searchResult?.data ?? [];
+
+  if (provider.xero_contact_id && !open) {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-slate-500">Xero contact:</span>
+        <code className="text-xs text-slate-700">{provider.xero_contact_id}</code>
+        <button onClick={() => setOpen(true)} className="text-xs text-slate-400 hover:underline">change</button>
+        <button onClick={() => link.mutate({ providerId: provider.id, xero_contact_id: null })}
+                className="text-xs text-red-500 hover:underline">unlink</button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className="text-xs text-slate-500 hover:underline">
+        Link to Xero contact
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-3 max-w-md">
+      <div className="flex items-center gap-2 mb-2">
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Xero contacts..."
+               className="flex-1 border border-slate-200 rounded px-2 py-1 text-sm" />
+        <button onClick={() => setOpen(false)} className="text-xs text-slate-400 hover:underline">close</button>
+      </div>
+      {isFetching && <p className="text-xs text-slate-400">Searching...</p>}
+      <ul className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+        {matches.map((c: XeroContact) => (
+          <li key={c.contact_id}>
+            <button onClick={() => link.mutate({ providerId: provider.id, xero_contact_id: c.contact_id }, { onSuccess: () => setOpen(false) })}
+                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-slate-50">
+              <div className="text-slate-900">{c.name}</div>
+              {c.email && <div className="text-xs text-slate-400">{c.email}</div>}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 pt-2 border-t border-slate-100">
+        <button
+          onClick={() => create.mutateAsync({ name: provider.name })
+            .then((c) => link.mutateAsync({ providerId: provider.id, xero_contact_id: c.contact_id }))
+            .then(() => setOpen(false))}
+          disabled={create.isPending || link.isPending}
+          className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+        >
+          Create new Xero contact "{provider.name}"
+        </button>
+      </div>
     </div>
   );
 }

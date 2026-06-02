@@ -9,6 +9,17 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+  constructor(status: number, message: string, body: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.body  = body;
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
@@ -21,7 +32,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const json = await res.json();
   if (!res.ok || !json.success) {
-    throw new Error(json.error || "Request failed");
+    throw new ApiError(res.status, json.error || "Request failed", json);
   }
   return json.data as T;
 }

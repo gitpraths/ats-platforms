@@ -14,6 +14,8 @@ import {
   useDeleteEnrolment,
 } from "../hooks/useCandidateTrainings";
 import { useTrainings } from "../hooks/useTrainings";
+import { GenerateInvoiceDialog } from "../components/training/GenerateInvoiceDialog";
+import { useXeroInvoicesForEnrolment } from "../hooks/useXero";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 
@@ -546,7 +548,7 @@ export default function CandidateDetail() {
       {/* Training history */}
       {id && (
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <TrainingTab candidateId={id} canWrite={canWrite} />
+          <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
         </div>
       )}
 
@@ -603,10 +605,11 @@ export default function CandidateDetail() {
   );
 }
 
-export function TrainingTab({ candidateId, canWrite }: { candidateId: string; canWrite: boolean }) {
+export function TrainingTab({ candidateId, canWrite, candidateName }: { candidateId: string; canWrite: boolean; candidateName: string }) {
   const { data: enrolments = [], isLoading } = useCandidateTrainings(candidateId);
   const [showDialog, setShowDialog] = useState(false);
   const [editingEnrolment, setEditingEnrolment] = useState<CandidateTraining | null>(null);
+  const [invoicingEnrolment, setInvoicingEnrolment] = useState<CandidateTraining | null>(null);
 
   return (
     <div className="space-y-4">
@@ -641,6 +644,7 @@ export function TrainingTab({ candidateId, canWrite }: { candidateId: string; ca
                 <th className="text-left px-4 py-2.5">End</th>
                 <th className="text-left px-4 py-2.5">Cert #</th>
                 <th className="px-4 py-2.5"></th>
+                <th className="px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -669,6 +673,9 @@ export function TrainingTab({ candidateId, canWrite }: { candidateId: string; ca
                       </button>
                     )}
                   </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <InvoiceCell enrolment={e} onGenerate={setInvoicingEnrolment} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -683,7 +690,35 @@ export function TrainingTab({ candidateId, canWrite }: { candidateId: string; ca
           onClose={() => { setShowDialog(false); setEditingEnrolment(null); }}
         />
       )}
+
+      {invoicingEnrolment && (
+        <GenerateInvoiceDialog
+          enrolment={invoicingEnrolment}
+          candidateName={candidateName}
+          defaultUnitPrice={null}
+          onClose={() => setInvoicingEnrolment(null)}
+          onSuccess={() => setInvoicingEnrolment(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function InvoiceCell({ enrolment, onGenerate }: { enrolment: CandidateTraining; onGenerate: (e: CandidateTraining) => void }) {
+  const { data } = useXeroInvoicesForEnrolment(enrolment.id);
+  const existing = data?.data?.[0];
+  if (existing) {
+    return (
+      <a href={`https://invoicing.xero.com/edit/${existing.xero_invoice_id}`} target="_blank" rel="noreferrer"
+         className="text-xs text-blue-600 hover:underline">
+        View in Xero
+      </a>
+    );
+  }
+  return (
+    <button onClick={() => onGenerate(enrolment)} className="text-xs text-slate-500 hover:underline">
+      Generate invoice
+    </button>
   );
 }
 
