@@ -278,6 +278,7 @@ export interface Training {
   provider_id: string | null;
   provider_name: string | null;
   is_active: boolean;
+  unit_price: number | null;
   created_at: string;
   updated_at: string;
 }
