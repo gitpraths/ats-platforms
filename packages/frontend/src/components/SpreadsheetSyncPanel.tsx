@@ -21,7 +21,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showPicker, setShowPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<OneDriveFile | null>(null);
   const [selectedSheet, setSelectedSheet] = useState("Sheet1");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -35,19 +35,15 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   const saveMutation      = useSaveSpreadsheet(provider.id);
   const syncMutation      = useTriggerSync(provider.id);
 
-  const pickerEnabled = showPicker && !selectedFile;
+  const pickerEnabled = showPicker && !selectedFile && activeQuery !== null;
   const { data: files = [], isFetching: filesLoading } = useSearchOneDriveFiles(
-    provider.id, debouncedQuery, pickerEnabled
+    provider.id, activeQuery ?? "", pickerEnabled
   );
   const { data: sheets = [], isLoading: sheetsLoading } = useOneDriveSheets(
     provider.id, showPicker && selectedFile ? selectedFile.id : null
   );
 
-  // Debounce search query 400ms
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(searchQuery), 400);
-    return () => clearTimeout(t);
-  }, [searchQuery]);
+
 
   // After OAuth callback: auto-open picker
   useEffect(() => {
@@ -71,12 +67,18 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
     setShowPicker(true);
     setSelectedFile(null);
     setSearchQuery("");
+    setActiveQuery(null);
   }
 
   function closePicker() {
     setShowPicker(false);
     setSelectedFile(null);
     setSearchQuery("");
+    setActiveQuery(null);
+  }
+
+  function handleSearch() {
+    setActiveQuery(searchQuery.trim());
   }
 
   function handleFileSelect(file: OneDriveFile) {
@@ -224,19 +226,39 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
           {/* Step 1: File search */}
           {!selectedFile && (
             <div className="p-3">
-              <div className="relative mb-3">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search your OneDrive Excel files..."
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                  autoFocus
-                />
+              {/* Search input + button */}
+              <div className="flex gap-2 mb-3">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleSearch()}
+                    placeholder="e.g. Candidates 2026..."
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={handleSearch}
+                  disabled={filesLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 flex-shrink-0"
+                >
+                  {filesLoading
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Search size={14} />}
+                  Search
+                </button>
               </div>
 
-              {filesLoading ? (
+              {activeQuery === null ? (
+                <div className="py-8 text-center">
+                  <Search size={28} className="mx-auto text-slate-200 mb-2" />
+                  <p className="text-sm text-slate-400">Type a filename and click <span className="font-medium text-slate-500">Search</span></p>
+                  <p className="text-xs text-slate-300 mt-1">e.g. "Candidates", "Agency List", "Staff"</p>
+                </div>
+              ) : filesLoading ? (
                 <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
                   <Loader2 size={16} className="animate-spin" />
                   <span className="text-sm">Searching your OneDrive...</span>
@@ -245,7 +267,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                 <div className="py-8 text-center">
                   <FileSpreadsheet size={28} className="mx-auto text-slate-300 mb-2" />
                   <p className="text-sm text-slate-400">
-                    {debouncedQuery ? `No Excel files found for "${debouncedQuery}"` : "No Excel files found in your OneDrive"}
+                    {activeQuery ? `No Excel files found for "${activeQuery}"` : "No Excel files found in your OneDrive"}
                   </p>
                 </div>
               ) : (
