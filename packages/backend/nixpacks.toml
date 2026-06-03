@@ -1,0 +1,13 @@
+[variables]
+NODE_ENV = "production"
+SHARP_IGNORE_GLOBAL_LIBVIPS = "1"
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install --omit=dev"]
+cacheDirectories = ["/root/.npm", "node_modules"]
+
+[start]
+cmd = "node src/server.js"
