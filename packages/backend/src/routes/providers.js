@@ -36,6 +36,47 @@ providersRouter.get("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── GET /api/providers/:id/onedrive/files ────────────────
+providersRouter.get('/:id/onedrive/files', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
+    const provider = rows[0];
+
+    const tokenResult = await getValidAccessToken(provider);
+    if (tokenResult.refreshed) {
+      await pool.query(
+        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
+        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
+      );
+    }
+
+    const q = (req.query.q ?? '').toString().trim();
+    const files = await searchOneDriveFiles(tokenResult.accessToken, q);
+    res.json({ success: true, data: files });
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/providers/:id/onedrive/files/:fileId/sheets ─
+providersRouter.get('/:id/onedrive/files/:fileId/sheets', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
+    const provider = rows[0];
+
+    const tokenResult = await getValidAccessToken(provider);
+    if (tokenResult.refreshed) {
+      await pool.query(
+        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
+        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
+      );
+    }
+
+    const sheets = await listWorksheets(tokenResult.accessToken, req.params.fileId);
+    res.json({ success: true, data: sheets });
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/providers/:id ───────────────────────────────
 providersRouter.get("/:id", async (req, res, next) => {
   try {
@@ -194,47 +235,6 @@ providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'
     );
 
     res.json({ success: true, data: { onedrive_file_id: fileId, onedrive_sheet_name } });
-  } catch (err) { next(err); }
-});
-
-// ── GET /api/providers/:id/onedrive/files ────────────────
-providersRouter.get('/:id/onedrive/files', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
-    const provider = rows[0];
-
-    const tokenResult = await getValidAccessToken(provider);
-    if (tokenResult.refreshed) {
-      await pool.query(
-        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
-        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
-      );
-    }
-
-    const q = (req.query.q ?? '').toString().trim();
-    const files = await searchOneDriveFiles(tokenResult.accessToken, q);
-    res.json({ success: true, data: files });
-  } catch (err) { next(err); }
-});
-
-// ── GET /api/providers/:id/onedrive/files/:fileId/sheets ─
-providersRouter.get('/:id/onedrive/files/:fileId/sheets', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
-    const provider = rows[0];
-
-    const tokenResult = await getValidAccessToken(provider);
-    if (tokenResult.refreshed) {
-      await pool.query(
-        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
-        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
-      );
-    }
-
-    const sheets = await listWorksheets(tokenResult.accessToken, req.params.fileId);
-    res.json({ success: true, data: sheets });
   } catch (err) { next(err); }
 });
 
