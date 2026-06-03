@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
-import { CheckCircle2, XCircle, Loader2, Unplug, RefreshCw, Link2 } from "lucide-react";
 import {
-  useSyncLogs,
-  useMsAuthUrl,
-  useDisconnect,
-  useSaveSpreadsheet,
-  useTriggerSync,
+  CheckCircle2, XCircle, Loader2, Unplug, RefreshCw,
+  Link2, Search, FileSpreadsheet, ChevronRight, ArrowLeft, LayoutGrid,
+} from "lucide-react";
+import {
+  useSyncLogs, useMsAuthUrl, useDisconnect, useSaveSpreadsheet,
+  useTriggerSync, useSearchOneDriveFiles, useOneDriveSheets,
+  type OneDriveFile,
 } from "../hooks/useSpreadsheetSync";
 import type { Provider } from "../types";
 
@@ -18,38 +19,77 @@ interface Props {
 
 export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showFileForm, setShowFileForm] = useState(false);
-  const [fileUrl, setFileUrl] = useState("");
-  const [sheetName, setSheetName] = useState(provider.onedrive_sheet_name || "Sheet1");
+  const [showPicker, setShowPicker] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState<OneDriveFile | null>(null);
+  const [selectedSheet, setSelectedSheet] = useState("Sheet1");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
-  const { data: logs = [], isLoading: logsLoading } = useSyncLogs(provider.id);
-  const connectMutation = useMsAuthUrl(provider.id);
-  const disconnectMutation = useDisconnect(provider.id);
-  const saveMutation = useSaveSpreadsheet(provider.id);
-  const syncMutation = useTriggerSync(provider.id);
-
+  const msConnected = !!provider.ms_user_email;
   const isConnected = !!provider.ms_user_email && !!provider.onedrive_file_id;
 
+  const { data: logs = [], isLoading: logsLoading } = useSyncLogs(provider.id);
+  const connectMutation   = useMsAuthUrl(provider.id);
+  const disconnectMutation = useDisconnect(provider.id);
+  const saveMutation      = useSaveSpreadsheet(provider.id);
+  const syncMutation      = useTriggerSync(provider.id);
+
+  const pickerEnabled = showPicker && !selectedFile;
+  const { data: files = [], isFetching: filesLoading } = useSearchOneDriveFiles(
+    provider.id, debouncedQuery, pickerEnabled
+  );
+  const { data: sheets = [], isLoading: sheetsLoading } = useOneDriveSheets(
+    provider.id, showPicker && selectedFile ? selectedFile.id : null
+  );
+
+  // Debounce search query 400ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // After OAuth callback: auto-open picker
   useEffect(() => {
     if (searchParams.get("connected") === "true") {
-      setShowFileForm(true);
+      setShowPicker(true);
       setSearchParams({});
     }
   }, [searchParams, setSearchParams]);
+
+  // Auto-select first sheet when sheets load
+  useEffect(() => {
+    if (sheets.length > 0) setSelectedSheet(sheets[0].name);
+  }, [sheets]);
 
   async function handleConnect() {
     const result = await connectMutation.mutateAsync();
     window.location.href = result.url;
   }
 
-  async function handleSaveFile() {
-    if (!fileUrl.trim()) return;
+  function openPicker() {
+    setShowPicker(true);
+    setSelectedFile(null);
+    setSearchQuery("");
+  }
+
+  function closePicker() {
+    setShowPicker(false);
+    setSelectedFile(null);
+    setSearchQuery("");
+  }
+
+  function handleFileSelect(file: OneDriveFile) {
+    setSelectedFile(file);
+  }
+
+  async function handleSave() {
+    if (!selectedFile) return;
     await saveMutation.mutateAsync({
-      onedrive_url: fileUrl.trim(),
-      onedrive_sheet_name: sheetName.trim() || "Sheet1",
+      onedrive_file_id: selectedFile.id,
+      onedrive_sheet_name: selectedSheet,
     });
-    setShowFileForm(false);
+    closePicker();
     setSyncMessage("Spreadsheet connected. Run your first sync.");
   }
 
@@ -62,14 +102,29 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   }
 
   return (
-    <div className="border border-slate-200 rounded-lg p-5 mt-6">
-      <h3 className="text-base font-semibold text-slate-800 mb-4">Spreadsheet Sync</h3>
+    <div className="border border-slate-200 rounded-xl p-5 mt-6 bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <LayoutGrid size={16} className="text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-800">Spreadsheet Sync</h3>
+        </div>
+
+        {/* Connected file name + change link */}
+        {isConnected && !showPicker && isAdmin && (
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <FileSpreadsheet size={13} />
+            <span className="text-slate-600">{provider.onedrive_sheet_name ?? "Sheet1"}</span>
+            <button onClick={openPicker} className="text-blue-500 hover:underline">Change</button>
+          </div>
+        )}
+      </div>
 
       {/* Status row */}
       <div className="flex items-center gap-2 mb-4">
         {isConnected ? (
           <>
-            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-green-500 inline-block flex-shrink-0" />
             <span className="text-sm text-slate-700">
               Connected as <span className="font-medium">{provider.ms_user_email}</span>
             </span>
@@ -79,9 +134,16 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
               </span>
             )}
           </>
+        ) : msConnected ? (
+          <>
+            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" />
+            <span className="text-sm text-slate-600">
+              Microsoft account connected — no spreadsheet selected
+            </span>
+          </>
         ) : (
           <>
-            <span className="w-2 h-2 rounded-full bg-slate-300 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-slate-300 inline-block flex-shrink-0" />
             <span className="text-sm text-slate-500">Not connected</span>
           </>
         )}
@@ -89,26 +151,43 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
 
       {/* Action buttons */}
       {isAdmin && (
-        <div className="flex gap-2 mb-4">
-          {!isConnected && !showFileForm && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {/* Step 1: Connect Microsoft account */}
+          {!msConnected && (
             <button
               onClick={handleConnect}
               disabled={connectMutation.isPending}
-              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-[#0078d4] text-white hover:bg-[#006cbe] disabled:opacity-50"
             >
-              {connectMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+              {connectMutation.isPending
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Link2 size={14} />}
               Connect OneDrive
             </button>
           )}
 
-          {isConnected && (
+          {/* Step 2: Pick spreadsheet (ms connected but no file) */}
+          {msConnected && !isConnected && !showPicker && (
+            <button
+              onClick={openPicker}
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-slate-800 text-white hover:bg-slate-900"
+            >
+              <FileSpreadsheet size={14} />
+              Choose Spreadsheet
+            </button>
+          )}
+
+          {/* Step 3: Sync controls */}
+          {isConnected && !showPicker && (
             <>
               <button
                 onClick={handleSync}
                 disabled={syncMutation.isPending}
                 className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50"
               >
-                {syncMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {syncMutation.isPending
+                  ? <Loader2 size={14} className="animate-spin" />
+                  : <RefreshCw size={14} />}
                 Sync Now
               </button>
               <button
@@ -124,51 +203,141 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
         </div>
       )}
 
-      {/* File setup form */}
-      {showFileForm && (
-        <div className="bg-slate-50 border border-slate-200 rounded-md p-4 mb-4 space-y-3">
-          <p className="text-sm font-medium text-slate-700">Paste your OneDrive spreadsheet URL</p>
-          <input
-            type="text"
-            placeholder="https://onedrive.live.com/..."
-            value={fileUrl}
-            onChange={(e) => setFileUrl(e.target.value)}
-            className="w-full text-sm border border-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500 whitespace-nowrap">Sheet name:</label>
-            <input
-              type="text"
-              value={sheetName}
-              onChange={(e) => setSheetName(e.target.value)}
-              className="text-sm border border-slate-300 rounded px-3 py-1.5 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleSaveFile}
-              disabled={saveMutation.isPending || !fileUrl.trim()}
-              className="ml-auto text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {saveMutation.isPending ? "Saving..." : "Save & Connect"}
-            </button>
+      {/* ── File Picker ── */}
+      {showPicker && msConnected && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden mb-4">
+          {/* Picker header */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white">
+            {selectedFile ? (
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800"
+              >
+                <ArrowLeft size={13} /> Back to file list
+              </button>
+            ) : (
+              <span className="text-xs font-medium text-slate-600">Step 1 — Choose a spreadsheet</span>
+            )}
+            <button onClick={closePicker} className="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
           </div>
+
+          {/* Step 1: File search */}
+          {!selectedFile && (
+            <div className="p-3">
+              <div className="relative mb-3">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search your OneDrive Excel files..."
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  autoFocus
+                />
+              </div>
+
+              {filesLoading ? (
+                <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span className="text-sm">Searching your OneDrive...</span>
+                </div>
+              ) : files.length === 0 ? (
+                <div className="py-8 text-center">
+                  <FileSpreadsheet size={28} className="mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-400">
+                    {debouncedQuery ? `No Excel files found for "${debouncedQuery}"` : "No Excel files found in your OneDrive"}
+                  </p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-slate-100 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                  {files.map(file => (
+                    <li key={file.id}>
+                      <button
+                        onClick={() => handleFileSelect(file)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-blue-50 group transition-colors"
+                      >
+                        <FileSpreadsheet size={16} className="text-green-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
+                          {file.last_modified && (
+                            <p className="text-xs text-slate-400">
+                              Modified {format(new Date(file.last_modified), "d MMM yyyy")}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 flex-shrink-0" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Sheet picker */}
+          {selectedFile && (
+            <div className="p-4">
+              {/* Selected file badge */}
+              <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg mb-4">
+                <FileSpreadsheet size={15} className="text-green-600 flex-shrink-0" />
+                <span className="text-sm font-medium text-green-800 truncate flex-1">{selectedFile.name}</span>
+                <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
+              </div>
+
+              <p className="text-xs font-medium text-slate-500 mb-2">Step 2 — Choose a sheet tab</p>
+
+              {sheetsLoading ? (
+                <div className="flex items-center gap-2 text-slate-400 py-3">
+                  <Loader2 size={14} className="animate-spin" />
+                  <span className="text-sm">Loading sheets...</span>
+                </div>
+              ) : sheets.length === 0 ? (
+                <p className="text-sm text-slate-400 py-2">No sheets found in this file.</p>
+              ) : (
+                <select
+                  value={selectedSheet}
+                  onChange={e => setSelectedSheet(e.target.value)}
+                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 mb-4"
+                >
+                  {sheets.map(s => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSave}
+                  disabled={saveMutation.isPending || sheetsLoading || sheets.length === 0}
+                  className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  {saveMutation.isPending ? "Connecting..." : "Save & Connect"}
+                </button>
+              </div>
+
+              {saveMutation.isError && (
+                <p className="text-xs text-red-600 mt-2">{saveMutation.error.message}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Sync result message */}
+      {/* Sync result / error messages */}
       {syncMessage && (
         <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2 mb-4">
           {syncMessage}
         </p>
       )}
-
       {syncMutation.isError && (
         <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 mb-4">
-          Sync failed: {syncMutation.error.message}
+          Sync failed: {(syncMutation.error as Error).message}
         </p>
       )}
 
       {/* Sync history */}
-      {isConnected && (
+      {isConnected && !showPicker && (
         <div>
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Recent Syncs</p>
           {logsLoading ? (
@@ -177,7 +346,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
             <p className="text-xs text-slate-400">No syncs yet.</p>
           ) : (
             <ul className="space-y-1.5">
-              {logs.slice(0, 5).map((log) => (
+              {logs.slice(0, 5).map(log => (
                 <li key={log.id} className="flex items-start gap-2 text-xs text-slate-600">
                   {log.status === 'success' || log.status === 'partial' ? (
                     <CheckCircle2 size={13} className="text-green-500 mt-0.5 shrink-0" />

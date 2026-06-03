@@ -2,6 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import type { SyncLog, SyncResult } from "../types";
 
+export interface OneDriveFile {
+  id: string;
+  name: string;
+  last_modified: string | null;
+}
+
+export interface OneDriveSheet {
+  id: string;
+  name: string;
+}
+
 export function useSyncLogs(providerId: string) {
   return useQuery<SyncLog[]>({
     queryKey: ["sync-logs", providerId],
@@ -29,7 +40,7 @@ export function useDisconnect(providerId: string) {
 
 export function useSaveSpreadsheet(providerId: string) {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, { onedrive_url: string; onedrive_sheet_name: string }>({
+  return useMutation<void, Error, { onedrive_file_id?: string; onedrive_url?: string; onedrive_sheet_name: string }>({
     mutationFn: (body) => api.patch(`/providers/${providerId}/spreadsheet`, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["provider", providerId] });
@@ -45,5 +56,22 @@ export function useTriggerSync(providerId: string) {
       queryClient.invalidateQueries({ queryKey: ["sync-logs", providerId] });
       queryClient.invalidateQueries({ queryKey: ["provider", providerId] });
     },
+  });
+}
+
+export function useSearchOneDriveFiles(providerId: string, query: string, enabled: boolean) {
+  return useQuery<OneDriveFile[]>({
+    queryKey: ["onedrive-files", providerId, query],
+    queryFn: () => api.get<OneDriveFile[]>(`/providers/${providerId}/onedrive/files?q=${encodeURIComponent(query)}`),
+    enabled: !!providerId && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function useOneDriveSheets(providerId: string, fileId: string | null) {
+  return useQuery<OneDriveSheet[]>({
+    queryKey: ["onedrive-sheets", providerId, fileId],
+    queryFn: () => api.get<OneDriveSheet[]>(`/providers/${providerId}/onedrive/files/${fileId}/sheets`),
+    enabled: !!providerId && !!fileId,
   });
 }

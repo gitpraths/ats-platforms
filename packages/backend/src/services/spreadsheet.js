@@ -312,3 +312,26 @@ export async function runSync(provider, triggeredById) {
     throw err;
   }
 }
+
+export async function searchOneDriveFiles(token, query) {
+  const q = (query ?? '').trim() || '.xlsx';
+  const path = `/me/drive/root/search(q='${encodeURIComponent(q)}')?$select=id,name,file,lastModifiedDateTime&$top=25`;
+  const json = await graphGet(token, path);
+  const items = json?.value ?? [];
+  return items
+    .filter(item => item.file && /\.(xlsx|xls|xlsm|xlsb)$/i.test(item.name ?? ''))
+    .slice(0, 20)
+    .map(item => ({
+      id: item.id,
+      name: item.name,
+      last_modified: item.lastModifiedDateTime ?? null,
+    }));
+}
+
+export async function listWorksheets(token, fileId) {
+  const path = `/me/drive/items/${encodeURIComponent(fileId)}/workbook/worksheets?$select=id,name,position`;
+  const json = await graphGet(token, path);
+  return (json?.value ?? [])
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .map(ws => ({ id: ws.id, name: ws.name }));
+}

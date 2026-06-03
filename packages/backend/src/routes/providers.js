@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
-import { runSync, resolveShareUrl } from '../services/spreadsheet.js';
+import { runSync, resolveShareUrl, searchOneDriveFiles, listWorksheets } from '../services/spreadsheet.js';
 import { getValidAccessToken } from '../services/ms-auth.js';
 
 export const providersRouter = Router();
@@ -156,9 +156,10 @@ providersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
 // ── PATCH /api/providers/:id/spreadsheet ─────────────────
 providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
   try {
-    const { onedrive_url, onedrive_sheet_name = 'Sheet1' } = req.body;
-    if (!onedrive_url) {
-      return res.status(400).json({ success: false, error: 'onedrive_url is required' });
+    const { onedrive_url, onedrive_file_id: directFileId, onedrive_sheet_name = 'Sheet1' } = req.body;
+
+    if (!onedrive_url && !directFileId) {
+      return res.status(400).json({ success: false, error: 'onedrive_file_id or onedrive_url is required' });
     }
 
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
@@ -169,20 +170,22 @@ providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'
       return res.status(409).json({ success: false, error: 'Connect OneDrive first before saving spreadsheet' });
     }
 
-    const tokenResult = await getValidAccessToken(provider);
+    let fileId = directFileId || null;
 
-    let fileId;
-    try {
-      fileId = await resolveShareUrl(tokenResult.accessToken, onedrive_url);
-    } catch {
-      return res.status(422).json({ success: false, error: 'Could not resolve OneDrive URL — check the link is valid and the file is accessible' });
-    }
-
-    if (tokenResult.refreshed) {
-      await pool.query(
-        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
-        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
-      );
+    if (!fileId) {
+      // Legacy: resolve from share URL
+      const tokenResult = await getValidAccessToken(provider);
+      if (tokenResult.refreshed) {
+        await pool.query(
+          `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
+          [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
+        );
+      }
+      try {
+        fileId = await resolveShareUrl(tokenResult.accessToken, onedrive_url);
+      } catch {
+        return res.status(422).json({ success: false, error: 'Could not resolve OneDrive URL — check the link is valid and the file is accessible' });
+      }
     }
 
     await pool.query(
@@ -191,6 +194,47 @@ providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'
     );
 
     res.json({ success: true, data: { onedrive_file_id: fileId, onedrive_sheet_name } });
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/providers/:id/onedrive/files ────────────────
+providersRouter.get('/:id/onedrive/files', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
+    const provider = rows[0];
+
+    const tokenResult = await getValidAccessToken(provider);
+    if (tokenResult.refreshed) {
+      await pool.query(
+        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
+        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
+      );
+    }
+
+    const q = (req.query.q ?? '').toString().trim();
+    const files = await searchOneDriveFiles(tokenResult.accessToken, q);
+    res.json({ success: true, data: files });
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/providers/:id/onedrive/files/:fileId/sheets ─
+providersRouter.get('/:id/onedrive/files/:fileId/sheets', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
+    const provider = rows[0];
+
+    const tokenResult = await getValidAccessToken(provider);
+    if (tokenResult.refreshed) {
+      await pool.query(
+        `UPDATE providers SET ms_access_token=$1, ms_refresh_token=$2, ms_token_expiry=$3 WHERE id=$4`,
+        [tokenResult.newAccessToken, tokenResult.newRefreshToken, tokenResult.newExpiry, req.params.id]
+      );
+    }
+
+    const sheets = await listWorksheets(tokenResult.accessToken, req.params.fileId);
+    res.json({ success: true, data: sheets });
   } catch (err) { next(err); }
 });
 
