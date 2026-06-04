@@ -99,6 +99,19 @@ async function graphPatch(token, path, body) {
   }
 }
 
+async function graphPost(token, path, body) {
+  const res = await fetch(`${GRAPH_BASE}${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = Object.assign(new Error(`Graph POST error ${res.status}`), { status: res.status });
+    throw err;
+  }
+  return res.json();
+}
+
 export async function resolveShareUrl(token, shareUrl) {
   const encoded = 'u!' + Buffer.from(shareUrl)
     .toString('base64')
@@ -314,12 +327,38 @@ export async function runSync(provider, triggeredById) {
 }
 
 export async function searchOneDriveFiles(token, query) {
-  const q = (query ?? '').trim() || '.xlsx';
-  // Include parentReference so we get driveId — needed for SharePoint/Teams files
-  const path = `/me/drive/root/search(q='${encodeURIComponent(q)}')?$select=id,name,file,lastModifiedDateTime,parentReference&$top=25`;
+  const q = (query ?? '').trim();
+
+  // ── No query: show recently accessed Excel files ──────────────────────────
+  // /me/drive/recent returns files the user recently opened — reliable and
+  // fast, no search index needed. Perfect for the "pick your file" flow.
+  if (!q) {
+    try {
+      const json = await graphGet(token, `/me/drive/recent?$select=id,name,file,lastModifiedDateTime,remoteItem&$top=50`);
+      const recent = (json?.value ?? [])
+        .filter(item => {
+          const name = item.remoteItem?.name ?? item.name ?? '';
+          return /\.(xlsx|xls|xlsm|xlsb)$/i.test(name);
+        })
+        .slice(0, 20)
+        .map(item => {
+          // remoteItem wraps the actual file when it lives outside the user's drive
+          const r = item.remoteItem ?? item;
+          return {
+            id: r.id,
+            name: r.name,
+            last_modified: r.lastModifiedDateTime ?? item.lastModifiedDateTime ?? null,
+            drive_id: r.parentReference?.driveId ?? item.parentReference?.driveId ?? null,
+          };
+        });
+      if (recent.length > 0) return recent;
+    } catch { /* fall through to search */ }
+  }
+
+  // ── With query: search personal OneDrive by name ──────────────────────────
+  const path = `/me/drive/root/search(q='${encodeURIComponent(q || 'xlsx')}')?$select=id,name,file,lastModifiedDateTime,parentReference&$top=25`;
   const json = await graphGet(token, path);
-  const items = json?.value ?? [];
-  return items
+  return (json?.value ?? [])
     .filter(item => item.file && /\.(xlsx|xls|xlsm|xlsb)$/i.test(item.name ?? ''))
     .slice(0, 20)
     .map(item => ({

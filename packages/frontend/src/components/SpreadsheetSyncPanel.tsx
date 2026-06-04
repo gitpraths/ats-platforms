@@ -35,6 +35,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   const saveMutation      = useSaveSpreadsheet(provider.id);
   const syncMutation      = useTriggerSync(provider.id);
 
+  // activeQuery="" means: load recent files. activeQuery=null means: picker not yet opened.
   const pickerEnabled = showPicker && !selectedFile && activeQuery !== null;
   const { data: files = [], isFetching: filesLoading } = useSearchOneDriveFiles(
     provider.id, activeQuery ?? "", pickerEnabled
@@ -69,7 +70,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
     setShowPicker(true);
     setSelectedFile(null);
     setSearchQuery("");
-    setActiveQuery(null);
+    setActiveQuery(""); // "" = load recent files immediately
   }
 
   function closePicker() {
@@ -254,23 +255,18 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                 </button>
               </div>
 
-              {activeQuery === null ? (
-                <div className="py-8 text-center">
-                  <Search size={28} className="mx-auto text-slate-200 mb-2" />
-                  <p className="text-sm text-slate-400">Type a filename and click <span className="font-medium text-slate-500">Search</span></p>
-                  <p className="text-xs text-slate-300 mt-1">e.g. "Candidates", "Agency List", "Staff"</p>
-                </div>
-              ) : filesLoading ? (
+              {filesLoading ? (
                 <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
                   <Loader2 size={16} className="animate-spin" />
-                  <span className="text-sm">Searching your OneDrive...</span>
+                  <span className="text-sm">{activeQuery ? "Searching your OneDrive..." : "Loading your recent Excel files..."}</span>
                 </div>
               ) : files.length === 0 ? (
                 <div className="py-8 text-center">
                   <FileSpreadsheet size={28} className="mx-auto text-slate-300 mb-2" />
                   <p className="text-sm text-slate-400">
-                    {activeQuery ? `No Excel files found for "${activeQuery}"` : "No Excel files found in your OneDrive"}
+                    {activeQuery ? `No Excel files found for "${activeQuery}"` : "No recent Excel files found"}
                   </p>
+                  {!activeQuery && <p className="text-xs text-slate-300 mt-1">Type a filename above and click Search</p>}
                 </div>
               ) : (
                 <ul className="divide-y divide-slate-100 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white">
