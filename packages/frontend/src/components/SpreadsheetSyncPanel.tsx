@@ -40,7 +40,9 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
     provider.id, activeQuery ?? "", pickerEnabled
   );
   const { data: sheets = [], isLoading: sheetsLoading } = useOneDriveSheets(
-    provider.id, showPicker && selectedFile ? selectedFile.id : null
+    provider.id,
+    showPicker && selectedFile ? selectedFile.id : null,
+    showPicker && selectedFile ? selectedFile.drive_id : null
   );
 
 

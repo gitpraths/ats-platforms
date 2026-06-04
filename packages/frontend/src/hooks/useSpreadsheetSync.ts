@@ -6,6 +6,7 @@ export interface OneDriveFile {
   id: string;
   name: string;
   last_modified: string | null;
+  drive_id: string | null;
 }
 
 export interface OneDriveSheet {
@@ -68,10 +69,13 @@ export function useSearchOneDriveFiles(providerId: string, query: string, enable
   });
 }
 
-export function useOneDriveSheets(providerId: string, fileId: string | null) {
+export function useOneDriveSheets(providerId: string, fileId: string | null, driveId: string | null) {
   return useQuery<OneDriveSheet[]>({
-    queryKey: ["onedrive-sheets", providerId, fileId],
-    queryFn: () => api.get<OneDriveSheet[]>(`/providers/${providerId}/onedrive/files/${fileId}/sheets`),
+    queryKey: ['onedrive-sheets', providerId, fileId, driveId],
+    queryFn: () => {
+      const params = driveId ? `?driveId=${encodeURIComponent(driveId)}` : '';
+      return api.get<OneDriveSheet[]>(`/providers/${providerId}/onedrive/files/${fileId}/sheets${params}`);
+    },
     enabled: !!providerId && !!fileId,
   });
 }

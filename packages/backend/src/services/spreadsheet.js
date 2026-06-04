@@ -315,7 +315,8 @@ export async function runSync(provider, triggeredById) {
 
 export async function searchOneDriveFiles(token, query) {
   const q = (query ?? '').trim() || '.xlsx';
-  const path = `/me/drive/root/search(q='${encodeURIComponent(q)}')?$select=id,name,file,lastModifiedDateTime&$top=25`;
+  // Include parentReference so we get driveId — needed for SharePoint/Teams files
+  const path = `/me/drive/root/search(q='${encodeURIComponent(q)}')?$select=id,name,file,lastModifiedDateTime,parentReference&$top=25`;
   const json = await graphGet(token, path);
   const items = json?.value ?? [];
   return items
@@ -325,11 +326,17 @@ export async function searchOneDriveFiles(token, query) {
       id: item.id,
       name: item.name,
       last_modified: item.lastModifiedDateTime ?? null,
+      drive_id: item.parentReference?.driveId ?? null,
     }));
 }
 
-export async function listWorksheets(token, fileId) {
-  const path = `/me/drive/items/${encodeURIComponent(fileId)}/workbook/worksheets?$select=id,name,position`;
+// driveId is required for SharePoint/Teams files — personal OneDrive files
+// work with /me/drive/items but SharePoint files need /drives/{driveId}/items
+export async function listWorksheets(token, fileId, driveId) {
+  const base = driveId
+    ? `/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(fileId)}`
+    : `/me/drive/items/${encodeURIComponent(fileId)}`;
+  const path = `${base}/workbook/worksheets?$select=id,name,position`;
   const json = await graphGet(token, path);
   return (json?.value ?? [])
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))

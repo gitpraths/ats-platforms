@@ -72,10 +72,13 @@ providersRouter.get('/:id/onedrive/files/:fileId/sheets', requireRole('admin', '
       );
     }
 
-    const sheets = await listWorksheets(tokenResult.accessToken, req.params.fileId);
+    // driveId is needed for SharePoint/Teams files (personal OneDrive works without it)
+    const driveId = (req.query.driveId ?? '').toString().trim() || null;
+    const sheets = await listWorksheets(tokenResult.accessToken, req.params.fileId, driveId);
     res.json({ success: true, data: sheets });
   } catch (err) { next(err); }
 });
+
 
 // ── GET /api/providers/:id ───────────────────────────────
 providersRouter.get("/:id", async (req, res, next) => {
