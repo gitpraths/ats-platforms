@@ -39,7 +39,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   const { data: files = [], isFetching: filesLoading } = useSearchOneDriveFiles(
     provider.id, activeQuery ?? "", pickerEnabled
   );
-  const { data: sheets = [], isLoading: sheetsLoading } = useOneDriveSheets(
+  const { data: sheets = [], isLoading: sheetsLoading, isError: sheetsError } = useOneDriveSheets(
     provider.id,
     showPicker && selectedFile ? selectedFile.id : null,
     showPicker && selectedFile ? selectedFile.drive_id : null
@@ -315,9 +315,8 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                   <Loader2 size={14} className="animate-spin" />
                   <span className="text-sm">Loading sheets...</span>
                 </div>
-              ) : sheets.length === 0 ? (
-                <p className="text-sm text-slate-400 py-2">No sheets found in this file.</p>
-              ) : (
+              ) : sheets.length > 0 ? (
+                // Auto-loaded dropdown from Graph API
                 <select
                   value={selectedSheet}
                   onChange={e => setSelectedSheet(e.target.value)}
@@ -327,12 +326,29 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                     <option key={s.id} value={s.name}>{s.name}</option>
                   ))}
                 </select>
+              ) : (
+                // Fallback: manual input when API can't load sheets
+                <div className="mb-4">
+                  {sheetsError && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mb-2">
+                      ⚠️ Could not auto-load sheet tabs — enter the sheet name manually below.
+                    </p>
+                  )}
+                  <input
+                    type="text"
+                    value={selectedSheet}
+                    onChange={e => setSelectedSheet(e.target.value)}
+                    placeholder="e.g. Sheet1"
+                    className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Type the exact sheet tab name (check the tab at the bottom of your Excel file).</p>
+                </div>
               )}
 
               <div className="flex justify-end">
                 <button
                   onClick={handleSave}
-                  disabled={saveMutation.isPending || sheetsLoading || sheets.length === 0}
+                  disabled={saveMutation.isPending || sheetsLoading || !selectedSheet.trim()}
                   className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
