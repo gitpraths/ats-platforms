@@ -3,7 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   CheckCircle2, XCircle, Loader2, Unplug, RefreshCw,
-  Link2, Search, FileSpreadsheet, ChevronRight, ArrowLeft, LayoutGrid,
+  Link2, Search, FileSpreadsheet, ChevronRight, ArrowLeft,
+  LayoutGrid, FolderOpen, ExternalLink,
 } from "lucide-react";
 import {
   useSyncLogs, useMsAuthUrl, useDisconnect, useSaveSpreadsheet,
@@ -17,26 +18,39 @@ interface Props {
   isAdmin: boolean;
 }
 
+type PickerTab = "browse" | "url";
+
 export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showPicker, setShowPicker] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeQuery, setActiveQuery] = useState<string | null>(null);
+
+  // Picker open/close
+  const [showPicker, setShowPicker]     = useState(false);
+  const [pickerTab, setPickerTab]       = useState<PickerTab>("browse");
+
+  // Browse tab state
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [activeQuery, setActiveQuery]   = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<OneDriveFile | null>(null);
   const [selectedSheet, setSelectedSheet] = useState("Sheet1");
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  // URL tab state
+  const [urlInput, setUrlInput]         = useState("");
+  const [urlSheet, setUrlSheet]         = useState("Sheet1");
+
+  // Misc
+  const [syncMessage, setSyncMessage]   = useState<string | null>(null);
 
   const msConnected = !!provider.ms_user_email;
   const isConnected = !!provider.ms_user_email && !!provider.onedrive_file_id;
 
   const { data: logs = [], isLoading: logsLoading } = useSyncLogs(provider.id);
-  const connectMutation   = useMsAuthUrl(provider.id);
+  const connectMutation    = useMsAuthUrl(provider.id);
   const disconnectMutation = useDisconnect(provider.id);
-  const saveMutation      = useSaveSpreadsheet(provider.id);
-  const syncMutation      = useTriggerSync(provider.id);
+  const saveMutation       = useSaveSpreadsheet(provider.id);
+  const syncMutation       = useTriggerSync(provider.id);
 
-  // activeQuery="" means: load recent files. activeQuery=null means: picker not yet opened.
-  const pickerEnabled = showPicker && !selectedFile && activeQuery !== null;
+  // Browse: load recent files when picker opens (activeQuery=""), search on demand
+  const pickerEnabled = showPicker && pickerTab === "browse" && !selectedFile && activeQuery !== null;
   const { data: files = [], isFetching: filesLoading } = useSearchOneDriveFiles(
     provider.id, activeQuery ?? "", pickerEnabled
   );
@@ -46,12 +60,10 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
     showPicker && selectedFile ? selectedFile.drive_id : null
   );
 
-
-
-  // After OAuth callback: auto-open picker
+  // Auto-open picker after OAuth callback
   useEffect(() => {
     if (searchParams.get("connected") === "true") {
-      setShowPicker(true);
+      openPicker();
       setSearchParams({});
     }
   }, [searchParams, setSearchParams]);
@@ -61,6 +73,8 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
     if (sheets.length > 0) setSelectedSheet(sheets[0].name);
   }, [sheets]);
 
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
   async function handleConnect() {
     const result = await connectMutation.mutateAsync();
     window.location.href = result.url;
@@ -68,31 +82,51 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
 
   function openPicker() {
     setShowPicker(true);
+    setPickerTab("browse");
+    resetBrowse();
+    setUrlInput("");
+    setUrlSheet("Sheet1");
+  }
+
+  function closePicker() {
+    setShowPicker(false);
+    resetBrowse();
+    setUrlInput("");
+    setUrlSheet("Sheet1");
+  }
+
+  function resetBrowse() {
     setSelectedFile(null);
     setSearchQuery("");
     setActiveQuery(""); // "" = load recent files immediately
   }
 
-  function closePicker() {
-    setShowPicker(false);
-    setSelectedFile(null);
-    setSearchQuery("");
-    setActiveQuery(null);
+  function switchTab(tab: PickerTab) {
+    setPickerTab(tab);
+    if (tab === "browse") resetBrowse();
   }
 
   function handleSearch() {
     setActiveQuery(searchQuery.trim());
   }
 
-  function handleFileSelect(file: OneDriveFile) {
-    setSelectedFile(file);
-  }
-
-  async function handleSave() {
+  // Browse: save with file ID
+  async function handleBrowseSave() {
     if (!selectedFile) return;
     await saveMutation.mutateAsync({
       onedrive_file_id: selectedFile.id,
       onedrive_sheet_name: selectedSheet,
+    });
+    closePicker();
+    setSyncMessage("Spreadsheet connected. Run your first sync.");
+  }
+
+  // URL tab: save with share URL
+  async function handleUrlSave() {
+    if (!urlInput.trim()) return;
+    await saveMutation.mutateAsync({
+      onedrive_url: urlInput.trim(),
+      onedrive_sheet_name: urlSheet.trim() || "Sheet1",
     });
     closePicker();
     setSyncMessage("Spreadsheet connected. Run your first sync.");
@@ -106,16 +140,17 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
     );
   }
 
+  // ── Render ───────────────────────────────────────────────────────────────────
+
   return (
     <div className="border border-slate-200 rounded-xl p-5 mt-6 bg-white">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <LayoutGrid size={16} className="text-slate-400" />
           <h3 className="text-sm font-semibold text-slate-800">Spreadsheet Sync</h3>
         </div>
-
-        {/* Connected file name + change link */}
         {isConnected && !showPicker && isAdmin && (
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <FileSpreadsheet size={13} />
@@ -125,7 +160,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
         )}
       </div>
 
-      {/* Status row */}
+      {/* ── Status row ── */}
       <div className="flex items-center gap-2 mb-4">
         {isConnected ? (
           <>
@@ -142,9 +177,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
         ) : msConnected ? (
           <>
             <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" />
-            <span className="text-sm text-slate-600">
-              Microsoft account connected — no spreadsheet selected
-            </span>
+            <span className="text-sm text-slate-600">Microsoft account connected — no spreadsheet selected</span>
           </>
         ) : (
           <>
@@ -154,24 +187,20 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
         )}
       </div>
 
-      {/* Action buttons */}
+      {/* ── Action buttons ── */}
       {isAdmin && (
         <div className="flex flex-wrap gap-2 mb-4">
-          {/* Step 1: Connect Microsoft account */}
           {!msConnected && (
             <button
               onClick={handleConnect}
               disabled={connectMutation.isPending}
               className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-[#0078d4] text-white hover:bg-[#006cbe] disabled:opacity-50"
             >
-              {connectMutation.isPending
-                ? <Loader2 size={14} className="animate-spin" />
-                : <Link2 size={14} />}
+              {connectMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
               Connect OneDrive
             </button>
           )}
 
-          {/* Step 2: Pick spreadsheet (ms connected but no file) */}
           {msConnected && !isConnected && !showPicker && (
             <button
               onClick={openPicker}
@@ -182,7 +211,6 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
             </button>
           )}
 
-          {/* Step 3: Sync controls */}
           {isConnected && !showPicker && (
             <>
               <button
@@ -190,9 +218,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                 disabled={syncMutation.isPending}
                 className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50"
               >
-                {syncMutation.isPending
-                  ? <Loader2 size={14} className="animate-spin" />
-                  : <RefreshCw size={14} />}
+                {syncMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 Sync Now
               </button>
               <button
@@ -208,12 +234,13 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
         </div>
       )}
 
-      {/* ── File Picker ── */}
+      {/* ── Picker ── */}
       {showPicker && msConnected && (
         <div className="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden mb-4">
+
           {/* Picker header */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white">
-            {selectedFile ? (
+            {pickerTab === "browse" && selectedFile ? (
               <button
                 onClick={() => setSelectedFile(null)}
                 className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800"
@@ -221,130 +248,220 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                 <ArrowLeft size={13} /> Back to file list
               </button>
             ) : (
-              <span className="text-xs font-medium text-slate-600">Step 1 — Choose a spreadsheet</span>
+              <span className="text-xs font-medium text-slate-600">Choose a spreadsheet</span>
             )}
             <button onClick={closePicker} className="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
           </div>
 
-          {/* Step 1: File search */}
-          {!selectedFile && (
-            <div className="p-3">
-              {/* Search input + button */}
-              <div className="flex gap-2 mb-3">
-                <div className="relative flex-1">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleSearch()}
-                    placeholder="e.g. Candidates 2026..."
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                    autoFocus
-                  />
-                </div>
-                <button
-                  onClick={handleSearch}
-                  disabled={filesLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 flex-shrink-0"
-                >
-                  {filesLoading
-                    ? <Loader2 size={14} className="animate-spin" />
-                    : <Search size={14} />}
-                  Search
-                </button>
-              </div>
+          {/* ── Tab switcher ── */}
+          <div className="flex border-b border-slate-200 bg-white">
+            <button
+              onClick={() => switchTab("browse")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
+                pickerTab === "browse"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <FolderOpen size={13} />
+              Browse OneDrive
+            </button>
+            <button
+              onClick={() => switchTab("url")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
+                pickerTab === "url"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <ExternalLink size={13} />
+              Paste Share URL
+            </button>
+          </div>
 
-              {filesLoading ? (
-                <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
-                  <Loader2 size={16} className="animate-spin" />
-                  <span className="text-sm">{activeQuery ? "Searching your OneDrive..." : "Loading your recent Excel files..."}</span>
+          {/* ══ TAB: Browse OneDrive ══════════════════════════════════════════ */}
+          {pickerTab === "browse" && (
+            <>
+              {/* Step 1 — file list */}
+              {!selectedFile && (
+                <div className="p-3">
+                  <div className="flex gap-2 mb-3">
+                    <div className="relative flex-1">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleSearch()}
+                        placeholder="Search by filename..."
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                        autoFocus
+                      />
+                    </div>
+                    <button
+                      onClick={handleSearch}
+                      disabled={filesLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 flex-shrink-0"
+                    >
+                      {filesLoading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                      Search
+                    </button>
+                  </div>
+
+                  {filesLoading ? (
+                    <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      <span className="text-sm">{activeQuery ? "Searching..." : "Loading recent Excel files..."}</span>
+                    </div>
+                  ) : files.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <FileSpreadsheet size={28} className="mx-auto text-slate-300 mb-2" />
+                      <p className="text-sm text-slate-400">
+                        {activeQuery ? `No Excel files found for "${activeQuery}"` : "No recent Excel files found"}
+                      </p>
+                      {!activeQuery && (
+                        <p className="text-xs text-slate-300 mt-1">
+                          Type a filename above and click Search<br />
+                          or use the <span className="font-medium">Paste Share URL</span> tab
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-slate-100 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                      {files.map(file => (
+                        <li key={file.id}>
+                          <button
+                            onClick={() => setSelectedFile(file)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-blue-50 group transition-colors"
+                          >
+                            <FileSpreadsheet size={16} className="text-green-600 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
+                              {file.last_modified && (
+                                <p className="text-xs text-slate-400">
+                                  Modified {format(new Date(file.last_modified), "d MMM yyyy")}
+                                </p>
+                              )}
+                            </div>
+                            <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 flex-shrink-0" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              ) : files.length === 0 ? (
-                <div className="py-8 text-center">
-                  <FileSpreadsheet size={28} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-sm text-slate-400">
-                    {activeQuery ? `No Excel files found for "${activeQuery}"` : "No recent Excel files found"}
-                  </p>
-                  {!activeQuery && <p className="text-xs text-slate-300 mt-1">Type a filename above and click Search</p>}
-                </div>
-              ) : (
-                <ul className="divide-y divide-slate-100 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white">
-                  {files.map(file => (
-                    <li key={file.id}>
-                      <button
-                        onClick={() => handleFileSelect(file)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-blue-50 group transition-colors"
-                      >
-                        <FileSpreadsheet size={16} className="text-green-600 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
-                          {file.last_modified && (
-                            <p className="text-xs text-slate-400">
-                              Modified {format(new Date(file.last_modified), "d MMM yyyy")}
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 flex-shrink-0" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
               )}
-            </div>
+
+              {/* Step 2 — sheet picker */}
+              {selectedFile && (
+                <div className="p-4">
+                  <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg mb-4">
+                    <FileSpreadsheet size={15} className="text-green-600 flex-shrink-0" />
+                    <span className="text-sm font-medium text-green-800 truncate flex-1">{selectedFile.name}</span>
+                    <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
+                  </div>
+
+                  <p className="text-xs font-medium text-slate-500 mb-2">Step 2 — Choose a sheet tab</p>
+
+                  {sheetsLoading ? (
+                    <div className="flex items-center gap-2 text-slate-400 py-3">
+                      <Loader2 size={14} className="animate-spin" />
+                      <span className="text-sm">Loading sheets...</span>
+                    </div>
+                  ) : sheets.length > 0 ? (
+                    <select
+                      value={selectedSheet}
+                      onChange={e => setSelectedSheet(e.target.value)}
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 mb-4"
+                    >
+                      {sheets.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="mb-4">
+                      {sheetsError && (
+                        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mb-2">
+                          ⚠️ Could not auto-load sheet tabs — enter the sheet name manually.
+                        </p>
+                      )}
+                      <input
+                        type="text"
+                        value={selectedSheet}
+                        onChange={e => setSelectedSheet(e.target.value)}
+                        placeholder="e.g. Sheet1"
+                        className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                      />
+                      <p className="text-xs text-slate-400 mt-1">
+                        Check the tab name at the bottom of your Excel file.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleBrowseSave}
+                      disabled={saveMutation.isPending || sheetsLoading || !selectedSheet.trim()}
+                      className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                      {saveMutation.isPending ? "Connecting..." : "Save & Connect"}
+                    </button>
+                  </div>
+                  {saveMutation.isError && (
+                    <p className="text-xs text-red-600 mt-2">{saveMutation.error.message}</p>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
-          {/* Step 2: Sheet picker */}
-          {selectedFile && (
-            <div className="p-4">
-              {/* Selected file badge */}
-              <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg mb-4">
-                <FileSpreadsheet size={15} className="text-green-600 flex-shrink-0" />
-                <span className="text-sm font-medium text-green-800 truncate flex-1">{selectedFile.name}</span>
-                <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
+          {/* ══ TAB: Paste Share URL ══════════════════════════════════════════ */}
+          {pickerTab === "url" && (
+            <div className="p-4 space-y-4">
+
+              {/* How to get a share URL hint */}
+              <div className="flex items-start gap-2 p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+                <ExternalLink size={13} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-blue-700">
+                  In OneDrive, right-click your Excel file → <strong>Share</strong> → <strong>Copy Link</strong>, then paste it below.
+                </p>
               </div>
 
-              <p className="text-xs font-medium text-slate-500 mb-2">Step 2 — Choose a sheet tab</p>
+              {/* URL input */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  OneDrive Share URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={e => setUrlInput(e.target.value)}
+                  placeholder="https://1drv.ms/x/s!Abc123... or https://myorg.sharepoint.com/..."
+                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  autoFocus
+                />
+              </div>
 
-              {sheetsLoading ? (
-                <div className="flex items-center gap-2 text-slate-400 py-3">
-                  <Loader2 size={14} className="animate-spin" />
-                  <span className="text-sm">Loading sheets...</span>
-                </div>
-              ) : sheets.length > 0 ? (
-                // Auto-loaded dropdown from Graph API
-                <select
-                  value={selectedSheet}
-                  onChange={e => setSelectedSheet(e.target.value)}
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 mb-4"
-                >
-                  {sheets.map(s => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
-                  ))}
-                </select>
-              ) : (
-                // Fallback: manual input when API can't load sheets
-                <div className="mb-4">
-                  {sheetsError && (
-                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mb-2">
-                      ⚠️ Could not auto-load sheet tabs — enter the sheet name manually below.
-                    </p>
-                  )}
-                  <input
-                    type="text"
-                    value={selectedSheet}
-                    onChange={e => setSelectedSheet(e.target.value)}
-                    placeholder="e.g. Sheet1"
-                    className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Type the exact sheet tab name (check the tab at the bottom of your Excel file).</p>
-                </div>
-              )}
+              {/* Sheet name input */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Sheet Tab Name</label>
+                <input
+                  type="text"
+                  value={urlSheet}
+                  onChange={e => setUrlSheet(e.target.value)}
+                  placeholder="Sheet1"
+                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Exact name of the sheet tab inside the Excel file (e.g. Sheet1, Candidates, Active).
+                </p>
+              </div>
 
               <div className="flex justify-end">
                 <button
-                  onClick={handleSave}
-                  disabled={saveMutation.isPending || sheetsLoading || !selectedSheet.trim()}
+                  onClick={handleUrlSave}
+                  disabled={saveMutation.isPending || !urlInput.trim()}
                   className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
@@ -353,14 +470,14 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
               </div>
 
               {saveMutation.isError && (
-                <p className="text-xs text-red-600 mt-2">{saveMutation.error.message}</p>
+                <p className="text-xs text-red-600">{saveMutation.error.message}</p>
               )}
             </div>
           )}
         </div>
       )}
 
-      {/* Sync result / error messages */}
+      {/* ── Sync messages ── */}
       {syncMessage && (
         <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2 mb-4">
           {syncMessage}
@@ -372,7 +489,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
         </p>
       )}
 
-      {/* Sync history */}
+      {/* ── Sync history ── */}
       {isConnected && !showPicker && (
         <div>
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Recent Syncs</p>
@@ -384,16 +501,16 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
             <ul className="space-y-1.5">
               {logs.slice(0, 5).map(log => (
                 <li key={log.id} className="flex items-start gap-2 text-xs text-slate-600">
-                  {log.status === 'success' || log.status === 'partial' ? (
+                  {log.status === "success" || log.status === "partial" ? (
                     <CheckCircle2 size={13} className="text-green-500 mt-0.5 shrink-0" />
-                  ) : log.status === 'failed' ? (
+                  ) : log.status === "failed" ? (
                     <XCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
                   ) : (
                     <Loader2 size={13} className="text-blue-400 mt-0.5 shrink-0 animate-spin" />
                   )}
                   <span>
                     {format(new Date(log.started_at), "d MMM h:mm a")}
-                    {log.status === 'failed'
+                    {log.status === "failed"
                       ? ` — Failed: ${log.error_message}`
                       : ` — ${log.candidates_created} created, ${log.candidates_updated} updated, ${log.rows_written_back} written back`}
                     {log.rows_skipped > 0 && `, ${log.rows_skipped} skipped`}
