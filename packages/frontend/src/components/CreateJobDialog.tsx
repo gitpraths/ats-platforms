@@ -15,6 +15,7 @@ interface Props {
 const JOB_TYPES   = ["full_time", "part_time", "contract", "internship"] as const;
 const WORK_MODELS = ["onsite", "remote", "hybrid"] as const;
 const CURRENCIES  = ["USD", "EUR", "CAD", "MXN"] as const;
+const WORKVISION_BOARD_URL = "https://workvision.com.au/current-vacancies/";
 
 const LABEL: Record<string, string> = {
   full_time: "Full Time", part_time: "Part Time", contract: "Contract", internship: "Internship",
@@ -56,7 +57,7 @@ const EMPTY: FormState = {
   min_annual_salary: "", max_annual_salary: "", currency_code: "USD",
   experience_years_min: "", deadline: "", cover_letter_required: false,
   recruiter_ids: [],
-  employer_id: "", positions_count: 1, job_board_url: "",
+  employer_id: "", positions_count: 1, job_board_url: WORKVISION_BOARD_URL,
   vacancy_type: "", staff_working_status: "active", end_date: "",
 };
 
@@ -231,10 +232,10 @@ function StepBasics({
             <input
               type="url"
               value={form.job_board_url}
-              onChange={(e) => set("job_board_url", e.target.value)}
-              placeholder="https://seek.com.au/job/12345"
-              className={cls}
+              readOnly
+              className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed"
             />
+            <p className="text-xs text-gray-400 mt-1">Automatically set to WorkVision job board</p>
           </div>
         </div>
       </div>
