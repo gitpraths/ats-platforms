@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { MoreHorizontal, List, Columns } from "lucide-react";
@@ -179,6 +179,7 @@ function PipelineView({
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
+                          style={provided.draggableProps.style as React.CSSProperties}
                           className={`bg-white rounded-lg border p-3 text-sm ${
                             snapshot.isDragging ? "shadow-lg rotate-1" : "shadow-sm"
                           } cursor-grab active:cursor-grabbing`}
