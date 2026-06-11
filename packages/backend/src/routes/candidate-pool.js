@@ -84,7 +84,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          LIMIT 1
        ) la ON true
        WHERE ${tabCondition(tab)} ${searchCondition}
-       ORDER BY c.name ASC
+       ORDER BY c.created_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, limit, offset]
     );
