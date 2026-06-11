@@ -11,25 +11,18 @@ interface CandidateForm {
   phone: string;
   city: string;
   state: string;
-  resume_url: string;
-  linkedin: string;
   notes: string;
   provider_id: string;
-  work_status: string;
   benchmark_hours: string;
   interested_job: string;
-  address_line1: string;
-  postcode: string;
   wage_subsidy: boolean;
   wage_subsidy_amount: string;
 }
 
 const EMPTY: CandidateForm = {
   name: "", email: "", phone: "", city: "", state: "",
-  resume_url: "", linkedin: "", notes: "",
-  provider_id: "", work_status: "job_seeking", benchmark_hours: "",
-  interested_job: "", address_line1: "", postcode: "",
-  wage_subsidy: false, wage_subsidy_amount: "",
+  notes: "", provider_id: "", benchmark_hours: "",
+  interested_job: "", wage_subsidy: false, wage_subsidy_amount: "",
 };
 
 export default function CandidateNew() {
@@ -149,25 +142,7 @@ export default function CandidateNew() {
           </div>
         </div>
 
-        {/* Resume URL */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Resume URL</label>
-          <input
-            {...field("resume_url")}
-            placeholder="https://..."
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
 
-        {/* LinkedIn */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn URL</label>
-          <input
-            {...field("linkedin")}
-            placeholder="https://linkedin.com/in/..."
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
 
         {/* Notes */}
         <div>
@@ -180,34 +155,19 @@ export default function CandidateNew() {
           />
         </div>
 
-        {/* Provider + Work Status */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Provider</label>
-            <select
-              value={form.provider_id}
-              onChange={(e) => setForm((f) => ({ ...f, provider_id: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">No Provider</option>
-              {providers.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Work Status</label>
-            <select
-              value={form.work_status}
-              onChange={(e) => setForm((f) => ({ ...f, work_status: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="job_seeking">Job Seeking</option>
-              <option value="employed">Employed</option>
-              <option value="placed">Placed</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+        {/* Provider */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Provider</label>
+          <select
+            value={form.provider_id}
+            onChange={(e) => setForm((f) => ({ ...f, provider_id: e.target.value }))}
+            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">No Provider</option>
+            {providers.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
 
         {/* Benchmark Hours + Interested Job */}
@@ -264,27 +224,7 @@ export default function CandidateNew() {
           )}
         </div>
 
-        {/* Address */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-            <input
-              value={form.address_line1}
-              onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-              placeholder="123 Main St"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Postcode</label>
-            <input
-              value={form.postcode}
-              onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
-              placeholder="2000"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+
 
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-2">
