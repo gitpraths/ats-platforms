@@ -45,7 +45,13 @@ candidatePoolRouter.get("/", async (req, res, next) => {
     let idx = 1;
 
     const searchCondition = q
-      ? `AND (c.name ILIKE $${idx} OR c.email ILIKE $${idx} OR c.phone ILIKE $${idx})`
+      ? `AND (
+          c.name           ILIKE $${idx} OR
+          c.email          ILIKE $${idx} OR
+          c.phone          ILIKE $${idx} OR
+          pr.name          ILIKE $${idx} OR
+          c.interested_job ILIKE $${idx}
+        )`
       : "";
     if (q) { params.push(`%${q}%`); idx++; }
 
@@ -112,7 +118,14 @@ candidatePoolRouter.get("/", async (req, res, next) => {
     // Tab counts (always against full dataset, search applied)
     const countParams = q ? [`%${q}%`] : [];
     const countSearch = q
-      ? `WHERE (c.name ILIKE $1 OR c.email ILIKE $1 OR c.phone ILIKE $1)`
+      ? `LEFT JOIN providers pr ON pr.id = c.provider_id
+         WHERE (
+           c.name           ILIKE $1 OR
+           c.email          ILIKE $1 OR
+           c.phone          ILIKE $1 OR
+           pr.name          ILIKE $1 OR
+           c.interested_job ILIKE $1
+         )`
       : "";
 
     const { rows: countRows } = await pool.query(
