@@ -103,12 +103,12 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-      isActive ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
+      isActive ? "bg-black/20 text-white" : "text-slate-200 hover:bg-black/10 hover:text-white"
     }`;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-none">
+      <nav style={{ backgroundColor: "#545454" }} className="border-b border-black/20 px-4 py-2 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-1">
           <span className="font-bold text-white mr-3 text-lg">MyATS</span>
           <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
