@@ -101,7 +101,7 @@ export default function PlacementDetail() {
         {canAct && !placement.confirmed_by_employer && (
           <button onClick={() => sendConfirmation.mutate()}
             disabled={sendConfirmation.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-900 disabled:opacity-50">
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#e88e2e] text-white rounded-lg text-sm hover:bg-[#d07d20] disabled:opacity-50">
             <Mail size={14} /> {sendConfirmation.isPending ? "Sending..." : "Send Confirmation Email"}
           </button>
         )}

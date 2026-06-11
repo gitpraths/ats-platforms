@@ -27,7 +27,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
-      <div className="hidden lg:flex w-1/2 bg-slate-900 flex-col items-center justify-center p-16 text-white">
+      <div className="hidden lg:flex w-1/2 bg-[#545454] flex-col items-center justify-center p-16 text-white">
         <div className="max-w-sm w-full">
           <div className="mb-8">
             <span className="text-4xl font-bold tracking-tight">MyATS</span>
@@ -86,7 +86,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50 mt-2"
+              className="w-full bg-[#e88e2e] hover:bg-[#d07d20] text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50 mt-2"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>

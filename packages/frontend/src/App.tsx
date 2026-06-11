@@ -57,7 +57,7 @@ function ProfileMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 hover:bg-slate-800 rounded-lg px-2 py-1.5 transition"
+        className="flex items-center gap-2 hover:bg-black/10 rounded-lg px-2 py-1.5 transition"
       >
         {avatarSrc ? (
           <img src={avatarSrc} alt="avatar" className="w-7 h-7 rounded-full object-cover" />

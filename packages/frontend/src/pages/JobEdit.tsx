@@ -378,7 +378,7 @@ export default function JobEdit() {
           <button
             type="submit"
             disabled={updateJob.isPending}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
           </button>

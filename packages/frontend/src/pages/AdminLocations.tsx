@@ -137,7 +137,7 @@ export default function AdminLocations() {
             <button
               type="submit"
               disabled={createLocation.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-900 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#e88e2e] text-white text-sm rounded-lg hover:bg-[#d07d20] disabled:opacity-50"
             >
               <Plus size={14} /> Add Location
             </button>
@@ -198,7 +198,7 @@ export default function AdminLocations() {
                       <button
                         onClick={saveEdit}
                         disabled={updateLocation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50"
                       >
                         <Check size={13} /> Save
                       </button>

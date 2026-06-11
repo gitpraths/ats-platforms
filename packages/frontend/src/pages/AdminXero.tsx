@@ -82,7 +82,7 @@ export default function AdminXero() {
             <button
               onClick={handleConnect}
               disabled={authUrl.isPending}
-              className="mt-2 px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50"
+              className="mt-2 px-4 py-2 text-sm rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20] disabled:opacity-50"
             >
               {authUrl.isPending ? "Loading..." : "Connect to Xero"}
             </button>

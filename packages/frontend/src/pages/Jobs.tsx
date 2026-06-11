@@ -27,7 +27,7 @@ export default function Jobs() {
         <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Jobs</h1>
         <button
           onClick={() => setDialogOpen(true)}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium"
         >
           <Plus size={16} /> New Job
         </button>

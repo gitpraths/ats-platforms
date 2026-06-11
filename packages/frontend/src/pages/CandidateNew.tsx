@@ -297,7 +297,7 @@ export default function CandidateNew() {
           <button
             type="submit"
             disabled={create.isPending}
-            className="px-5 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50"
+            className="px-5 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50"
           >
             {create.isPending ? "Saving..." : "Add Candidate"}
           </button>

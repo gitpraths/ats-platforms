@@ -129,7 +129,7 @@ export default function Profile() {
           <button
             onClick={() => updateProfile.mutate()}
             disabled={updateProfile.isPending}
-            className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 rounded-lg transition disabled:opacity-50"
+            className="w-full bg-[#e88e2e] hover:bg-[#d07d20] text-white font-medium py-2 rounded-lg transition disabled:opacity-50"
           >
             {updateProfile.isPending ? "Saving..." : "Save Changes"}
           </button>

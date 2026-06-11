@@ -97,7 +97,7 @@ export function GenerateInvoiceDialog({ enrolment, candidateName, defaultUnitPri
       <div className="flex justify-end gap-2">
         <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">Cancel</button>
         <button onClick={() => submit()} disabled={generate.isPending}
-          className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50">
+          className="px-4 py-2 text-sm rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20] disabled:opacity-50">
           {generate.isPending ? "Generating..." : "Generate invoice"}
         </button>
       </div>

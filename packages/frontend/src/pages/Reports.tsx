@@ -196,7 +196,7 @@ export default function Reports() {
         )}
         <button
           onClick={applyFilters}
-          className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900"
+          className="flex items-center gap-1.5 px-4 py-2 bg-[#e88e2e] text-white rounded-lg text-sm font-medium hover:bg-[#d07d20]"
         >
           <Search size={14} /> Search
         </button>

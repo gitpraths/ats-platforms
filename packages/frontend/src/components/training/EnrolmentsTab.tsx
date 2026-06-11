@@ -119,7 +119,7 @@ export function EnrolmentsTab({
                 type="button"
                 onClick={() => toggleStatus(s)}
                 className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  active ? "bg-slate-800 text-white border-slate-800" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  active ? "bg-[#e88e2e] text-white border-slate-800" : "border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {s.replace("_", " ")}

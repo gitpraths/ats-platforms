@@ -133,7 +133,7 @@ export default function EmployerCreate() {
             <label className="text-sm font-medium text-slate-700">Active</label>
             <button type="button" onClick={() => set("is_active", !form.is_active)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                form.is_active ? "bg-slate-800" : "bg-slate-200"
+                form.is_active ? "bg-[#e88e2e]" : "bg-slate-200"
               }`}>
               <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
                 form.is_active ? "translate-x-5" : "translate-x-1"
@@ -148,7 +148,7 @@ export default function EmployerCreate() {
             Cancel
           </Link>
           <button type="submit" disabled={save.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50">
+            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50">
             <Save size={14} /> {save.isPending ? "Saving..." : "Save Employer"}
           </button>
         </div>

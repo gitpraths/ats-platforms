@@ -205,7 +205,7 @@ export function CohortEnrolTab({ onViewEnrolments }: { onViewEnrolments: (f: Pre
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-40"
+            className="px-4 py-2 text-sm rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20] disabled:opacity-40"
           >
             {bulk.isPending ? "Enrolling..." : `Enrol ${selected.length} candidate${selected.length === 1 ? "" : "s"}`}
           </button>
@@ -240,7 +240,7 @@ export function CohortEnrolTab({ onViewEnrolments }: { onViewEnrolments: (f: Pre
                   });
                   resetFlow();
                 }}
-                className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+                className="px-4 py-2 text-sm rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20]"
               >
                 View enrolments
               </button>

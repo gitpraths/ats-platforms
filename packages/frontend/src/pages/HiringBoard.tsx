@@ -83,7 +83,7 @@ function StageDialog({
 
         <div className="flex gap-2 justify-end mt-5">
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-          <button onClick={handleSave} className="px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900">Save</button>
+          <button onClick={handleSave} className="px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20]">Save</button>
         </div>
       </div>
     </div>

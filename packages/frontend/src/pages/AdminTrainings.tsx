@@ -45,7 +45,7 @@ export default function AdminTrainings() {
         {canEdit && (
           <button
             onClick={() => setCreating(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-900"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#e88e2e] text-white text-sm rounded-lg hover:bg-[#d07d20]"
           >
             <Plus size={14} /> New Training
           </button>
@@ -229,7 +229,7 @@ function TrainingFormDialog({ training, providers, onClose }: DialogProps) {
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">Cancel</button>
-              <button type="submit" disabled={create.isPending || update.isPending} className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50">
+              <button type="submit" disabled={create.isPending || update.isPending} className="px-4 py-2 text-sm rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20] disabled:opacity-50">
                 {training ? "Save" : "Create"}
               </button>
             </div>

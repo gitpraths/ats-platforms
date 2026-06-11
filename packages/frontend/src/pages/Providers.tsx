@@ -38,7 +38,7 @@ export default function Providers() {
         {isAdmin && (
           <button
             onClick={() => navigate("/providers/new")}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] text-sm font-medium"
           >
             <Plus size={15} /> Add Provider
           </button>

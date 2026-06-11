@@ -106,7 +106,7 @@ export default function Placements() {
         </div>
         {canCreate && (
           <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] text-sm font-medium">
             <Plus size={15} /> New Placement
           </button>
         )}
@@ -250,7 +250,7 @@ export default function Placements() {
                 <button type="button" onClick={() => setShowCreate(false)}
                   className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50">Cancel</button>
                 <button type="submit" disabled={createPlacement.isPending}
-                  className="px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50">
+                  className="px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50">
                   {createPlacement.isPending ? "Creating..." : "Create Placement"}
                 </button>
               </div>

@@ -204,7 +204,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
           {msConnected && !isConnected && !showPicker && (
             <button
               onClick={openPicker}
-              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-slate-800 text-white hover:bg-slate-900"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-[#e88e2e] text-white hover:bg-[#d07d20]"
             >
               <FileSpreadsheet size={14} />
               Choose Spreadsheet
@@ -216,7 +216,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
               <button
                 onClick={handleSync}
                 disabled={syncMutation.isPending}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-[#e88e2e] text-white hover:bg-[#d07d20] disabled:opacity-50"
               >
                 {syncMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 Sync Now

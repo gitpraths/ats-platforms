@@ -162,14 +162,14 @@ export default function Candidates() {
           <div className="flex border border-slate-200 rounded-lg overflow-hidden">
             <button
               onClick={() => handleViewChange("list")}
-              className={`px-3 py-2 ${view === "list" ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+              className={`px-3 py-2 ${view === "list" ? "bg-[#e88e2e] text-white" : "text-slate-500 hover:bg-slate-50"}`}
               title="List view"
             >
               <List size={15} />
             </button>
             <button
               onClick={() => handleViewChange("card")}
-              className={`px-3 py-2 ${view === "card" ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+              className={`px-3 py-2 ${view === "card" ? "bg-[#e88e2e] text-white" : "text-slate-500 hover:bg-slate-50"}`}
               title="Card view"
             >
               <Grid size={15} />
@@ -178,7 +178,7 @@ export default function Candidates() {
           {canCreate && (
             <button
               onClick={() => navigate("/candidates/new")}
-              className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium"
+              className="bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium"
             >
               + Add Candidate
             </button>
@@ -223,7 +223,7 @@ export default function Candidates() {
               {label}
               <span
                 className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                  isActive ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500"
+                  isActive ? "bg-[#e88e2e] text-white" : "bg-slate-100 text-slate-500"
                 }`}
               >
                 {count}

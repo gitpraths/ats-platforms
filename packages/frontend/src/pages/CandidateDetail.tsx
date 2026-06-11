@@ -343,7 +343,7 @@ export default function CandidateDetail() {
               <button onClick={() => setEditing(false)}
                 className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50">Cancel</button>
               <button onClick={handleSave} disabled={updateCandidate.isPending}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50">
+                className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50">
                 <Check size={14} />
                 {updateCandidate.isPending ? "Saving..." : "Save Changes"}
               </button>
@@ -597,7 +597,7 @@ export default function CandidateDetail() {
               <button onClick={() => { setShowUpload(false); setDocFile(null); setUploadError(""); }}
                 className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50">Cancel</button>
               <button onClick={handleDocUpload}
-                className="px-4 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900">
+                className="px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20]">
                 Upload
               </button>
             </div>
@@ -624,7 +624,7 @@ export function TrainingTab({ candidateId, canWrite, candidateName }: { candidat
         {canWrite && (
           <button
             onClick={() => { setEditingEnrolment(null); setShowDialog(true); }}
-            className="px-3 py-1.5 text-xs rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+            className="px-3 py-1.5 text-xs rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20]"
           >
             + Enrol
           </button>
@@ -839,7 +839,7 @@ function EnrolmentDialog({
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">Cancel</button>
-              <button type="submit" disabled={create.isPending || update.isPending} className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50">
+              <button type="submit" disabled={create.isPending || update.isPending} className="px-4 py-2 text-sm rounded-lg bg-[#e88e2e] text-white hover:bg-[#d07d20] disabled:opacity-50">
                 {enrolment ? "Save" : "Enrol"}
               </button>
             </div>

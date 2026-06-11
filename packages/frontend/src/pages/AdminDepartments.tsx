@@ -82,7 +82,7 @@ export default function AdminDepartments() {
           <button
             type="submit"
             disabled={createDept.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-900 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#e88e2e] text-white text-sm rounded-lg hover:bg-[#d07d20] disabled:opacity-50"
           >
             <Plus size={14} /> Add
           </button>

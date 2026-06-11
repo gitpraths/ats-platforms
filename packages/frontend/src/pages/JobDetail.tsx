@@ -129,7 +129,7 @@ export default function JobDetail() {
             <div className="flex gap-2">
               <button
                 onClick={() => setAssignOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20]"
               >
                 <Users size={14} /> Assign Talent
               </button>
