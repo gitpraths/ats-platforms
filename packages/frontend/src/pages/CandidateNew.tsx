@@ -80,8 +80,11 @@ export default function CandidateNew() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <Link to="/candidates" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4">
-        <ArrowLeft size={15} /> Back to Candidates
+      <Link
+        to="/candidates"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition mb-4"
+      >
+        <ArrowLeft size={14} /> Back to Candidates
       </Link>
 
       <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Add Candidate</h1>
