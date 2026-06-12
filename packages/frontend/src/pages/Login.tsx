@@ -27,26 +27,25 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
-      <div className="hidden lg:flex w-1/2 bg-[#545454] flex-col items-center justify-center p-16 text-white">
+      <div className="hidden lg:flex w-1/2 bg-white flex-col items-center justify-center p-16 border-r border-slate-100">
         <div className="max-w-sm w-full">
           <div className="mb-8">
-            <div className="bg-white rounded-xl px-4 py-3 inline-block mb-2">
-              <img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-12 w-auto" />
-            </div>
-            <p className="mt-3 text-slate-400 text-lg leading-relaxed">
+            <img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-16 w-auto mb-4" />
+            <p className="mt-3 text-slate-500 text-lg leading-relaxed">
               Hire smarter. Move faster.<br />Your entire pipeline in one place.
             </p>
           </div>
           <div className="space-y-4 mt-12">
             {["Manage jobs, candidates & applications", "AI-powered screening & job descriptions", "Kanban hiring board with drag & drop"].map((f) => (
               <div key={f} className="flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
-                <p className="text-slate-400 text-sm">{f}</p>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#e88e2e] flex-shrink-0" />
+                <p className="text-slate-500 text-sm">{f}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
+
 
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center bg-white p-8">
