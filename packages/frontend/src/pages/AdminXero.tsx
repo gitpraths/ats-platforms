@@ -30,7 +30,7 @@ export default function AdminXero() {
   }
 
   function handleDisconnect() {
-    if (!confirm("Disconnect MyATS from Xero? Existing invoice records stay in MyATS.")) return;
+    if (!confirm("Disconnect WorkVision Australia from Xero? Existing invoice records stay in WorkVision Australia.")) return;
     disconnect.mutate();
   }
 
@@ -38,7 +38,7 @@ export default function AdminXero() {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Xero</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Manage the MyATS connection to Xero for invoicing.</p>
+        <p className="text-sm text-slate-500 mt-0.5">Manage the WorkVision Australia connection to Xero for invoicing.</p>
       </div>
 
       {banner && (
@@ -76,7 +76,7 @@ export default function AdminXero() {
             <Plug className="mx-auto text-slate-400" />
             <h2 className="font-semibold text-slate-900">Not connected</h2>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Connect MyATS to a Xero organisation to generate invoices from training enrolments.
+              Connect WorkVision Australia to a Xero organisation to generate invoices from training enrolments.
               You'll need admin access on the Xero side.
             </p>
             <button
