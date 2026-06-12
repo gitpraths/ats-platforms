@@ -69,7 +69,7 @@ export default function JobDetail() {
   });
 
   if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
-  if (!job)      return <p className="p-6 text-red-500">Job not found.</p>;
+  if (!job)      return <p className="p-6 text-red-500">Vacancy not found.</p>;
 
   const isOwner    = job.created_by === user?.id;
   const isRecruiter = (job as any).recruiters?.some((r: any) => r.id === user?.id);
@@ -79,7 +79,7 @@ export default function JobDetail() {
     <div className="p-6 max-w-4xl mx-auto">
       {/* Back */}
       <Link to="/jobs" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4">
-        <ArrowLeft size={15} /> Back to Jobs
+        <ArrowLeft size={15} /> Back to Vacancies
       </Link>
 
       {/* Header */}
@@ -141,7 +141,7 @@ export default function JobDetail() {
               </button>
               {isOwner && (
                 <button
-                  onClick={() => { if (confirm("Delete this job?")) deleteJob.mutate(); }}
+                  onClick={() => { if (confirm("Delete this vacancy?")) deleteJob.mutate(); }}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
                 >
                   <Trash2 size={14} />

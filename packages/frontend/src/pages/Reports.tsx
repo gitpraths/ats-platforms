@@ -314,7 +314,7 @@ export default function Reports() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Staff Member", "Role", "Jobs Assigned", "Active Jobs", "Applications", "Placements"].map((h) => (
+                {["Staff Member", "Role", "Vacancies Assigned", "Active Vacancies", "Applications", "Placements"].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">{h}</th>
                 ))}
               </tr>

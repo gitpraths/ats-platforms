@@ -76,8 +76,8 @@ export default function Employers() {
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Company</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Industry</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Contact</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Open Jobs</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Total Jobs</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Open Vacancies</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Total Vacancies</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
               <th className="px-4 py-3" />
             </tr>

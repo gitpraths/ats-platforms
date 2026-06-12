@@ -71,8 +71,8 @@ export default function EmployerDetail() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: "Open Jobs",       value: employer.open_jobs_count ?? 0 },
-          { label: "Total Jobs",      value: employer.total_jobs_count ?? 0 },
+          { label: "Open Vacancies",   value: employer.open_jobs_count ?? 0 },
+          { label: "Total Vacancies",  value: employer.total_jobs_count ?? 0 },
           { label: "Total Placements",value: employer.total_placements_count ?? 0 },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl shadow-sm p-4 text-center">
@@ -114,10 +114,10 @@ export default function EmployerDetail() {
       {/* Jobs */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="font-semibold text-slate-900 tracking-tight mb-4 flex items-center gap-2">
-          <Briefcase size={15} /> Jobs
+          <Briefcase size={15} /> Vacancies
         </h2>
         {!employer.jobs?.length ? (
-          <p className="text-sm text-slate-400">No jobs linked to this employer.</p>
+          <p className="text-sm text-slate-400">No vacancies linked to this employer.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>

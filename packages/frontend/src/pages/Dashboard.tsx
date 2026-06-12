@@ -88,7 +88,7 @@ export default function Dashboard() {
       {/* Row 1: Core stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open Jobs",           value: openJobs,        icon: Briefcase,    border: "border-l-4 border-blue-500",   iconCls: "text-blue-600",   link: "/jobs" },
+          { label: "Open Vacancies",        value: openJobs,        icon: Briefcase,    border: "border-l-4 border-blue-500",   iconCls: "text-blue-600",   link: "/jobs" },
           { label: "Active Applications", value: activeApps,      icon: ClipboardList,border: "border-l-4 border-purple-500", iconCls: "text-purple-600", link: "/hiring-board" },
           { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  border: "border-l-4 border-green-500",  iconCls: "text-green-600",  link: "/hiring-board" },
           { label: "Total Candidates",    value: totalCandidates, icon: Users,        border: "border-l-4 border-slate-400",  iconCls: "text-slate-500",  link: "/candidates" },
@@ -157,7 +157,7 @@ export default function Dashboard() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Jobs by Status Chart */}
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Jobs by Status</h2>
+          <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Vacancies by Status</h2>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={statusCounts} barSize={40}>
               <XAxis dataKey="status" tick={{ fontSize: 12 }} />

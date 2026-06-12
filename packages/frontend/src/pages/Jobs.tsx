@@ -24,12 +24,12 @@ export default function Jobs() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Jobs</h1>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Vacancies</h1>
         <button
           onClick={() => setDialogOpen(true)}
           className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium"
         >
-          <Plus size={16} /> New Job
+          <Plus size={16} /> New Vacancy
         </button>
       </div>
 
@@ -37,10 +37,10 @@ export default function Jobs() {
         <p className="text-slate-500">Loading...</p>
       ) : jobs.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-slate-400 mb-4">No jobs yet.</p>
+          <p className="text-slate-400 mb-4">No vacancies yet.</p>
           <button onClick={() => setDialogOpen(true)}
             className="text-slate-600 hover:underline text-sm">
-            Create your first job posting
+            Create your first vacancy
           </button>
         </div>
       ) : (

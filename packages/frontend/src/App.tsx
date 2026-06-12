@@ -57,7 +57,7 @@ function ProfileMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 hover:bg-black/10 rounded-lg px-2 py-1.5 transition"
+        className="flex items-center gap-2 hover:bg-slate-800 rounded-lg px-2 py-1.5 transition"
       >
         {avatarSrc ? (
           <img src={avatarSrc} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
@@ -66,7 +66,7 @@ function ProfileMenu() {
             {initials}
           </div>
         )}
-        <span className="text-sm text-slate-200 hidden sm:block">{user?.name}</span>
+        <span className="text-sm text-slate-300 hidden sm:block">{user?.name}</span>
         <ChevronDown size={14} className="text-gray-400" />
       </button>
 
@@ -103,16 +103,16 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-      isActive ? "bg-black/20 text-white" : "text-slate-200 hover:bg-black/10 hover:text-white"
+      isActive ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
     }`;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav style={{ backgroundColor: "#545454" }} className="border-b border-black/20 px-4 py-2 flex items-center justify-between sticky top-0 z-20">
+      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-none">
         <div className="flex items-center gap-1">
           <span className="font-bold text-white mr-3 text-lg">MyATS</span>
           <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
-          <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Jobs</NavLink>
+          <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Vacancies</NavLink>
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Hiring Board</NavLink>
           <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
           {isAdminOrRecruiter && (
