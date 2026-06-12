@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spreadsheet Sync — User Tutorial</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #1e293b;
+    background: #fff;
+  }
+
+  /* ── Cover ─────────────────────────────────────────── */
+  .cover {
+    page-break-after: always;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 70px;
+  }
+  .cover-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 60px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    opacity: 0.8;
+    margin-bottom: 60px;
+    max-width: 520px;
+  }
+  .cover .meta {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-top: auto;
+    padding-top: 40px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-bottom: 28px;
+  }
+
+  /* ── TOC ────────────────────────────────────────────── */
+  .toc-page {
+    page-break-after: always;
+    padding: 60px 70px;
+  }
+  .toc-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 28px; color: #0f172a; }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    font-size: 14px;
+  }
+  .toc-list li:last-child { border-bottom: none; }
+  .toc-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 14px;
+  }
+  .toc-title { flex: 1; font-weight: 500; }
+  .toc-tag {
+    font-size: 11px;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* ── Page layout ────────────────────────────────────── */
+  .page {
+    padding: 50px 70px;
+    page-break-after: always;
+    min-height: 100vh;
+    position: relative;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* ── Step header ────────────────────────────────────── */
+  .step-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-number.green { background: #059669; }
+  .step-number.purple { background: #7c3aed; }
+  .step-number.orange { background: #ea580c; }
+  .step-number.cyan { background: #0891b2; }
+
+  .step-title-group h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+  }
+  .step-title-group .step-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+  }
+
+  /* ── Body text ──────────────────────────────────────── */
+  p { margin-bottom: 14px; color: #334155; }
+  h3 { font-size: 15px; font-weight: 700; margin: 24px 0 10px; color: #0f172a; }
+  h4 { font-size: 13px; font-weight: 700; margin: 16px 0 8px; color: #334155; }
+
+  /* ── Callout boxes ──────────────────────────────────── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 18px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13px;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; font-weight: 700; margin-bottom: 3px; }
+
+  .callout.info { background: #eff6ff; border-left: 4px solid #2563eb; }
+  .callout.info .callout-icon { color: #2563eb; }
+  .callout.info strong { color: #1d4ed8; }
+
+  .callout.warn { background: #fffbeb; border-left: 4px solid #f59e0b; }
+  .callout.warn .callout-icon { color: #f59e0b; }
+  .callout.warn strong { color: #92400e; }
+
+  .callout.success { background: #f0fdf4; border-left: 4px solid #059669; }
+  .callout.success .callout-icon { color: #059669; }
+  .callout.success strong { color: #065f46; }
+
+  .callout.error { background: #fef2f2; border-left: 4px solid #dc2626; }
+  .callout.error .callout-icon { color: #dc2626; }
+  .callout.error strong { color: #991b1b; }
+
+  /* ── UI mockups ─────────────────────────────────────── */
+  .ui-mockup {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 20px 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    background: #fff;
+  }
+  .mockup-bar {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.red { background: #f87171; }
+  .dot.yellow { background: #fbbf24; }
+  .dot.green { background: #34d399; }
+  .mockup-url {
+    margin-left: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: monospace;
+  }
+  .mockup-body { padding: 20px 24px; }
+
+  /* Navigation sidebar mockup */
+  .mockup-layout {
+    display: flex;
+    min-height: 240px;
+  }
+  .mockup-sidebar {
+    width: 180px;
+    background: #0f172a;
+    padding: 16px 12px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    padding: 0 8px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 12px;
+  }
+  .sidebar-item {
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 2px;
+    cursor: default;
+  }
+  .sidebar-item.active {
+    background: rgba(37,99,235,0.3);
+    color: #93c5fd;
+    font-weight: 600;
+  }
+  .mockup-main {
+    flex: 1;
+    padding: 20px 24px;
+    background: #f8fafc;
+  }
+
+  /* Provider card */
+  .provider-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .provider-name { font-size: 14px; font-weight: 600; color: #0f172a; }
+  .provider-meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .badge-active {
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* Detail page header */
+  .detail-header {
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 20px;
+    margin: -20px -24px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .detail-header .back { font-size: 12px; color: #2563eb; }
+  .detail-title { font-size: 16px; font-weight: 700; color: #0f172a; }
+  .detail-subtitle { font-size: 11px; color: #94a3b8; }
+
+  /* Sync panel */
+  .sync-panel {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 16px;
+    background: #fff;
+  }
+  .sync-panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 14px;
+  }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 12px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-dot.connected { background: #22c55e; }
+  .status-dot.disconnected { background: #cbd5e1; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 7px;
+    padding: 7px 14px;
+    cursor: default;
+    border: none;
+  }
+  .btn-blue { background: #2563eb; color: #fff; }
+  .btn-dark { background: #1e293b; color: #fff; }
+  .btn-outline { background: #fff; color: #475569; border: 1px solid #cbd5e1; }
+  .btn-red { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+  .btn-row { display: flex; gap: 8px; margin-bottom: 16px; }
+
+  /* URL input */
+  .url-form {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .url-form label { font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; }
+  .url-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 11px;
+    color: #64748b;
+    background: #fff;
+    margin-bottom: 10px;
+    font-family: monospace;
+  }
+  .url-input.active { border-color: #2563eb; box-shadow: 0 0 0 2px #bfdbfe; }
+
+  /* Sync log */
+  .log-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 11px;
+    color: #475569;
+  }
+  .log-row:last-child { border-bottom: none; }
+  .log-icon { flex-shrink: 0; margin-top: 1px; font-size: 13px; }
+  .log-icon.ok { color: #22c55e; }
+  .log-icon.fail { color: #ef4444; }
+  .log-icon.run { color: #3b82f6; }
+
+  /* MS OAuth screen */
+  .ms-dialog {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    max-width: 340px;
+    margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    text-align: center;
+  }
+  .ms-logo { font-size: 32px; margin-bottom: 12px; }
+  .ms-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .ms-sub { font-size: 12px; color: #64748b; margin-bottom: 20px; }
+  .ms-btn {
+    width: 100%;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .ms-email-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #0f172a;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
+  /* Spreadsheet table */
+  .sheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin: 14px 0;
+  }
+  .sheet-table th {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .sheet-table th.ats-col { background: #059669; }
+  .sheet-table td {
+    border: 1px solid #e2e8f0;
+    padding: 6px 10px;
+    color: #334155;
+    white-space: nowrap;
+  }
+  .sheet-table tr:nth-child(even) td { background: #f8fafc; }
+  .sheet-table td.ats-val { background: #f0fdf4; color: #065f46; font-weight: 500; }
+
+  /* Success banner */
+  .success-banner {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #065f46;
+    margin-bottom: 12px;
+  }
+
+  /* Error banner */
+  .error-banner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #991b1b;
+    margin-bottom: 12px;
+  }
+
+  /* Steps list */
+  .steps-list { list-style: none; counter-reset: step; }
+  .steps-list li {
+    counter-increment: step;
+    position: relative;
+    padding: 12px 14px 12px 50px;
+    margin-bottom: 10px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+  }
+  .steps-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 24px;
+    text-align: center;
+  }
+
+  /* Column reference table */
+  .col-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 14px 0; }
+  .col-table th {
+    background: #1e293b; color: #fff; padding: 8px 12px; text-align: left;
+    font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .col-table td { border-bottom: 1px solid #e2e8f0; padding: 9px 12px; color: #334155; vertical-align: top; }
+  .col-table tr:last-child td { border-bottom: none; }
+  .col-table td:first-child { font-family: monospace; font-size: 11px; color: #2563eb; white-space: nowrap; }
+  .required-tag {
+    display: inline-block;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-left: 4px;
+  }
+  .optional-tag {
+    display: inline-block;
+    background: #f0fdf4;
+    color: #059669;
+    border: 1px solid #bbf7d0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-left: 4px;
+  }
+
+  /* ATS columns */
+  .ats-col-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 14px 0; }
+  .ats-col-table th {
+    background: #064e3b; color: #fff; padding: 8px 12px; text-align: left;
+    font-weight: 600; font-size: 11px;
+  }
+  .ats-col-table td { border-bottom: 1px solid #d1fae5; padding: 9px 12px; color: #334155; vertical-align: top; }
+  .ats-col-table tr:last-child td { border-bottom: none; }
+  .ats-col-table td:first-child { font-family: monospace; font-size: 11px; color: #059669; white-space: nowrap; }
+
+  /* Troubleshoot */
+  .trouble-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .trouble-q {
+    background: #f8fafc;
+    padding: 11px 16px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .trouble-a {
+    padding: 11px 16px;
+    font-size: 13px;
+    color: #475569;
+  }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+
+  /* Highlight */
+  .hl { background: #fef3c7; border-radius: 3px; padding: 0 3px; }
+  .code { font-family: monospace; font-size: 11.5px; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; color: #2563eb; }
+
+  /* Footer */
+  .page-footer {
+    position: fixed;
+    bottom: 28px;
+    left: 70px;
+    right: 70px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 10px;
+  }
+
+  /* Print */
+  @media print {
+    body { font-size: 12.5px; }
+    .page { page-break-after: always; }
+    .cover { page-break-after: always; min-height: 100vh; }
+    .toc-page { page-break-after: always; }
+  }
+
+  /* Highlight box */
+  .highlight-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .highlight-box strong { color: #1d4ed8; }
+
+  /* Two column layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: #fff;
+  }
+  .card h4 { margin-top: 0; font-size: 13px; color: #0f172a; }
+  .card p { font-size: 12px; margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  COVER                                            -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">My ATS Platform</div>
+  <div class="cover-badge">User Guide · May 2026</div>
+  <h1>Spreadsheet Sync<br>Step-by-Step Tutorial</h1>
+  <p class="subtitle">Connect your OneDrive spreadsheet to automatically import and update candidate records — and push live ATS status back to your file.</p>
+  <div class="meta">
+    Version 1.0 &nbsp;·&nbsp; For Admins &amp; Recruiter Admins &nbsp;·&nbsp; My ATS Platform
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  TABLE OF CONTENTS                                -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <h2>Contents</h2>
+  <ul class="toc-list">
+    <li>
+      <span class="toc-num">1</span>
+      <span class="toc-title">What is Spreadsheet Sync?</span>
+      <span class="toc-tag">Overview</span>
+    </li>
+    <li>
+      <span class="toc-num">2</span>
+      <span class="toc-title">Prerequisites &amp; Access</span>
+      <span class="toc-tag">Before you start</span>
+    </li>
+    <li>
+      <span class="toc-num">3</span>
+      <span class="toc-title">Navigate to the Provider</span>
+      <span class="toc-tag">Step 1</span>
+    </li>
+    <li>
+      <span class="toc-num">4</span>
+      <span class="toc-title">Connect Your OneDrive Account</span>
+      <span class="toc-tag">Step 2</span>
+    </li>
+    <li>
+      <span class="toc-num">5</span>
+      <span class="toc-title">Link the Spreadsheet File</span>
+      <span class="toc-tag">Step 3</span>
+    </li>
+    <li>
+      <span class="toc-num">6</span>
+      <span class="toc-title">Run Your First Sync</span>
+      <span class="toc-tag">Step 4</span>
+    </li>
+    <li>
+      <span class="toc-num">7</span>
+      <span class="toc-title">Review Sync Results</span>
+      <span class="toc-tag">Step 5</span>
+    </li>
+    <li>
+      <span class="toc-num">8</span>
+      <span class="toc-title">Verify Sync by Searching Candidates</span>
+      <span class="toc-tag">Step 6</span>
+    </li>
+    <li>
+      <span class="toc-num">9</span>
+      <span class="toc-title">What Gets Written Back to Excel</span>
+      <span class="toc-tag">Reference</span>
+    </li>
+    <li>
+      <span class="toc-num">10</span>
+      <span class="toc-title">Required Spreadsheet Columns</span>
+      <span class="toc-tag">Reference</span>
+    </li>
+    <li>
+      <span class="toc-num">11</span>
+      <span class="toc-title">Disconnecting &amp; Reconnecting</span>
+      <span class="toc-tag">Maintenance</span>
+    </li>
+    <li>
+      <span class="toc-num">12</span>
+      <span class="toc-title">Troubleshooting</span>
+      <span class="toc-tag">Help</span>
+    </li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 1 · OVERVIEW                                -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#0f172a; font-size:20px;">📋</div>
+    <div class="step-title-group">
+      <div class="step-label">Overview</div>
+      <h2>What is Spreadsheet Sync?</h2>
+    </div>
+  </div>
+
+  <p>Spreadsheet Sync lets you connect a provider's existing Microsoft Excel file (stored in OneDrive or SharePoint) directly to the ATS platform. Once connected, you can run a sync at any time to:</p>
+
+  <div class="two-col">
+    <div class="card" style="border-left: 4px solid #2563eb;">
+      <h4>⬇&nbsp; Import candidates</h4>
+      <p>New rows in the spreadsheet are automatically created as candidates in the ATS. Existing candidates are updated with the latest data from Excel.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #059669;">
+      <h4>⬆&nbsp; Write back ATS status</h4>
+      <p>After importing, the system writes current work status, pipeline stage, placement info, and welfare check results into four dedicated ATS columns in your spreadsheet.</p>
+    </div>
+  </div>
+
+  <h3>How it works — at a glance</h3>
+
+  <div style="background:#f8fafc; border-radius:10px; padding:20px 24px; margin:16px 0; border:1px solid #e2e8f0;">
+    <div style="display:flex; align-items:stretch; gap:0; font-size:12px;">
+      <div style="flex:1; text-align:center; padding:12px 8px; background:#eff6ff; border-radius:8px;">
+        <div style="font-size:24px; margin-bottom:6px;">📊</div>
+        <strong style="display:block; color:#1d4ed8; margin-bottom:4px;">OneDrive / SharePoint</strong>
+        <span style="color:#475569;">Your Excel file with jobseeker rows</span>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 14px; color:#94a3b8; font-size:18px;">
+        ⟷
+      </div>
+      <div style="flex:1; text-align:center; padding:12px 8px; background:#f0fdf4; border-radius:8px;">
+        <div style="font-size:24px; margin-bottom:6px;">🔄</div>
+        <strong style="display:block; color:#059669; margin-bottom:4px;">Spreadsheet Sync</strong>
+        <span style="color:#475569;">Reads rows, upserts candidates, writes back ATS columns</span>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 14px; color:#94a3b8; font-size:18px;">
+        ⟷
+      </div>
+      <div style="flex:1; text-align:center; padding:12px 8px; background:#faf5ff; border-radius:8px;">
+        <div style="font-size:24px; margin-bottom:6px;">🗄️</div>
+        <strong style="display:block; color:#7c3aed; margin-bottom:4px;">ATS Database</strong>
+        <span style="color:#475569;">Candidates, applications, placements, welfare checks</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">🔐</span>
+    <div class="callout-body">
+      <strong>Access control</strong>
+      Only users with the <strong>Admin</strong> or <strong>Recruiter Admin</strong> role can connect OneDrive, configure the spreadsheet, and trigger syncs. Regular recruiter accounts can view sync logs but cannot initiate a sync.
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>One spreadsheet per provider</strong>
+      Each provider can have one connected spreadsheet. If a candidate's email already exists in the ATS under a different provider, that row will be skipped during sync.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 2 · PREREQUISITES                           -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#475569; font-size:20px;">✅</div>
+    <div class="step-title-group">
+      <div class="step-label">Before you start</div>
+      <h2>Prerequisites &amp; Access</h2>
+    </div>
+  </div>
+
+  <p>Before running your first sync, make sure the following are in place:</p>
+
+  <ul class="steps-list">
+    <li>
+      <strong>Admin or Recruiter Admin role</strong> — Your ATS account must have one of these roles. Check with your system administrator if unsure.
+    </li>
+    <li>
+      <strong>A provider record exists</strong> — The employment service provider must already be created in the ATS (Providers list page). If not, an Admin can add it first.
+    </li>
+    <li>
+      <strong>Your spreadsheet is in OneDrive or SharePoint</strong> — The Excel file must be stored in a Microsoft 365 OneDrive or SharePoint account that you have access to sign in with.
+    </li>
+    <li>
+      <strong>Required columns are present in the spreadsheet</strong> — At minimum, your spreadsheet must have a header row containing <span class="code">email</span> and <span class="code">jobseeker</span> columns (exact names, case-insensitive). See the full column reference on page 9.
+    </li>
+    <li>
+      <strong>Sharing link for the file</strong> — You will need a copy or share link to the Excel file from OneDrive. You can get this by right-clicking the file in OneDrive and selecting <em>Share → Copy link</em>.
+    </li>
+  </ul>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Which Microsoft account to use?</strong>
+      Sign in with the Microsoft 365 account that owns (or has Editor access to) the spreadsheet. This is usually a work/school Microsoft account, not a personal outlook.com account.
+    </div>
+  </div>
+
+  <h3>Checklist at a glance</h3>
+  <table class="col-table">
+    <thead>
+      <tr><th>Item</th><th>Where to find it</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Admin / Recruiter Admin role</td><td>Your profile → role badge</td><td>☐</td></tr>
+      <tr><td>Provider record in ATS</td><td>Providers page</td><td>☐</td></tr>
+      <tr><td>Excel file in OneDrive / SharePoint</td><td>Your Microsoft 365 account</td><td>☐</td></tr>
+      <tr><td>email &amp; jobseeker columns in row 1</td><td>Your spreadsheet header row</td><td>☐</td></tr>
+      <tr><td>OneDrive share link to the file</td><td>Right-click file → Share → Copy link</td><td>☐</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 3 · STEP 1                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number">1</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 1</div>
+      <h2>Navigate to the Provider</h2>
+    </div>
+  </div>
+
+  <p>Sync is configured per-provider. Start by opening the detail page for the provider whose spreadsheet you want to connect.</p>
+
+  <ol class="steps-list">
+    <li>Log in to the ATS platform with your Admin or Recruiter Admin account.</li>
+    <li>Click <strong>Providers</strong> in the left navigation sidebar.</li>
+    <li>Find the provider in the list and click on their name to open their detail page.</li>
+  </ol>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers</span>
+    </div>
+    <div class="mockup-layout">
+      <div class="mockup-sidebar">
+        <div class="sidebar-logo">My ATS</div>
+        <div class="sidebar-item">Dashboard</div>
+        <div class="sidebar-item">Jobs</div>
+        <div class="sidebar-item">Candidates</div>
+        <div class="sidebar-item">Hiring Board</div>
+        <div class="sidebar-item active">Providers ←</div>
+        <div class="sidebar-item">Users</div>
+      </div>
+      <div class="mockup-main">
+        <div style="font-size:16px; font-weight:700; color:#0f172a; margin-bottom:16px;">Providers</div>
+        <div class="provider-card">
+          <div>
+            <div class="provider-name">Aseana Care</div>
+            <div class="provider-meta">Contact: Jane Smith · 12 candidates</div>
+          </div>
+          <span class="badge-active">Active</span>
+        </div>
+        <div class="provider-card" style="border-color:#bfdbfe; background:#eff6ff;">
+          <div>
+            <div class="provider-name" style="color:#1d4ed8;">MaxSolutions Employment ← click here</div>
+            <div class="provider-meta">Contact: Tom Brown · 8 candidates</div>
+          </div>
+          <span class="badge-active">Active</span>
+        </div>
+        <div class="provider-card">
+          <div>
+            <div class="provider-name">WorkPath Services</div>
+            <div class="provider-meta">Contact: Sarah Lee · 21 candidates</div>
+          </div>
+          <span class="badge-active">Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">🔍</span>
+    <div class="callout-body">
+      <strong>Can't find the provider?</strong>
+      Use the search bar at the top of the Providers page. Type any part of the provider name, contact name, or email address to filter the list.
+    </div>
+  </div>
+
+  <p>Once you click the provider name, you'll arrive at their <strong>Provider Detail</strong> page. Scroll down — the <strong>Spreadsheet Sync</strong> panel appears below the candidate list.</p>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123</span>
+    </div>
+    <div class="mockup-body">
+      <div class="detail-header">
+        <div>
+          <div class="back">← Providers</div>
+          <div class="detail-title">MaxSolutions Employment</div>
+          <div class="detail-subtitle">Active · 8 candidates</div>
+        </div>
+      </div>
+      <div style="color:#94a3b8; font-size:11px; font-style:italic; text-align:center; padding:16px 0; border:1px dashed #e2e8f0; border-radius:8px; margin-bottom:12px;">
+        [ Provider info, stats, and candidate list shown here ]
+      </div>
+      <div class="sync-panel" style="border-color:#bfdbfe; background:#eff6ff;">
+        <div class="sync-panel-title" style="color:#1d4ed8;">Spreadsheet Sync ← scroll down to here</div>
+        <div class="status-row">
+          <span class="status-dot disconnected"></span>
+          <span style="color:#64748b; font-size:12px;">Not connected</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-blue">🔗 Connect OneDrive</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 4 · STEP 2                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number green">2</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 2</div>
+      <h2>Connect Your OneDrive Account</h2>
+    </div>
+  </div>
+
+  <p>The first time you set up sync for a provider, you need to authorise the ATS to access OneDrive on behalf of the provider's Microsoft account.</p>
+
+  <ol class="steps-list">
+    <li>In the <strong>Spreadsheet Sync</strong> panel, click the <strong>Connect OneDrive</strong> button.</li>
+    <li>You will be redirected to the Microsoft login page in the same browser tab.</li>
+    <li>Sign in with the Microsoft 365 account that has access to the provider's Excel file.</li>
+    <li>On the permissions screen, review the requested permissions and click <strong>Accept</strong>.</li>
+    <li>You will be automatically redirected back to the Provider Detail page.</li>
+  </ol>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">login.microsoftonline.com</span>
+    </div>
+    <div class="mockup-body" style="background:#f3f4f6; min-height:260px; display:flex; align-items:center; justify-content:center;">
+      <div class="ms-dialog">
+        <div class="ms-logo">🪟</div>
+        <div class="ms-title">Sign in to Microsoft</div>
+        <div class="ms-sub">My ATS Platform is requesting access to your OneDrive files</div>
+        <input class="ms-email-input" type="text" value="jane@provider.org.au" readonly />
+        <button class="ms-btn">→ Next</button>
+        <div style="font-size:10px; color:#94a3b8; margin-top:10px;">
+          Permissions requested: Files.ReadWrite, User.Read, offline_access
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body">
+      <strong>After successful connection</strong>
+      You'll be redirected back to the Provider Detail page. The Spreadsheet Sync panel will show a green connected dot and the Microsoft email address you used. A form will appear asking for the spreadsheet URL.
+    </div>
+  </div>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123?connected=true</span>
+    </div>
+    <div class="mockup-body">
+      <div class="sync-panel">
+        <div class="sync-panel-title">Spreadsheet Sync</div>
+        <div class="status-row">
+          <span class="status-dot connected"></span>
+          <span style="color:#334155; font-size:12px;">Connected as <strong>jane@provider.org.au</strong></span>
+        </div>
+        <div class="url-form">
+          <label>Paste your OneDrive spreadsheet URL</label>
+          <div class="url-input active" style="color:#94a3b8;">https://onedrive.live.com/...</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+            <span style="font-size:11px; color:#64748b;">Sheet name:</span>
+            <div style="border:1px solid #cbd5e1; border-radius:5px; padding:4px 8px; font-size:11px; color:#334155; width:80px;">Sheet1</div>
+            <button class="btn btn-blue" style="margin-left:auto;">Save &amp; Connect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Pop-up blocked?</strong>
+      If your browser blocks the Microsoft login page, look for a pop-up blocked notification in the browser address bar and allow pop-ups for this site, then click <strong>Connect OneDrive</strong> again.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 5 · STEP 3                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number purple">3</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 3</div>
+      <h2>Link the Spreadsheet File</h2>
+    </div>
+  </div>
+
+  <p>After OneDrive is connected, you need to tell the ATS <em>which</em> Excel file to sync. You do this by pasting a share link from OneDrive.</p>
+
+  <h3>Getting the OneDrive link</h3>
+  <ol class="steps-list">
+    <li>Open OneDrive in a new browser tab and locate the Excel file.</li>
+    <li>Right-click (or click the three-dot menu) on the file.</li>
+    <li>Choose <strong>Share</strong> → then click <strong>Copy link</strong>.</li>
+    <li>Make sure the link is set to <em>Anyone with the link</em> or <em>People in your organisation</em> — not restricted to specific people only.</li>
+  </ol>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>SharePoint links work too</strong>
+      If the file is stored in SharePoint, you can paste the SharePoint file URL directly. The system uses the same Microsoft Graph API to resolve both OneDrive and SharePoint links.
+    </div>
+  </div>
+
+  <h3>Saving the spreadsheet</h3>
+  <ol class="steps-list" style="counter-reset:step 5;">
+    <li>In the ATS, paste the link into the <strong>OneDrive spreadsheet URL</strong> field.</li>
+    <li>If your data is not on the first sheet, update the <strong>Sheet name</strong> field (defaults to <code>Sheet1</code>).</li>
+    <li>Click <strong>Save &amp; Connect</strong>.</li>
+  </ol>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123</span>
+    </div>
+    <div class="mockup-body">
+      <div class="sync-panel">
+        <div class="sync-panel-title">Spreadsheet Sync</div>
+        <div class="status-row">
+          <span class="status-dot connected"></span>
+          <span style="color:#334155; font-size:12px;">Connected as <strong>jane@provider.org.au</strong></span>
+        </div>
+        <div class="url-form" style="border-color:#bfdbfe; background:#eff6ff;">
+          <label style="color:#1d4ed8;">Paste your OneDrive spreadsheet URL</label>
+          <div class="url-input active" style="color:#0f172a;">https://1drv.ms/x/s!AjKlMnOpQrStUvWxYz123456</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+            <span style="font-size:11px; color:#64748b;">Sheet name:</span>
+            <div style="border:1px solid #2563eb; border-radius:5px; padding:4px 8px; font-size:11px; color:#334155; width:80px; box-shadow:0 0 0 2px #bfdbfe;">Jobseekers</div>
+            <button class="btn btn-blue" style="margin-left:auto;">Save &amp; Connect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-banner">
+    ✅ After clicking Save &amp; Connect, the ATS resolves the link to the actual file ID. You'll see the panel update and a message: <em>"Spreadsheet connected. Run your first sync."</em>
+  </div>
+
+  <div class="callout error">
+    <span class="callout-icon">❌</span>
+    <div class="callout-body">
+      <strong>Error: "Could not resolve OneDrive URL"</strong>
+      This means the link is invalid or the signed-in Microsoft account doesn't have access to that file. Double-check the link and make sure the file sharing permissions allow access.
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Sheet name is case-sensitive</strong>
+      The sheet name must exactly match the tab name in your Excel file. <code>Sheet1</code> and <code>sheet1</code> are different. Check the tab at the bottom of your Excel file.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 6 · STEP 4                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number orange">4</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 4</div>
+      <h2>Run Your First Sync</h2>
+    </div>
+  </div>
+
+  <p>With OneDrive connected and the spreadsheet file saved, you're ready to sync. The sync process reads every data row in your spreadsheet and processes it in the ATS.</p>
+
+  <ol class="steps-list">
+    <li>In the Spreadsheet Sync panel, click the <strong>Sync Now</strong> button.</li>
+    <li>The button shows a spinning indicator while the sync is in progress — this usually takes 5–30 seconds depending on the number of rows.</li>
+    <li>When complete, a green result banner appears with a summary of what changed.</li>
+  </ol>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123</span>
+    </div>
+    <div class="mockup-body">
+      <div class="sync-panel">
+        <div class="sync-panel-title">Spreadsheet Sync</div>
+        <div class="status-row">
+          <span class="status-dot connected"></span>
+          <span style="color:#334155; font-size:12px;">Connected as <strong>jane@provider.org.au</strong></span>
+          <span style="color:#94a3b8; font-size:11px; margin-left:8px;">Last synced 31 May 2026, 9:14 am</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-dark">🔄 Sync Now</button>
+          <button class="btn btn-outline">Disconnect</button>
+        </div>
+
+        <!-- During sync -->
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:12px; color:#1d4ed8; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+          <span style="animation:spin 1s linear infinite; display:inline-block;">⏳</span>
+          Syncing… please wait
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>After sync completes</h3>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123</span>
+    </div>
+    <div class="mockup-body">
+      <div class="sync-panel">
+        <div class="sync-panel-title">Spreadsheet Sync</div>
+        <div class="status-row">
+          <span class="status-dot connected"></span>
+          <span style="color:#334155; font-size:12px;">Connected as <strong>jane@provider.org.au</strong></span>
+          <span style="color:#94a3b8; font-size:11px; margin-left:8px;">Last synced just now</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-dark">🔄 Sync Now</button>
+          <button class="btn btn-outline">Disconnect</button>
+        </div>
+        <div class="success-banner">
+          ✅ Sync complete — <strong>5 created</strong>, <strong>3 updated</strong>, <strong>8 written back</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">🔄</span>
+    <div class="callout-body">
+      <strong>When should I run sync?</strong>
+      Sync is manual — run it whenever your spreadsheet has been updated with new or changed jobseeker information. There is no automatic schedule; you control when syncs happen.
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Don't navigate away during sync</strong>
+      The sync runs in the browser tab. If you close the tab or navigate away before it finishes, the sync will still complete on the server, but you won't see the result message. Check the sync history log for the outcome.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 7 · STEP 5                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number cyan">5</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 5</div>
+      <h2>Review Sync Results</h2>
+    </div>
+  </div>
+
+  <p>After each sync, the panel displays a history of the last five sync runs. Use this to verify what happened and catch any issues.</p>
+
+  <h3>Understanding the result numbers</h3>
+
+  <table class="col-table">
+    <thead>
+      <tr><th>Field</th><th>What it means</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Created</td>
+        <td>Rows that did not exist in the ATS — new candidate records were created.</td>
+      </tr>
+      <tr>
+        <td>Updated</td>
+        <td>Rows already in the ATS — the candidate's name, phone, notes, and other fields were refreshed from the spreadsheet.</td>
+      </tr>
+      <tr>
+        <td>Written back</td>
+        <td>Rows where the ATS successfully wrote current status (work status, pipeline stage, placement, welfare check) back into the spreadsheet's ATS columns.</td>
+      </tr>
+      <tr>
+        <td>Skipped</td>
+        <td>Rows that were not processed — either no email AND no name/phone to generate a placeholder, or the email belongs to a candidate under a different provider.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Sync history log</h3>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123</span>
+    </div>
+    <div class="mockup-body">
+      <div class="sync-panel">
+        <div class="sync-panel-title">Spreadsheet Sync</div>
+        <p style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;">Recent Syncs</p>
+        <div class="log-row">
+          <span class="log-icon ok">✓</span>
+          <span>31 May 9:14 am — <strong>5 created</strong>, 3 updated, 8 written back</span>
+        </div>
+        <div class="log-row">
+          <span class="log-icon ok">✓</span>
+          <span>30 May 2:05 pm — 0 created, 2 updated, 2 written back</span>
+        </div>
+        <div class="log-row">
+          <span class="log-icon fail">✗</span>
+          <span>29 May 10:32 am — <span style="color:#dc2626;">Failed: Missing required column: "email"</span></span>
+        </div>
+        <div class="log-row">
+          <span class="log-icon ok">✓</span>
+          <span>28 May 4:17 pm — 12 created, 0 updated, 12 written back, <span style="color:#f59e0b;">2 skipped</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Rows showing as Skipped?</strong>
+      A row is skipped if it has no email, no name, and no phone number (nothing to identify the person), OR if the email is already linked to a candidate under a different provider. Check those rows in your spreadsheet and add missing information.
+    </div>
+  </div>
+
+  <h3>What happens to candidates without an email address?</h3>
+  <p>If a row has no email but does have a name or phone number, the system auto-generates a placeholder email in the format:</p>
+  <div style="background:#f1f5f9; border-radius:6px; padding:10px 14px; font-family:monospace; font-size:12px; color:#334155; margin:12px 0;">
+    <span style="color:#7c3aed;">firstname-lastname</span>-<span style="color:#059669;">0412345678</span>@sync.local
+  </div>
+  <p>This ensures the candidate is still created in the ATS. You can update the email address on the Candidate Detail page later once you have it.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 8 · VERIFY VIA CANDIDATE SEARCH             -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#0891b2; font-size:20px;">6</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 6</div>
+      <h2>Verify Sync by Searching Candidates</h2>
+    </div>
+  </div>
+
+  <p>After the sync completes, the best way to confirm everything worked correctly is to search for one of the candidates from your spreadsheet in the ATS Candidates page and review their profile.</p>
+
+  <h3>How to search for a synced candidate</h3>
+  <ol class="steps-list">
+    <li>Click <strong>Candidates</strong> in the left navigation sidebar.</li>
+    <li>Type the candidate's name or email address into the <strong>search bar</strong> at the top of the page.</li>
+    <li>The list filters in real time — click the candidate's card to open their profile.</li>
+  </ol>
+
+  <!-- Candidates list mockup -->
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/candidates</span>
+    </div>
+    <div class="mockup-layout">
+      <div class="mockup-sidebar">
+        <div class="sidebar-logo">My ATS</div>
+        <div class="sidebar-item">Dashboard</div>
+        <div class="sidebar-item">Jobs</div>
+        <div class="sidebar-item active">Candidates ←</div>
+        <div class="sidebar-item">Hiring Board</div>
+        <div class="sidebar-item">Providers</div>
+        <div class="sidebar-item">Users</div>
+      </div>
+      <div class="mockup-main">
+        <div style="font-size:15px; font-weight:700; color:#0f172a; margin-bottom:12px;">Candidates</div>
+        <!-- Search bar -->
+        <div style="display:flex; align-items:center; background:#fff; border:1.5px solid #2563eb; border-radius:8px; padding:7px 12px; margin-bottom:14px; gap:8px; box-shadow:0 0 0 3px #bfdbfe;">
+          <span style="color:#94a3b8; font-size:14px;">🔍</span>
+          <span style="font-size:12px; color:#0f172a; font-weight:500;">John Doe</span>
+        </div>
+        <!-- Result card -->
+        <div class="provider-card" style="border-color:#bfdbfe; background:#eff6ff;">
+          <div>
+            <div class="provider-name" style="color:#1d4ed8;">John Doe ← click to open</div>
+            <div class="provider-meta">john.doe@email.com · MaxSolutions Employment · Added via sync</div>
+          </div>
+          <span class="badge-active">job_seeking</span>
+        </div>
+        <div class="provider-card" style="opacity:0.4;">
+          <div>
+            <div class="provider-name">Sara Lee</div>
+            <div class="provider-meta">sara.lee@mail.au · MaxSolutions Employment</div>
+          </div>
+          <span class="badge-active">placed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>What to check on the Candidate Detail page</h3>
+  <p>Open the candidate and verify the following fields match your spreadsheet:</p>
+
+  <!-- Candidate detail mockup -->
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/candidates/xyz-789</span>
+    </div>
+    <div class="mockup-body">
+      <div class="detail-header">
+        <div>
+          <div class="back">← Candidates</div>
+          <div class="detail-title">John Doe</div>
+          <div class="detail-subtitle">MaxSolutions Employment · Synced 31 May 2026, 9:14 am</div>
+        </div>
+        <span class="badge-active">job_seeking</span>
+      </div>
+
+      <!-- Profile fields grid -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#94a3b8; margin-bottom:3px;">Email</div>
+          <div style="font-size:12px; color:#0f172a;">john.doe@email.com ✓</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#94a3b8; margin-bottom:3px;">Phone</div>
+          <div style="font-size:12px; color:#0f172a;">0412 111 222 ✓</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#94a3b8; margin-bottom:3px;">Interested Role</div>
+          <div style="font-size:12px; color:#0f172a;">Warehouse ✓</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#94a3b8; margin-bottom:3px;">Transport</div>
+          <div style="font-size:12px; color:#0f172a;">Car ✓</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#94a3b8; margin-bottom:3px;">Provider</div>
+          <div style="font-size:12px; color:#0f172a;">MaxSolutions Employment ✓</div>
+        </div>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:7px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#059669; margin-bottom:3px;">Work Status</div>
+          <div style="font-size:12px; color:#065f46; font-weight:600;">job_seeking ✓</div>
+        </div>
+      </div>
+
+      <!-- Notes section -->
+      <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:7px; padding:10px 14px;">
+        <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#92400e; margin-bottom:4px;">Notes (from spreadsheet)</div>
+        <div style="font-size:12px; color:#78350f;">Strong background in logistics. Available immediately. [EC: Jane Smith]</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 8b · VERIFY — WHAT TO CHECK                 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#0891b2; font-size:20px;">6</div>
+    <div class="step-title-group">
+      <div class="step-label">Step 6 (continued)</div>
+      <h2>Verify Sync by Searching Candidates</h2>
+    </div>
+  </div>
+
+  <h3>Verification checklist</h3>
+  <p>Use the table below as a quick checklist when spot-checking a synced candidate:</p>
+
+  <table class="col-table">
+    <thead>
+      <tr><th>What to check</th><th>Where to find it</th><th>Expected result</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Candidate exists in ATS</td>
+        <td>Candidates page → search by name or email</td>
+        <td>Candidate card appears in search results</td>
+      </tr>
+      <tr>
+        <td>Name matches spreadsheet</td>
+        <td>Candidate Detail → top of profile</td>
+        <td>Same as the <code>jobseeker</code> column in Excel</td>
+      </tr>
+      <tr>
+        <td>Email address</td>
+        <td>Candidate Detail → Email field</td>
+        <td>Same as <code>email</code> column, or <code>name-phone@sync.local</code> if email was blank</td>
+      </tr>
+      <tr>
+        <td>Phone number</td>
+        <td>Candidate Detail → Phone field</td>
+        <td>Same as <code>mobile</code> column in Excel</td>
+      </tr>
+      <tr>
+        <td>Provider is linked</td>
+        <td>Candidate Detail → Provider field</td>
+        <td>Shows the correct provider name (e.g. MaxSolutions Employment)</td>
+      </tr>
+      <tr>
+        <td>Interested role / job type</td>
+        <td>Candidate Detail → Interested Job field</td>
+        <td>Same as <code>ideal roles</code> column</td>
+      </tr>
+      <tr>
+        <td>Transport type</td>
+        <td>Candidate Detail → Transport field</td>
+        <td>Car / Public Transport / Both, parsed from <code>car or pt?</code> column</td>
+      </tr>
+      <tr>
+        <td>Notes populated</td>
+        <td>Candidate Detail → Notes section</td>
+        <td>Contains experience comments and any EC/WV annotations from the spreadsheet</td>
+      </tr>
+      <tr>
+        <td>Wage subsidy info</td>
+        <td>Candidate Detail → Wage Subsidy fields</td>
+        <td>Parsed dollar amount and benchmark hours from the <code>wage sub</code> column</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Verifying the ATS columns were written back to Excel</h3>
+  <p>Open your Excel file in OneDrive and scroll to the right — you should see four new columns added (or updated) by the sync:</p>
+
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body">
+      <strong>Columns to look for in your spreadsheet</strong>
+      <code style="display:inline-block; margin:2px 4px;">Work Status (ATS)</code>
+      <code style="display:inline-block; margin:2px 4px;">Pipeline Stage (ATS)</code>
+      <code style="display:inline-block; margin:2px 4px;">Placement (ATS)</code>
+      <code style="display:inline-block; margin:2px 4px;">Welfare Check (ATS)</code>
+      <br/>These will be blank for brand-new candidates (no applications or placements yet) and will populate as activity is recorded in the ATS.
+    </div>
+  </div>
+
+  <h3>What if the candidate is missing or has wrong data?</h3>
+
+  <div class="trouble-item">
+    <div class="trouble-q">Candidate doesn't appear in search</div>
+    <div class="trouble-a">
+      Check the sync log — if the row was skipped (shown in the Skipped count), it means the row had no email, name, or phone. Go back to the spreadsheet, add the missing data, and run the sync again.
+    </div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">Candidate exists but is linked to a different provider</div>
+    <div class="trouble-a">
+      Open the candidate and check the Provider field. If it shows a different provider, the email address was already registered under that provider before this sync. The row will have been skipped — you'll need to reconcile the duplicate in the ATS manually.
+    </div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">Fields are blank or have old values</div>
+    <div class="trouble-a">
+      The sync updates candidates based on the current spreadsheet content. If the field is blank in Excel, it will be synced as blank. Check your spreadsheet row and ensure the data is filled in, then run the sync again.
+    </div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">Email shows as name-phone@sync.local</div>
+    <div class="trouble-a">
+      The spreadsheet row had no email address, so a placeholder was generated. You can edit the candidate in the ATS and update the email to the real address once you have it. The next sync will recognise the real email and update the record.
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Spot-check tip</strong>
+      After a large sync (50+ rows), pick 3–5 candidates at random from different parts of the spreadsheet — one near the top, one in the middle, one near the bottom — and verify each one. This catches any column-mapping issues that affect a whole section of the file.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 9 · ATS WRITE-BACK                          -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#059669; font-size:20px;">↑</div>
+    <div class="step-title-group">
+      <div class="step-label">Reference</div>
+      <h2>What Gets Written Back to Excel</h2>
+    </div>
+  </div>
+
+  <p>After importing candidates, the sync automatically adds (or updates) four ATS columns in your spreadsheet. These columns are created by the system if they don't already exist.</p>
+
+  <table class="ats-col-table">
+    <thead>
+      <tr><th>Column name added to spreadsheet</th><th>What it contains</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Work Status (ATS)</td>
+        <td>The candidate's current work status in the ATS, e.g. <em>job_seeking</em>, <em>employed</em>, <em>placed</em>, <em>inactive</em>.</td>
+      </tr>
+      <tr>
+        <td>Pipeline Stage (ATS)</td>
+        <td>Their current stage in the most recent job application pipeline, e.g. <em>applied</em>, <em>screening</em>, <em>interview</em>, <em>offer</em>, <em>hired</em>.</td>
+      </tr>
+      <tr>
+        <td>Placement (ATS)</td>
+        <td>Employer name and placement start date for their most recent placement, e.g. <em>Aldi Supermarkets – 2026-04-14</em>.</td>
+      </tr>
+      <tr>
+        <td>Welfare Check (ATS)</td>
+        <td>The type of the most recent completed welfare check, e.g. <em>4-week</em>, <em>12-week</em>, <em>26-week</em>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>How the spreadsheet looks after sync</h3>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">OneDrive — Jobseekers.xlsx</span>
+    </div>
+    <div class="mockup-body" style="overflow-x:auto;">
+      <table class="sheet-table">
+        <thead>
+          <tr>
+            <th>email</th>
+            <th>jobseeker</th>
+            <th>mobile</th>
+            <th>ideal roles</th>
+            <th>car or pt?</th>
+            <th class="ats-col">Work Status (ATS)</th>
+            <th class="ats-col">Pipeline Stage (ATS)</th>
+            <th class="ats-col">Placement (ATS)</th>
+            <th class="ats-col">Welfare Check (ATS)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>john.doe@email.com</td>
+            <td>John Doe</td>
+            <td>0412 111 222</td>
+            <td>Warehouse</td>
+            <td>Car</td>
+            <td class="ats-val">placed</td>
+            <td class="ats-val">hired</td>
+            <td class="ats-val">Aldi – 2026-04-14</td>
+            <td class="ats-val">4-week</td>
+          </tr>
+          <tr>
+            <td>sara.lee@mail.au</td>
+            <td>Sara Lee</td>
+            <td>0423 333 444</td>
+            <td>Admin</td>
+            <td>PT</td>
+            <td class="ats-val">job_seeking</td>
+            <td class="ats-val">interview</td>
+            <td class="ats-val"></td>
+            <td class="ats-val"></td>
+          </tr>
+          <tr>
+            <td>mike.t@work.com</td>
+            <td>Mike Tran</td>
+            <td>0434 555 666</td>
+            <td>Retail</td>
+            <td>Both</td>
+            <td class="ats-val">employed</td>
+            <td class="ats-val">hired</td>
+            <td class="ats-val">Woolworths – 2026-03-01</td>
+            <td class="ats-val">12-week</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">📌</span>
+    <div class="callout-body">
+      <strong>Columns are created automatically</strong>
+      If the four ATS columns don't exist in your spreadsheet yet, the system creates them at the end of the existing columns the first time you run a sync. You don't need to add them manually.
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Do not rename or delete the ATS columns</strong>
+      If you rename the four ATS columns, the next sync will treat them as missing and create new columns alongside them. The old (renamed) columns will be left as-is.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 9 · COLUMN REFERENCE                        -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#7c3aed; font-size:20px;">📄</div>
+    <div class="step-title-group">
+      <div class="step-label">Reference</div>
+      <h2>Required Spreadsheet Columns</h2>
+    </div>
+  </div>
+
+  <p>Your spreadsheet's first row must be a header row. The sync engine reads column names <strong>case-insensitively</strong> and maps them to candidate fields. Below is the full column reference.</p>
+
+  <h3>Required columns</h3>
+  <table class="col-table">
+    <thead><tr><th>Column name</th><th>Maps to</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>email <span class="required-tag">REQUIRED</span></td>
+        <td>Candidate email</td>
+        <td>Used as the unique identifier. If missing, a placeholder is generated from name + phone.</td>
+      </tr>
+      <tr>
+        <td>jobseeker <span class="required-tag">REQUIRED</span></td>
+        <td>Candidate full name</td>
+        <td>The person's full name. Also used for the placeholder email if email is blank.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Recognised optional columns</h3>
+  <table class="col-table">
+    <thead><tr><th>Column name</th><th>Maps to</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>mobile <span class="optional-tag">OPTIONAL</span></td>
+        <td>Phone number</td>
+        <td>Stored as-is. Also used in placeholder email generation.</td>
+      </tr>
+      <tr>
+        <td>ideal roles <span class="optional-tag">OPTIONAL</span></td>
+        <td>Interested job type</td>
+        <td>Free-text field for preferred role or industry.</td>
+      </tr>
+      <tr>
+        <td>car or pt? <span class="optional-tag">OPTIONAL</span></td>
+        <td>Transport type</td>
+        <td>Accepts: <code>car</code>, <code>pt</code> / <code>public transport</code>, or any combination for <em>both</em>.</td>
+      </tr>
+      <tr>
+        <td>wage sub - max $ &amp; hours <span class="optional-tag">OPTIONAL</span></td>
+        <td>Wage subsidy details</td>
+        <td>Parses dollar amount (e.g. <code>$10,000</code>) and hours (e.g. <code>520 hrs</code>).</td>
+      </tr>
+      <tr>
+        <td>comments - experience, hours etc <span class="optional-tag">OPTIONAL</span></td>
+        <td>Candidate notes</td>
+        <td>Free-text. Appended to the candidate's notes field.</td>
+      </tr>
+      <tr>
+        <td>ec <span class="optional-tag">OPTIONAL</span></td>
+        <td>EC reference (notes)</td>
+        <td>Appended to notes as <code>[EC: value]</code>.</td>
+      </tr>
+      <tr>
+        <td>please refer to (ec only) <span class="optional-tag">OPTIONAL</span></td>
+        <td>EC refer note</td>
+        <td>Appended to notes as <code>[EC Refer: value]</code>.</td>
+      </tr>
+      <tr>
+        <td>comments (ec only) <span class="optional-tag">OPTIONAL</span></td>
+        <td>EC comments</td>
+        <td>Appended to notes as <code>[EC Comments: value]</code>.</td>
+      </tr>
+      <tr>
+        <td>have referred to (wv only) <span class="optional-tag">OPTIONAL</span></td>
+        <td>WV refer note</td>
+        <td>Appended to notes as <code>[WV Refer: value]</code>.</td>
+      </tr>
+      <tr>
+        <td>comments (wv only) <span class="optional-tag">OPTIONAL</span></td>
+        <td>WV comments</td>
+        <td>Appended to notes as <code>[WV Comments: value]</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Extra columns are ignored</strong>
+      Any columns in your spreadsheet that aren't in the list above are simply ignored by the sync engine. You can have as many extra columns as you like without affecting the sync.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 10 · DISCONNECT                             -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#64748b; font-size:20px;">🔌</div>
+    <div class="step-title-group">
+      <div class="step-label">Maintenance</div>
+      <h2>Disconnecting &amp; Reconnecting</h2>
+    </div>
+  </div>
+
+  <h3>How to disconnect OneDrive</h3>
+  <p>If you need to remove the OneDrive connection for a provider (e.g. the account changed, or you need to connect a different file), click the <strong>Disconnect</strong> button in the Spreadsheet Sync panel.</p>
+
+  <div class="ui-mockup">
+    <div class="mockup-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="mockup-url">localhost:5173/providers/abc-123</span>
+    </div>
+    <div class="mockup-body">
+      <div class="sync-panel">
+        <div class="sync-panel-title">Spreadsheet Sync</div>
+        <div class="status-row">
+          <span class="status-dot connected"></span>
+          <span style="color:#334155; font-size:12px;">Connected as <strong>jane@provider.org.au</strong></span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-dark">🔄 Sync Now</button>
+          <button class="btn btn-outline" style="border-color:#fca5a5; color:#dc2626;">🔌 Disconnect ← click here</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>What disconnecting does</strong>
+      Disconnecting removes the stored Microsoft OAuth tokens and the spreadsheet file link from the provider record. <strong>It does not delete any candidate data</strong> that was previously imported. You can reconnect at any time.
+    </div>
+  </div>
+
+  <h3>Reconnecting after a disconnect</h3>
+  <p>After disconnecting, the panel returns to the <em>Not connected</em> state. Follow Steps 2–3 again to reconnect: click <strong>Connect OneDrive</strong>, sign in to Microsoft, then paste the spreadsheet URL.</p>
+
+  <hr class="divider" />
+
+  <h3>Token expiry &amp; automatic refresh</h3>
+  <p>Microsoft OAuth access tokens expire after one hour. The ATS automatically refreshes the token before each sync run using the stored refresh token. You do not need to reconnect periodically.</p>
+
+  <div class="callout error">
+    <span class="callout-icon">❌</span>
+    <div class="callout-body">
+      <strong>Sync failed with a 401 Unauthorised error</strong>
+      If the refresh token itself has expired (which can happen if the token is unused for 90+ days, or if the Microsoft admin revoked access), you will see this error. Simply disconnect and reconnect to generate fresh tokens.
+    </div>
+  </div>
+
+  <h3>Changing the spreadsheet or sheet name</h3>
+  <p>If you move your data to a new Excel file or a different sheet tab:</p>
+  <ol class="steps-list">
+    <li>Click <strong>Disconnect</strong> in the Sync panel.</li>
+    <li>Click <strong>Connect OneDrive</strong> and sign in again.</li>
+    <li>Paste the new spreadsheet URL and update the sheet name.</li>
+    <li>Click <strong>Save &amp; Connect</strong>, then run a sync.</li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  PAGE 11 · TROUBLESHOOTING                        -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="step-header">
+    <div class="step-number" style="background:#dc2626; font-size:20px;">🛠</div>
+    <div class="step-title-group">
+      <div class="step-label">Help</div>
+      <h2>Troubleshooting</h2>
+    </div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">❌ "Provider spreadsheet not connected" error when I click Sync Now</div>
+    <div class="trouble-a">OneDrive has been connected but no spreadsheet file has been saved yet. Go back to Step 3 and paste the OneDrive share link to configure the file.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">❌ "Missing required column: email" or "Missing required column: jobseeker"</div>
+    <div class="trouble-a">Your spreadsheet's header row (row 1) doesn't contain a column named <code>email</code> or <code>jobseeker</code>. Check the column names — they must match exactly (case doesn't matter, but spelling does). Rename the columns in Excel and run the sync again.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">❌ "Spreadsheet is empty or has only a header row"</div>
+    <div class="trouble-a">The Excel sheet has a header row but no data rows below it. Add at least one data row to the spreadsheet and sync again.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">❌ "Could not resolve OneDrive URL — check the link is valid"</div>
+    <div class="trouble-a">The share link you pasted doesn't resolve to an accessible file. Check: (1) the link is correct and not truncated; (2) the sharing is set to "Anyone with the link" or "People in your organisation"; (3) you're connected with the right Microsoft account.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">⚠️ Many rows are showing as Skipped</div>
+    <div class="trouble-a">Rows are skipped for two reasons: (a) the row has no email, name, or phone — add the missing data; or (b) the email belongs to a candidate under a different provider — this is expected and cannot be overridden.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">⚠️ Candidates were created but their email looks like "john-smith-0412345678@sync.local"</div>
+    <div class="trouble-a">These are placeholder emails auto-generated because the spreadsheet row had no email address. Update the candidate's real email address on their Candidate Detail page in the ATS once you have it.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">⚠️ ATS columns were not written back to my spreadsheet</div>
+    <div class="trouble-a">Check the sync log — if the sync shows rows written back as 0, it may be because the candidates have no applications, placements, or welfare checks yet. There's nothing to write back until activity is recorded in the ATS.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">❌ Sync failed with "Graph GET error 401"</div>
+    <div class="trouble-a">The Microsoft access token has expired and could not be refreshed. Disconnect and reconnect OneDrive from Step 2. This is typically caused by a long period of inactivity (90+ days without a sync) or an admin revocation of OAuth permissions.</div>
+  </div>
+
+  <div class="trouble-item">
+    <div class="trouble-q">🔒 The "Connect OneDrive" and "Sync Now" buttons aren't visible</div>
+    <div class="trouble-a">These buttons are only visible to Admin and Recruiter Admin users. If you don't see them, your account role doesn't have sufficient permissions. Contact your ATS administrator to update your role.</div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scope for Recruitment Portal — Changes Summary</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      color: #1e293b;
+      background: #fff;
+      padding: 48px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      border-bottom: 3px solid #1e3a5f;
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e3a5f;
+      letter-spacing: -0.5px;
+    }
+    .header .meta {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .header .meta span { margin-right: 20px; }
+
+    /* Section */
+    .section {
+      margin-bottom: 28px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e3a5f;
+      border-left: 4px solid #1e3a5f;
+      padding-left: 10px;
+      margin-bottom: 14px;
+    }
+    .point-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      background: #1e3a5f;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 2px 10px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .badge-new    { background: #dbeafe; color: #1d4ed8; }
+    .badge-exists { background: #dcfce7; color: #15803d; }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+    th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 7px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+      font-size: 12.5px;
+    }
+    td.file {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11.5px;
+      color: #0f172a;
+      background: #f8fafc;
+      white-space: nowrap;
+    }
+    tr:hover td { background: #f8fafc; }
+
+    /* Change list */
+    ul.changes {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    ul.changes li {
+      padding: 3px 0 3px 16px;
+      position: relative;
+      line-height: 1.5;
+    }
+    ul.changes li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #16a34a;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    /* Already built section */
+    .built-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .built-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .built-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .built-card p {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Migration box */
+    .migration {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 10px;
+    }
+    .migration p {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+    .migration ol {
+      padding-left: 18px;
+      font-size: 12px;
+      color: #1e293b;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      line-height: 2;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 40px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    @media print {
+      body { padding: 32px; }
+      .built-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Scope for Recruitment Portal — Implementation Summary</h1>
+    <div class="meta">
+      <span>Project: My ATS Platform</span>
+      <span>Date: 23 May 2026</span>
+      <span>Repository: github.com/gitpraths/ats-platforms</span>
+    </div>
+  </div>
+
+  <!-- Point 2 -->
+  <div class="section">
+    <div class="section-title">
+      <span class="point-label">Point 2</span>
+      Candidate Details
+      <span class="badge badge-new">Implemented</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36%">File Changed</th>
+          <th>Changes Made</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="file">packages/frontend/src/pages/<br>CandidateNew.tsx</td>
+          <td>
+            <ul class="changes">
+              <li>Added <strong>Provider</strong> dropdown — links candidate to a provider organisation</li>
+              <li>Added <strong>Work Status</strong> select — Job Seeking / Employed / Placed / Inactive</li>
+              <li>Added <strong>Benchmark Hours / Week</strong> number input</li>
+              <li>Added <strong>Interested Job</strong> text field (e.g. Forklift Operator)</li>
+              <li>Added <strong>Address</strong> and <strong>Postcode</strong> fields</li>
+              <li>All fields saved to database on candidate creation</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:11.5px;color:#64748b;margin-top:6px;">
+      Note: CV and document upload was already implemented in the Candidate Detail page. The backend API already accepted all extended fields — only the creation form was missing them.
+    </p>
+  </div>
+
+  <!-- Point 3 -->
+  <div class="section">
+    <div class="section-title">
+      <span class="point-label">Point 3</span>
+      Provider Wise — Candidates Pool &amp; Stats
+      <span class="badge badge-new">Implemented</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36%">File Changed</th>
+          <th>Changes Made</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="file">packages/backend/src/routes/<br>providers.js</td>
+          <td>
+            <ul class="changes">
+              <li>Provider detail API now returns candidate breakdown by work status</li>
+              <li>New fields: <strong>placed_count</strong>, <strong>job_seeking_count</strong>, <strong>employed_count</strong>, <strong>inactive_count</strong></li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td class="file">packages/frontend/src/pages/<br>ProviderDetail.tsx</td>
+          <td>
+            <ul class="changes">
+              <li>Stats panel updated — was showing "—" for all counts</li>
+              <li>Now shows real numbers: Total / Placed / Job Seeking / Employed / Inactive</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td class="file">packages/frontend/src/pages/<br>Candidates.tsx</td>
+          <td>
+            <ul class="changes">
+              <li>Candidates list now accepts <strong>?provider_id=</strong> URL parameter</li>
+              <li>"View all" link on Provider Detail filters candidates to that provider's pool</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Point 4 -->
+  <div class="section">
+    <div class="section-title">
+      <span class="point-label">Point 4</span>
+      Vacancy Details
+      <span class="badge badge-new">Implemented</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36%">File Changed</th>
+          <th>Changes Made</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="file">database/<br>008-vacancy-type.sql</td>
+          <td>
+            <ul class="changes">
+              <li>New column: <strong>vacancy_type</strong> — Full Time / Part Time / Casual / Contract / Temporary</li>
+              <li>New column: <strong>staff_working_status</strong> — Active / On Leave / Resigned / Terminated</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td class="file">packages/backend/src/routes/<br>jobs.js</td>
+          <td>
+            <ul class="changes">
+              <li>Job <strong>create</strong> now saves: employer_id, positions_count, job_board_url, vacancy_type, staff_working_status</li>
+              <li>Job <strong>update</strong> allowlist extended with all 5 vacancy fields</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td class="file">packages/frontend/src/pages/<br>JobEdit.tsx</td>
+          <td>
+            <ul class="changes">
+              <li>New <strong>Vacancy Details</strong> section added to job edit form</li>
+              <li>Employer dropdown (linked to Employers list)</li>
+              <li>Type of Vacancy select</li>
+              <li>No. of Positions number input</li>
+              <li>Staff Working Status select</li>
+              <li>Job Board URL input (link to external job board)</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td class="file">packages/frontend/src/components/<br>CreateJobDialog.tsx</td>
+          <td>
+            <ul class="changes">
+              <li>All 5 vacancy fields added to the 4-step Job Creation wizard (Step 1: Basics)</li>
+              <li>Final API call includes all vacancy fields on job creation</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Already Built -->
+  <div class="section">
+    <div class="section-title">
+      Points 1, 5, 6 &amp; Reports — Already Built
+      <span class="badge badge-exists">Pre-existing</span>
+    </div>
+    <div class="built-grid">
+      <div class="built-card">
+        <h4>Point 1 — Super Admin / Staff Logins</h4>
+        <p>5 roles: admin, recruiter_admin, recruiter, hiring_manager, provider. JWT authentication. AdminUsers page for user management. Provider users linked to their organisation.</p>
+      </div>
+      <div class="built-card">
+        <h4>Point 5 — Employer Details</h4>
+        <p>Full Employers module: list, detail, create, and edit pages. Fields: name, industry, website, contact details, address. Shows open job count and placement count.</p>
+      </div>
+      <div class="built-card">
+        <h4>Point 6 — Placement Details</h4>
+        <p>Placements module with one-click placement from application. Welfare checks at Day 1, Week 1, Month 1, 3, and 6. Automated email confirmation sent to employer on placement.</p>
+      </div>
+      <div class="built-card">
+        <h4>Reports</h4>
+        <p>Reports page with 3 tabs: Provider Report (placement rates by provider), Placement Tracking (welfare check status), Staff Report (jobs and placements per staff member). CSV export on all tabs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Migrations -->
+  <div class="section">
+    <div class="section-title">Database Migration Order</div>
+    <div class="migration">
+      <p>Run these files in order on the production PostgreSQL database:</p>
+      <ol>
+        <li>database/001-create-tables.sql</li>
+        <li>database/002-seed-data.sql</li>
+        <li>database/003-alter-tables.sql</li>
+        <li>database/004-providers-employers.sql</li>
+        <li>database/005-placements-welfare-checks.sql</li>
+        <li>database/006-alter-candidates-jobs.sql</li>
+        <li>database/007-demo-australia.sql</li>
+        <li>database/008-vacancy-type.sql &nbsp; ← new (added in this release)</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>My ATS Platform — Recruitment Portal Implementation</span>
+    <span>Generated 23 May 2026</span>
+  </div>
+
+</body>
+</html>

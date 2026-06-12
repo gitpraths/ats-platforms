@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Training Module — User Tutorial</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #1e293b;
+    background: #fff;
+  }
+
+  /* ── Cover ─────────────────────────────────────────── */
+  .cover {
+    page-break-after: always;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 70px;
+  }
+  .cover-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 60px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    opacity: 0.8;
+    margin-bottom: 60px;
+    max-width: 520px;
+  }
+  .cover .meta {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-top: auto;
+    padding-top: 40px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+
+  /* ── Sections ──────────────────────────────────────── */
+  .page {
+    padding: 50px 70px;
+    max-width: 820px;
+    margin: 0 auto;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2563eb;
+  }
+  h2 .section-number {
+    color: #2563eb;
+    font-weight: 800;
+    margin-right: 12px;
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-top: 30px;
+    margin-bottom: 10px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  p { margin-bottom: 12px; }
+
+  ol, ul {
+    margin-left: 22px;
+    margin-bottom: 14px;
+  }
+  li { margin-bottom: 6px; }
+
+  .lead {
+    font-size: 14.5px;
+    color: #475569;
+    margin-bottom: 22px;
+    margin-top: 6px;
+  }
+
+  code {
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .callout {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .callout strong { color: #1e3a5f; }
+  .callout.warn { background: #fffbeb; border-left-color: #d97706; }
+  .callout.warn strong { color: #92400e; }
+  .callout.gotcha { background: #fef2f2; border-left-color: #dc2626; }
+  .callout.gotcha strong { color: #991b1b; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  th {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #1e3a5f;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    border: 1px solid;
+    background: transparent;
+  }
+  .badge.grey   { color: #475569; border-color: #94a3b8; }
+  .badge.blue   { color: #1e40af; border-color: #60a5fa; }
+  .badge.green  { color: #166534; border-color: #22c55e; }
+  .badge.amber  { color: #92400e; border-color: #d97706; }
+  .badge.red    { color: #991b1b; border-color: #ef4444; }
+
+  .step {
+    display: flex;
+    gap: 14px;
+    margin: 12px 0;
+    align-items: baseline;
+  }
+  .step-n {
+    flex: 0 0 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-body { flex: 1; padding-top: 3px; }
+
+  .footnote {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .toc {
+    list-style: none;
+    margin-left: 0;
+  }
+  .toc li {
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    color: #1e3a5f;
+    font-size: 14px;
+  }
+  .toc .num {
+    color: #2563eb;
+    font-weight: 700;
+    margin-right: 14px;
+  }
+
+  @media print {
+    .page { padding: 30px 50px; }
+    body  { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───── Cover ────────────────────────────────────── -->
+<section class="cover">
+  <div class="cover-logo">MyATS Platform</div>
+  <div class="cover-badge">User tutorial · v1.0</div>
+  <h1>Training Module</h1>
+  <p class="subtitle">Track every candidate's training history, run cohort enrolments in seconds, and keep certifications visible across your hiring pipeline.</p>
+  <div class="meta">
+    Released 1 June 2026 · For admins, recruiter admins and recruiters
+  </div>
+</section>
+
+<!-- ───── TOC ──────────────────────────────────────── -->
+<section class="page">
+  <h2><span class="section-number">·</span>Contents</h2>
+  <ul class="toc">
+    <li><span><span class="num">1.</span>What the Training Module does</span><span>3</span></li>
+    <li><span><span class="num">2.</span>The training catalogue (admins)</span><span>4</span></li>
+    <li><span><span class="num">3.</span>Enrolling one candidate</span><span>6</span></li>
+    <li><span><span class="num">4.</span>The Training page — Enrolments tab</span><span>8</span></li>
+    <li><span><span class="num">5.</span>Cohort enrolment — bulk enrol</span><span>10</span></li>
+    <li><span><span class="num">6.</span>Permissions reference</span><span>12</span></li>
+  </ul>
+</section>
+
+<!-- ───── 1. Overview ─────────────────────────────────── -->
+<section class="page">
+  <h2><span class="section-number">1.</span>What the Training Module does</h2>
+  <p class="lead">A single place to manage the courses your candidates take and the certificates they earn — past, current, and future.</p>
+
+  <h3>Three views, one purpose</h3>
+  <ul>
+    <li><strong>Catalogue</strong> — admins maintain the list of courses (name, code, provider, duration).</li>
+    <li><strong>Per-candidate history</strong> — every candidate's profile shows the training they've done, are doing, or are scheduled to do.</li>
+    <li><strong>Cross-candidate operations</strong> — recruiters get a global view of enrolments and a bulk-enrol flow for cohorts.</li>
+  </ul>
+
+  <h3>Status lifecycle</h3>
+  <p>Every enrolment has one of five statuses. Move freely between them as situations change.</p>
+  <table>
+    <thead><tr><th>Status</th><th>Means</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge grey">enrolled</span></td><td>Booked but hasn't started.</td></tr>
+      <tr><td><span class="badge blue">in progress</span></td><td>Currently undertaking the course.</td></tr>
+      <tr><td><span class="badge green">completed</span></td><td>Finished. Certificate number can be recorded.</td></tr>
+      <tr><td><span class="badge amber">withdrawn</span></td><td>Candidate withdrew before completion.</td></tr>
+      <tr><td><span class="badge red">failed</span></td><td>Did not pass.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Behind the scenes:</strong> while a candidate has an <em>in&nbsp;progress</em> enrolment, the start/end dates show up as the "active training" pill on their profile automatically — no extra step needed.
+  </div>
+</section>
+
+<!-- ───── 2. Catalogue ────────────────────────────────── -->
+<section class="page">
+  <h2><span class="section-number">2.</span>The training catalogue (admins)</h2>
+  <p class="lead">Maintained at <code>/admin/trainings</code>. Visible to recruiters as read-only; admins and recruiter-admins can add, edit, and deactivate.</p>
+
+  <h3>Adding a course</h3>
+  <div class="step"><div class="step-n">1</div><div class="step-body">Click the dark <strong>+ New Training</strong> button in the top-right of the catalogue.</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">Fill in <strong>Name</strong> (required). Tip: keep names short and readable — they appear in dropdowns all over the platform.</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">Optionally set <strong>Code</strong> (e.g. <code>CHC33015</code> for a TAFE course), <strong>Duration (days)</strong> (drives the auto-suggested end date on cohort enrol), <strong>Provider</strong>, and a <strong>Description</strong>.</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body">Click <strong>Create</strong>. The course is immediately available everywhere.</div></div>
+
+  <h3>Editing or deactivating</h3>
+  <p>Click the pencil icon on any row. Use the <strong>Mark inactive</strong> link inside the edit dialog to hide a course from new enrolment flows — existing enrolment records keep working. Inactive courses don't appear in the catalogue picker on the Cohort enrol page.</p>
+
+  <h3>Search and filter</h3>
+  <p>The search box matches both the <strong>name</strong> and the <strong>code</strong> (case-insensitive). Toggle <strong>Active only</strong> off to see deactivated courses.</p>
+
+  <div class="callout warn">
+    <strong>Why can't I delete a course?</strong> Once a course has been used in an enrolment, hard-deleting it would lose history. We deactivate instead — the course disappears from the picker but the history of who took it stays intact.
+  </div>
+
+  <h3>Suggested starter catalogue</h3>
+  <p>A ready-made list to populate your environment:</p>
+  <table>
+    <thead><tr><th>Name</th><th>Code</th><th>Duration</th></tr></thead>
+    <tbody>
+      <tr><td>Cert III in Aged Care</td><td>CHC33015</td><td>180 days</td></tr>
+      <tr><td>Cert III in Individual Support</td><td>CHC33021</td><td>180 days</td></tr>
+      <tr><td>White Card</td><td>CPCWHS1001</td><td>1 day</td></tr>
+      <tr><td>First Aid Certificate</td><td>HLTAID011</td><td>1 day</td></tr>
+      <tr><td>Forklift Licence</td><td>TLILIC0003</td><td>5 days</td></tr>
+      <tr><td>Food Handling</td><td>SITXFSA005</td><td>1 day</td></tr>
+      <tr><td>Manual Handling</td><td>HLTWHS005</td><td>1 day</td></tr>
+      <tr><td>Responsible Service of Alcohol</td><td>SITHFAB021</td><td>1 day</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ───── 3. Per-candidate enrolments ─────────────────── -->
+<section class="page">
+  <h2><span class="section-number">3.</span>Enrolling one candidate</h2>
+  <p class="lead">When you need to add a single training record to a single candidate — by far the most common task.</p>
+
+  <h3>Where to find it</h3>
+  <p>Open any candidate from <strong>Candidates</strong>. Scroll down past Application History and you'll find the <strong>Training history</strong> panel.</p>
+
+  <h3>Adding an enrolment</h3>
+  <div class="step"><div class="step-n">1</div><div class="step-body">Click the dark <strong>+ Enrol</strong> button on the right of the panel header.</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Course *</strong> — pick from the catalogue dropdown (only active courses appear).</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Status</strong> — defaults to <em>enrolled</em>. Choose <em>in&nbsp;progress</em> if the candidate is already studying; the dates immediately flow to their profile's "active training" indicator.</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body"><strong>Start date</strong> / <strong>End date</strong> — both optional, but enter end if known. The system rejects an end date that's earlier than start.</div></div>
+  <div class="step"><div class="step-n">5</div><div class="step-body">If <strong>Status = Completed</strong>, a <strong>Certificate&nbsp;#</strong> field appears. Fill it in to record the certificate number.</div></div>
+  <div class="step"><div class="step-n">6</div><div class="step-body">Click <strong>Enrol</strong>. The row appears immediately in the candidate's history table.</div></div>
+
+  <h3>Editing or removing an enrolment</h3>
+  <p>Click <strong>Edit</strong> on any row in the history table. The same dialog opens, pre-filled. Use it to update the status (e.g. move from <em>enrolled</em> to <em>in progress</em>, or to <em>completed</em>), correct a date, or add a certificate number. The <strong>Remove</strong> link at the bottom of the dialog deletes the enrolment entirely — useful for fixing mistakes.</p>
+
+  <div class="callout">
+    <strong>Did you know?</strong> The status badge colour in the history table matches the same colours used elsewhere in the platform — grey for enrolled, blue for in progress, green for completed, amber for withdrawn, red for failed. Spot a candidate's situation at a glance.
+  </div>
+</section>
+
+<!-- ───── 4. Training page — Enrolments tab ─────────── -->
+<section class="page">
+  <h2><span class="section-number">4.</span>The Training page — Enrolments tab</h2>
+  <p class="lead">A cross-candidate operational view. Access via the <strong>Training</strong> entry in the main nav (between Candidates and Placements).</p>
+
+  <h3>What you see first</h3>
+  <p>Five summary chips at the top show how many enrolments are in each status — driven by your active filters (excluding the status filter itself). Below that, a filter bar; below that, a paginated table of every enrolment in the system.</p>
+
+  <h3>The filter bar</h3>
+  <table>
+    <thead><tr><th>Control</th><th>Use it for</th></tr></thead>
+    <tbody>
+      <tr><td>Status chips</td><td>Click one or more to narrow by status. Tap again to deselect.</td></tr>
+      <tr><td>All courses</td><td>Limit to one course (handy when reviewing who took a specific qualification).</td></tr>
+      <tr><td>All providers</td><td>Limit to one training provider.</td></tr>
+      <tr><td>From / To</td><td>Date range on the enrolment's start date.</td></tr>
+      <tr><td>Search candidate name</td><td>Case-insensitive partial match.</td></tr>
+    </tbody>
+  </table>
+  <p>A <strong>Clear filters</strong> link appears when anything is set.</p>
+
+  <h3>The table</h3>
+  <p>Each row shows the candidate, the course, the provider, the status, dates, and a certificate number (if recorded). The <strong>Open</strong> link on the right takes you straight to the candidate's full profile — useful when reviewing a list of completions before sending out paperwork.</p>
+
+  <h3>Pagination</h3>
+  <p>The page shows 25 enrolments at a time. Use the Prev / Next buttons at the bottom of the table. The total count is always visible.</p>
+
+  <div class="callout warn">
+    <strong>Empty list?</strong> Either your filter is too tight (click <em>Clear filters</em>) or there genuinely are no enrolments yet. New deployments start with an empty list — start by creating courses in the catalogue and enrolling at least one candidate.
+  </div>
+</section>
+
+<!-- ───── 5. Cohort enrol ────────────────────────────── -->
+<section class="page">
+  <h2><span class="section-number">5.</span>Cohort enrolment — bulk enrol</h2>
+  <p class="lead">When a group of candidates is doing the same course at the same time, enrolling them one by one is busywork. The Cohort enrol tab does the whole group in one transaction.</p>
+
+  <h3>Three steps, one page</h3>
+  <p>On the Training page, click the <strong>Cohort enrol</strong> tab. The form is a single inline flow — each step unlocks the next.</p>
+
+  <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Pick a course</strong>. The selected course card shows the name, code, provider and the nominal duration in days.</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Set dates</strong>. Enter a start date. If the course has a duration set, the end date auto-fills (e.g. 180-day Cert III sets end date 180 days later). Both dates are editable.</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Choose candidates</strong>. Search by name, tick the checkbox next to each candidate. Your running selection is in the sticky right-hand panel — remove anyone with the × icon.</div></div>
+
+  <h3>Submitting</h3>
+  <p>The sticky footer at the bottom of the page shows how many candidates are selected. When at least one is picked, the <strong>Enrol N candidates</strong> button activates. Click it. A short pause, then a results dialog:</p>
+  <ul>
+    <li><strong>Created N enrolments</strong> — how many succeeded.</li>
+    <li><strong>Skipped</strong> (collapsible) — any candidates who already had an active enrolment in this course are listed with the reason. They're left alone; their existing record isn't disturbed.</li>
+  </ul>
+
+  <h3>Skip logic</h3>
+  <p>A candidate is skipped when they already hold an <em>enrolled</em> or <em>in&nbsp;progress</em> record for the same course. This prevents accidental double-booking. Once their previous enrolment moves to <em>completed</em>, <em>withdrawn</em>, or <em>failed</em>, you can re-enrol them in a future cohort.</p>
+
+  <h3>"View enrolments" handoff</h3>
+  <p>After a successful bulk enrol, click <strong>View enrolments</strong> in the results dialog. You're switched to the Enrolments tab with the course and start date pre-filtered — you can immediately see the new cohort in context.</p>
+
+  <div class="callout gotcha">
+    <strong>All-or-nothing transaction:</strong> if one insert fails (e.g. an invalid candidate ID), the entire batch is rolled back. You'll get an error message instead of partial creation. Try a smaller batch to isolate the cause.
+  </div>
+</section>
+
+<!-- ───── 6. Permissions ─────────────────────────────── -->
+<section class="page">
+  <h2><span class="section-number">6.</span>Permissions reference</h2>
+  <p class="lead">Who can do what.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Admin</th>
+        <th>Recruiter Admin</th>
+        <th>Recruiter</th>
+        <th>Provider</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>View training catalogue (<code>/admin/trainings</code>)</td><td>✅ Read/write</td><td>✅ Read/write</td><td>—</td><td>—</td></tr>
+      <tr><td>Create / edit catalogue courses</td><td>✅</td><td>✅</td><td>—</td><td>—</td></tr>
+      <tr><td>View Training page (<code>/training</code>)</td><td>✅</td><td>✅</td><td>✅</td><td>—</td></tr>
+      <tr><td>Enrol single candidate (Candidate Detail)</td><td>✅</td><td>✅</td><td>✅</td><td>—</td></tr>
+      <tr><td>Edit / remove an enrolment</td><td>✅</td><td>✅</td><td>✅</td><td>—</td></tr>
+      <tr><td>Cohort enrol (bulk)</td><td>✅</td><td>✅</td><td>✅</td><td>—</td></tr>
+      <tr><td>Hard-delete an enrolment record</td><td>✅</td><td>—</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <p>Recruiters see the same UI as admins but the <strong>+ New Training</strong> button and catalogue edit controls are hidden — the same pattern used everywhere else in the platform.</p>
+
+  <div class="footnote">
+    Generated 1 June 2026 · MyATS Training Module v1.0 · For internal use.<br />
+    Backend: <code>/api/trainings</code>, <code>/api/candidate-trainings</code> · Frontend: <code>/admin/trainings</code>, <code>/training</code>, Candidate Detail tab.
+  </div>
+</section>
+
+</body>
+</html>

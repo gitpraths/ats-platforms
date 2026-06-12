@@ -22,6 +22,8 @@ import { candidateTrainingsRouter } from "./routes/candidate-trainings.js";
 import { xeroRouter }         from "./routes/xero.js";
 import { candidatePoolRouter } from "./routes/candidate-pool.js";
 import { msAuthRouter }        from "./routes/ms-auth.js";
+import { industriesRouter, workTypesRouter, workStatusRouter } from "./routes/master.js";
+
 import { errorHandler }       from "./middleware/errorHandler.js";
 import { requestLogger }      from "./middleware/requestLogger.js";
 import { requestId }          from "./middleware/requestId.js";
@@ -105,6 +107,10 @@ app.use("/api/candidate-trainings", candidateTrainingsRouter);
 app.use("/api/xero",           xeroRouter);
 app.use("/api/candidate-pool", candidatePoolRouter);
 app.use("/api", msAuthRouter);
+app.use("/api/master/industries",  industriesRouter);
+app.use("/api/master/work-types",  workTypesRouter);
+app.use("/api/master/work-status", workStatusRouter);
+
 
 // ── Admin: manual welfare check trigger ───────────────────────────────────────
 import { requireAuth, requireRole } from "./middleware/auth.js";

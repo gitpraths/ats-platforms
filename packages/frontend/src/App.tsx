@@ -32,6 +32,9 @@ import EmployerCreate   from "./pages/EmployerCreate";
 import Placements       from "./pages/Placements";
 import PlacementDetail  from "./pages/PlacementDetail";
 import Reports          from "./pages/Reports";
+import MasterIndustries from "./pages/MasterIndustries";
+import MasterWorkTypes  from "./pages/MasterWorkTypes";
+import MasterWorkStatus from "./pages/MasterWorkStatus";
 
 const queryClient = new QueryClient();
 
@@ -306,6 +309,11 @@ function AppRoutes() {
       <Route path="/placements/:id"     element={<ProtectedRoute><PlacementDetail /></ProtectedRoute>} />
 
       <Route path="/reports"            element={<AdminRoute><Reports             /></AdminRoute>} />
+
+      <Route path="/admin/master/industries"  element={<AdminRoute><MasterIndustries /></AdminRoute>} />
+      <Route path="/admin/master/work-types"  element={<AdminRoute><MasterWorkTypes  /></AdminRoute>} />
+      <Route path="/admin/master/work-status" element={<AdminRoute><MasterWorkStatus /></AdminRoute>} />
+
 
       <Route path="/admin/users"       element={<AdminRoute><AdminUsers       /></AdminRoute>} />
       <Route path="/admin/departments" element={<AdminRoute><AdminDepartments /></AdminRoute>} />
