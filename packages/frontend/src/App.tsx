@@ -161,7 +161,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-none">
         <div className="flex items-center gap-1">
-          <span className="font-bold text-white mr-3 text-lg">WorkVision Australia</span>
+          <a href="/dashboard"><img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-9 w-auto mr-2" /></a>
           <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
           <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Vacancies</NavLink>
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Hiring Board</NavLink>

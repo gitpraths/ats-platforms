@@ -30,7 +30,7 @@ export default function Login() {
       <div className="hidden lg:flex w-1/2 bg-[#545454] flex-col items-center justify-center p-16 text-white">
         <div className="max-w-sm w-full">
           <div className="mb-8">
-            <span className="text-4xl font-bold tracking-tight">WorkVision Australia</span>
+            <img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-14 w-auto mb-2" />
             <p className="mt-3 text-slate-400 text-lg leading-relaxed">
               Hire smarter. Move faster.<br />Your entire pipeline in one place.
             </p>
