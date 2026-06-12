@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon } from "lucide-react";
+import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus } from "lucide-react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import SessionExpiringDialog from "./components/SessionExpiringDialog";
 import { Toaster } from "./components/ui/toaster";
+import CreateJobDialog from "./components/CreateJobDialog";
 import Login            from "./pages/Login";
 import Dashboard        from "./pages/Dashboard";
 import Jobs             from "./pages/Jobs";
@@ -35,6 +36,61 @@ import Reports          from "./pages/Reports";
 const queryClient = new QueryClient();
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
+
+// ── New Menu Dropdown ─────────────────────────────────────────────────────────
+function NewMenu() {
+  const [open, setOpen]           = useState(false);
+  const [vacancyOpen, setVacancyOpen] = useState(false);
+  const ref                       = useRef<HTMLDivElement>(null);
+  const navigate                  = useNavigate();
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <>
+      <div className="relative" ref={ref}>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-3 py-1.5 rounded-lg text-sm font-medium transition"
+        >
+          <Plus size={14} /> New <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        {open && (
+          <div className="absolute right-0 top-10 bg-white border border-slate-200 rounded-xl shadow-xl z-30 w-52 py-1.5 overflow-hidden">
+            <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Quick Create</p>
+            <button
+              onClick={() => { setOpen(false); setVacancyOpen(true); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-[#e88e2e] transition"
+            >
+              <span className="w-7 h-7 rounded-lg bg-orange-100 text-[#e88e2e] flex items-center justify-center flex-shrink-0">
+                <Briefcase size={14} />
+              </span>
+              Add Vacancy
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigate("/employers/new"); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
+            >
+              <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <Building2 size={14} />
+              </span>
+              Add Employer
+            </button>
+          </div>
+        )}
+      </div>
+
+      <CreateJobDialog isOpen={vacancyOpen} onClose={() => setVacancyOpen(false)} />
+    </>
+  );
+}
 
 // ── Profile Dropdown ──────────────────────────────────────────────────────────
 function ProfileMenu() {
@@ -133,7 +189,10 @@ function Layout({ children }: { children: React.ReactNode }) {
             </>
           )}
         </div>
-        <ProfileMenu />
+        <div className="flex items-center gap-2">
+          <NewMenu />
+          <ProfileMenu />
+        </div>
       </nav>
       <main>{children}</main>
     </div>
