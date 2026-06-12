@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus } from "lucide-react";
+import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus, Table2 } from "lucide-react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import SessionExpiringDialog from "./components/SessionExpiringDialog";
 import { Toaster } from "./components/ui/toaster";
@@ -92,6 +92,52 @@ function NewMenu() {
   );
 }
 
+// ── Admin Dropdown ────────────────────────────────────────────────────────────
+function AdminMenu() {
+  const [open, setOpen] = useState(false);
+  const ref             = useRef<HTMLDivElement>(null);
+  const navigate        = useNavigate();
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function go(path: string) { setOpen(false); navigate(path); }
+
+  const item = "w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition";
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white"
+      >
+        <Settings size={15} /> Admin <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-10 bg-white border border-slate-200 rounded-xl shadow-xl z-30 w-52 py-1.5 overflow-hidden">
+          <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Management</p>
+          <button onClick={() => go("/admin/users")}       className={item}><Users     size={14} className="text-slate-400" /> Users</button>
+          <button onClick={() => go("/admin/departments")} className={item}><Building2 size={14} className="text-slate-400" /> Departments</button>
+          <button onClick={() => go("/admin/locations")}   className={item}><MapPinIcon size={14} className="text-slate-400" /> Locations</button>
+          <button onClick={() => go("/admin/trainings")}   className={item}><Table2    size={14} className="text-slate-400" /> Trainings</button>
+          <button onClick={() => go("/admin/xero")}        className={item}><Settings  size={14} className="text-slate-400" /> Xero</button>
+          <div className="border-t border-slate-100 my-1" />
+          <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Master Tables</p>
+          <button onClick={() => go("/admin/master/industries")}  className={item}><Table2 size={14} className="text-orange-400" /> Industries</button>
+          <button onClick={() => go("/admin/master/work-types")}  className={item}><Table2 size={14} className="text-orange-400" /> Work Types</button>
+          <button onClick={() => go("/admin/master/work-status")} className={item}><Table2 size={14} className="text-orange-400" /> Work Status</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Profile Dropdown ──────────────────────────────────────────────────────────
 function ProfileMenu() {
   const { user, logout } = useAuth();
@@ -178,19 +224,12 @@ function Layout({ children }: { children: React.ReactNode }) {
           <NavLink to="/providers"    className={navClass}><MapPinIcon size={15} />Providers</NavLink>
           <NavLink to="/employers"    className={navClass}><Building2 size={15} />Employers</NavLink>
           {isAdmin && (
-            <>
-              <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
-              <span className="mx-1 text-slate-600 select-none">|</span>
-              <NavLink to="/admin/users"       className={navClass}><Settings size={15} />Users</NavLink>
-              <NavLink to="/admin/departments" className={navClass}>Departments</NavLink>
-              <NavLink to="/admin/locations"   className={navClass}>Locations</NavLink>
-              <NavLink to="/admin/trainings"   className={navClass}>Trainings</NavLink>
-              <NavLink to="/admin/xero"        className={navClass}>Xero</NavLink>
-            </>
+            <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
           )}
         </div>
         <div className="flex items-center gap-2">
           <NewMenu />
+          {isAdmin && <AdminMenu />}
           <ProfileMenu />
         </div>
       </nav>
