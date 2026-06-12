@@ -298,7 +298,7 @@ function ListView({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HiringBoard() {
   const queryClient                       = useQueryClient();
-  const [view, setView]                   = useState<"pipeline" | "list">("pipeline");
+  const [view, setView]                   = useState<"pipeline" | "list">("list");
   const [stageDialogApp, setStageDialogApp] = useState<Application | null>(null);
 
   const { data: applications = [], isLoading } = useQuery<Application[]>({
@@ -335,7 +335,7 @@ export default function HiringBoard() {
         </div>
       )}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Hiring Board</h1>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Important Updates</h1>
         <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
           <button
             onClick={() => setView("pipeline")}
