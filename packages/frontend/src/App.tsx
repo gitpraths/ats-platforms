@@ -177,7 +177,6 @@ function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <NewMenu />
           {isAdmin && <AdminMenu />}
           <ProfileMenu />
         </div>
