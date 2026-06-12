@@ -9,3 +9,12 @@ build/
 uploads/
 coverage/
 .DS_Store
+*.pdf
+*.docx
+*.zip
+*.pages
+*.jpeg
+*.jpg
+*.png
+.worktrees/
+CRM Portal.docx
