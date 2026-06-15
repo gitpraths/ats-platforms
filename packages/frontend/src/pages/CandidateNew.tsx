@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AlertTriangle, AlertCircle, Plus, X, Check } from "lucide-react";
+import { ArrowLeft, AlertTriangle, AlertCircle, Plus, X, Check, Upload, FileText } from "lucide-react";
 import { api } from "../lib/api";
 import type { Provider } from "../types";
 
@@ -127,6 +127,9 @@ export default function CandidateNew() {
   const [postcodeLoading, setPostcodeLoading] = useState(false);
   const [showAddConsultant, setShowAddConsultant] = useState(false);
   const [extraConsultants, setExtraConsultants] = useState<Consultant[]>([]);
+  const [resumeFile, setResumeFile]   = useState<File | null>(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   // Data queries
   const { data: providersData } = useQuery({
@@ -203,8 +206,25 @@ export default function CandidateNew() {
       name: [form.first_name, form.last_name].filter(Boolean).join(" "),
       benchmark_hours: form.benchmark_hours ? Number(form.benchmark_hours) : undefined,
     }),
-    onSuccess: (candidate: { id: string }) => {
+    onSuccess: async (candidate: { id: string }) => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
+
+      // Upload resume if selected
+      if (resumeFile) {
+        setResumeUploading(true);
+        try {
+          const fd = new FormData();
+          fd.append("file", resumeFile);
+          fd.append("document_type", "cv");
+          const token = localStorage.getItem("token");
+          await fetch(
+            `${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/candidates/${candidate.id}/documents`,
+            { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd }
+          );
+        } catch { /* non-fatal — candidate is saved regardless */ }
+        finally { setResumeUploading(false); }
+      }
+
       // Enrol selected trainings
       if (form.training_ids.length > 0) {
         Promise.all(
@@ -498,10 +518,44 @@ export default function CandidateNew() {
             <p className={sectionTitle}>Documents & Notes</p>
             <div>
               <Label>Upload Resume</Label>
-              <p className="text-xs text-slate-400 mb-2">You can upload resume after saving the candidate from their profile page.</p>
-              <div className="border-2 border-dashed border-slate-200 rounded-lg px-4 py-6 text-center text-sm text-slate-400">
-                Resume upload available after saving
+              <div
+                onClick={() => resumeInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-lg px-4 py-5 text-center cursor-pointer transition ${
+                  resumeFile
+                    ? "border-green-400 bg-green-50"
+                    : "border-slate-200 hover:border-[#e88e2e] hover:bg-orange-50"
+                }`}
+              >
+                <input
+                  ref={resumeInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={(e) => setResumeFile(e.target.files?.[0] ?? null)}
+                />
+                {resumeFile ? (
+                  <div className="flex items-center justify-center gap-2 text-green-700">
+                    <FileText size={18} />
+                    <span className="text-sm font-medium">{resumeFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setResumeFile(null); if (resumeInputRef.current) resumeInputRef.current.value = ""; }}
+                      className="ml-1 text-slate-400 hover:text-red-500"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-slate-400">
+                    <Upload size={20} />
+                    <p className="text-sm">Click to select resume</p>
+                    <p className="text-xs">PDF, Word, or Image (max 10 MB)</p>
+                  </div>
+                )}
               </div>
+              {resumeUploading && (
+                <p className="text-xs text-[#e88e2e] mt-1 animate-pulse">Uploading resume...</p>
+              )}
             </div>
             <div>
               <Label>Comments <span className="text-slate-400 font-normal">(Xero Notes)</span></Label>
@@ -517,9 +571,9 @@ export default function CandidateNew() {
               className="px-5 py-2.5 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">
               Cancel
             </Link>
-            <button type="submit" disabled={create.isPending}
+            <button type="submit" disabled={create.isPending || resumeUploading}
               className="px-6 py-2.5 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50 font-medium">
-              {create.isPending ? "Saving..." : "Save Candidate"}
+              {resumeUploading ? "Uploading resume..." : create.isPending ? "Saving..." : "Save Candidate"}
             </button>
           </div>
         </form>
