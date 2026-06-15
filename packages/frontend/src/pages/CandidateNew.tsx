@@ -25,26 +25,24 @@ export default function CandidateNew() {
   }, []);
 
   const create = useMutation({
-    // Move ALL work into mutationFn so:
-    //  - form values are captured at call time (no stale-closure risk)
-    //  - training enrolment errors surface as real errors (not swallowed)
-    mutationFn: async () => {
-      // Snapshot training IDs right now to avoid stale closure
-      const trainingIds = [...form.training_ids];
+    // Pass the entire form snapshot as the mutation argument so there is
+    // zero stale-closure risk — the values are frozen at the time mutate() is called.
+    mutationFn: async (snapshot: typeof form) => {
+      const trainingIds = [...snapshot.training_ids];
 
       // 1. Create the candidate
       const candidate = await api.post<{ id: string }>("/candidates", {
-        ...form,
-        name: [form.first_name, form.last_name].filter(Boolean).join(" "),
-        benchmark_hours: form.benchmark_hours ? Number(form.benchmark_hours) : undefined,
-        wage_subsidy_amount: form.wage_subsidy && form.wage_subsidy_amount
-          ? Number(form.wage_subsidy_amount)
+        ...snapshot,
+        name: [snapshot.first_name, snapshot.last_name].filter(Boolean).join(" "),
+        benchmark_hours: snapshot.benchmark_hours ? Number(snapshot.benchmark_hours) : undefined,
+        wage_subsidy_amount: snapshot.wage_subsidy && snapshot.wage_subsidy_amount
+          ? Number(snapshot.wage_subsidy_amount)
           : undefined,
       });
 
-      // 2. Enrol selected trainings (errors will now propagate to onError)
+      // 2. Enrol each selected training course
       if (trainingIds.length > 0) {
-        await Promise.all(
+        const results = await Promise.allSettled(
           trainingIds.map((tid) =>
             api.post(`/candidate-trainings`, {
               candidate_id: candidate.id,
@@ -53,6 +51,13 @@ export default function CandidateNew() {
             })
           )
         );
+        // Surface any enrolment failures as a combined error message
+        const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
+        if (failed.length > 0) {
+          const msgs = failed.map((f) => (f.reason as Error).message).join("; ");
+          console.error("Training enrolment failed:", msgs);
+          throw new Error(`Candidate created, but ${failed.length} training enrolment(s) failed: ${msgs}`);
+        }
       }
 
       return candidate;
@@ -92,7 +97,8 @@ export default function CandidateNew() {
     if (!form.provider_id)     { setError("Provider is required."); return; }
     if (!form.benchmark_hours) { setError("Benchmark hours is required."); return; }
     if (!form.car)             { setError("Car preference is required."); return; }
-    create.mutate();
+    // Pass a frozen snapshot of the form — no stale-closure risk inside mutationFn
+    create.mutate({ ...form });
   }
 
   return (
