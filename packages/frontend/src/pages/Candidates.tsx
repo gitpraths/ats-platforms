@@ -296,7 +296,7 @@ export default function Candidates() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Name","Date Referred","Mobile","Email","Provider","Consultant","Status","Comment","Training Dates","Job Start","Employer","Job Role",""].map((h) => (
+                {["Name","Date Referred","Suburb/State","Mobile","Provider","Consultant","Status","Benchmark","Industry","Wage Sub","Training Dates","Job Start","Employer","Job Role",""].map((h) => (
                   <th key={h}
                     className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
                     {h}
@@ -318,18 +318,20 @@ export default function Candidates() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
-                      {row.date_referred
-                        ? format(new Date(row.date_referred), "d MMM yyyy")
-                        : "—"}
+                      {row.date_referred ? format(new Date(row.date_referred), "d MMM yyyy") : "—"}
+                    </td>
+                    {/* Suburb / State */}
+                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
+                      {[row.suburb || row.city, row.state].filter(Boolean).join(", ") || "—"}
                     </td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.phone || "—"}</td>
-                    <td className="px-4 py-3 text-slate-600">{displayEmail(row.email)}</td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.provider_name || "—"}</td>
                     <td className="px-4 py-3">
                       {row.consultant_name
                         ? <span className="text-slate-700 whitespace-nowrap">{row.consultant_name}</span>
                         : <span className="text-slate-400">—</span>}
                     </td>
+                    {/* Status */}
                     <td className="px-4 py-3">
                       <span className={`text-xs rounded-full px-2.5 py-0.5 font-medium whitespace-nowrap ${
                         STATUS_BADGE[row.work_status as CandidateWorkStatus] ?? "bg-slate-100 text-slate-600"
@@ -337,8 +339,23 @@ export default function Candidates() {
                         {getStatusLabel(row)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500 max-w-[140px] truncate" title={row.notes ?? ""}>
-                      {row.notes || "—"}
+                    {/* Benchmark Hrs */}
+                    <td className="px-4 py-3 text-center">
+                      {row.benchmark_hours
+                        ? <span className="text-xs font-semibold text-slate-700">{row.benchmark_hours}<span className="text-slate-400 font-normal">h</span></span>
+                        : <span className="text-slate-300">—</span>}
+                    </td>
+                    {/* Industry */}
+                    <td className="px-4 py-3">
+                      {(row.industry_preference ?? []).length > 0
+                        ? <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-100 whitespace-nowrap">{row.industry_preference![0]}</span>
+                        : <span className="text-slate-300">—</span>}
+                    </td>
+                    {/* Wage Subsidy */}
+                    <td className="px-4 py-3 text-center">
+                      {row.wage_subsidy
+                        ? <span className="text-xs font-bold text-green-600">✓</span>
+                        : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {row.training_start_date
@@ -362,7 +379,7 @@ export default function Candidates() {
                     </td>
                   </tr>
                   {row.placement_id && (row.welfare_checks?.length ?? 0) > 0 && (
-                    <WelfareSubRow checks={row.welfare_checks!} colSpan={13} />
+                    <WelfareSubRow checks={row.welfare_checks!} colSpan={15} />
                   )}
                 </Fragment>
               ))}

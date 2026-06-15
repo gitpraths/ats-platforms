@@ -256,6 +256,9 @@ export interface CandidatePoolRow {
   date_referred?: string | null;
   work_status?: CandidateWorkStatus;
   notes?: string;
+  benchmark_hours?: number | null;
+  wage_subsidy?: boolean;
+  industry_preference?: string[];
   training_start_date?: string | null;
   training_end_date?: string | null;
   provider_name?: string;
