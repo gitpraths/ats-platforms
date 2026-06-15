@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { displayEmail } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, MapPin, ExternalLink, Edit2, X, Check, Upload, Download, Trash2, FileText } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, ExternalLink, Edit2, X, Check, Upload, Download, Trash2, FileText, Eye } from "lucide-react";
+
 import { format } from "date-fns";
 import { api } from "../lib/api";
 import type { Candidate, ApplicationStage, CandidateDocument, Provider, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
@@ -481,39 +482,74 @@ export default function CandidateDetail() {
         {documents.length === 0 ? (
           <p className="text-sm text-slate-400">No documents uploaded yet.</p>
         ) : (
-          <div className="space-y-2">
-            {documents.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between border rounded-lg px-3 py-2">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText size={16} className="text-slate-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
-                    <p className="text-xs text-slate-400">
-                      {format(new Date(doc.created_at), "MMM d, yyyy")}
-                      {doc.uploaded_by_name && ` · ${doc.uploaded_by_name}`}
-                      {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
-                    </p>
+        <div className="space-y-2">
+            {documents.map((doc) => {
+              // Pick icon colour by mime type
+              const mime = (doc.mime_type ?? "").toLowerCase();
+              const isPdf   = mime.includes("pdf");
+              const isImage = mime.startsWith("image/");
+              const isWord  = mime.includes("word") || mime.includes("officedocument");
+              const iconCls = isPdf ? "text-red-500" : isImage ? "text-blue-500" : isWord ? "text-indigo-500" : "text-slate-400";
+              const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
+              const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
+              return (
+                <div key={doc.id} className="flex items-center justify-between border border-slate-100 rounded-xl px-4 py-3 hover:bg-slate-50 transition">
+                  {/* Left — icon + info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText size={20} className={`flex-shrink-0 ${iconCls}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {format(new Date(doc.created_at), "MMM d, yyyy")}
+                        {doc.uploaded_by_name && ` · ${doc.uploaded_by_name}`}
+                        {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right — badge + actions */}
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
+                      {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+                    </span>
+
+                    {/* View — opens inline in new tab (best for PDF/images) */}
+                    <a
+                      href={viewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Open in browser"
+                      className="flex items-center gap-1 text-xs text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded px-2.5 py-1 font-medium transition"
+                    >
+                      <Eye size={11} /> View
+                    </a>
+
+                    {/* Download — force-saves the file */}
+                    <a
+                      href={downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Download file"
+                      className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2.5 py-1 hover:bg-slate-100 transition"
+                    >
+                      <Download size={11} /> Download
+                    </a>
+
+                    {isAdmin && (
+                      <button
+                        onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
+                        title="Delete"
+                        className="flex items-center gap-1 text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50 transition"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
-                    {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
-                  </span>
-                  <a href={`${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
-                    <Download size={11} /> Download
-                  </a>
-                  {isAdmin && (
-                    <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
-                      className="flex items-center gap-1 text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50">
-                      <Trash2 size={11} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
         )}
       </div>
 

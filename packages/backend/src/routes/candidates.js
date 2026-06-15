@@ -351,11 +351,31 @@ candidatesRouter.get("/:id/documents/:doc_id/download", async (req, res, next) =
       [req.params.doc_id, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
-
     const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
     res.download(filePath, rows[0].file_name);
   } catch (err) { next(err); }
 });
+
+// ── GET /api/candidates/:id/documents/:doc_id/view ───────
+// Serves the file inline so PDFs and images open in the browser tab
+candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM candidate_documents WHERE id = $1 AND candidate_id = $2`,
+      [req.params.doc_id, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
+    const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
+    const mimeType = rows[0].mime_type || "application/octet-stream";
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Content-Disposition", `inline; filename="${rows[0].file_name}"`);
+    res.sendFile(path.resolve(filePath), (err) => {
+      if (err) next(err);
+    });
+  } catch (err) { next(err); }
+});
+
+
 
 // ── DELETE /api/candidates/:id/documents/:doc_id ─────────
 candidatesRouter.delete("/:id/documents/:doc_id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
