@@ -135,9 +135,14 @@ export default function CandidateNew() {
   });
   const providers = providersData?.data ?? [];
 
-  const { data: industriesData } = useQuery({
+  const {
+    data: industriesData,
+    isLoading: industriesLoading,
+    isError: industriesError,
+  } = useQuery<MasterIndustry[]>({
     queryKey: ["master-industries"],
     queryFn: () => api.get<MasterIndustry[]>("/master/industries"),
+    staleTime: 5 * 60 * 1000,
   });
   const industries = industriesData ?? [];
 
@@ -440,8 +445,12 @@ export default function CandidateNew() {
             <div>
               <Label>Industry Preference</Label>
               <div className="flex flex-wrap gap-2 p-3 border border-slate-200 rounded-lg min-h-[48px]">
-                {industries.length === 0 ? (
-                  <p className="text-sm text-slate-400">No industries in master table.</p>
+                {industriesLoading ? (
+                  <p className="text-sm text-slate-400 animate-pulse">Loading industries...</p>
+                ) : industriesError ? (
+                  <p className="text-sm text-red-400">⚠ Failed to load industries. Please refresh.</p>
+                ) : industries.length === 0 ? (
+                  <p className="text-sm text-slate-400">No industries found. Add them in Master Tables → Industries.</p>
                 ) : (
                   industries.map((ind) => {
                     const selected = form.industry_preference.includes(ind.name);
