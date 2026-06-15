@@ -5,7 +5,7 @@ import { ArrowLeft, AlertTriangle, AlertCircle, Plus, X, Check } from "lucide-re
 import { api } from "../lib/api";
 import type { Provider } from "../types";
 
-interface MasterIndustry { id: string; name: string; is_active: boolean; }
+interface MasterIndustry { id: string; name: string; sort_order: number; }
 interface Training { id: string; name: string; code: string | null; }
 interface Consultant { id: string; name: string; email?: string; provider_id: string; }
 
@@ -139,7 +139,7 @@ export default function CandidateNew() {
     queryKey: ["master-industries"],
     queryFn: () => api.get<MasterIndustry[]>("/master/industries"),
   });
-  const industries = (industriesData ?? []).filter((i) => i.is_active);
+  const industries = industriesData ?? [];
 
   const { data: trainingsData } = useQuery({
     queryKey: ["trainings-select"],
