@@ -54,11 +54,15 @@ export default function CandidateNew() {
         } catch { /* non-fatal */ } finally { setResumeUploading(false); }
       }
 
-      // Enrol selected trainings
+      // Enrol selected trainings → correct endpoint: POST /candidate-trainings
       if (form.training_ids.length > 0) {
         await Promise.allSettled(
           form.training_ids.map((tid) =>
-            api.post(`/candidates/${candidate.id}/trainings`, { training_id: tid, status: "enrolled" })
+            api.post(`/candidate-trainings`, {
+              candidate_id: candidate.id,
+              training_id:  tid,
+              status:       "enrolled",
+            })
           )
         );
       }
