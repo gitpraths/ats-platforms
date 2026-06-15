@@ -240,6 +240,32 @@ export default function CandidateDetail() {
     { key: "applications",  label: `Applications${candidate.applications?.length ? ` (${candidate.applications.length})` : ""}` },
   ] as const;
 
+  // ── When editing: full-page light layout (same look as Create Candidate) ──
+  if (editing) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <button onClick={() => setEditing(false)}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-50 shadow-sm transition mb-5">
+            <ArrowLeft size={14} /> Back to {candidate.name}
+          </button>
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Edit Candidate</h1>
+          <CandidateFormPanel
+            form={editForm}
+            setForm={setEditForm}
+            mode="edit"
+            error={saveError}
+            isSubmitting={updateCandidate.isPending}
+            onSubmit={handleSave}
+            onCancel={() => setEditing(false)}
+            submitLabel={updateCandidate.isPending ? "Saving..." : "Save Changes"}
+            showResumeUpload={false}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* ── Hero Banner ─────────────────────────────────── */}
@@ -251,32 +277,8 @@ export default function CandidateDetail() {
             <ArrowLeft size={14} /> Back to Candidates
           </Link>
 
-          {editing ? (
-            /* ── Edit Form — uses the same shared panel as Create ── */
-            <div className="bg-slate-50 rounded-2xl shadow-xl p-6 mb-6 max-h-[80vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-900">Edit Candidate</h2>
-                <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600 transition">
-                  <ExternalLink size={0} className="hidden" />
-                  ✕
-                </button>
-              </div>
-              <CandidateFormPanel
-                form={editForm}
-                setForm={setEditForm}
-                mode="edit"
-                error={saveError}
-                isSubmitting={updateCandidate.isPending}
-                onSubmit={handleSave}
-                onCancel={() => setEditing(false)}
-                submitLabel={updateCandidate.isPending ? "Saving..." : "Save Changes"}
-                showResumeUpload={false}
-              />
-            </div>
-
-          ) : (
-            /* ── Hero Profile ─────────────────────────── */
-            <div className="flex items-end gap-6 pb-6">
+          {/* ── Hero Profile ─────────────────────────── */}
+          <div className="flex items-end gap-6 pb-6">
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] flex items-center justify-center text-3xl font-black text-white shadow-lg">
@@ -328,7 +330,6 @@ export default function CandidateDetail() {
                 </div>
               </div>
             </div>
-          )}
 
           {/* ── Tabs ──────────────────────────────────── */}
           {!editing && (
