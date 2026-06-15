@@ -67,6 +67,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          pr.name         AS provider_name,
          pr.contact_name AS provider_contact_name,
          pr.email        AS provider_contact_email,
+         con.name        AS consultant_name,
          lp.id           AS placement_id,
          lp.start_date   AS job_start_date,
          lp.confirmed_by_employer,
@@ -76,6 +77,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          la.id           AS latest_application_id
        FROM candidates c
        LEFT JOIN providers pr ON pr.id = c.provider_id
+       LEFT JOIN consultants con ON con.id = c.consultant_id
        LEFT JOIN LATERAL (
          SELECT id, job_id, employer_id, start_date, confirmed_by_employer
          FROM placements

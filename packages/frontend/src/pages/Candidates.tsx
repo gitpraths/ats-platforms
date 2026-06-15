@@ -61,6 +61,18 @@ function welfareBandStatus(check: WelfareCheck | undefined, today: string): stri
   return `Due ${format(new Date(check.due_date), "d MMM")}`;
 }
 
+interface CandidateRow {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  provider_name?: string;
+  provider_contact_name?: string;
+  provider_contact_email?: string;
+  consultant_name?: string;
+  status: string;
+}
+
 function WelfareSubRow({ checks, colSpan }: { checks: WelfareCheck[]; colSpan: number }) {
   const today   = new Date().toISOString().split("T")[0];
   const checkMap = Object.fromEntries(checks.map((c) => [c.check_type, c])) as Record<string, WelfareCheck>;
@@ -314,12 +326,9 @@ export default function Candidates() {
                     <td className="px-4 py-3 text-slate-600">{displayEmail(row.email)}</td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.provider_name || "—"}</td>
                     <td className="px-4 py-3">
-                      {row.provider_contact_name ? (
-                        <div>
-                          <p className="text-slate-700 whitespace-nowrap">{row.provider_contact_name}</p>
-                          <p className="text-xs text-slate-400">{row.provider_contact_email}</p>
-                        </div>
-                      ) : "—"}
+                      {row.consultant_name
+                        ? <span className="text-slate-700 whitespace-nowrap">{row.consultant_name}</span>
+                        : <span className="text-slate-400">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs rounded-full px-2.5 py-0.5 font-medium whitespace-nowrap ${
