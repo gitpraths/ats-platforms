@@ -192,438 +192,440 @@ export default function CandidateDetail() {
     industry_preference?: string[]; consultant_name?: string; comments?: string;
   };
 
+  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
+
+  const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
+    job_seeking: { label: "Job Seeking", bg: "bg-blue-100",   text: "text-blue-700"   },
+    employed:    { label: "Employed",    bg: "bg-green-100",  text: "text-green-700"  },
+    placed:      { label: "Placed",      bg: "bg-purple-100", text: "text-purple-700" },
+    inactive:    { label: "Inactive",    bg: "bg-slate-100",  text: "text-slate-600"  },
+  };
+  const statusCfg = statusConfig[candidate.work_status ?? ""] ?? { label: candidate.work_status ?? "", bg: "bg-slate-100", text: "text-slate-600" };
+
+  const tabs = [
+    { key: "overview",      label: "Overview"     },
+    { key: "documents",     label: `Documents${documents.length ? ` (${documents.length})` : ""}` },
+    { key: "training",      label: "Training"     },
+    { key: "applications",  label: `Applications${candidate.applications?.length ? ` (${candidate.applications.length})` : ""}` },
+  ] as const;
+
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <Link
-        to="/candidates"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition mb-4"
-      >
-        <ArrowLeft size={14} /> Back to Candidates
-      </Link>
+    <div className="min-h-screen bg-slate-50">
+      {/* ── Hero Banner ─────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] pt-6 pb-0">
+        <div className="max-w-5xl mx-auto px-6">
+          {/* Back link */}
+          <Link to="/candidates"
+            className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition mb-5">
+            <ArrowLeft size={14} /> Back to Candidates
+          </Link>
 
-      {/* Profile card */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
-        {editing ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold text-slate-900 tracking-tight">Edit Candidate</h2>
-              <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={16} />
-              </button>
-            </div>
-            {saveError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{saveError}</p>
-            )}
-            <div className="grid sm:grid-cols-2 gap-3">
-              {[
-                { label: "Full Name *",  field: "name" as const,  type: "text" },
-                { label: "Email *",      field: "email" as const, type: "email" },
-                { label: "Phone",        field: "phone" as const, type: "text" },
-              ].map(({ label, field, type }) => (
-                <div key={field}>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
-                  <input type={type} value={(form[field] as string) ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              ))}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">City</label>
-                  <input value={form.city ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">State</label>
-                  <input value={form.state ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
+          {editing ? (
+            /* ── Edit Form ────────────────────────────── */
+            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-900">Edit Candidate</h2>
+                <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600 transition"><X size={18} /></button>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Address Line 1</label>
-                <input value={form.address_line1 ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Address Line 2</label>
-                <input value={form.address_line2 ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Postcode</label>
-                <input value={form.postcode ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Country</label>
-                <input value={form.country ?? "Australia"}
-                  onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Work Status</label>
-                <select value={form.work_status ?? "job_seeking"}
-                  onChange={(e) => setForm((f) => ({ ...f, work_status: e.target.value as CandidateWorkStatus }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="job_seeking">Job Seeking</option>
-                  <option value="employed">Employed</option>
-                  <option value="placed">Placed</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Benchmark Hours / Week</label>
-                <input type="number" min="1" max="168"
-                  value={form.benchmark_hours ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, benchmark_hours: e.target.value ? Number(e.target.value) : undefined }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              {isAdmin && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Provider</label>
-                  <select value={form.provider_id ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, provider_id: e.target.value || null }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">No provider</option>
-                    {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Resume URL</label>
-                <input value={form.resume_url ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, resume_url: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">LinkedIn URL</label>
-                <input value={form.linkedin ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, linkedin: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Interested Job (type of role)</label>
-              <input value={form.interested_job ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, interested_job: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Wage Subsidy</label>
-                <select
-                  value={form.wage_subsidy ? "yes" : "no"}
-                  onChange={(e) => setForm((f) => ({ ...f, wage_subsidy: e.target.value === "yes", wage_subsidy_amount: e.target.value === "no" ? undefined : f.wage_subsidy_amount }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </div>
-              {form.wage_subsidy && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Amount ($)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={form.wage_subsidy_amount ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, wage_subsidy_amount: e.target.value ? Number(e.target.value) : undefined }))}
-                    placeholder="e.g. 5000"
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
-              <textarea value={form.notes ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={3}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditing(false)}
-                className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50">Cancel</button>
-              <button onClick={handleSave} disabled={updateCandidate.isPending}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50">
-                <Check size={14} />
-                {updateCandidate.isPending ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-start gap-4">
-            {/* Avatar + SR No */}
-            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-              <div className="w-16 h-16 rounded-full border-2 border-[#e88e2e] text-[#e88e2e] bg-orange-50 flex items-center justify-center text-xl font-bold">
-                {initials}
-              </div>
-              {ext.sr_no && (
-                <span className="text-xs text-slate-400 font-mono">{ext.sr_no}</span>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              {/* Name + status + edit */}
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">{candidate.name}</h1>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    {candidate.work_status && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${WORK_STATUS_BADGE[candidate.work_status]}`}>
-                        {candidate.work_status.replace("_", " ")}
-                      </span>
-                    )}
-                    {ext.date_referred && (
-                      <span className="text-xs text-slate-400">
-                        Referred: {format(new Date(ext.date_referred), "dd MMM yyyy")}
-                      </span>
-                    )}
+              {saveError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{saveError}</p>}
+              <div className="grid sm:grid-cols-2 gap-3">
+                {([
+                  { label: "Full Name *",  field: "name"  as const, type: "text"  },
+                  { label: "Email *",      field: "email" as const, type: "email" },
+                  { label: "Phone",        field: "phone" as const, type: "text"  },
+                ] as { label: string; field: keyof typeof form; type: string }[]).map(({ label, field, type }) => (
+                  <div key={String(field)}>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">{label}</label>
+                    <input type={type} value={(form[field] as string) ?? ""}
+                      onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+                  </div>
+                ))}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">City</label>
+                    <input value={form.city ?? ""} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">State</label>
+                    <input value={form.state ?? ""} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
                   </div>
                 </div>
-                {canWrite && (
-                  <button onClick={startEdit}
-                    className="flex items-center gap-1 text-xs text-slate-500 border rounded-lg px-2 py-1.5 hover:bg-slate-50 flex-shrink-0">
-                    <Edit2 size={12} /> Edit
-                  </button>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Postcode</label>
+                  <input value={form.postcode ?? ""} onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Work Status</label>
+                  <select value={form.work_status ?? "job_seeking"}
+                    onChange={(e) => setForm((f) => ({ ...f, work_status: e.target.value as CandidateWorkStatus }))}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
+                    <option value="job_seeking">Job Seeking</option>
+                    <option value="employed">Employed</option>
+                    <option value="placed">Placed</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Benchmark Hours / Week</label>
+                  <input type="number" min="1" max="168" value={form.benchmark_hours ?? ""}
+                    onChange={(e) => setForm((f) => ({ ...f, benchmark_hours: e.target.value ? Number(e.target.value) : undefined }))}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+                </div>
+                {isAdmin && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Provider</label>
+                    <select value={form.provider_id ?? ""}
+                      onChange={(e) => setForm((f) => ({ ...f, provider_id: e.target.value || null }))}
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
+                      <option value="">No provider</option>
+                      {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Wage Subsidy</label>
+                  <select value={form.wage_subsidy ? "yes" : "no"}
+                    onChange={(e) => setForm((f) => ({ ...f, wage_subsidy: e.target.value === "yes", wage_subsidy_amount: e.target.value === "no" ? undefined : f.wage_subsidy_amount }))}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+                {form.wage_subsidy && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Subsidy Amount ($)</label>
+                    <input type="number" min={0} step="0.01" value={form.wage_subsidy_amount ?? ""} placeholder="e.g. 5000"
+                      onChange={(e) => setForm((f) => ({ ...f, wage_subsidy_amount: e.target.value ? Number(e.target.value) : undefined }))}
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+                  </div>
                 )}
               </div>
-
-              {/* Contact row */}
-              <div className="flex flex-wrap gap-3 mt-2 text-sm text-slate-500">
-                <span className="flex items-center gap-1"><Mail size={13} />{displayEmail(candidate.email)}</span>
-                {candidate.phone && <span className="flex items-center gap-1"><Phone size={13} />{candidate.phone}</span>}
-                {(ext.suburb || candidate.state) && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={13} />
-                    {[ext.suburb || candidate.city, candidate.state, ext.postcode || candidate.postcode]
-                      .filter(Boolean).join(", ")}
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Notes</label>
+                <textarea value={form.notes ?? ""} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={3}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+              </div>
+              <div className="flex gap-2 justify-end mt-4">
+                <button onClick={() => setEditing(false)} className="px-4 py-2.5 text-sm text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                <button onClick={handleSave} disabled={updateCandidate.isPending}
+                  className="flex items-center gap-1.5 px-5 py-2.5 text-sm bg-[#e88e2e] text-white rounded-xl hover:bg-[#d07d20] disabled:opacity-50 font-medium transition">
+                  <Check size={14} />{updateCandidate.isPending ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ── Hero Profile ─────────────────────────── */
+            <div className="flex items-end gap-6 pb-6">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] flex items-center justify-center text-3xl font-black text-white shadow-lg">
+                  {initials}
+                </div>
+                {ext.sr_no && (
+                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] bg-white text-slate-500 font-mono px-2 py-0.5 rounded-full shadow border border-slate-100 whitespace-nowrap">
+                    {ext.sr_no}
                   </span>
                 )}
               </div>
 
-              {/* Compliance badges */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {(["car","police_check","wwc"] as const).map((field) => {
-                  const val = ext[field] ?? "";
-                  if (!val || val === "undefined") return null;
-                  const label = field === "car" ? "Car" : field === "police_check" ? "Police Check" : "WWC";
-                  return (
-                    <span key={field} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
-                      val === "yes" ? "border-green-400 text-green-700" : "border-slate-300 text-slate-500"
-                    }`}>
-                      {label}: {val.charAt(0).toUpperCase() + val.slice(1)}
-                    </span>
-                  );
-                })}
+              {/* Name block */}
+              <div className="flex-1 min-w-0 mb-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h1 className="text-2xl font-black text-white tracking-tight leading-tight">{candidate.name}</h1>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                        {statusCfg.label}
+                      </span>
+                      {ext.date_referred && (
+                        <span className="text-xs text-white/60">
+                          Referred {format(new Date(ext.date_referred), "dd MMM yyyy")}
+                        </span>
+                      )}
+                      {candidate.provider_name && (
+                        <span className="text-xs text-white/60">· {candidate.provider_name}</span>
+                      )}
+                    </div>
+                    {/* Contact pills */}
+                    <div className="flex flex-wrap gap-3 mt-3">
+                      <span className="flex items-center gap-1.5 text-xs text-white/80"><Mail size={12} />{displayEmail(candidate.email)}</span>
+                      {candidate.phone && <span className="flex items-center gap-1.5 text-xs text-white/80"><Phone size={12} />{candidate.phone}</span>}
+                      {(ext.suburb || candidate.state) && (
+                        <span className="flex items-center gap-1.5 text-xs text-white/80">
+                          <MapPin size={12} />
+                          {[ext.suburb || candidate.city, candidate.state, ext.postcode || candidate.postcode].filter(Boolean).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {canWrite && (
+                    <button onClick={startEdit}
+                      className="flex items-center gap-1.5 text-xs text-white border border-white/30 bg-white/10 hover:bg-white/20 rounded-xl px-3 py-2 transition flex-shrink-0">
+                      <Edit2 size={12} /> Edit
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tabs ──────────────────────────────────── */}
+          {!editing && (
+            <div className="flex gap-1 mt-2">
+              {tabs.map((t) => (
+                <button key={t.key} onClick={() => setActiveTab(t.key)}
+                  className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition ${
+                    activeTab === t.key
+                      ? "bg-slate-50 text-[#e88e2e]"
+                      : "text-white/60 hover:text-white/90"
+                  }`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Tab Content ─────────────────────────────── */}
+      {!editing && (
+        <div className="max-w-5xl mx-auto px-6 py-6 space-y-4">
+
+          {/* ══ OVERVIEW TAB ══════════════════════════ */}
+          {activeTab === "overview" && (
+            <>
+              {/* Info grid */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                {/* Contact card */}
+                <div className="bg-white rounded-2xl shadow-sm p-5 lg:col-span-2">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Contact Info</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-400 mb-0.5">Email</p>
+                      <p className="font-medium text-slate-800 truncate">{displayEmail(candidate.email)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 mb-0.5">Phone</p>
+                      <p className="font-medium text-slate-800">{candidate.phone || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 mb-0.5">Suburb</p>
+                      <p className="font-medium text-slate-800">{ext.suburb || candidate.city || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 mb-0.5">State / Postcode</p>
+                      <p className="font-medium text-slate-800">{[candidate.state, ext.postcode || candidate.postcode].filter(Boolean).join(" ") || "—"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Benchmark card */}
+                <div className="bg-gradient-to-br from-[#e88e2e] to-[#f5a623] rounded-2xl shadow-sm p-5 text-white">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">Benchmark</p>
+                  <p className="text-4xl font-black">{candidate.benchmark_hours ?? "—"}</p>
+                  <p className="text-sm text-white/80 mt-0.5">hours / week</p>
+                  {candidate.wage_subsidy && (
+                    <div className="mt-3 bg-white/20 rounded-xl px-3 py-1.5 text-xs font-medium">
+                      💰 Wage Subsidy{candidate.wage_subsidy_amount ? `: $${Number(candidate.wage_subsidy_amount).toLocaleString()}` : ""}
+                    </div>
+                  )}
+                </div>
+
+                {/* Provider/Consultant card */}
+                <div className="bg-white rounded-2xl shadow-sm p-5">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Provider</h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-400 mb-0.5">Organisation</p>
+                      {candidate.provider_id ? (
+                        <Link to={`/providers/${candidate.provider_id}`}
+                          className="font-semibold text-[#e88e2e] hover:underline">
+                          {candidate.provider_name || "View"}
+                        </Link>
+                      ) : <p className="text-slate-400">Not assigned</p>}
+                    </div>
+                    {ext.consultant_name && (
+                      <div>
+                        <p className="text-xs text-slate-400 mb-0.5">Consultant</p>
+                        <p className="font-medium text-slate-800">{ext.consultant_name}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Compliance card */}
+                <div className="bg-white rounded-2xl shadow-sm p-5">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Compliance</h3>
+                  <div className="space-y-2.5">
+                    {([
+                      { field: "car" as const,          label: "🚗 Car Available" },
+                      { field: "police_check" as const, label: "🔍 Police Check" },
+                      { field: "wwc" as const,          label: "👶 WWC Check"    },
+                    ]).map(({ field, label }) => {
+                      const val = ext[field];
+                      return (
+                        <div key={field} className="flex items-center justify-between">
+                          <span className="text-sm text-slate-600">{label}</span>
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                            val === "yes" ? "bg-green-100 text-green-700" :
+                            val === "no"  ? "bg-red-50 text-red-500" :
+                            "bg-slate-100 text-slate-400"
+                          }`}>
+                            {val === "yes" ? "✓ Yes" : val === "no" ? "✗ No" : "—"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Industry Preference */}
+                {(ext.industry_preference ?? []).length > 0 && (
+                  <div className="bg-white rounded-2xl shadow-sm p-5">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Industry Preference</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {(ext.industry_preference ?? []).map((ind) => (
+                        <span key={ind} className="text-xs font-medium px-3 py-1.5 rounded-xl bg-orange-50 text-[#e88e2e] border border-orange-100">
+                          {ind}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Industry preference chips */}
-              {(ext.industry_preference ?? []).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {(ext.industry_preference ?? []).map((ind) => (
-                    <span key={ind} className="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-200">{ind}</span>
+              {/* Comments */}
+              {(ext.comments || candidate.notes) && (
+                <div className="bg-white rounded-2xl shadow-sm p-5">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Comments / Notes</h3>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{ext.comments || candidate.notes}</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ══ DOCUMENTS TAB ═════════════════════════ */}
+          {activeTab === "documents" && (
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-bold text-slate-900">Documents</h3>
+                {canWrite && (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
+                      className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-xl px-3 py-2 transition">
+                      <Upload size={12} /> Upload Resume
+                    </button>
+                    <button onClick={() => { setDocType("other"); setShowUpload(true); }}
+                      className="flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-50 transition">
+                      <Upload size={12} /> Upload Document
+                    </button>
+                  </div>
+                )}
+              </div>
+              {documents.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText size={40} className="text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm">No documents uploaded yet</p>
+                  {canWrite && <p className="text-xs text-slate-300 mt-1">Click "Upload Resume" to add the first one</p>}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {documents.map((doc) => {
+                    const mime = (doc.mime_type ?? "").toLowerCase();
+                    const isPdf = mime.includes("pdf");
+                    const isImage = mime.startsWith("image/");
+                    const isWord = mime.includes("word") || mime.includes("officedocument");
+                    const iconBg = isPdf ? "bg-red-50 text-red-500" : isImage ? "bg-blue-50 text-blue-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-50 text-slate-400";
+                    const viewUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
+                    const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
+                    return (
+                      <div key={doc.id} className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50/30 transition group">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                          <FileText size={18} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 truncate">{doc.file_name}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {format(new Date(doc.created_at), "dd MMM yyyy")}
+                            {doc.uploaded_by_name && ` · ${doc.uploaded_by_name}`}
+                            {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
+                          {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <a href={viewUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-2.5 py-1.5 transition">
+                            <Eye size={11} /> View
+                          </a>
+                          <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-slate-500 border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 transition">
+                            <Download size={11} /> Download
+                          </a>
+                          {isAdmin && (
+                            <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
+                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══ TRAINING TAB ══════════════════════════ */}
+          {activeTab === "training" && id && (
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
+            </div>
+          )}
+
+          {/* ══ APPLICATIONS TAB ══════════════════════ */}
+          {activeTab === "applications" && (
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <h3 className="font-bold text-slate-900 mb-4">Application History</h3>
+              {!candidate.applications?.length ? (
+                <div className="text-center py-12">
+                  <ExternalLink size={36} className="text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm">No applications yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {candidate.applications.map((app) => (
+                    <div key={app.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{app.job_title}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Applied {format(new Date(app.applied_at), "dd MMM yyyy")}
+                          {app.source && ` · ${app.source}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {app.score > 0 && (
+                          <span className="text-xs font-bold text-slate-500 bg-slate-100 rounded-lg px-2 py-1">{app.score}/10</span>
+                        )}
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>{app.stage}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Work & Placement Section */}
-      {!editing && (
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-3">Work & Placement</h2>
-          <dl className="grid sm:grid-cols-3 gap-3 text-sm">
-            {candidate.provider_name && (
-              <div>
-                <dt className="text-xs font-medium text-slate-500 uppercase">Provider</dt>
-                <dd className="mt-0.5">
-                  <Link to={`/providers/${candidate.provider_id}`} className="text-slate-700 hover:underline font-medium">
-                    {candidate.provider_name}
-                  </Link>
-                </dd>
-              </div>
-            )}
-            {ext.consultant_name && (
-              <div>
-                <dt className="text-xs font-medium text-slate-500 uppercase">Consultant</dt>
-                <dd className="mt-0.5 text-slate-700">{ext.consultant_name}</dd>
-              </div>
-            )}
-            {candidate.benchmark_hours && (
-              <div>
-                <dt className="text-xs font-medium text-slate-500 uppercase">Benchmark Hours</dt>
-                <dd className="mt-0.5 text-slate-700">{candidate.benchmark_hours} hrs/week</dd>
-              </div>
-            )}
-            {candidate.interested_job && (
-              <div className="sm:col-span-2">
-                <dt className="text-xs font-medium text-slate-500 uppercase">Interested Job</dt>
-                <dd className="mt-0.5 text-slate-700">{candidate.interested_job}</dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-xs font-medium text-slate-500 uppercase">Wage Subsidy</dt>
-              <dd className="mt-0.5">
-                {candidate.wage_subsidy ? (
-                  <span className="text-green-700 font-medium">
-                    Yes{candidate.wage_subsidy_amount ? ` — $${Number(candidate.wage_subsidy_amount).toLocaleString()}` : ""}
-                  </span>
-                ) : (
-                  <span className="text-slate-500">No</span>
-                )}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      )}
-
-      {/* Comments / Notes */}
-      {!editing && (ext.comments || candidate.notes) && (
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-2">Comments</h2>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{ext.comments || candidate.notes}</p>
-        </div>
-      )}
-
-      {/* Documents */}
-      <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-900 tracking-tight">Documents</h2>
-          {canWrite && (
-            <div className="flex items-center gap-2">
-              <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
-                className="flex items-center gap-1.5 text-xs text-green-700 border border-green-300 rounded-lg px-3 py-1.5 hover:bg-green-50 font-medium">
-                <Upload size={12} /> Upload Resume
-              </button>
-              <button onClick={() => { setDocType("other"); setShowUpload(true); }}
-                className="flex items-center gap-1.5 text-xs text-slate-600 border border-slate-300 rounded-lg px-3 py-1.5 hover:bg-slate-50">
-                <Upload size={12} /> Upload Document
-              </button>
-            </div>
           )}
         </div>
-
-        {documents.length === 0 ? (
-          <p className="text-sm text-slate-400">No documents uploaded yet.</p>
-        ) : (
-        <div className="space-y-2">
-            {documents.map((doc) => {
-              // Pick icon colour by mime type
-              const mime = (doc.mime_type ?? "").toLowerCase();
-              const isPdf   = mime.includes("pdf");
-              const isImage = mime.startsWith("image/");
-              const isWord  = mime.includes("word") || mime.includes("officedocument");
-              const iconCls = isPdf ? "text-red-500" : isImage ? "text-blue-500" : isWord ? "text-indigo-500" : "text-slate-400";
-              const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
-              const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
-              return (
-                <div key={doc.id} className="flex items-center justify-between border border-slate-100 rounded-xl px-4 py-3 hover:bg-slate-50 transition">
-                  {/* Left — icon + info */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileText size={20} className={`flex-shrink-0 ${iconCls}`} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {format(new Date(doc.created_at), "MMM d, yyyy")}
-                        {doc.uploaded_by_name && ` · ${doc.uploaded_by_name}`}
-                        {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right — badge + actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
-                      {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
-                    </span>
-
-                    {/* View — opens inline in new tab (best for PDF/images) */}
-                    <a
-                      href={viewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Open in browser"
-                      className="flex items-center gap-1 text-xs text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded px-2.5 py-1 font-medium transition"
-                    >
-                      <Eye size={11} /> View
-                    </a>
-
-                    {/* Download — force-saves the file */}
-                    <a
-                      href={downloadUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Download file"
-                      className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2.5 py-1 hover:bg-slate-100 transition"
-                    >
-                      <Download size={11} /> Download
-                    </a>
-
-                    {isAdmin && (
-                      <button
-                        onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
-                        title="Delete"
-                        className="flex items-center gap-1 text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50 transition"
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-        )}
-      </div>
-
-      {/* Application history */}
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <h2 className="font-semibold text-slate-900 tracking-tight mb-3">
-          Application History
-          <span className="text-slate-400 font-normal ml-1">({candidate.applications?.length ?? 0})</span>
-        </h2>
-        {!candidate.applications?.length ? (
-          <p className="text-sm text-slate-400">No applications yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {candidate.applications.map((app) => (
-              <div key={app.id} className="flex items-center justify-between border rounded-lg px-3 py-2">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{app.job_title}</p>
-                  <p className="text-xs text-slate-500">
-                    Applied {format(new Date(app.applied_at), "MMM d, yyyy")}
-                    {app.source && ` · ${app.source}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {app.score > 0 && <span className="text-xs text-slate-400">{app.score}/10</span>}
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STAGE_BADGE[app.stage]}`}>
-                    {app.stage}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Training history */}
-      {id && (
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
-        </div>
       )}
 
-      {/* Upload dialog */}
+      {/* ── Upload Dialog ────────────────────────────── */}
       {showUpload && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
