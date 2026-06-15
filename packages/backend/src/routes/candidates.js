@@ -104,12 +104,14 @@ candidatesRouter.get("/", async (req, res, next) => {
 
     const { rows } = await pool.query(
       `SELECT c.*, COUNT(a.id)::int AS application_count,
-              pr.name AS provider_name
+              pr.name AS provider_name,
+              con.name AS consultant_name
        FROM candidates c
-       LEFT JOIN applications a ON a.candidate_id = c.id
-       LEFT JOIN providers pr   ON pr.id = c.provider_id
+       LEFT JOIN applications a  ON a.candidate_id = c.id
+       LEFT JOIN providers pr    ON pr.id = c.provider_id
+       LEFT JOIN consultants con ON con.id = c.consultant_id
        ${where}
-       GROUP BY c.id, pr.name
+       GROUP BY c.id, pr.name, con.name
        ORDER BY c.created_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, Number(limit), offset]
@@ -118,13 +120,16 @@ candidatesRouter.get("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── GET /api/candidates/:id ──────────────────────────────
+// ── GET /api/candidates/:id ────────────────────────────
 candidatesRouter.get("/:id", async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT c.*, pr.name AS provider_name, pr.id AS provider_id_check
+      `SELECT c.*,
+              pr.name  AS provider_name,
+              con.name AS consultant_name
        FROM candidates c
-       LEFT JOIN providers pr ON pr.id = c.provider_id
+       LEFT JOIN providers   pr  ON pr.id  = c.provider_id
+       LEFT JOIN consultants con ON con.id = c.consultant_id
        WHERE c.id = $1`,
       [req.params.id]
     );
@@ -135,8 +140,11 @@ candidatesRouter.get("/:id", async (req, res, next) => {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
 
+    // Latest application dates
     const { rows: apps } = await pool.query(
-      `SELECT a.id, a.stage, a.source, a.score, a.applied_at, j.title AS job_title
+      `SELECT a.id, a.stage, a.source, a.score, a.applied_at,
+              a.interview_date, a.ets_date, a.placement_date,
+              j.title AS job_title
        FROM applications a
        JOIN jobs j ON a.job_id = j.id
        WHERE a.candidate_id = $1
@@ -216,7 +224,7 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
       wage_subsidy, wage_subsidy_amount, work_status,
     } = req.body;
 
-    const fullName = name || (first_name && last_name ? `${first_name} ${last_name}` : undefined);
+    const fullName = name || (first_name && last_name ? `${first_name} ${last_name}` : (first_name || undefined));
     const { rows } = await pool.query(
       `UPDATE candidates SET
          name                = COALESCE($1,  name),
@@ -245,16 +253,27 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
          updated_at          = NOW()
        WHERE id = $22 RETURNING *`,
       [
-        fullName || null, first_name || null, last_name || null,
-        email || null, phone || null,
-        suburb || city || null, state || null, postcode || null,
-        provider_id || null, consultant_id || null, date_referred || null,
+        fullName || null,
+        first_name || null,
+        last_name  || null,
+        email      || null,
+        phone      || null,
+        suburb || city || null,
+        state      || null,
+        postcode   || null,
+        provider_id   || null,
+        consultant_id || null,
+        date_referred || null,
         benchmark_hours ? Number(benchmark_hours) : null,
         industry_preference || null,
-        car || null, police_check || null, wwc || null,
-        comments || notes || null, interested_job || null,
+        car          || null,
+        police_check || null,
+        wwc          || null,
+        comments || notes || null,
+        interested_job || null,
         wage_subsidy !== undefined ? wage_subsidy : null,
-        wage_subsidy_amount || null, work_status || null,
+        wage_subsidy_amount || null,
+        work_status || null,
         req.params.id,
       ]
     );
