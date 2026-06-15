@@ -113,6 +113,27 @@ app.use("/api/master/industries",  industriesRouter);
 app.use("/api/master/work-types",  workTypesRouter);
 app.use("/api/master/work-status", workStatusRouter);
 
+// ── Postcode lookup proxy (avoids browser CORS) ───────────────────────────────
+app.get("/api/postcodes/:postcode", async (req, res) => {
+  try {
+    const { postcode } = req.params;
+    if (!/^\d{4}$/.test(postcode)) {
+      return res.status(400).json({ success: false, error: "Postcode must be 4 digits" });
+    }
+    const response = await fetch(`https://v0.postcodeapi.com.au/suburbs/${postcode}.json`);
+    if (!response.ok) return res.json({ success: true, data: [] });
+    const data = await response.json();
+    // Return simplified list: [{ suburb, state }]
+    const results = (Array.isArray(data) ? data : []).map((s) => ({
+      suburb: s.name,
+      state:  s.state?.abbreviation || s.state,
+    }));
+    res.json({ success: true, data: results });
+  } catch {
+    res.json({ success: true, data: [] });
+  }
+});
+
 
 // ── Admin: manual welfare check trigger ───────────────────────────────────────
 import { requireAuth, requireRole } from "./middleware/auth.js";

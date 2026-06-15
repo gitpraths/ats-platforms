@@ -161,15 +161,14 @@ export default function CandidateNew() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  // Postcode auto-fill (Australian)
+  // Postcode auto-fill via backend proxy (avoids CORS)
   const lookupPostcode = useCallback(async (postcode: string) => {
     if (postcode.length !== 4) return;
     setPostcodeLoading(true);
     try {
-      const res = await fetch(`https://v0.postcodeapi.com.au/suburbs/${postcode}.json`);
-      const data = await res.json();
-      if (data?.length > 0) {
-        setForm((f) => ({ ...f, suburb: data[0].name, state: data[0].state.abbreviation }));
+      const res = await api.get<{ suburb: string; state: string }[]>(`/postcodes/${postcode}`);
+      if (res && res.length > 0) {
+        setForm((f) => ({ ...f, suburb: res[0].suburb, state: res[0].state }));
       }
     } catch { /* silent */ } finally { setPostcodeLoading(false); }
   }, []);
