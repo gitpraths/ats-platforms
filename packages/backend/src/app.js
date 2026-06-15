@@ -23,6 +23,7 @@ import { xeroRouter }         from "./routes/xero.js";
 import { candidatePoolRouter } from "./routes/candidate-pool.js";
 import { msAuthRouter }        from "./routes/ms-auth.js";
 import { industriesRouter, workTypesRouter, workStatusRouter } from "./routes/master.js";
+import { consultantsRouter }  from "./routes/consultants.js";
 
 import { errorHandler }       from "./middleware/errorHandler.js";
 import { requestLogger }      from "./middleware/requestLogger.js";
@@ -98,6 +99,7 @@ app.use("/api/locations",      locationsRouter);
 app.use("/api/session",        sessionRouter);
 app.use("/api/stats",          statsRouter);
 app.use("/api/providers",      providersRouter);
+app.use("/api/consultants",    consultantsRouter);
 app.use("/api/employers",      employersRouter);
 app.use("/api/placements",     placementsRouter);
 app.use("/api/welfare-checks", welfareChecksRouter);

@@ -42,15 +42,45 @@ function getDocUpload(candidateId) {
   });
 }
 
+// ── GET /api/candidates/check-duplicate ─────────────────
+candidatesRouter.get("/check-duplicate", async (req, res, next) => {
+  try {
+    const { phone, name, exclude_id } = req.query;
+    const results = {};
+    if (phone) {
+      const { rows } = await pool.query(
+        `SELECT id, name, email FROM candidates WHERE phone = $1 ${exclude_id ? 'AND id != $2' : ''} LIMIT 1`,
+        exclude_id ? [phone, exclude_id] : [phone]
+      );
+      if (rows[0]) results.phone = rows[0];
+    }
+    if (name) {
+      const { rows } = await pool.query(
+        `SELECT id, name, email FROM candidates WHERE LOWER(TRIM(name)) = LOWER(TRIM($1)) ${exclude_id ? 'AND id != $2' : ''} LIMIT 1`,
+        exclude_id ? [name, exclude_id] : [name]
+      );
+      if (rows[0]) results.name = rows[0];
+    }
+    res.json({ success: true, data: results });
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/candidates ──────────────────────────────────
 candidatesRouter.get("/", async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, q, work_status, provider_id } = req.query;
+    const { page = 1, limit = 20, q, search, work_status, provider_id } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
-    const search = `%${q || ""}%`;
+    const searchTerm = `%${q || search || ""}%`;
 
-    const conditions = ["(c.name ILIKE $1 OR c.email ILIKE $1)"];
-    const params = [search];
+    const conditions = [
+      `(c.name ILIKE $1 OR c.email ILIKE $1 OR c.phone ILIKE $1
+        OR pr.name ILIKE $1
+        OR EXISTS (
+          SELECT 1 FROM master_industries mi
+          WHERE mi.name ILIKE $1 AND mi.name = ANY(c.industry_preference)
+        ))`
+    ];
+    const params = [searchTerm];
     let idx = 2;
 
     // Provider scope
@@ -122,26 +152,46 @@ candidatesRouter.get("/:id", async (req, res, next) => {
 candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
   try {
     const {
-      name, email, phone, city, state, resume_url, linkedin, notes,
-      provider_id, address_line1, address_line2, postcode, country,
-      benchmark_hours, work_status, interested_job, wage_subsidy, wage_subsidy_amount,
+      first_name, last_name, name,
+      email, phone, suburb, city, state, postcode,
+      provider_id, consultant_id,
+      date_referred, benchmark_hours,
+      industry_preference, car, police_check, wwc,
+      comments, notes,
+      wage_subsidy, wage_subsidy_amount, interested_job,
     } = req.body;
-    if (!name)  return res.status(400).json({ success: false, error: "name is required" });
-    if (!email) return res.status(400).json({ success: false, error: "email is required" });
+
+    const fullName = name || [first_name, last_name].filter(Boolean).join(" ");
+    if (!fullName.trim()) return res.status(400).json({ success: false, error: "Name is required" });
+    if (!phone)          return res.status(400).json({ success: false, error: "Phone is required" });
+    if (!provider_id)    return res.status(400).json({ success: false, error: "Provider is required" });
+    if (!benchmark_hours) return res.status(400).json({ success: false, error: "Benchmark hours is required" });
+
+    // Auto-generate sr_no
+    const srResult = await pool.query("SELECT 'C-' || LPAD(nextval('candidate_sr_seq')::TEXT, 4, '0') AS sr_no");
+    const sr_no = srResult.rows[0].sr_no;
 
     const { rows } = await pool.query(
       `INSERT INTO candidates
-         (name, email, phone, city, state, resume_url, linkedin, notes,
-          provider_id, address_line1, address_line2, postcode, country,
-          benchmark_hours, work_status, interested_job, wage_subsidy, wage_subsidy_amount)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
+         (sr_no, name, first_name, last_name,
+          email, phone, suburb, city, state, postcode, country,
+          provider_id, consultant_id, date_referred,
+          benchmark_hours, industry_preference,
+          car, police_check, wwc,
+          comments, notes, interested_job,
+          wage_subsidy, wage_subsidy_amount, work_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+       RETURNING *`,
       [
-        name, email, phone || null, city || null, state || null,
-        resume_url || null, linkedin || null, notes || null,
-        provider_id || null, address_line1 || null, address_line2 || null,
-        postcode || null, country || "Australia",
-        benchmark_hours || null, work_status || "job_seeking", interested_job || null,
-        wage_subsidy ?? false, wage_subsidy_amount || null,
+        sr_no, fullName, first_name || null, last_name || null,
+        email || null, phone, suburb || city || null, suburb || city || null, state || null,
+        postcode || null, "Australia",
+        provider_id, consultant_id || null, date_referred || null,
+        benchmark_hours ? Number(benchmark_hours) : null,
+        industry_preference || [],
+        car || "no", police_check || "no", wwc || "no",
+        comments || notes || null, notes || comments || null, interested_job || null,
+        wage_subsidy ?? false, wage_subsidy_amount || null, "job_seeking",
       ]
     );
     res.status(201).json({ success: true, data: rows[0] });
@@ -157,39 +207,54 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
 candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
   try {
     const {
-      name, email, phone, city, state, resume_url, linkedin, notes,
-      provider_id, address_line1, address_line2, postcode, country,
-      benchmark_hours, work_status, interested_job, wage_subsidy, wage_subsidy_amount,
+      first_name, last_name, name,
+      email, phone, suburb, city, state, postcode,
+      provider_id, consultant_id, date_referred,
+      benchmark_hours, industry_preference,
+      car, police_check, wwc,
+      comments, notes, interested_job,
+      wage_subsidy, wage_subsidy_amount, work_status,
     } = req.body;
 
+    const fullName = name || (first_name && last_name ? `${first_name} ${last_name}` : undefined);
     const { rows } = await pool.query(
-      `UPDATE candidates
-       SET name                = COALESCE($1,  name),
-           email               = COALESCE($2,  email),
-           phone               = COALESCE($3,  phone),
-           city                = COALESCE($4,  city),
-           state               = COALESCE($5,  state),
-           resume_url          = COALESCE($6,  resume_url),
-           linkedin            = COALESCE($7,  linkedin),
-           notes               = COALESCE($8,  notes),
-           provider_id         = COALESCE($9,  provider_id),
-           address_line1       = COALESCE($10, address_line1),
-           address_line2       = COALESCE($11, address_line2),
-           postcode            = COALESCE($12, postcode),
-           country             = COALESCE($13, country),
-           benchmark_hours     = COALESCE($14, benchmark_hours),
-           work_status         = COALESCE($15, work_status),
-           interested_job      = COALESCE($16, interested_job),
-           wage_subsidy        = COALESCE($17, wage_subsidy),
-           wage_subsidy_amount = COALESCE($18, wage_subsidy_amount),
-           updated_at          = NOW()
-       WHERE id = $19 RETURNING *`,
+      `UPDATE candidates SET
+         name                = COALESCE($1,  name),
+         first_name          = COALESCE($2,  first_name),
+         last_name           = COALESCE($3,  last_name),
+         email               = COALESCE($4,  email),
+         phone               = COALESCE($5,  phone),
+         suburb              = COALESCE($6,  suburb),
+         city                = COALESCE($6,  city),
+         state               = COALESCE($7,  state),
+         postcode            = COALESCE($8,  postcode),
+         provider_id         = COALESCE($9,  provider_id),
+         consultant_id       = COALESCE($10, consultant_id),
+         date_referred       = COALESCE($11, date_referred),
+         benchmark_hours     = COALESCE($12, benchmark_hours),
+         industry_preference = COALESCE($13, industry_preference),
+         car                 = COALESCE($14, car),
+         police_check        = COALESCE($15, police_check),
+         wwc                 = COALESCE($16, wwc),
+         comments            = COALESCE($17, comments),
+         notes               = COALESCE($17, notes),
+         interested_job      = COALESCE($18, interested_job),
+         wage_subsidy        = COALESCE($19, wage_subsidy),
+         wage_subsidy_amount = COALESCE($20, wage_subsidy_amount),
+         work_status         = COALESCE($21, work_status),
+         updated_at          = NOW()
+       WHERE id = $22 RETURNING *`,
       [
-        name, email, phone, city, state, resume_url, linkedin, notes,
-        provider_id, address_line1, address_line2, postcode, country,
-        benchmark_hours, work_status, interested_job,
+        fullName || null, first_name || null, last_name || null,
+        email || null, phone || null,
+        suburb || city || null, state || null, postcode || null,
+        provider_id || null, consultant_id || null, date_referred || null,
+        benchmark_hours ? Number(benchmark_hours) : null,
+        industry_preference || null,
+        car || null, police_check || null, wwc || null,
+        comments || notes || null, interested_job || null,
         wage_subsidy !== undefined ? wage_subsidy : null,
-        wage_subsidy_amount || null,
+        wage_subsidy_amount || null, work_status || null,
         req.params.id,
       ]
     );
