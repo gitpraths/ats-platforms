@@ -25,20 +25,43 @@ export default function CandidateNew() {
   }, []);
 
   const create = useMutation({
-    mutationFn: () =>
-      api.post<{ id: string }>("/candidates", {
+    // Move ALL work into mutationFn so:
+    //  - form values are captured at call time (no stale-closure risk)
+    //  - training enrolment errors surface as real errors (not swallowed)
+    mutationFn: async () => {
+      // Snapshot training IDs right now to avoid stale closure
+      const trainingIds = [...form.training_ids];
+
+      // 1. Create the candidate
+      const candidate = await api.post<{ id: string }>("/candidates", {
         ...form,
         name: [form.first_name, form.last_name].filter(Boolean).join(" "),
         benchmark_hours: form.benchmark_hours ? Number(form.benchmark_hours) : undefined,
         wage_subsidy_amount: form.wage_subsidy && form.wage_subsidy_amount
           ? Number(form.wage_subsidy_amount)
           : undefined,
-      }),
+      });
+
+      // 2. Enrol selected trainings (errors will now propagate to onError)
+      if (trainingIds.length > 0) {
+        await Promise.all(
+          trainingIds.map((tid) =>
+            api.post(`/candidate-trainings`, {
+              candidate_id: candidate.id,
+              training_id:  tid,
+              status:       "enrolled",
+            })
+          )
+        );
+      }
+
+      return candidate;
+    },
 
     onSuccess: async (candidate: { id: string }) => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
 
-      // Upload resume if one was selected
+      // Upload resume if one was selected (non-fatal)
       const file = resumeFileRef.current;
       if (file) {
         setResumeUploading(true);
@@ -52,19 +75,6 @@ export default function CandidateNew() {
             { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd }
           );
         } catch { /* non-fatal */ } finally { setResumeUploading(false); }
-      }
-
-      // Enrol selected trainings → correct endpoint: POST /candidate-trainings
-      if (form.training_ids.length > 0) {
-        await Promise.allSettled(
-          form.training_ids.map((tid) =>
-            api.post(`/candidate-trainings`, {
-              candidate_id: candidate.id,
-              training_id:  tid,
-              status:       "enrolled",
-            })
-          )
-        );
       }
 
       navigate(`/candidates/${candidate.id}`);
