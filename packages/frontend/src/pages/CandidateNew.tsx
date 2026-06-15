@@ -137,7 +137,7 @@ export default function CandidateNew() {
 
   const { data: industriesData } = useQuery({
     queryKey: ["master-industries"],
-    queryFn: () => api.get<MasterIndustry[]>("/industries"),
+    queryFn: () => api.get<MasterIndustry[]>("/master/industries"),
   });
   const industries = (industriesData ?? []).filter((i) => i.is_active);
 
