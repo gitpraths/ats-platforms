@@ -78,6 +78,7 @@ export default function CandidateDetail() {
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
   const canWrite = user?.role !== "provider";
 
+  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
   const [editing, setEditing] = useState(false);
   const [form, setForm]       = useState<Partial<Candidate>>({});
   const [saveError, setSaveError] = useState("");
@@ -191,8 +192,6 @@ export default function CandidateDetail() {
     car?: string; police_check?: string; wwc?: string;
     industry_preference?: string[]; consultant_name?: string; comments?: string;
   };
-
-  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
 
   const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
     job_seeking: { label: "Job Seeking", bg: "bg-blue-100",   text: "text-blue-700"   },
