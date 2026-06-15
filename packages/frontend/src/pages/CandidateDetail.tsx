@@ -235,7 +235,6 @@ export default function CandidateDetail() {
 
   const tabs = [
     { key: "overview",      label: "Overview"     },
-    { key: "documents",     label: `Documents${documents.length ? ` (${documents.length})` : ""}` },
     { key: "training",      label: "Training"     },
     { key: "applications",  label: `Applications${candidate.applications?.length ? ` (${candidate.applications.length})` : ""}` },
   ] as const;
@@ -476,16 +475,88 @@ export default function CandidateDetail() {
                 {/* Notes */}
                 {(ext.comments || candidate.notes) && (
                   <div className="bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(15,23,42,0.05)'}}>
-                    <div className="px-6 py-3 bg-amber-50 border-b border-amber-100 rounded-t-2xl">
+                    <div className="px-6 py-2 bg-amber-50 border-b border-amber-100 rounded-t-2xl">
                       <h2 className="text-sm font-semibold text-amber-900">Notes</h2>
                     </div>
-                    <div className="px-6 py-4">
+                    <div className="px-6 py-2">
                       <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                         {ext.comments || candidate.notes}
                       </p>
                     </div>
                   </div>
                 )}
+
+                {/* ── Documents inline ───────────────────────── */}
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
+                  <div className="flex items-center justify-between px-5 py-2 bg-indigo-50 border-b border-indigo-100">
+                    <h3 className="text-sm font-semibold text-indigo-900">
+                      Documents{documents.length > 0 && <span className="ml-1.5 text-xs font-normal text-indigo-500">({documents.length})</span>}
+                    </h3>
+                    {canWrite && (
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
+                          className="flex items-center gap-1 text-xs font-semibold text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-2.5 py-1 transition-colors">
+                          <Upload size={11} /> Resume
+                        </button>
+                        <button onClick={() => { setDocType("other"); setShowUpload(true); }}
+                          className="flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-2.5 py-1 hover:bg-slate-50 transition-colors">
+                          <Upload size={11} /> Document
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {documents.length === 0 ? (
+                    <div className="flex items-center gap-2.5 px-5 py-3 text-slate-400">
+                      <FileText size={14} className="text-slate-300" />
+                      <span className="text-xs">No documents uploaded yet{canWrite && " — use the buttons above to upload"}.</span>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {documents.map((doc) => {
+                        const mime = (doc.mime_type ?? "").toLowerCase();
+                        const isPdf  = mime.includes("pdf");
+                        const isImg  = mime.startsWith("image/");
+                        const isWord = mime.includes("word") || mime.includes("officedocument");
+                        const iconBg = isPdf ? "bg-red-50 text-red-500" : isImg ? "bg-sky-50 text-sky-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-500";
+                        const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
+                        const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
+                        return (
+                          <div key={doc.id} className="flex items-center gap-3 px-5 py-1.5 hover:bg-blue-50/30 transition-colors">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                              <FileText size={13} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-slate-900 truncate">{doc.file_name}</p>
+                              <p className="text-[10px] text-slate-400">
+                                {format(new Date(doc.created_at), "dd MMM yyyy")}
+                                {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
+                              </p>
+                            </div>
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
+                              {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+                            </span>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <a href={viewUrl} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[10px] font-medium text-slate-600 border border-slate-200 hover:border-slate-300 rounded-md px-2 py-0.5 transition-colors">
+                                <Eye size={10} /> View
+                              </a>
+                              <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[10px] text-slate-500 border border-slate-200 rounded-md px-2 py-0.5 hover:bg-slate-50 transition-colors">
+                                <Download size={10} /> Download
+                              </a>
+                              {isAdmin && (
+                                <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
+                                  className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
+                                  <Trash2 size={11} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* ── Right 30% ─────────────────────────── */}
@@ -578,79 +649,7 @@ export default function CandidateDetail() {
 
           )}
 
-          {/* ══ DOCUMENTS ══════════════════════════════════════ */}
-          {activeTab === "documents" && (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
-              <div className="flex items-center justify-between px-6 py-4 bg-indigo-50 border-b border-indigo-100">
-                <h3 className="text-base font-semibold text-indigo-900">Documents</h3>
-                {canWrite && (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
-                      <Upload size={12} /> Upload Resume
-                    </button>
-                    <button onClick={() => { setDocType("other"); setShowUpload(true); }}
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
-                      <Upload size={12} /> Upload Document
-                    </button>
-                  </div>
-                )}
-              </div>
-              {documents.length === 0 ? (
-                <div className="text-center py-16">
-                  <FileText size={32} className="text-slate-200 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-slate-500">No documents uploaded yet</p>
-                  {canWrite && <p className="text-xs text-slate-400 mt-1">Click "Upload Resume" to get started</p>}
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {documents.map((doc) => {
-                    const mime = (doc.mime_type ?? "").toLowerCase();
-                    const isPdf  = mime.includes("pdf");
-                    const isImg  = mime.startsWith("image/");
-                    const isWord = mime.includes("word") || mime.includes("officedocument");
-                    const iconBg = isPdf ? "bg-red-50 text-red-500" : isImg ? "bg-sky-50 text-sky-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-500";
-                    const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
-                    const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
-                    return (
-                      <div key={doc.id} className="flex items-center gap-4 px-6 py-4 hover:bg-blue-50/30 transition-colors">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
-                          <FileText size={15} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 truncate">{doc.file_name}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {format(new Date(doc.created_at), "dd MMM yyyy")}
-                            {doc.uploaded_by_name && ` · ${doc.uploaded_by_name}`}
-                            {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
-                          </p>
-                        </div>
-                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
-                          {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
-                        </span>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <a href={viewUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 hover:border-slate-300 rounded-lg px-2.5 py-1 transition-colors">
-                            <Eye size={11} /> View
-                          </a>
-                          <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs text-slate-500 border border-slate-200 rounded-lg px-2.5 py-1 hover:bg-slate-50 transition-colors">
-                            <Download size={11} /> Download
-                          </a>
-                          {isAdmin && (
-                            <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
-                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+
 
           {/* ══ TRAINING ═══════════════════════════════════════ */}
           {activeTab === "training" && id && (
