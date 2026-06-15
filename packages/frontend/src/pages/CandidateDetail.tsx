@@ -2,11 +2,12 @@ import { useState, useRef } from "react";
 import { displayEmail } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, MapPin, ExternalLink, Edit2, X, Check, Upload, Download, Trash2, FileText, Eye } from "lucide-react";
-
+import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
-import type { Candidate, ApplicationStage, CandidateDocument, Provider, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
+import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
+import type { CandidateFormData } from "../components/CandidateFormPanel";
+import type { Candidate, ApplicationStage, CandidateDocument, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useCandidateTrainings,
@@ -80,7 +81,7 @@ export default function CandidateDetail() {
 
   const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
   const [editing, setEditing] = useState(false);
-  const [form, setForm]       = useState<Partial<Candidate>>({});
+  const [editForm, setEditForm] = useState<CandidateFormData>(EMPTY_FORM);
   const [saveError, setSaveError] = useState("");
 
   // Document upload state
@@ -101,13 +102,6 @@ export default function CandidateDetail() {
       .then((r) => (r as unknown as { data?: CandidateDocument[] }).data ?? (r as unknown as CandidateDocument[])),
   });
 
-  const { data: providersResult } = useQuery({
-    queryKey: ["providers-select"],
-    queryFn:  () => api.list<Provider>("/providers?limit=100"),
-    enabled: isAdmin,
-  });
-  const providers = providersResult?.data ?? [];
-
   const updateCandidate = useMutation({
     mutationFn: (body: Partial<Candidate>) => api.put<Candidate>(`/candidates/${id}`, body),
     onSuccess: () => {
@@ -126,36 +120,74 @@ export default function CandidateDetail() {
 
   function startEdit() {
     if (!candidate) return;
-    setForm({
-      name:                candidate.name,
-      email:               candidate.email,
+    const ext = candidate as unknown as {
+      sr_no?: string; date_referred?: string; suburb?: string;
+      car?: string; police_check?: string; wwc?: string;
+      industry_preference?: string[]; consultant_id?: string; comments?: string;
+    };
+    // Split name into first/last
+    const nameParts = (candidate.name ?? "").split(" ");
+    const first_name = nameParts[0] ?? "";
+    const last_name  = nameParts.slice(1).join(" ");
+
+    setEditForm({
+      ...EMPTY_FORM,
+      first_name,
+      last_name,
+      email:               candidate.email ?? "",
       phone:               candidate.phone ?? "",
-      city:                candidate.city ?? "",
+      postcode:            ext.suburb ? (candidate.postcode ?? "") : (candidate.postcode ?? ""),
+      suburb:              ext.suburb ?? candidate.city ?? "",
       state:               candidate.state ?? "",
-      resume_url:          candidate.resume_url ?? "",
-      linkedin:            candidate.linkedin ?? "",
-      notes:               candidate.notes ?? "",
-      address_line1:       candidate.address_line1 ?? "",
-      address_line2:       candidate.address_line2 ?? "",
-      postcode:            candidate.postcode ?? "",
-      country:             candidate.country ?? "Australia",
-      benchmark_hours:     candidate.benchmark_hours ?? undefined,
-      work_status:         candidate.work_status ?? "job_seeking",
-      interested_job:      candidate.interested_job ?? "",
       provider_id:         candidate.provider_id ?? "",
+      consultant_id:       ext.consultant_id ?? "",
+      benchmark_hours:     candidate.benchmark_hours ? String(candidate.benchmark_hours) : "",
+      work_status:         candidate.work_status ?? "job_seeking",
       wage_subsidy:        candidate.wage_subsidy ?? false,
-      wage_subsidy_amount: candidate.wage_subsidy_amount ?? undefined,
+      wage_subsidy_amount: candidate.wage_subsidy_amount ? String(candidate.wage_subsidy_amount) : "",
+      car:                 (ext.car as "yes"|"no"|"") ?? "",
+      police_check:        (ext.police_check as "yes"|"no"|"") ?? "",
+      wwc:                 (ext.wwc as "yes"|"no"|"") ?? "",
+      industry_preference: ext.industry_preference ?? [],
+      comments:            ext.comments ?? candidate.notes ?? "",
+      date_referred:       ext.date_referred ? ext.date_referred.slice(0, 10) : "",
+      training_ids:        [],   // trainings managed via Training tab
     });
     setSaveError("");
     setEditing(true);
   }
 
   function handleSave() {
-    if (!form.name?.trim() || !form.email?.trim()) {
-      setSaveError("Name and email are required.");
-      return;
+    const fullName = [editForm.first_name, editForm.last_name].filter(Boolean).join(" ");
+    if (!fullName.trim()) { setSaveError("First name is required."); return; }
+    if (!editForm.phone)   { setSaveError("Phone is required."); return; }
+    if (!/^\d{10}$/.test(editForm.phone.replace(/\s/g, ""))) {
+      setSaveError("Phone must be 10 digits."); return;
     }
-    updateCandidate.mutate(form);
+    updateCandidate.mutate({
+      name:                fullName,
+      email:               editForm.email,
+      phone:               editForm.phone,
+      city:                editForm.suburb,
+      state:               editForm.state,
+      postcode:            editForm.postcode,
+      provider_id:         editForm.provider_id || null,
+      benchmark_hours:     editForm.benchmark_hours ? Number(editForm.benchmark_hours) : undefined,
+      work_status:         editForm.work_status as CandidateWorkStatus,
+      wage_subsidy:        editForm.wage_subsidy,
+      wage_subsidy_amount: editForm.wage_subsidy && editForm.wage_subsidy_amount
+        ? Number(editForm.wage_subsidy_amount) : undefined,
+      notes:               editForm.comments,
+      // New fields
+      suburb:              editForm.suburb,
+      car:                 editForm.car,
+      police_check:        editForm.police_check,
+      wwc:                 editForm.wwc,
+      industry_preference: editForm.industry_preference,
+      consultant_id:       editForm.consultant_id || null,
+      comments:            editForm.comments,
+      date_referred:       editForm.date_referred || null,
+    } as unknown as Partial<Candidate>);
   }
 
   async function handleDocUpload() {
@@ -220,102 +252,28 @@ export default function CandidateDetail() {
           </Link>
 
           {editing ? (
-            /* ── Edit Form ────────────────────────────── */
-            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+            /* ── Edit Form — uses the same shared panel as Create ── */
+            <div className="bg-slate-50 rounded-2xl shadow-xl p-6 mb-6 max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-slate-900">Edit Candidate</h2>
-                <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600 transition"><X size={18} /></button>
-              </div>
-              {saveError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{saveError}</p>}
-              <div className="grid sm:grid-cols-2 gap-3">
-                {([
-                  { label: "Full Name *",  field: "name"  as const, type: "text"  },
-                  { label: "Email *",      field: "email" as const, type: "email" },
-                  { label: "Phone",        field: "phone" as const, type: "text"  },
-                ] as { label: string; field: keyof typeof form; type: string }[]).map(({ label, field, type }) => (
-                  <div key={String(field)}>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">{label}</label>
-                    <input type={type} value={(form[field] as string) ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-                  </div>
-                ))}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">City</label>
-                    <input value={form.city ?? ""} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">State</label>
-                    <input value={form.state ?? ""} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Postcode</label>
-                  <input value={form.postcode ?? ""} onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Work Status</label>
-                  <select value={form.work_status ?? "job_seeking"}
-                    onChange={(e) => setForm((f) => ({ ...f, work_status: e.target.value as CandidateWorkStatus }))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                    <option value="job_seeking">Job Seeking</option>
-                    <option value="employed">Employed</option>
-                    <option value="placed">Placed</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Benchmark Hours / Week</label>
-                  <input type="number" min="1" max="168" value={form.benchmark_hours ?? ""}
-                    onChange={(e) => setForm((f) => ({ ...f, benchmark_hours: e.target.value ? Number(e.target.value) : undefined }))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-                </div>
-                {isAdmin && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Provider</label>
-                    <select value={form.provider_id ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, provider_id: e.target.value || null }))}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                      <option value="">No provider</option>
-                      {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Wage Subsidy</label>
-                  <select value={form.wage_subsidy ? "yes" : "no"}
-                    onChange={(e) => setForm((f) => ({ ...f, wage_subsidy: e.target.value === "yes", wage_subsidy_amount: e.target.value === "no" ? undefined : f.wage_subsidy_amount }))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
-                {form.wage_subsidy && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Subsidy Amount ($)</label>
-                    <input type="number" min={0} step="0.01" value={form.wage_subsidy_amount ?? ""} placeholder="e.g. 5000"
-                      onChange={(e) => setForm((f) => ({ ...f, wage_subsidy_amount: e.target.value ? Number(e.target.value) : undefined }))}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-                  </div>
-                )}
-              </div>
-              <div className="mt-3">
-                <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Notes</label>
-                <textarea value={form.notes ?? ""} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={3}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
-              </div>
-              <div className="flex gap-2 justify-end mt-4">
-                <button onClick={() => setEditing(false)} className="px-4 py-2.5 text-sm text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-                <button onClick={handleSave} disabled={updateCandidate.isPending}
-                  className="flex items-center gap-1.5 px-5 py-2.5 text-sm bg-[#e88e2e] text-white rounded-xl hover:bg-[#d07d20] disabled:opacity-50 font-medium transition">
-                  <Check size={14} />{updateCandidate.isPending ? "Saving..." : "Save Changes"}
+                <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600 transition">
+                  <ExternalLink size={0} className="hidden" />
+                  ✕
                 </button>
               </div>
+              <CandidateFormPanel
+                form={editForm}
+                setForm={setEditForm}
+                mode="edit"
+                error={saveError}
+                isSubmitting={updateCandidate.isPending}
+                onSubmit={handleSave}
+                onCancel={() => setEditing(false)}
+                submitLabel={updateCandidate.isPending ? "Saving..." : "Save Changes"}
+                showResumeUpload={false}
+              />
             </div>
+
           ) : (
             /* ── Hero Profile ─────────────────────────── */
             <div className="flex items-end gap-6 pb-6">
