@@ -194,7 +194,7 @@ export default function CandidateNew() {
 
   // Submit
   const create = useMutation({
-    mutationFn: () => api.post("/candidates", {
+    mutationFn: () => api.post<{ id: string }>("/candidates", {
       ...form,
       name: [form.first_name, form.last_name].filter(Boolean).join(" "),
       benchmark_hours: form.benchmark_hours ? Number(form.benchmark_hours) : undefined,
