@@ -284,7 +284,7 @@ export default function Candidates() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Name","Mobile","Email","Provider","Consultant","Status","Comment","Training Dates","Job Start","Employer","Job Role",""].map((h) => (
+                {["Name","Date Referred","Mobile","Email","Provider","Consultant","Status","Comment","Training Dates","Job Start","Employer","Job Role",""].map((h) => (
                   <th key={h}
                     className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
                     {h}
@@ -304,6 +304,11 @@ export default function Candidates() {
                         </div>
                         <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
+                      {row.date_referred
+                        ? format(new Date(row.date_referred), "d MMM yyyy")
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.phone || "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{displayEmail(row.email)}</td>
@@ -348,7 +353,7 @@ export default function Candidates() {
                     </td>
                   </tr>
                   {row.placement_id && (row.welfare_checks?.length ?? 0) > 0 && (
-                    <WelfareSubRow checks={row.welfare_checks!} colSpan={12} />
+                    <WelfareSubRow checks={row.welfare_checks!} colSpan={13} />
                   )}
                 </Fragment>
               ))}

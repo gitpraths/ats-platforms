@@ -252,6 +252,8 @@ export interface CandidatePoolRow {
   phone?: string;
   city?: string;
   state?: string;
+  suburb?: string;
+  date_referred?: string | null;
   work_status?: CandidateWorkStatus;
   notes?: string;
   training_start_date?: string | null;

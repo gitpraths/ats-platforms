@@ -36,7 +36,7 @@ function tabCondition(tab) {
 // GET /api/candidate-pool
 candidatePoolRouter.get("/", async (req, res, next) => {
   try {
-    const { tab = "all", page: rawPage = 1, limit: rawLimit = 20, q = "" } = req.query;
+    const { tab = "all", page: rawPage = 1, limit: rawLimit = 20, q = "", date_from = "" } = req.query;
     const page = Math.max(1, Number(rawPage));
     const limit = Math.min(100, Math.max(1, Number(rawLimit)));
     const offset = (page - 1) * limit;
@@ -55,10 +55,13 @@ candidatePoolRouter.get("/", async (req, res, next) => {
       : "";
     if (q) { params.push(`%${q}%`); idx++; }
 
+    const dateCondition = date_from ? `AND c.date_referred >= $${idx}` : "";
+    if (date_from) { params.push(date_from); idx++; }
+
     const { rows } = await pool.query(
       `SELECT
          c.id, c.name, c.email, c.phone,
-         c.city, c.state,
+         c.city, c.state, c.suburb, c.date_referred,
          c.work_status, c.notes,
          c.training_start_date, c.training_end_date,
          pr.name         AS provider_name,
@@ -89,8 +92,8 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          ORDER BY updated_at DESC
          LIMIT 1
        ) la ON true
-       WHERE ${tabCondition(tab)} ${searchCondition}
-       ORDER BY c.created_at DESC
+       WHERE ${tabCondition(tab)} ${searchCondition} ${dateCondition}
+       ORDER BY COALESCE(c.date_referred, c.created_at::date) DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, limit, offset]
     );
