@@ -185,6 +185,12 @@ export default function CandidateDetail() {
   if (!candidate) return <p className="p-6 text-red-500">Candidate not found.</p>;
 
   const initials = candidate.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  // Typed access to new fields not yet in the Candidate type definition
+  const ext = candidate as unknown as {
+    sr_no?: string; date_referred?: string; suburb?: string; postcode?: string;
+    car?: string; police_check?: string; wwc?: string;
+    industry_preference?: string[]; consultant_name?: string; comments?: string;
+  };
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -352,18 +358,33 @@ export default function CandidateDetail() {
           </div>
         ) : (
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-full border border-blue-400 text-blue-600 bg-transparent flex items-center justify-center text-xl font-bold flex-shrink-0">
-              {initials}
+            {/* Avatar + SR No */}
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div className="w-16 h-16 rounded-full border-2 border-[#e88e2e] text-[#e88e2e] bg-orange-50 flex items-center justify-center text-xl font-bold">
+                {initials}
+              </div>
+              {ext.sr_no && (
+                <span className="text-xs text-slate-400 font-mono">{ext.sr_no}</span>
+              )}
             </div>
+
             <div className="min-w-0 flex-1">
+              {/* Name + status + edit */}
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">{candidate.name}</h1>
-                  {candidate.work_status && (
-                    <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${WORK_STATUS_BADGE[candidate.work_status]}`}>
-                      {candidate.work_status.replace("_", " ")}
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {candidate.work_status && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${WORK_STATUS_BADGE[candidate.work_status]}`}>
+                        {candidate.work_status.replace("_", " ")}
+                      </span>
+                    )}
+                    {ext.date_referred && (
+                      <span className="text-xs text-slate-400">
+                        Referred: {format(new Date(ext.date_referred), "dd MMM yyyy")}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {canWrite && (
                   <button onClick={startEdit}
@@ -373,68 +394,79 @@ export default function CandidateDetail() {
                 )}
               </div>
 
+              {/* Contact row */}
               <div className="flex flex-wrap gap-3 mt-2 text-sm text-slate-500">
                 <span className="flex items-center gap-1"><Mail size={13} />{displayEmail(candidate.email)}</span>
                 {candidate.phone && <span className="flex items-center gap-1"><Phone size={13} />{candidate.phone}</span>}
-                {(candidate.city || candidate.state) && (
+                {(ext.suburb || candidate.state) && (
                   <span className="flex items-center gap-1">
-                    <MapPin size={13} />{[candidate.city, candidate.state].filter(Boolean).join(", ")}
+                    <MapPin size={13} />
+                    {[ext.suburb || candidate.city, candidate.state, ext.postcode || candidate.postcode]
+                      .filter(Boolean).join(", ")}
                   </span>
                 )}
               </div>
 
-              {/* Address */}
-              {(candidate.address_line1 || candidate.postcode) && (
-                <p className="text-sm text-slate-500 mt-1">
-                  {[candidate.address_line1, candidate.address_line2, candidate.postcode, candidate.country]
-                    .filter(Boolean).join(", ")}
-                </p>
-              )}
-
-              <div className="flex gap-3 mt-3">
-                {candidate.resume_url && (
-                  <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-slate-600 hover:underline">
-                    <ExternalLink size={12} /> Resume
-                  </a>
-                )}
-                {candidate.linkedin && (
-                  <a href={candidate.linkedin} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-slate-600 hover:underline">
-                    <ExternalLink size={12} /> LinkedIn
-                  </a>
-                )}
+              {/* Compliance badges */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {(["car","police_check","wwc"] as const).map((field) => {
+                  const val = ext[field] ?? "";
+                  if (!val || val === "undefined") return null;
+                  const label = field === "car" ? "Car" : field === "police_check" ? "Police Check" : "WWC";
+                  return (
+                    <span key={field} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                      val === "yes" ? "border-green-400 text-green-700" : "border-slate-300 text-slate-500"
+                    }`}>
+                      {label}: {val.charAt(0).toUpperCase() + val.slice(1)}
+                    </span>
+                  );
+                })}
               </div>
+
+              {/* Industry preference chips */}
+              {(ext.industry_preference ?? []).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {(ext.industry_preference ?? []).map((ind) => (
+                    <span key={ind} className="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-200">{ind}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
 
       {/* Work & Placement Section */}
-      {!editing && (candidate.provider_id || candidate.benchmark_hours || candidate.interested_job || candidate.wage_subsidy) && (
+      {!editing && (
         <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
           <h2 className="font-semibold text-slate-900 tracking-tight mb-3">Work & Placement</h2>
-          <dl className="grid sm:grid-cols-2 gap-3 text-sm">
+          <dl className="grid sm:grid-cols-3 gap-3 text-sm">
             {candidate.provider_name && (
               <div>
                 <dt className="text-xs font-medium text-slate-500 uppercase">Provider</dt>
                 <dd className="mt-0.5">
-                  <Link to={`/providers/${candidate.provider_id}`} className="text-slate-600 hover:underline">
+                  <Link to={`/providers/${candidate.provider_id}`} className="text-slate-700 hover:underline font-medium">
                     {candidate.provider_name}
                   </Link>
                 </dd>
               </div>
             )}
+            {ext.consultant_name && (
+              <div>
+                <dt className="text-xs font-medium text-slate-500 uppercase">Consultant</dt>
+                <dd className="mt-0.5 text-slate-700">{ext.consultant_name}</dd>
+              </div>
+            )}
             {candidate.benchmark_hours && (
               <div>
                 <dt className="text-xs font-medium text-slate-500 uppercase">Benchmark Hours</dt>
-                <dd className="mt-0.5 text-slate-900">{candidate.benchmark_hours} hrs/week</dd>
+                <dd className="mt-0.5 text-slate-700">{candidate.benchmark_hours} hrs/week</dd>
               </div>
             )}
             {candidate.interested_job && (
               <div className="sm:col-span-2">
                 <dt className="text-xs font-medium text-slate-500 uppercase">Interested Job</dt>
-                <dd className="mt-0.5 text-slate-900">{candidate.interested_job}</dd>
+                <dd className="mt-0.5 text-slate-700">{candidate.interested_job}</dd>
               </div>
             )}
             <div>
@@ -453,11 +485,11 @@ export default function CandidateDetail() {
         </div>
       )}
 
-      {/* Notes */}
-      {!editing && candidate.notes && (
+      {/* Comments / Notes */}
+      {!editing && (ext.comments || candidate.notes) && (
         <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-2">Notes</h2>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{candidate.notes}</p>
+          <h2 className="font-semibold text-slate-900 tracking-tight mb-2">Comments</h2>
+          <p className="text-sm text-slate-700 whitespace-pre-wrap">{ext.comments || candidate.notes}</p>
         </div>
       )}
 
