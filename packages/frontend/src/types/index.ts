@@ -261,6 +261,7 @@ export interface CandidatePoolRow {
   provider_name?: string;
   provider_contact_name?: string;
   provider_contact_email?: string;
+  consultant_name?: string;
   placement_id?: string | null;
   job_start_date?: string | null;
   confirmed_by_employer?: boolean;
