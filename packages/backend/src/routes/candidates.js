@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { mountCandidateTrainingsList } from "./candidate-trainings.js";
+import { uploadToR2, getR2PresignedUrl, deleteFromR2, isR2Key, r2 } from "../config/r2.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,16 +23,22 @@ const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-function getDocUpload(candidateId) {
-  const dir = path.join(__dirname, "../../../../uploads/candidates", candidateId);
-  fs.mkdirSync(dir, { recursive: true });
-  const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, dir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      cb(null, `${Date.now()}-${file.fieldname}${ext}`);
-    },
-  });
+// ── Multer: memory storage so buffer can be uploaded to R2
+//    Falls back to disk in dev if R2 is not configured
+function getDocUpload() {
+  const storage = r2
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (_req, _file, cb) => {
+          const dir = path.join(__dirname, "../../../../uploads/candidates", "tmp");
+          fs.mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+          const ext = path.extname(file.originalname);
+          cb(null, `${Date.now()}-${file.fieldname}${ext}`);
+        },
+      });
   return multer({
     storage,
     limits: { fileSize: 10 * 1024 * 1024 },
@@ -306,14 +313,13 @@ candidatesRouter.get("/:id/documents", async (req, res, next) => {
 
 // ── POST /api/candidates/:id/documents ──────────────────
 candidatesRouter.post("/:id/documents", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
-  const upload = getDocUpload(req.params.id);
+  const upload = getDocUpload();
   upload.single("file")(req, res, async (err) => {
     if (err) return res.status(400).json({ success: false, error: err.message });
     if (!req.file) return res.status(400).json({ success: false, error: "file is required" });
 
     const { document_type } = req.body;
     if (!document_type || !ALLOWED_DOC_TYPES.includes(document_type)) {
-      fs.unlink(req.file.path, () => {});
       return res.status(400).json({ success: false, error: `document_type must be one of: ${ALLOWED_DOC_TYPES.join(", ")}` });
     }
 
@@ -321,15 +327,31 @@ candidatesRouter.post("/:id/documents", requireRole("admin", "recruiter_admin", 
       const { rows: candidate } = await pool.query("SELECT id FROM candidates WHERE id = $1", [req.params.id]);
       if (!candidate[0]) return res.status(404).json({ success: false, error: "Candidate not found" });
 
-      const relativePath = `/uploads/candidates/${req.params.id}/${req.file.filename}`;
+      let storedPath;
+
+      if (r2) {
+        // ── Upload to Cloudflare R2 ─────────────────────────────
+        const ext = path.extname(req.file.originalname);
+        const key = `candidates/${req.params.id}/${Date.now()}-${document_type}${ext}`;
+        await uploadToR2({ key, body: req.file.buffer, contentType: req.file.mimetype });
+        storedPath = key; // store R2 key in DB
+      } else {
+        // ── Fallback: local disk (dev only) ────────────────────
+        const dir = path.join(__dirname, "../../../../uploads/candidates", req.params.id);
+        fs.mkdirSync(dir, { recursive: true });
+        const ext = path.extname(req.file.originalname);
+        const filename = `${Date.now()}-${document_type}${ext}`;
+        const localPath = path.join(dir, filename);
+        fs.writeFileSync(localPath, req.file.buffer || req.file.path);
+        storedPath = `/uploads/candidates/${req.params.id}/${filename}`;
+      }
+
       const { rows } = await pool.query(
         `INSERT INTO candidate_documents
            (candidate_id, document_type, file_name, file_path, file_size, mime_type, uploaded_by)
          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-        [
-          req.params.id, document_type, req.file.originalname,
-          relativePath, req.file.size, req.file.mimetype, req.user.id,
-        ]
+        [req.params.id, document_type, req.file.originalname, storedPath,
+         req.file.size, req.file.mimetype, req.user.id]
       );
 
       pool.query(
@@ -351,13 +373,23 @@ candidatesRouter.get("/:id/documents/:doc_id/download", async (req, res, next) =
       [req.params.doc_id, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
+
+    if (isR2Key(rows[0].file_path)) {
+      // R2 — generate presigned download URL (forces browser Save-As)
+      const url = await getR2PresignedUrl(rows[0].file_path, {
+        expiresIn: 900,
+        download: true,
+        fileName: rows[0].file_name,
+      });
+      return res.redirect(url);
+    }
+    // Legacy local file
     const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
     res.download(filePath, rows[0].file_name);
   } catch (err) { next(err); }
 });
 
 // ── GET /api/candidates/:id/documents/:doc_id/view ───────
-// Serves the file inline so PDFs and images open in the browser tab
 candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
   try {
     const { rows } = await pool.query(
@@ -365,13 +397,18 @@ candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
       [req.params.doc_id, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
+
+    if (isR2Key(rows[0].file_path)) {
+      // R2 — generate presigned inline view URL
+      const url = await getR2PresignedUrl(rows[0].file_path, { expiresIn: 900 });
+      return res.redirect(url);
+    }
+    // Legacy local file
     const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
     const mimeType = rows[0].mime_type || "application/octet-stream";
     res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Disposition", `inline; filename="${rows[0].file_name}"`);
-    res.sendFile(path.resolve(filePath), (err) => {
-      if (err) next(err);
-    });
+    res.sendFile(path.resolve(filePath), (err) => { if (err) next(err); });
   } catch (err) { next(err); }
 });
 
@@ -386,8 +423,12 @@ candidatesRouter.delete("/:id/documents/:doc_id", requireRole("admin", "recruite
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
 
-    const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
-    fs.unlink(filePath, () => {});
+    if (isR2Key(rows[0].file_path)) {
+      await deleteFromR2(rows[0].file_path).catch(() => {}); // non-fatal
+    } else {
+      const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
+      fs.unlink(filePath, () => {});
+    }
 
     res.json({ success: true });
   } catch (err) { next(err); }
