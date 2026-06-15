@@ -62,7 +62,8 @@ candidatePoolRouter.get("/", async (req, res, next) => {
       `SELECT
          c.id, c.name, c.email, c.phone,
          c.city, c.state, c.suburb, c.date_referred,
-         c.work_status, c.notes,
+         c.work_status,
+         COALESCE(c.comments, c.notes) AS notes,
          c.training_start_date, c.training_end_date,
          pr.name         AS provider_name,
          pr.contact_name AS provider_contact_name,
