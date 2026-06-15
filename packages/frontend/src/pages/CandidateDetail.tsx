@@ -236,7 +236,6 @@ export default function CandidateDetail() {
   const tabs = [
     { key: "overview",      label: "Overview"     },
     { key: "training",      label: "Training"     },
-    { key: "applications",  label: `Applications${candidate.applications?.length ? ` (${candidate.applications.length})` : ""}` },
   ] as const;
 
   // ── When editing: full-page light layout (same look as Create Candidate) ──
@@ -368,10 +367,10 @@ export default function CandidateDetail() {
 
           {/* ══ OVERVIEW ══════════════════════════════════════ */}
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-10 gap-4" style={{height: 'calc(100vh - 160px)'}}>
 
               {/* ── Left 70% ──────────────────────────── */}
-              <div className="lg:col-span-7 space-y-3">
+              <div className="lg:col-span-7 flex flex-col gap-3">
 
                 {/* Candidate Details — unified card with internal sections */}
                 <div className="bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
@@ -474,7 +473,7 @@ export default function CandidateDetail() {
 
                 {/* Notes */}
                 {(ext.comments || candidate.notes) && (
-                  <div className="bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(15,23,42,0.05)'}}>
+                  <div className="flex-shrink-0 bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(15,23,42,0.05)'}}>
                     <div className="px-6 py-2 bg-amber-50 border-b border-amber-100 rounded-t-2xl">
                       <h2 className="text-sm font-semibold text-amber-900">Notes</h2>
                     </div>
@@ -486,81 +485,62 @@ export default function CandidateDetail() {
                   </div>
                 )}
 
-                {/* ── Documents inline ───────────────────────── */}
-                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
-                  <div className="flex items-center justify-between px-5 py-2 bg-indigo-50 border-b border-indigo-100">
-                    <h3 className="text-sm font-semibold text-indigo-900">
-                      Documents{documents.length > 0 && <span className="ml-1.5 text-xs font-normal text-indigo-500">({documents.length})</span>}
-                    </h3>
-                    {canWrite && (
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
-                          className="flex items-center gap-1 text-xs font-semibold text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-2.5 py-1 transition-colors">
-                          <Upload size={11} /> Resume
-                        </button>
-                        <button onClick={() => { setDocType("other"); setShowUpload(true); }}
-                          className="flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-2.5 py-1 hover:bg-slate-50 transition-colors">
-                          <Upload size={11} /> Document
-                        </button>
+                {/* ── Application History — fills remaining height ── */}
+                {(() => {
+                  const realApps = candidate.applications ?? [];
+                  const isDummy  = realApps.length === 0;
+                  const displayApps = isDummy ? [
+                    { id: "_d1", job_title: "Customer Service Officer", stage: "interview" as ApplicationStage, applied_at: "2026-05-20", score: 7, source: "provider" },
+                    { id: "_d2", job_title: "Administration Assistant",  stage: "screening" as ApplicationStage, applied_at: "2026-04-15", score: 5, source: "manual"   },
+                    { id: "_d3", job_title: "Retail Sales Associate",    stage: "applied"  as ApplicationStage, applied_at: "2026-03-10", score: 0, source: "job_board" },
+                  ] : realApps;
+                  return (
+                    <div className="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
+                      {/* card header */}
+                      <div className="flex items-center justify-between px-5 py-2 bg-sky-50 border-b border-sky-100 flex-shrink-0">
+                        <h3 className="text-sm font-semibold text-sky-900">
+                          Application History
+                          {!isDummy && <span className="ml-1.5 text-xs font-normal text-sky-500">({realApps.length})</span>}
+                        </h3>
+                        {isDummy && (
+                          <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">Sample preview</span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  {documents.length === 0 ? (
-                    <div className="flex items-center gap-2.5 px-5 py-3 text-slate-400">
-                      <FileText size={14} className="text-slate-300" />
-                      <span className="text-xs">No documents uploaded yet{canWrite && " — use the buttons above to upload"}.</span>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-slate-100">
-                      {documents.map((doc) => {
-                        const mime = (doc.mime_type ?? "").toLowerCase();
-                        const isPdf  = mime.includes("pdf");
-                        const isImg  = mime.startsWith("image/");
-                        const isWord = mime.includes("word") || mime.includes("officedocument");
-                        const iconBg = isPdf ? "bg-red-50 text-red-500" : isImg ? "bg-sky-50 text-sky-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-500";
-                        const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
-                        const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
-                        return (
-                          <div key={doc.id} className="flex items-center gap-3 px-5 py-1.5 hover:bg-blue-50/30 transition-colors">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
-                              <FileText size={13} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-slate-900 truncate">{doc.file_name}</p>
-                              <p className="text-[10px] text-slate-400">
-                                {format(new Date(doc.created_at), "dd MMM yyyy")}
-                                {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
+                      {/* notice banner for dummy mode */}
+                      {isDummy && (
+                        <div className="px-5 py-1.5 bg-amber-50/60 border-b border-amber-100 flex-shrink-0">
+                          <p className="text-[10px] text-amber-700">Applications will appear here once this candidate applies to a vacancy.</p>
+                        </div>
+                      )}
+                      {/* scrollable row list */}
+                      <div className="flex-1 overflow-auto divide-y divide-slate-100">
+                        {displayApps.map((app) => (
+                          <div key={app.id} className={`flex items-center justify-between px-5 py-2.5 hover:bg-blue-50/20 transition-colors ${isDummy ? "opacity-40" : ""}` }>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900 truncate">{app.job_title}</p>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                Applied {format(new Date(app.applied_at), "dd MMM yyyy")}
+                                {app.source && ` · ${app.source}`}
                               </p>
                             </div>
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
-                              {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
-                            </span>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <a href={viewUrl} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-[10px] font-medium text-slate-600 border border-slate-200 hover:border-slate-300 rounded-md px-2 py-0.5 transition-colors">
-                                <Eye size={10} /> View
-                              </a>
-                              <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-[10px] text-slate-500 border border-slate-200 rounded-md px-2 py-0.5 hover:bg-slate-50 transition-colors">
-                                <Download size={10} /> Download
-                              </a>
-                              {isAdmin && (
-                                <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
-                                  className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
-                                  <Trash2 size={11} />
-                                </button>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                              {(app.score ?? 0) > 0 && (
+                                <span className="text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg px-2.5 py-1">{app.score}/10</span>
                               )}
+                              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>
+                                {app.stage.replace("_", " ")}
+                              </span>
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
 
               {/* ── Right 30% ─────────────────────────── */}
-              <div className="lg:col-span-3 space-y-3">
+              <div className="lg:col-span-3 flex flex-col gap-3">
 
                 {/* Availability & Employment Support */}
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
@@ -630,7 +610,7 @@ export default function CandidateDetail() {
 
                 {/* Industry Preferences */}
                 {(ext.industry_preference ?? []).length > 0 && (
-                  <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.05)'}}>
+                  <div className="flex-shrink-0 bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.05)'}}>
                     <div className="px-5 py-2 bg-violet-50 border-b border-violet-100">
                       <h3 className="text-sm font-semibold text-violet-900">Industry Preferences</h3>
                     </div>
@@ -644,52 +624,89 @@ export default function CandidateDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Documents — fills remaining height */}
+                <div className="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
+                  <div className="flex items-center justify-between px-5 py-2 bg-indigo-50 border-b border-indigo-100 flex-shrink-0">
+                    <h3 className="text-sm font-semibold text-indigo-900">
+                      Documents{documents.length > 0 && <span className="ml-1.5 text-xs font-normal text-indigo-500">({documents.length})</span>}
+                    </h3>
+                    {canWrite && (
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
+                          className="flex items-center gap-1 text-xs font-semibold text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-2.5 py-1 transition-colors">
+                          <Upload size={11} /> Resume
+                        </button>
+                        <button onClick={() => { setDocType("other"); setShowUpload(true); }}
+                          className="flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-2.5 py-1 hover:bg-slate-50 transition-colors">
+                          <Upload size={11} /> Document
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    {documents.length === 0 ? (
+                      <div className="flex items-center gap-2.5 px-5 py-3 text-slate-400">
+                        <FileText size={14} className="text-slate-300" />
+                        <span className="text-xs">No documents uploaded yet{canWrite && " — upload using the buttons above"}.</span>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {documents.map((doc) => {
+                          const mime     = (doc.mime_type ?? "").toLowerCase();
+                          const isPdf    = mime.includes("pdf");
+                          const isImg    = mime.startsWith("image/");
+                          const isWord   = mime.includes("word") || mime.includes("officedocument");
+                          const iconBg   = isPdf ? "bg-red-50 text-red-500" : isImg ? "bg-sky-50 text-sky-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-500";
+                          const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
+                          const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
+                          return (
+                            <div key={doc.id} className="flex items-center gap-3 px-5 py-1.5 hover:bg-blue-50/30 transition-colors">
+                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                                <FileText size={13} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-slate-900 truncate">{doc.file_name}</p>
+                                <p className="text-[10px] text-slate-400">
+                                  {format(new Date(doc.created_at), "dd MMM yyyy")}
+                                  {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
+                                </p>
+                              </div>
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
+                                {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+                              </span>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <a href={viewUrl} target="_blank" rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-[10px] font-medium text-slate-600 border border-slate-200 hover:border-slate-300 rounded-md px-2 py-0.5 transition-colors">
+                                  <Eye size={10} /> View
+                                </a>
+                                <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-[10px] text-slate-500 border border-slate-200 rounded-md px-2 py-0.5 hover:bg-slate-50 transition-colors">
+                                  <Download size={10} /> Download
+                                </a>
+                                {isAdmin && (
+                                  <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
+                                    className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
+                                    <Trash2 size={11} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
           )}
 
-
-
-          {/* ══ TRAINING ═══════════════════════════════════════ */}
+          {/* ══ TRAINING ═════════════════════════════════════ */}
           {activeTab === "training" && id && (
             <div className="bg-white border border-slate-200 rounded-2xl p-6" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
               <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
-            </div>
-          )}
-
-          {/* ══ APPLICATIONS ═══════════════════════════════════ */}
-          {activeTab === "applications" && (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
-              <div className="px-6 py-4 bg-sky-50 border-b border-sky-100">
-                <h3 className="text-base font-semibold text-sky-900">Application History</h3>
-              </div>
-              {!candidate.applications?.length ? (
-                <div className="text-center py-16">
-                  <ExternalLink size={32} className="text-slate-200 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-slate-500">No applications yet</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {candidate.applications.map((app) => (
-                    <div key={app.id} className="flex items-center justify-between px-6 py-4 hover:bg-blue-50/30 transition-colors">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">{app.job_title}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          Applied {format(new Date(app.applied_at), "dd MMM yyyy")}
-                          {app.source && ` · ${app.source}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {app.score > 0 && (
-                          <span className="text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg px-2.5 py-1">{app.score}/10</span>
-                        )}
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>{app.stage}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </div>
