@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { displayEmail } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
@@ -267,79 +267,91 @@ export default function CandidateDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* ── Hero Banner ─────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] pt-6 pb-0">
-        <div className="max-w-5xl mx-auto px-6">
-          {/* Back link */}
-          <Link to="/candidates"
-            className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition mb-5">
-            <ArrowLeft size={14} /> Back to Candidates
-          </Link>
+    <div className="h-screen overflow-hidden flex flex-col bg-[#f1f4f8]">
 
-          {/* ── Hero Profile ─────────────────────────── */}
-          <div className="flex items-end gap-6 pb-6">
-              {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] flex items-center justify-center text-3xl font-black text-white shadow-lg">
-                  {initials}
-                </div>
+      {/* ═══════════════════════════════════════════════════════
+          HEADER — Candidate Workspace
+      ═══════════════════════════════════════════════════════ */}
+      <div style={{background: 'linear-gradient(135deg, #060d1f 0%, #0b1629 45%, #0f1e3a 100%)'}} className="relative overflow-hidden flex-shrink-0">
+        <div className="max-w-[1600px] mx-auto px-6">
+
+          {/* Back */}
+          <div className="pt-2">
+            <Link to="/candidates"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <ArrowLeft size={12} /> All Candidates
+            </Link>
+          </div>
+
+          {/* Candidate Identity */}
+          <div className="flex items-start gap-4 pt-2 pb-2">
+            {/* Avatar */}
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#b8711a] flex items-center justify-center text-lg font-bold text-white shadow-lg ring-1 ring-white/10 flex-shrink-0">
+              {initials}
+            </div>
+
+            {/* Name + meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1.5">
+                <h1 className="text-xl font-bold text-white tracking-tight leading-none">{candidate.name}</h1>
                 {ext.sr_no && (
-                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] bg-white text-slate-500 font-mono px-2 py-0.5 rounded-full shadow border border-slate-100 whitespace-nowrap">
-                    {ext.sr_no}
+                  <span className="text-[11px] font-mono text-slate-500 bg-slate-800/80 border border-slate-700 px-2 py-0.5 rounded">
+                    #{ext.sr_no}
+                  </span>
+                )}
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                  {statusCfg.label}
+                </span>
+              </div>
+
+              {/* Pipe-separated metadata */}
+              <div className="flex items-center flex-wrap divide-x divide-slate-700">
+                <span className="flex items-center gap-1.5 text-xs text-slate-300 pr-3">
+                  <Mail size={11} className="text-slate-500 flex-shrink-0" />{displayEmail(candidate.email)}
+                </span>
+                {candidate.phone && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
+                    <Phone size={11} className="text-slate-500 flex-shrink-0" />{candidate.phone}
+                  </span>
+                )}
+                {(ext.suburb || candidate.city || candidate.state) && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
+                    <MapPin size={11} className="text-slate-500 flex-shrink-0" />
+                    {[ext.suburb || candidate.city, candidate.state].filter(Boolean).join(", ")}
+                  </span>
+                )}
+                {candidate.provider_name && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
+                    <Building2 size={11} className="text-slate-500 flex-shrink-0" />{candidate.provider_name}
+                  </span>
+                )}
+                {ext.date_referred && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
+                    <Calendar size={11} className="text-slate-500 flex-shrink-0" />
+                    Referred {format(new Date(ext.date_referred), "d MMM yyyy")}
                   </span>
                 )}
               </div>
-
-              {/* Name block */}
-              <div className="flex-1 min-w-0 mb-1">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h1 className="text-2xl font-black text-white tracking-tight leading-tight">{candidate.name}</h1>
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
-                        {statusCfg.label}
-                      </span>
-                      {ext.date_referred && (
-                        <span className="text-xs text-white/60">
-                          Referred {format(new Date(ext.date_referred), "dd MMM yyyy")}
-                        </span>
-                      )}
-                      {candidate.provider_name && (
-                        <span className="text-xs text-white/60">· {candidate.provider_name}</span>
-                      )}
-                    </div>
-                    {/* Contact pills */}
-                    <div className="flex flex-wrap gap-3 mt-3">
-                      <span className="flex items-center gap-1.5 text-xs text-white/80"><Mail size={12} />{displayEmail(candidate.email)}</span>
-                      {candidate.phone && <span className="flex items-center gap-1.5 text-xs text-white/80"><Phone size={12} />{candidate.phone}</span>}
-                      {(ext.suburb || candidate.state) && (
-                        <span className="flex items-center gap-1.5 text-xs text-white/80">
-                          <MapPin size={12} />
-                          {[ext.suburb || candidate.city, candidate.state, ext.postcode || candidate.postcode].filter(Boolean).join(", ")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {canWrite && (
-                    <button onClick={startEdit}
-                      className="flex items-center gap-1.5 text-xs text-white border border-white/30 bg-white/10 hover:bg-white/20 rounded-xl px-3 py-2 transition flex-shrink-0">
-                      <Edit2 size={12} /> Edit
-                    </button>
-                  )}
-                </div>
-              </div>
             </div>
 
-          {/* ── Tabs ──────────────────────────────────── */}
+            {/* Edit */}
+            {canWrite && (
+              <button onClick={startEdit}
+                className="flex items-center gap-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5 transition-colors flex-shrink-0">
+                <Edit2 size={12} /> Edit
+              </button>
+            )}
+          </div>
+
+          {/* Tab Nav */}
           {!editing && (
-            <div className="flex gap-1 mt-2">
+            <div className="flex border-t border-slate-800/80">
               {tabs.map((t) => (
                 <button key={t.key} onClick={() => setActiveTab(t.key)}
-                  className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition ${
+                  className={`px-5 py-1.5 text-sm font-medium transition-all border-b-2 -mb-px ${
                     activeTab === t.key
-                      ? "bg-slate-50 text-[#e88e2e]"
-                      : "text-white/60 hover:text-white/90"
+                      ? "border-blue-400 text-white"
+                      : "border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-600"
                   }`}>
                   {t.label}
                 </button>
@@ -349,92 +361,195 @@ export default function CandidateDetail() {
         </div>
       </div>
 
-      {/* ── Tab Content ─────────────────────────────── */}
-      {!editing && (
-        <div className="max-w-5xl mx-auto px-6 py-6 space-y-4">
+      {/* ═══════════════════════════════════════════════════════
+          TAB CONTENT
+      ═══════════════════════════════════════════════════════ */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-[1600px] mx-auto px-6 py-3">
 
-          {/* ══ OVERVIEW TAB ══════════════════════════ */}
+          {/* ══ OVERVIEW ══════════════════════════════════════ */}
           {activeTab === "overview" && (
-            <>
-              {/* Info grid */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
 
-                {/* Contact card */}
-                <div className="bg-white rounded-2xl shadow-sm p-5 lg:col-span-2">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Contact Info</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-xs text-slate-400 mb-0.5">Email</p>
-                      <p className="font-medium text-slate-800 truncate">{displayEmail(candidate.email)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 mb-0.5">Phone</p>
-                      <p className="font-medium text-slate-800">{candidate.phone || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 mb-0.5">Suburb</p>
-                      <p className="font-medium text-slate-800">{ext.suburb || candidate.city || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 mb-0.5">State / Postcode</p>
-                      <p className="font-medium text-slate-800">{[candidate.state, ext.postcode || candidate.postcode].filter(Boolean).join(" ") || "—"}</p>
+              {/* ── Left 70% ──────────────────────────── */}
+              <div className="lg:col-span-7 space-y-3">
+
+                {/* Candidate Details — unified card with internal sections */}
+                <div className="bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
+
+                  <div className="px-6 py-2 bg-orange-50 border-b border-orange-100 rounded-t-2xl">
+                    <h2 className="text-sm font-semibold text-orange-900">Candidate Details</h2>
+                  </div>
+
+                  {/* Contact */}
+                  <div className="px-6 py-3">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Contact Information</p>
+                    <div className="grid grid-cols-3 gap-x-8 gap-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Email Address</p>
+                        <p className="text-sm font-semibold text-slate-900 truncate">{displayEmail(candidate.email)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Phone Number</p>
+                        <p className="text-sm font-semibold text-slate-900">{candidate.phone || "—"}</p>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Location */}
+                  <div className="border-t border-slate-200/60 px-6 py-3">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Location</p>
+                    <div className="grid grid-cols-3 gap-x-8 gap-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Suburb</p>
+                        <p className="text-sm font-semibold text-slate-900">{ext.suburb || candidate.city || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">State</p>
+                        <p className="text-sm font-semibold text-slate-900">{candidate.state || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Postcode</p>
+                        <p className="text-sm font-semibold text-slate-900">{ext.postcode || candidate.postcode || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Provider & Consultant */}
+                  <div className="border-t border-slate-200/60 px-6 py-3">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Provider &amp; Consultant</p>
+                    <div className="grid grid-cols-3 gap-x-8 gap-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Organisation</p>
+                        {candidate.provider_id ? (
+                          <Link to={`/providers/${candidate.provider_id}`}
+                            className="text-sm font-semibold text-[#e88e2e] hover:text-[#c97a20] hover:underline transition-colors truncate block">
+                            {candidate.provider_name || "View Provider"}
+                          </Link>
+                        ) : (
+                          <p className="text-sm text-slate-400">Not assigned</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Consultant</p>
+                        <p className="text-sm font-semibold text-slate-900">{ext.consultant_name || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Work Details */}
+                  <div className="border-t border-slate-200/60 px-6 py-3 bg-slate-50/40 rounded-b-2xl">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Work Details</p>
+                    <div className="grid grid-cols-3 gap-x-8 gap-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Work Status</p>
+                        <span className={`inline-flex w-fit text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                          {statusCfg.label}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Benchmark Hours</p>
+                        <p className="text-sm font-bold text-slate-900">
+                          {candidate.benchmark_hours ? `${candidate.benchmark_hours} hrs / wk` : "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Wage Subsidy</p>
+                        {candidate.wage_subsidy ? (
+                          <div className="flex items-center gap-1.5 text-green-700">
+                            <CheckCircle size={12} />
+                            <span className="text-sm font-semibold">
+                              Eligible{candidate.wage_subsidy_amount
+                                ? ` · $${Number(candidate.wage_subsidy_amount).toLocaleString()}`
+                                : ""}
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-400">Not eligible</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
-                {/* Benchmark card */}
-                <div className="bg-gradient-to-br from-[#e88e2e] to-[#f5a623] rounded-2xl shadow-sm p-5 text-white">
-                  <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">Benchmark</p>
-                  <p className="text-4xl font-black">{candidate.benchmark_hours ?? "—"}</p>
-                  <p className="text-sm text-white/80 mt-0.5">hours / week</p>
+                {/* Notes */}
+                {(ext.comments || candidate.notes) && (
+                  <div className="bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(15,23,42,0.05)'}}>
+                    <div className="px-6 py-3 bg-amber-50 border-b border-amber-100 rounded-t-2xl">
+                      <h2 className="text-sm font-semibold text-amber-900">Notes</h2>
+                    </div>
+                    <div className="px-6 py-4">
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                        {ext.comments || candidate.notes}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Right 30% ─────────────────────────── */}
+              <div className="lg:col-span-3 space-y-3">
+
+                {/* Availability & Employment Support */}
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
+                  <div className="px-5 py-2.5 bg-blue-50 border-b border-blue-100">
+                    <h3 className="text-sm font-semibold text-blue-900">Availability</h3>
+                  </div>
+                  <div className="px-5 py-3">
+                    <div className="flex items-baseline gap-2 mb-1.5">
+                      <span className="text-[26px] font-bold text-slate-900 tracking-tight leading-none">
+                        {candidate.benchmark_hours ?? "—"}
+                      </span>
+                      <span className="text-xs text-slate-500 pb-0.5">hrs / week</span>
+                    </div>
+                    <span className={`inline-flex text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                      {statusCfg.label}
+                    </span>
+                  </div>
+
                   {candidate.wage_subsidy && (
-                    <div className="mt-3 bg-white/20 rounded-xl px-3 py-1.5 text-xs font-medium">
-                      💰 Wage Subsidy{candidate.wage_subsidy_amount ? `: $${Number(candidate.wage_subsidy_amount).toLocaleString()}` : ""}
+                    <div className="border-t border-slate-200/60 bg-slate-50/50 px-5 py-2.5">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Employment Support</p>
+                      <div className="flex items-center gap-1.5 text-green-700 mb-1">
+                        <CheckCircle size={12} />
+                        <span className="text-xs font-semibold">Wage Subsidy Eligible</span>
+                      </div>
+                      {candidate.wage_subsidy_amount && (
+                        <p className="text-lg font-bold text-slate-900 tracking-tight">
+                          ${Number(candidate.wage_subsidy_amount).toLocaleString()}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
 
-                {/* Provider/Consultant card */}
-                <div className="bg-white rounded-2xl shadow-sm p-5">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Provider</h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-xs text-slate-400 mb-0.5">Organisation</p>
-                      {candidate.provider_id ? (
-                        <Link to={`/providers/${candidate.provider_id}`}
-                          className="font-semibold text-[#e88e2e] hover:underline">
-                          {candidate.provider_name || "View"}
-                        </Link>
-                      ) : <p className="text-slate-400">Not assigned</p>}
-                    </div>
-                    {ext.consultant_name && (
-                      <div>
-                        <p className="text-xs text-slate-400 mb-0.5">Consultant</p>
-                        <p className="font-medium text-slate-800">{ext.consultant_name}</p>
-                      </div>
-                    )}
+                {/* Verification / Compliance */}
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
+                  <div className="px-5 py-2.5 bg-green-50 border-b border-green-100">
+                    <h3 className="text-sm font-semibold text-green-900">Verification</h3>
                   </div>
-                </div>
-
-                {/* Compliance card */}
-                <div className="bg-white rounded-2xl shadow-sm p-5">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Compliance</h3>
-                  <div className="space-y-2.5">
+                  <div className="px-4 py-2 divide-y divide-slate-100">
                     {([
-                      { field: "car" as const,          label: "🚗 Car Available" },
-                      { field: "police_check" as const, label: "🔍 Police Check" },
-                      { field: "wwc" as const,          label: "👶 WWC Check"    },
-                    ]).map(({ field, label }) => {
+                      { field: "car"          as const, label: "Vehicle Available",     Icon: Car    },
+                      { field: "police_check" as const, label: "Police Check",           Icon: Shield },
+                      { field: "wwc"          as const, label: "Working With Children",  Icon: Users  },
+                    ]).map(({ field, label, Icon }) => {
                       const val = ext[field];
+                      const isYes = val === "yes";
+                      const isNo  = val === "no";
                       return (
-                        <div key={field} className="flex items-center justify-between">
-                          <span className="text-sm text-slate-600">{label}</span>
+                        <div key={field} className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-2.5">
+                            <Icon size={14} className={isYes ? "text-green-600" : isNo ? "text-red-500" : "text-slate-400"} />
+                            <span className="text-sm font-medium text-slate-700">{label}</span>
+                          </div>
                           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                            val === "yes" ? "bg-green-100 text-green-700" :
-                            val === "no"  ? "bg-red-50 text-red-500" :
-                            "bg-slate-100 text-slate-400"
+                            isYes ? "bg-green-100 text-green-800 ring-1 ring-green-300" :
+                            isNo  ? "bg-red-100 text-red-700 ring-1 ring-red-300" :
+                            "bg-slate-200/80 text-slate-500"
                           }`}>
-                            {val === "yes" ? "✓ Yes" : val === "no" ? "✗ No" : "—"}
+                            {isYes ? "Verified" : isNo ? "Not Done" : "Unknown"}
                           </span>
                         </div>
                       );
@@ -442,13 +557,16 @@ export default function CandidateDetail() {
                   </div>
                 </div>
 
-                {/* Industry Preference */}
+                {/* Industry Preferences */}
                 {(ext.industry_preference ?? []).length > 0 && (
-                  <div className="bg-white rounded-2xl shadow-sm p-5">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Industry Preference</h3>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.05)'}}>
+                    <div className="px-5 py-2 bg-violet-50 border-b border-violet-100">
+                      <h3 className="text-sm font-semibold text-violet-900">Industry Preferences</h3>
+                    </div>
+                    <div className="px-5 py-2 flex flex-wrap gap-1.5">
                       {(ext.industry_preference ?? []).map((ind) => (
-                        <span key={ind} className="text-xs font-medium px-3 py-1.5 rounded-xl bg-orange-50 text-[#e88e2e] border border-orange-100">
+                        <span key={ind}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors">
                           {ind}
                         </span>
                       ))}
@@ -456,55 +574,48 @@ export default function CandidateDetail() {
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Comments */}
-              {(ext.comments || candidate.notes) && (
-                <div className="bg-white rounded-2xl shadow-sm p-5">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Comments / Notes</h3>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{ext.comments || candidate.notes}</p>
-                </div>
-              )}
-            </>
           )}
 
-          {/* ══ DOCUMENTS TAB ═════════════════════════ */}
+          {/* ══ DOCUMENTS ══════════════════════════════════════ */}
           {activeTab === "documents" && (
-            <div className="bg-white rounded-2xl shadow-sm p-5">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="font-bold text-slate-900">Documents</h3>
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
+              <div className="flex items-center justify-between px-6 py-4 bg-indigo-50 border-b border-indigo-100">
+                <h3 className="text-base font-semibold text-indigo-900">Documents</h3>
                 {canWrite && (
                   <div className="flex items-center gap-2">
                     <button onClick={() => { setDocType("cv"); setShowUpload(true); }}
-                      className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-xl px-3 py-2 transition">
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
                       <Upload size={12} /> Upload Resume
                     </button>
                     <button onClick={() => { setDocType("other"); setShowUpload(true); }}
-                      className="flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-50 transition">
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
                       <Upload size={12} /> Upload Document
                     </button>
                   </div>
                 )}
               </div>
               {documents.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText size={40} className="text-slate-200 mx-auto mb-3" />
-                  <p className="text-slate-400 text-sm">No documents uploaded yet</p>
-                  {canWrite && <p className="text-xs text-slate-300 mt-1">Click "Upload Resume" to add the first one</p>}
+                <div className="text-center py-16">
+                  <FileText size={32} className="text-slate-200 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-500">No documents uploaded yet</p>
+                  {canWrite && <p className="text-xs text-slate-400 mt-1">Click "Upload Resume" to get started</p>}
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-slate-100">
                   {documents.map((doc) => {
                     const mime = (doc.mime_type ?? "").toLowerCase();
-                    const isPdf = mime.includes("pdf");
-                    const isImage = mime.startsWith("image/");
+                    const isPdf  = mime.includes("pdf");
+                    const isImg  = mime.startsWith("image/");
                     const isWord = mime.includes("word") || mime.includes("officedocument");
-                    const iconBg = isPdf ? "bg-red-50 text-red-500" : isImage ? "bg-blue-50 text-blue-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-50 text-slate-400";
-                    const viewUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
+                    const iconBg = isPdf ? "bg-red-50 text-red-500" : isImg ? "bg-sky-50 text-sky-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-500";
+                    const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
                     const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
                     return (
-                      <div key={doc.id} className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50/30 transition group">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
-                          <FileText size={18} />
+                      <div key={doc.id} className="flex items-center gap-4 px-6 py-4 hover:bg-blue-50/30 transition-colors">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                          <FileText size={15} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-900 truncate">{doc.file_name}</p>
@@ -514,21 +625,21 @@ export default function CandidateDetail() {
                             {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
                           </p>
                         </div>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
+                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex-shrink-0 ${DOC_TYPE_BADGE[doc.document_type] ?? DOC_TYPE_BADGE.other}`}>
                           {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
                         </span>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <a href={viewUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-2.5 py-1.5 transition">
+                            className="flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 hover:border-slate-300 rounded-lg px-2.5 py-1 transition-colors">
                             <Eye size={11} /> View
                           </a>
                           <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs text-slate-500 border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 transition">
+                            className="flex items-center gap-1 text-xs text-slate-500 border border-slate-200 rounded-lg px-2.5 py-1 hover:bg-slate-50 transition-colors">
                             <Download size={11} /> Download
                           </a>
                           {isAdmin && (
                             <button onClick={() => { if (confirm("Delete this document?")) deleteDoc.mutate(doc.id); }}
-                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                               <Trash2 size={13} />
                             </button>
                           )}
@@ -541,26 +652,28 @@ export default function CandidateDetail() {
             </div>
           )}
 
-          {/* ══ TRAINING TAB ══════════════════════════ */}
+          {/* ══ TRAINING ═══════════════════════════════════════ */}
           {activeTab === "training" && id && (
-            <div className="bg-white rounded-2xl shadow-sm p-5">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
               <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
             </div>
           )}
 
-          {/* ══ APPLICATIONS TAB ══════════════════════ */}
+          {/* ══ APPLICATIONS ═══════════════════════════════════ */}
           {activeTab === "applications" && (
-            <div className="bg-white rounded-2xl shadow-sm p-5">
-              <h3 className="font-bold text-slate-900 mb-4">Application History</h3>
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
+              <div className="px-6 py-4 bg-sky-50 border-b border-sky-100">
+                <h3 className="text-base font-semibold text-sky-900">Application History</h3>
+              </div>
               {!candidate.applications?.length ? (
-                <div className="text-center py-12">
-                  <ExternalLink size={36} className="text-slate-200 mx-auto mb-3" />
-                  <p className="text-slate-400 text-sm">No applications yet</p>
+                <div className="text-center py-16">
+                  <ExternalLink size={32} className="text-slate-200 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-500">No applications yet</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-slate-100">
                   {candidate.applications.map((app) => (
-                    <div key={app.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition">
+                    <div key={app.id} className="flex items-center justify-between px-6 py-4 hover:bg-blue-50/30 transition-colors">
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{app.job_title}</p>
                         <p className="text-xs text-slate-400 mt-0.5">
@@ -570,9 +683,9 @@ export default function CandidateDetail() {
                       </div>
                       <div className="flex items-center gap-2">
                         {app.score > 0 && (
-                          <span className="text-xs font-bold text-slate-500 bg-slate-100 rounded-lg px-2 py-1">{app.score}/10</span>
+                          <span className="text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg px-2.5 py-1">{app.score}/10</span>
                         )}
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>{app.stage}</span>
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>{app.stage}</span>
                       </div>
                     </div>
                   ))}
@@ -581,23 +694,24 @@ export default function CandidateDetail() {
             </div>
           )}
         </div>
-      )}
+        </div>
 
-      {/* ── Upload Dialog ────────────────────────────── */}
+
+      {/* ── Upload Dialog ──────────────────────────────────── */}
       {showUpload && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h2 className="text-base font-semibold text-slate-900 mb-4">
               {docType === "cv" ? "Upload Resume / CV" : "Upload Document"}
             </h2>
             {uploadError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3">{uploadError}</p>
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-4">{uploadError}</p>
             )}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Document Type</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Document Type</label>
                 <select value={docType} onChange={(e) => setDocType(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]">
                   <option value="cv">Resume / CV</option>
                   <option value="cover_letter">Cover Letter</option>
                   <option value="id">ID Document</option>
@@ -606,14 +720,17 @@ export default function CandidateDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">File</label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">File</label>
+                <div onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center cursor-pointer hover:border-[#e88e2e] hover:bg-orange-50/30 transition-colors">
                   {docFile ? (
-                    <p className="text-sm text-slate-700">{docFile.name}</p>
+                    <p className="text-sm font-medium text-slate-700">{docFile.name}</p>
                   ) : (
-                    <p className="text-sm text-slate-400">Click to select file (PDF, JPG, PNG, DOC — max 10MB)</p>
+                    <>
+                      <Upload size={20} className="text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">Click to select file</p>
+                      <p className="text-xs text-slate-400 mt-0.5">PDF, JPG, PNG, DOC — max 10 MB</p>
+                    </>
                   )}
                 </div>
                 <input ref={fileInputRef} type="file" className="hidden"
@@ -621,11 +738,11 @@ export default function CandidateDetail() {
                   onChange={(e) => setDocFile(e.target.files?.[0] ?? null)} />
               </div>
             </div>
-            <div className="flex gap-3 justify-end mt-4">
+            <div className="flex gap-2 justify-end mt-5">
               <button onClick={() => { setShowUpload(false); setDocFile(null); setUploadError(""); }}
-                className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50">Cancel</button>
+                className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
               <button onClick={handleDocUpload}
-                className="px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20]">
+                className="px-4 py-2 text-sm font-semibold bg-[#e88e2e] text-white rounded-xl hover:bg-[#d07d20] transition-colors">
                 Upload
               </button>
             </div>
