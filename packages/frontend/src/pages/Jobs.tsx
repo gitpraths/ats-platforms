@@ -29,7 +29,7 @@ export default function Jobs() {
           onClick={() => setDialogOpen(true)}
           className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium"
         >
-          <Plus size={16} /> New Vacancy
+          <Plus size={16} /> Add Vacancy
         </button>
       </div>
 

@@ -28,7 +28,7 @@ The Vacancies page will show two buttons at the top:
 | Job Title | Required |
 | Employer | Dropdown from Employer list. Shows **"+ Add Employer"** link if not found |
 | Industry | Text field |
-| Pay Rate | $ per hour |
+| Pay Rate | Amount + type toggle: **Per Hour** or **Annual Salary** |
 | No. of Positions | Number |
 | Work Type | Dropdown: Full-time / Part-time / Casual |
 | Work Location | Text field |

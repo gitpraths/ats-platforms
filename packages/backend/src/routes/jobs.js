@@ -96,49 +96,52 @@ jobsRouter.get("/:id", async (req, res, next) => {
 jobsRouter.post("/", async (req, res, next) => {
   try {
     const {
-      title, description, department_id, location_id,
-      skills_required, skills_desired,
-      job_type, work_model,
-      cover_letter_required, min_annual_salary, max_annual_salary, currency_code,
-      experience_years_min, deadline, team,
-      employer_id, positions_count, job_board_url, vacancy_type, staff_working_status, end_date,
+      title, description,
+      employer_id, industry, pay_rate, pay_rate_type,
+      positions_count, vacancy_type, work_location, job_board_url,
+      police_check, drug_alcohol_test, wwc, car_required, public_transport,
+      wage_subsidy_required, comments, status,
+      // legacy fields kept for backward compatibility
+      department_id, location_id, skills_required, skills_desired,
+      job_type, work_model, cover_letter_required, min_annual_salary,
+      max_annual_salary, currency_code, experience_years_min, deadline,
+      team, staff_working_status, end_date,
     } = req.body;
 
-    if (!title)      return res.status(400).json({ success: false, error: "title is required" });
-    if (!job_type)   return res.status(400).json({ success: false, error: "job_type is required" });
-    if (!work_model) return res.status(400).json({ success: false, error: "work_model is required" });
-
-    if (job_type && !VALID_JOB_TYPES.includes(job_type))
-      return res.status(400).json({ success: false, error: `job_type must be one of: ${VALID_JOB_TYPES.join(", ")}` });
-    if (work_model && !VALID_WORK_MODELS.includes(work_model))
-      return res.status(400).json({ success: false, error: `work_model must be one of: ${VALID_WORK_MODELS.join(", ")}` });
-    if (currency_code && !VALID_CURRENCIES.includes(currency_code))
-      return res.status(400).json({ success: false, error: `currency_code must be one of: ${VALID_CURRENCIES.join(", ")}` });
+    if (!title) return res.status(400).json({ success: false, error: "title is required" });
 
     const { rows } = await pool.query(
       `INSERT INTO jobs (
-         title, description, department_id, location_id,
-         skills_required, skills_desired,
-         job_type, work_model,
-         cover_letter_required, min_annual_salary, max_annual_salary, currency_code,
-         experience_years_min, deadline, team,
-         employer_id, positions_count, job_board_url, vacancy_type, staff_working_status, end_date,
+         title, description, employer_id,
+         industry, pay_rate, pay_rate_type,
+         positions_count, vacancy_type, work_location, job_board_url,
+         police_check, drug_alcohol_test, wwc, car_required, public_transport,
+         wage_subsidy_required, comments,
+         department_id, location_id, skills_required, skills_desired,
+         job_type, work_model, cover_letter_required, min_annual_salary,
+         max_annual_salary, currency_code, experience_years_min, deadline,
+         team, staff_working_status, end_date,
          status, created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
-         $16,$17,$18,$19,$20,$21,
-         'draft', $22, $22
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
+         $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,
+         $33,$34,$34
        ) RETURNING id, job_number, created_at`,
       [
-        title, description, department_id || null, location_id || null,
+        title, description || null, employer_id || null,
+        industry || null, pay_rate || null, pay_rate_type || 'per_hour',
+        positions_count || 1, vacancy_type || null, work_location || null, job_board_url || null,
+        police_check || 'not_required', drug_alcohol_test || 'no', wwc || 'no',
+        car_required || 'no', public_transport || 'no',
+        wage_subsidy_required || 'no', comments || null,
+        department_id || null, location_id || null,
         skills_required || [], skills_desired || [],
-        job_type, work_model,
+        job_type || 'full_time', work_model || 'onsite',
         cover_letter_required ?? false,
-        min_annual_salary || null, max_annual_salary || null, currency_code || "AUD",
+        min_annual_salary || null, max_annual_salary || null, currency_code || 'AUD',
         experience_years_min || null, deadline || null, team || null,
-        employer_id || null, positions_count || 1, job_board_url || null,
-        vacancy_type || null, staff_working_status || "active", end_date || null,
-        req.user.id,
+        staff_working_status || 'active', end_date || null,
+        status || 'draft', req.user.id,
       ]
     );
     res.status(201).json({ success: true, data: rows[0] });
@@ -152,8 +155,12 @@ jobsRouter.patch("/:id", async (req, res, next) => {
       "title", "description", "department_id", "location_id",
       "skills_required", "skills_desired", "job_type", "work_model",
       "cover_letter_required", "min_annual_salary", "max_annual_salary", "currency_code",
-      "experience_years_min", "deadline", "team",
+      "experience_years_min", "deadline", "team", "status",
       "employer_id", "positions_count", "job_board_url", "vacancy_type", "staff_working_status", "end_date",
+      // new vacancy form fields
+      "industry", "pay_rate", "pay_rate_type", "work_location",
+      "police_check", "drug_alcohol_test", "wwc", "car_required",
+      "public_transport", "wage_subsidy_required", "comments",
     ];
 
     const updates = [];

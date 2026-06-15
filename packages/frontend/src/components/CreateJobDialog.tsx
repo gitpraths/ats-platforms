@@ -1,91 +1,105 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Check, Hash } from "lucide-react";
 import { api } from "../lib/api";
-import type { Department, Employer, Location, User } from "../types";
-import AISuggestTitles      from "./AISuggestTitles";
-import AIGenerateDescription from "./AIGenerateDescription";
-import SkillsInput           from "./SkillsInput";
+import type { Employer, Candidate } from "../types";
 
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-}
+interface Props { isOpen: boolean; onClose: () => void; }
 
-const JOB_TYPES   = ["full_time", "part_time", "contract", "internship"] as const;
-const WORK_MODELS = ["onsite", "remote", "hybrid"] as const;
-const CURRENCIES  = ["USD", "EUR", "CAD", "MXN"] as const;
 const WORKVISION_BOARD_URL = "https://workvision.com.au/current-vacancies/";
+const STEPS = ["Vacancy Details", "Description & Compliance", "Candidate Assignment"] as const;
+type Step = 0 | 1 | 2;
 
-const LABEL: Record<string, string> = {
-  full_time: "Full Time", part_time: "Part Time", contract: "Contract", internship: "Internship",
-  onsite: "Onsite", remote: "Remote", hybrid: "Hybrid",
-};
-
-const STEPS = ["Basics", "Description", "Requirements", "Assignment"] as const;
-type Step = 0 | 1 | 2 | 3;
+const YES_NO     = ["yes", "no"] as const;
+const YES_NO_NR  = ["yes", "no", "not_required"] as const;
+const WORK_TYPES = ["Full-time", "Part-time", "Casual", "Contract", "Temporary"] as const;
 
 interface FormState {
-  title: string;
-  department_id: string;
-  location_id: string;
-  job_type: string;
-  work_model: string;
-  team: string;
-  description: string;
-  skills_required: string[];
-  skills_desired: string[];
-  min_annual_salary: string;
-  max_annual_salary: string;
-  currency_code: string;
-  experience_years_min: string;
-  deadline: string;
-  cover_letter_required: boolean;
-  recruiter_ids: string[];
-  employer_id: string;
+  // Step 1
+  title:          string;
+  employer_id:    string;
+  industry:       string;
+  pay_rate:       string;
+  pay_rate_type:  "per_hour" | "annual";
   positions_count: number;
-  job_board_url: string;
-  vacancy_type: string;
-  staff_working_status: string;
-  end_date: string;
+  work_type:      string;
+  work_location:  string;
+  job_board_url:  string;
+  // Step 2
+  description:         string;
+  police_check:        string;
+  drug_alcohol_test:   string;
+  wwc:                 string;
+  car_required:        string;
+  public_transport:    string;
+  wage_subsidy_required: string;
+  comments:            string;
+  // Step 3
+  candidate_id:    string;
+  candidate_name:  string;
+  interview_date:  string;
+  ets_date:        string;
+  placement_date:  string;
 }
 
 const EMPTY: FormState = {
-  title: "", department_id: "", location_id: "", job_type: "full_time",
-  work_model: "onsite", team: "", description: "",
-  skills_required: [], skills_desired: [],
-  min_annual_salary: "", max_annual_salary: "", currency_code: "USD",
-  experience_years_min: "", deadline: "", cover_letter_required: false,
-  recruiter_ids: [],
-  employer_id: "", positions_count: 1, job_board_url: WORKVISION_BOARD_URL,
-  vacancy_type: "", staff_working_status: "active", end_date: "",
+  title: "", employer_id: "", industry: "", pay_rate: "", pay_rate_type: "per_hour",
+  positions_count: 1, work_type: "Full-time", work_location: "", job_board_url: WORKVISION_BOARD_URL,
+  description: "", police_check: "not_required", drug_alcohol_test: "no", wwc: "no",
+  car_required: "no", public_transport: "no", wage_subsidy_required: "no", comments: "",
+  candidate_id: "", candidate_name: "", interview_date: "", ets_date: "", placement_date: "",
 };
 
-// ── Step indicator ────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const cls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e] focus:border-transparent";
+
+function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label className="block text-sm font-medium text-slate-700 mb-1">
+      {children} {required && <span className="text-red-500">*</span>}
+    </label>
+  );
+}
+
+function YesNoSelect({ value, onChange, options = YES_NO }: {
+  value: string;
+  onChange: (v: string) => void;
+  options?: readonly string[];
+}) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={cls}>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o === "not_required" ? "Not Required" : o.charAt(0).toUpperCase() + o.slice(1)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// ── Step Indicator ────────────────────────────────────────────────────────────
 function StepIndicator({ current }: { current: Step }) {
   return (
     <div className="flex items-center gap-0 mb-6">
       {STEPS.map((label, i) => {
-        const done    = i < current;
-        const active  = i === current;
-        const last    = i === STEPS.length - 1;
+        const done   = i < current;
+        const active = i === current;
+        const last   = i === STEPS.length - 1;
         return (
           <div key={label} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors ${
-                done   ? "bg-blue-600 border-blue-600 text-white" :
-                active ? "border-blue-600 text-blue-600 bg-white" :
-                         "border-gray-200 text-gray-400 bg-white"
+                done   ? "bg-[#e88e2e] border-[#e88e2e] text-white" :
+                active ? "border-[#e88e2e] text-[#e88e2e] bg-white"  :
+                         "border-slate-200 text-slate-400 bg-white"
               }`}>
                 {done ? <Check size={12} /> : i + 1}
               </div>
-              <span className={`text-xs mt-1 font-medium ${active ? "text-blue-600" : done ? "text-gray-600" : "text-gray-400"}`}>
+              <span className={`text-xs mt-1 font-medium ${active ? "text-[#e88e2e]" : done ? "text-slate-600" : "text-slate-400"}`}>
                 {label}
               </span>
             </div>
-            {!last && (
-              <div className={`flex-1 h-0.5 mb-4 mx-1 ${i < current ? "bg-blue-600" : "bg-gray-200"}`} />
-            )}
+            {!last && <div className={`flex-1 h-0.5 mb-4 mx-1 ${i < current ? "bg-[#e88e2e]" : "bg-slate-200"}`} />}
           </div>
         );
       })}
@@ -93,333 +107,250 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
-// ── Step 1: Basics ────────────────────────────────────────────────────────────
-function StepBasics({
-  form, set, departments, locations, employers,
-}: {
+// ── Step 1: Vacancy Details ───────────────────────────────────────────────────
+function StepVacancyDetails({ form, set, employers }: {
   form: FormState;
   set: (k: keyof FormState, v: unknown) => void;
-  departments: Department[];
-  locations: Location[];
   employers: Employer[];
 }) {
-  const cls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
   return (
     <div className="space-y-4">
-      {/* Title + AI Suggest */}
+      {/* Vacancy ID — auto generated */}
+      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+        <Hash size={14} className="text-slate-400" />
+        <span className="text-xs text-slate-500 font-medium">Vacancy ID:</span>
+        <span className="text-xs text-slate-400 italic">Auto-generated on save</span>
+      </div>
+
+      {/* Job Title */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
+        <Label required>Job Title</Label>
+        <input value={form.title} onChange={(e) => set("title", e.target.value)}
+          className={cls} placeholder="e.g. Warehouse Packer" autoFocus />
+      </div>
+
+      {/* Employer */}
+      <div>
+        <Label>Employer</Label>
+        <select value={form.employer_id} onChange={(e) => set("employer_id", e.target.value)} className={cls}>
+          <option value="">— Select Employer —</option>
+          {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+        </select>
+        <p className="text-xs text-slate-400 mt-1">
+          Not listed? <a href="/employers/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Employer</a>
+        </p>
+      </div>
+
+      {/* Industry + Work Type */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Industry</Label>
+          <input value={form.industry} onChange={(e) => set("industry", e.target.value)}
+            className={cls} placeholder="e.g. Warehouse, Security" />
+        </div>
+        <div>
+          <Label>Work Type</Label>
+          <select value={form.work_type} onChange={(e) => set("work_type", e.target.value)} className={cls}>
+            {WORK_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Pay Rate */}
+      <div>
+        <Label>Pay Rate</Label>
         <div className="flex gap-2">
-          <input
-            value={form.title}
-            onChange={(e) => set("title", e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g. Senior Software Engineer"
-            autoFocus
-          />
-          <AISuggestTitles
-            currentTitle={form.title}
-            skills={form.skills_required}
-            description={form.description}
-            onSelect={(t) => set("title", t)}
-          />
-        </div>
-      </div>
-
-      {/* Job Type + Work Model */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Job Type *</label>
-          <select value={form.job_type} onChange={(e) => set("job_type", e.target.value)} className={cls}>
-            {JOB_TYPES.map((t) => <option key={t} value={t}>{LABEL[t]}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Work Model *</label>
-          <select value={form.work_model} onChange={(e) => set("work_model", e.target.value)} className={cls}>
-            {WORK_MODELS.map((m) => <option key={m} value={m}>{LABEL[m]}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Department + Location */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-          <select value={form.department_id} onChange={(e) => set("department_id", e.target.value)} className={cls}>
-            <option value="">— None —</option>
-            {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-          <select value={form.location_id} onChange={(e) => set("location_id", e.target.value)} className={cls}>
-            <option value="">— None —</option>
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.is_remote ? "Remote" : `${l.city}${l.state ? `, ${l.state}` : ""}`}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Team */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
-        <input
-          value={form.team}
-          onChange={(e) => set("team", e.target.value)}
-          className={cls}
-          placeholder="e.g. Platform"
-        />
-      </div>
-
-      {/* Vacancy Details */}
-      <div className="border-t pt-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Vacancy Details</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Employer</label>
-            <select value={form.employer_id} onChange={(e) => set("employer_id", e.target.value)} className={cls}>
-              <option value="">No Employer</option>
-              {employers.map((e) => (
-                <option key={e.id} value={e.id}>{e.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type of Vacancy</label>
-            <select value={form.vacancy_type} onChange={(e) => set("vacancy_type", e.target.value)} className={cls}>
-              <option value="">Select type</option>
-              <option value="full_time">Full Time</option>
-              <option value="part_time">Part Time</option>
-              <option value="casual">Casual</option>
-              <option value="contract">Contract</option>
-              <option value="temporary">Temporary</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">No. of Positions</label>
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
             <input
-              type="number"
-              min={1}
-              value={form.positions_count}
-              onChange={(e) => set("positions_count", Number(e.target.value))}
-              className={cls}
+              type="number" min={0} step="0.01"
+              value={form.pay_rate}
+              onChange={(e) => set("pay_rate", e.target.value)}
+              className="w-full border border-slate-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+              placeholder="0.00"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-            <input
-              type="date"
-              value={form.end_date}
-              onChange={(e) => set("end_date", e.target.value)}
-              className={cls}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Working Status</label>
-            <select value={form.staff_working_status} onChange={(e) => set("staff_working_status", e.target.value)} className={cls}>
-              <option value="active">Active</option>
-              <option value="on_leave">On Leave</option>
-              <option value="resigned">Resigned</option>
-              <option value="terminated">Terminated</option>
-            </select>
-          </div>
-          <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Job Board URL</label>
-            <input
-              type="url"
-              value={form.job_board_url}
-              readOnly
-              className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed"
-            />
-            <p className="text-xs text-gray-400 mt-1">Automatically set to WorkVision job board</p>
+          <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => set("pay_rate_type", "per_hour")}
+              className={`px-3 py-2 text-xs font-medium transition ${form.pay_rate_type === "per_hour" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
+            >Per Hour</button>
+            <button
+              type="button"
+              onClick={() => set("pay_rate_type", "annual")}
+              className={`px-3 py-2 text-xs font-medium transition ${form.pay_rate_type === "annual" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
+            >Annual</button>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-// ── Step 2: Description ───────────────────────────────────────────────────────
-function StepDescription({
-  form, set, departments,
-}: {
-  form: FormState;
-  set: (k: keyof FormState, v: unknown) => void;
-  departments: Department[];
-}) {
-  const departmentName = departments.find((d) => d.id === form.department_id)?.name;
-  return (
-    <div className="space-y-3">
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">Job Description</label>
-          <AIGenerateDescription
-            jobTitle={form.title}
-            requiredSkills={form.skills_required}
-            desiredSkills={form.skills_desired}
-            currentDesc={form.description}
-            department={departmentName}
-            onGenerated={(d) => set("description", d)}
-          />
-        </div>
-        <textarea
-          value={form.description}
-          onChange={(e) => set("description", e.target.value)}
-          rows={12}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Describe the role, key responsibilities, and what success looks like..."
-        />
-      </div>
-      <p className="text-xs text-gray-400">
-        Tip: Enter a title first, then click <span className="font-medium text-emerald-600">Generate with AI</span> to get a starting draft.
-      </p>
-    </div>
-  );
-}
-
-// ── Step 3: Requirements ──────────────────────────────────────────────────────
-function StepRequirements({
-  form, set,
-}: {
-  form: FormState;
-  set: (k: keyof FormState, v: unknown) => void;
-}) {
-  const cls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-  return (
-    <div className="space-y-4">
-      {/* Skills */}
-      <div className="grid grid-cols-2 gap-4">
-        <SkillsInput label="Required Skills" value={form.skills_required} onChange={(v) => set("skills_required", v)} />
-        <SkillsInput label="Desired Skills"  value={form.skills_desired}  onChange={(v) => set("skills_desired", v)} />
-      </div>
-
-      {/* Salary */}
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Min Salary</label>
-          <input type="number" value={form.min_annual_salary}
-            onChange={(e) => set("min_annual_salary", e.target.value)}
-            className={cls} placeholder="50000" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Max Salary</label>
-          <input type="number" value={form.max_annual_salary}
-            onChange={(e) => set("max_annual_salary", e.target.value)}
-            className={cls} placeholder="100000" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-          <select value={form.currency_code} onChange={(e) => set("currency_code", e.target.value)} className={cls}>
-            {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Experience + Deadline */}
+      {/* No. of Positions + Work Location */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Min Experience (yrs)</label>
-          <input type="number" min={0} value={form.experience_years_min}
-            onChange={(e) => set("experience_years_min", e.target.value)}
-            className={cls} placeholder="3" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Application Deadline</label>
-          <input type="date" value={form.deadline}
-            onChange={(e) => set("deadline", e.target.value)}
+          <Label>No. of Positions</Label>
+          <input type="number" min={1} value={form.positions_count}
+            onChange={(e) => set("positions_count", Number(e.target.value))}
             className={cls} />
         </div>
+        <div>
+          <Label>Work Location</Label>
+          <input value={form.work_location} onChange={(e) => set("work_location", e.target.value)}
+            className={cls} placeholder="e.g. Melbourne, VIC" />
+        </div>
       </div>
 
-      {/* Cover letter */}
-      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer pt-1">
-        <input type="checkbox" checked={form.cover_letter_required}
-          onChange={(e) => set("cover_letter_required", e.target.checked)}
-          className="w-4 h-4 accent-blue-600" />
-        Require cover letter from applicants
-      </label>
+      {/* Job Board URL */}
+      <div>
+        <Label>Job Board URL</Label>
+        <input type="url" value={form.job_board_url}
+          onChange={(e) => set("job_board_url", e.target.value)}
+          className={cls} />
+        <p className="text-xs text-slate-400 mt-1">Pre-filled with WorkVision job board URL</p>
+      </div>
     </div>
   );
 }
 
-// ── Step 4: Assignment ────────────────────────────────────────────────────────
-function StepAssignment({
-  form, set,
-}: {
+// ── Step 2: Description & Compliance ─────────────────────────────────────────
+function StepDescriptionCompliance({ form, set }: {
+  form: FormState;
+  set: (k: keyof FormState, v: unknown) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Job Description */}
+      <div>
+        <Label>Job Description</Label>
+        <textarea value={form.description} onChange={(e) => set("description", e.target.value)}
+          rows={8} className={cls}
+          placeholder="Describe the role, key responsibilities..." />
+      </div>
+
+      {/* Compliance grid */}
+      <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Compliance & Requirements</p>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Police Check</Label>
+            <YesNoSelect value={form.police_check} onChange={(v) => set("police_check", v)} options={YES_NO_NR} />
+          </div>
+          <div>
+            <Label>Drug & Alcohol Test <span className="text-slate-400 font-normal">(Optional)</span></Label>
+            <YesNoSelect value={form.drug_alcohol_test} onChange={(v) => set("drug_alcohol_test", v)} />
+          </div>
+          <div>
+            <Label>WWC (Working With Children)</Label>
+            <YesNoSelect value={form.wwc} onChange={(v) => set("wwc", v)} />
+          </div>
+          <div>
+            <Label>Car Required</Label>
+            <YesNoSelect value={form.car_required} onChange={(v) => set("car_required", v)} />
+          </div>
+          <div>
+            <Label>Public Transport Accessible</Label>
+            <YesNoSelect value={form.public_transport} onChange={(v) => set("public_transport", v)} />
+          </div>
+          <div>
+            <Label>Wage Subsidy</Label>
+            <YesNoSelect value={form.wage_subsidy_required} onChange={(v) => set("wage_subsidy_required", v)} />
+          </div>
+        </div>
+      </div>
+
+      {/* Comments */}
+      <div>
+        <Label>Comments</Label>
+        <textarea value={form.comments} onChange={(e) => set("comments", e.target.value)}
+          rows={3} className={cls} placeholder="Additional notes or comments..." />
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Candidate Assignment ──────────────────────────────────────────────
+function StepCandidateAssignment({ form, set }: {
   form: FormState;
   set: (k: keyof FormState, v: unknown) => void;
 }) {
   const [q, setQ] = useState("");
 
-  const { data: recruiters = [], isFetching } = useQuery<User[]>({
-    queryKey: ["recruiters"],
-    queryFn:  () => api.get<User[]>("/users?role=recruiter"),
+  const { data: candidatesResult } = useQuery({
+    queryKey: ["candidates-search", q],
+    queryFn: () => api.list<Candidate>(`/candidates?limit=20&search=${encodeURIComponent(q)}`),
+    enabled: q.length >= 2,
   });
-
-  const filtered = recruiters.filter((r) =>
-    !q || r.name.toLowerCase().includes(q.toLowerCase()) || r.email.toLowerCase().includes(q.toLowerCase())
-  );
-
-  function toggle(id: string) {
-    const current = form.recruiter_ids;
-    set("recruiter_ids", current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
-  }
+  const candidates = candidatesResult?.data ?? [];
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500">
-        Assign recruiters to this job. You can also do this later from the job detail page.
+    <div className="space-y-4">
+      <p className="text-sm text-slate-500">
+        Optionally assign a candidate to this vacancy and set key dates. You can also do this later.
       </p>
 
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Filter by name or email..."
-        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-
-      <div className="border rounded-xl overflow-y-auto max-h-56">
-        {isFetching && <p className="text-center text-sm text-gray-400 py-4">Loading recruiters...</p>}
-        {!isFetching && filtered.length === 0 && (
-          <p className="text-center text-sm text-gray-400 py-4">No recruiters found.</p>
+      {/* Candidate search */}
+      <div>
+        <Label>Candidate</Label>
+        {form.candidate_id ? (
+          <div className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+            <div>
+              <p className="text-sm font-medium text-slate-900">{form.candidate_name}</p>
+              <p className="text-xs text-slate-500">Candidate selected</p>
+            </div>
+            <button type="button" onClick={() => { set("candidate_id", ""); set("candidate_name", ""); }}
+              className="text-xs text-red-500 hover:underline">Remove</button>
+          </div>
+        ) : (
+          <div className="relative">
+            <input
+              value={q} onChange={(e) => setQ(e.target.value)}
+              className={cls} placeholder="Search by name or email (min 2 chars)..."
+            />
+            {candidates.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-20 mt-1 max-h-48 overflow-y-auto">
+                {candidates.map((c) => (
+                  <button key={c.id} type="button"
+                    onClick={() => { set("candidate_id", c.id); set("candidate_name", c.name); setQ(""); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-orange-50 flex items-center gap-3 border-b last:border-0"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-orange-100 text-[#e88e2e] text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{c.name}</p>
+                      <p className="text-xs text-slate-500">{c.email}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-slate-400 mt-1">
+              Not listed? <a href="/candidates/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Candidate</a>
+            </p>
+          </div>
         )}
-        {filtered.map((r) => {
-          const selected = form.recruiter_ids.includes(r.id);
-          return (
-            <label
-              key={r.id}
-              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition border-b last:border-b-0 ${
-                selected ? "bg-blue-50" : "hover:bg-gray-50"
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selected}
-                onChange={() => toggle(r.id)}
-                className="w-4 h-4 accent-blue-600 flex-shrink-0"
-              />
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                {r.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900">{r.name}</p>
-                <p className="text-xs text-gray-500 truncate">{r.email}</p>
-              </div>
-              {selected && <Check size={14} className="ml-auto text-blue-600 flex-shrink-0" />}
-            </label>
-          );
-        })}
       </div>
 
-      {form.recruiter_ids.length > 0 && (
-        <p className="text-xs text-blue-600 font-medium">
-          {form.recruiter_ids.length} recruiter{form.recruiter_ids.length > 1 ? "s" : ""} selected
-        </p>
-      )}
+      {/* Dates */}
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label>Interview Date</Label>
+          <input type="date" value={form.interview_date}
+            onChange={(e) => set("interview_date", e.target.value)} className={cls} />
+        </div>
+        <div>
+          <Label>ETS Date</Label>
+          <input type="date" value={form.ets_date}
+            onChange={(e) => set("ets_date", e.target.value)} className={cls} />
+        </div>
+        <div>
+          <Label>Placement Date</Label>
+          <input type="date" value={form.placement_date}
+            onChange={(e) => set("placement_date", e.target.value)} className={cls} />
+        </div>
+      </div>
+      <p className="text-xs text-slate-400">ETS = Expected To Start</p>
     </div>
   );
 }
@@ -431,21 +362,9 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
   const [form,  setForm]  = useState<FormState>(EMPTY);
   const [error, setError] = useState("");
 
-  const { data: departments = [] } = useQuery<Department[]>({
-    queryKey: ["departments"],
-    queryFn:  () => api.get<Department[]>("/departments"),
-    enabled: isOpen,
-  });
-
-  const { data: locations = [] } = useQuery<Location[]>({
-    queryKey: ["locations"],
-    queryFn:  () => api.get<Location[]>("/locations"),
-    enabled: isOpen,
-  });
-
   const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
-    queryFn:  () => api.list<Employer>("/employers?limit=100"),
+    queryFn:  () => api.list<Employer>("/employers?limit=200"),
     enabled: isOpen,
   });
   const employers = employersResult?.data ?? [];
@@ -453,10 +372,17 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
   const createJob = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.post<{ id: string }>("/jobs", body),
     onSuccess: async (data) => {
-      // Assign recruiters if any selected
-      if (form.recruiter_ids.length > 0) {
+      // If candidate assigned, create application with dates
+      if (form.candidate_id) {
         try {
-          await api.post(`/jobs/${data.id}/recruiters`, { user_ids: form.recruiter_ids });
+          await api.post("/applications", {
+            job_id:         data.id,
+            candidate_id:   form.candidate_id,
+            stage:          form.interview_date ? "interview" : "applied",
+            interview_date: form.interview_date || undefined,
+            ets_date:       form.ets_date       || undefined,
+            placement_date: form.placement_date || undefined,
+          });
         } catch { /* non-fatal */ }
       }
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
@@ -469,108 +395,82 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleClose() {
-    setStep(0);
-    setForm(EMPTY);
-    setError("");
-    onClose();
-  }
+  function handleClose() { setStep(0); setForm(EMPTY); setError(""); onClose(); }
 
   function handleNext() {
     setError("");
-    if (step === 0 && !form.title.trim()) {
-      setError("Job title is required to continue.");
-      return;
-    }
+    if (step === 0 && !form.title.trim()) { setError("Job title is required."); return; }
     setStep((s) => (s + 1) as Step);
   }
 
-  function handleBack() {
-    setError("");
-    setStep((s) => (s - 1) as Step);
-  }
+  function handleBack() { setError(""); setStep((s) => (s - 1) as Step); }
 
   function handleSubmit() {
     setError("");
     createJob.mutate({
       title:                 form.title.trim(),
-      description:           form.description || undefined,
-      department_id:         form.department_id  || undefined,
-      location_id:           form.location_id    || undefined,
-      job_type:              form.job_type,
-      work_model:            form.work_model,
-      team:                  form.team           || undefined,
-      skills_required:       form.skills_required,
-      skills_desired:        form.skills_desired,
-      min_annual_salary:     form.min_annual_salary  ? Number(form.min_annual_salary)  : undefined,
-      max_annual_salary:     form.max_annual_salary  ? Number(form.max_annual_salary)  : undefined,
-      currency_code:         form.currency_code,
-      experience_years_min:  form.experience_years_min ? Number(form.experience_years_min) : undefined,
-      deadline:              form.deadline       || undefined,
-      cover_letter_required: form.cover_letter_required,
-      employer_id:           form.employer_id    || undefined,
+      employer_id:           form.employer_id        || undefined,
+      industry:              form.industry            || undefined,
+      pay_rate:              form.pay_rate            ? Number(form.pay_rate) : undefined,
+      pay_rate_type:         form.pay_rate_type,
       positions_count:       form.positions_count,
-      job_board_url:         form.job_board_url  || undefined,
-      vacancy_type:          form.vacancy_type   || undefined,
-      staff_working_status:  form.staff_working_status,
-      end_date:              form.end_date       || undefined,
+      vacancy_type:          form.work_type,
+      work_location:         form.work_location       || undefined,
+      job_board_url:         form.job_board_url       || undefined,
+      description:           form.description         || undefined,
+      police_check:          form.police_check,
+      drug_alcohol_test:     form.drug_alcohol_test,
+      wwc:                   form.wwc,
+      car_required:          form.car_required,
+      public_transport:      form.public_transport,
+      wage_subsidy_required: form.wage_subsidy_required,
+      comments:              form.comments            || undefined,
+      status:                "draft",
     });
   }
 
   if (!isOpen) return null;
-
   const isLast = step === STEPS.length - 1;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto py-8 px-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Create New Job</h2>
-          <button onClick={handleClose} className="p-1 rounded-lg hover:bg-gray-100"><X size={18} /></button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-900">Add Vacancy</h2>
+          <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+            <X size={18} />
+          </button>
         </div>
 
         <div className="p-6">
           <StepIndicator current={step} />
 
-          {/* Error */}
           {error && (
             <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
           )}
 
-          {/* Step content */}
-          {step === 0 && <StepBasics form={form} set={set} departments={departments} locations={locations} employers={employers} />}
-          {step === 1 && <StepDescription form={form} set={set} departments={departments} />}
-          {step === 2 && <StepRequirements form={form} set={set} />}
-          {step === 3 && <StepAssignment form={form} set={set} />}
+          {step === 0 && <StepVacancyDetails form={form} set={set} employers={employers} />}
+          {step === 1 && <StepDescriptionCompliance form={form} set={set} />}
+          {step === 2 && <StepCandidateAssignment form={form} set={set} />}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6 pt-4 border-t">
-            <button
-              type="button"
-              onClick={step === 0 ? handleClose : handleBack}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
+            <button type="button" onClick={step === 0 ? handleClose : handleBack}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">
               {step > 0 && <ChevronLeft size={15} />}
               {step === 0 ? "Cancel" : "Back"}
             </button>
 
             {isLast ? (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={createJob.isPending}
-                className="flex items-center gap-1.5 px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50"
-              >
+              <button type="button" onClick={handleSubmit} disabled={createJob.isPending}
+                className="flex items-center gap-1.5 px-5 py-2 text-sm bg-[#e88e2e] hover:bg-[#d07d20] text-white font-medium rounded-lg disabled:opacity-50">
                 <Check size={15} />
-                {createJob.isPending ? "Creating..." : "Create Job"}
+                {createJob.isPending ? "Saving..." : "Save Vacancy"}
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="flex items-center gap-1.5 px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-              >
+              <button type="button" onClick={handleNext}
+                className="flex items-center gap-1.5 px-5 py-2 text-sm bg-[#e88e2e] hover:bg-[#d07d20] text-white font-medium rounded-lg">
                 Next <ChevronRight size={15} />
               </button>
             )}
