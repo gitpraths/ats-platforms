@@ -869,11 +869,10 @@ export function VacanciesTab({
   const [adding, setAdding]         = useState(false);
   const [selectedJob, setSelectedJob] = useState("");
 
-  const { data: jobsData } = useQuery<{ data: { id: string; title: string; job_number?: string }[] }>({
+  const { data: openJobs = [] } = useQuery<{ id: string; title: string; job_number?: string }[]>({
     queryKey: ["jobs-open"],
-    queryFn:  () => api.get("/jobs?status=open&limit=200"),
+    queryFn:  () => api.get<{ id: string; title: string; job_number?: string }[]>("/jobs?status=open&limit=200"),
   });
-  const openJobs = jobsData?.data ?? [];
 
   const addToVacancy = useMutation({
     mutationFn: ({ job_id }: { job_id: string }) =>
