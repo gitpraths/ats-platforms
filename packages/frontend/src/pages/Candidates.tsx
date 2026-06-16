@@ -1,7 +1,7 @@
 import { Fragment, useState, useEffect } from "react";
 import { displayEmail } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
-import { List, Grid, Search, Calendar, X } from "lucide-react";
+import { List, Grid, Search, Calendar, X, Pencil } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
@@ -93,6 +93,69 @@ function WelfareSubRow({ checks, colSpan }: { checks: WelfareCheck[]; colSpan: n
         </div>
       </td>
     </tr>
+  );
+}
+
+// ── Inline Date Cell ──────────────────────────────────────────────────────────
+function InlineDateCell({
+  appId,
+  field,
+  value,
+  onSaved,
+}: {
+  appId: string | null | undefined;
+  field: "interview_date" | "ets_date" | "placement_date";
+  value: string | null | undefined;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving]   = useState(false);
+
+  if (!appId) {
+    return <span className="text-slate-200 text-xs">—</span>;
+  }
+
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newVal = e.target.value || null;
+    setSaving(true);
+    try {
+      await api.patch(`/applications/${appId}`, { [field]: newVal });
+      onSaved();
+    } catch {
+      // silent — toast shown by global error handler if needed
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        defaultValue={value ?? ""}
+        onBlur={() => setEditing(false)}
+        onChange={handleChange}
+        className="border border-[#e88e2e] rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 w-32"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+      disabled={saving}
+      className="group flex items-center gap-1 text-xs text-left transition-colors hover:text-[#e88e2e]"
+    >
+      {saving ? (
+        <span className="text-slate-400">Saving…</span>
+      ) : value ? (
+        <><span className="font-medium text-slate-700 group-hover:text-[#e88e2e]">{format(new Date(value), "d MMM yy")}</span><Pencil size={9} className="text-slate-300 group-hover:text-[#e88e2e] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" /></>
+      ) : (
+        <span className="text-slate-300 group-hover:text-[#e88e2e]/60 italic">+ set</span>
+      )}
+    </button>
   );
 }
 
@@ -296,7 +359,7 @@ export default function Candidates() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Name","Date Referred","Suburb/State","Mobile","Provider","Consultant","Status","Benchmark","Industry","Wage Sub","Training Dates","Job Start","Employer","Job Role",""].map((h) => (
+                {["Name","Date Referred","Suburb/State","Mobile","Provider","Consultant","Status","Benchmark","Industry","Wage Sub","Training Dates","Interview Date","ETS Date","Placement Date","Job Start","Employer","Job Role",""].map((h) => (
                   <th key={h}
                     className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
                     {h}
@@ -357,10 +420,38 @@ export default function Candidates() {
                         ? <span className="text-xs font-bold text-green-600">✓</span>
                         : <span className="text-slate-300">—</span>}
                     </td>
+                    {/* Training Dates */}
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {row.training_start_date
                         ? `${format(new Date(row.training_start_date), "d MMM yyyy")}${row.training_end_date ? ` – ${format(new Date(row.training_end_date), "d MMM yyyy")}` : ""}`
                         : "—"}
+                    </td>
+                    {/* Interview Date — inline editable */}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <InlineDateCell
+                        appId={row.latest_application_id}
+                        field="interview_date"
+                        value={row.latest_interview_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                      />
+                    </td>
+                    {/* ETS Date — inline editable */}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <InlineDateCell
+                        appId={row.latest_application_id}
+                        field="ets_date"
+                        value={row.latest_ets_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                      />
+                    </td>
+                    {/* Placement Date — inline editable */}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <InlineDateCell
+                        appId={row.latest_application_id}
+                        field="placement_date"
+                        value={row.latest_placement_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                      />
                     </td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {row.job_start_date ? format(new Date(row.job_start_date), "d MMM yyyy") : "—"}
@@ -379,7 +470,7 @@ export default function Candidates() {
                     </td>
                   </tr>
                   {row.placement_id && (row.welfare_checks?.length ?? 0) > 0 && (
-                    <WelfareSubRow checks={row.welfare_checks!} colSpan={15} />
+                    <WelfareSubRow checks={row.welfare_checks!} colSpan={18} />
                   )}
                 </Fragment>
               ))}

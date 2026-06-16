@@ -28,7 +28,7 @@ applicationsRouter.get("/", async (req, res, next) => {
     const { rows } = await pool.query(
       `SELECT
          a.id, a.candidate_id, a.job_id, a.stage, a.source, a.score, a.notes,
-         a.applied_at, a.updated_at,
+         a.applied_at, a.updated_at, a.interview_date, a.ets_date, a.placement_date,
          j.title        AS job_title,
          j.job_number   AS job_number,
          j.status       AS job_status,
@@ -76,7 +76,7 @@ applicationsRouter.post("/", async (req, res, next) => {
 // ── PATCH /api/applications/:id ──────────────────────────────────────────────
 applicationsRouter.patch("/:id", async (req, res, next) => {
   try {
-    const { stage, score, notes } = req.body;
+    const { stage, score, notes, interview_date, ets_date, placement_date } = req.body;
 
     // Verify user is recruiter for this application's job
     const { rows: appRows } = await pool.query(
@@ -101,9 +101,12 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 
     const updates = [];
     const params  = [];
-    if (stage !== undefined) { params.push(stage); updates.push(`stage = $${params.length}`); }
-    if (score !== undefined) { params.push(score); updates.push(`score = $${params.length}`); }
-    if (notes !== undefined) { params.push(notes); updates.push(`notes = $${params.length}`); }
+    if (stage !== undefined)          { params.push(stage);                  updates.push(`stage          = $${params.length}`); }
+    if (score !== undefined)          { params.push(score);                  updates.push(`score          = $${params.length}`); }
+    if (notes !== undefined)          { params.push(notes);                  updates.push(`notes          = $${params.length}`); }
+    if (interview_date !== undefined) { params.push(interview_date || null); updates.push(`interview_date = $${params.length}`); }
+    if (ets_date !== undefined)       { params.push(ets_date || null);       updates.push(`ets_date       = $${params.length}`); }
+    if (placement_date !== undefined) { params.push(placement_date || null); updates.push(`placement_date = $${params.length}`); }
 
     if (updates.length === 0)
       return res.status(400).json({ success: false, error: "No updatable fields provided" });

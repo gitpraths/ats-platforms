@@ -77,8 +77,11 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          lp.confirmed_by_employer,
          e.name          AS employer_name,
          j.title         AS job_title,
-         la.stage        AS latest_stage,
-         la.id           AS latest_application_id
+         la.stage          AS latest_stage,
+         la.id             AS latest_application_id,
+         la.interview_date AS latest_interview_date,
+         la.ets_date       AS latest_ets_date,
+         la.placement_date AS latest_placement_date
        FROM candidates c
        LEFT JOIN providers pr ON pr.id = c.provider_id
        LEFT JOIN consultants con ON con.id = c.consultant_id
@@ -92,7 +95,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
        LEFT JOIN employers e ON e.id = lp.employer_id
        LEFT JOIN jobs j ON j.id = lp.job_id
        LEFT JOIN LATERAL (
-         SELECT id, stage
+         SELECT id, stage, interview_date, ets_date, placement_date
          FROM applications
          WHERE candidate_id = c.id
          ORDER BY updated_at DESC

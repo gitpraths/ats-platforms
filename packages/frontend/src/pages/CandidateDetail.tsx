@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { displayEmail } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
@@ -79,7 +79,7 @@ export default function CandidateDetail() {
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
   const canWrite = user?.role !== "provider";
 
-  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
+  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications"|"vacancies">("overview");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<CandidateFormData>(EMPTY_FORM);
   const [saveError, setSaveError] = useState("");
@@ -234,8 +234,9 @@ export default function CandidateDetail() {
   const statusCfg = statusConfig[candidate.work_status ?? ""] ?? { label: candidate.work_status ?? "", bg: "bg-slate-100", text: "text-slate-600" };
 
   const tabs = [
-    { key: "overview",      label: "Overview"     },
-    { key: "training",      label: "Training"     },
+    { key: "overview",   label: "Overview"   },
+    { key: "vacancies",  label: "Vacancies"  },
+    { key: "training",   label: "Training"   },
   ] as const;
 
   // ── When editing: full-page light layout (same look as Create Candidate) ──
@@ -709,6 +710,15 @@ export default function CandidateDetail() {
               <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
             </div>
           )}
+
+          {/* ══ VACANCIES ══════════════════════════════════ */}
+          {activeTab === "vacancies" && (
+            <VacanciesTab
+              applications={candidate?.applications ?? []}
+              candidateId={id ?? ""}
+              canWrite={canWrite}
+            />
+          )}
         </div>
         </div>
 
@@ -763,6 +773,245 @@ export default function CandidateDetail() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// VacanciesTab
+// ──────────────────────────────────────────────────────────────────────────────
+type AppWithDates = {
+  id: string;
+  job_id?: string;
+  job_title?: string;
+  stage: string;
+  applied_at: string;
+  interview_date?: string | null;
+  ets_date?: string | null;
+  placement_date?: string | null;
+  source?: string;
+  score?: number;
+};
+
+const STAGE_BADGE2: Record<string, string> = {
+  applied:   "bg-blue-100 text-blue-700",
+  screening: "bg-purple-100 text-purple-700",
+  interview: "bg-amber-100 text-amber-700",
+  offer:     "bg-orange-100 text-orange-700",
+  hired:     "bg-green-100 text-green-700",
+  rejected:  "bg-red-100 text-red-500",
+};
+
+function InlineDateCellDetail({
+  appId,
+  field,
+  value,
+  onSaved,
+}: {
+  appId: string;
+  field: "interview_date" | "ets_date" | "placement_date";
+  value?: string | null;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving]   = useState(false);
+
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newVal = e.target.value || null;
+    setSaving(true);
+    try {
+      await api.patch(`/applications/${appId}`, { [field]: newVal });
+      onSaved();
+    } catch { /* silent */ }
+    finally { setSaving(false); setEditing(false); }
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        defaultValue={value ?? ""}
+        onBlur={() => setEditing(false)}
+        onChange={handleChange}
+        className="border border-[#e88e2e] rounded-lg px-2 py-1 text-xs focus:outline-none w-36"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      disabled={saving}
+      className="group flex items-center gap-1 text-xs transition-colors hover:text-[#e88e2e] text-left"
+    >
+      {saving ? <span className="text-slate-400">Saving…</span>
+        : value
+          ? <><span className="font-medium text-slate-800">{format(new Date(value), "d MMM yyyy")}</span>
+              <Pencil size={9} className="ml-0.5 text-slate-300 group-hover:text-[#e88e2e] opacity-0 group-hover:opacity-100 transition-opacity" /></>
+          : <span className="italic text-slate-300 group-hover:text-[#e88e2e]/60">+ set</span>}
+    </button>
+  );
+}
+
+export function VacanciesTab({
+  applications,
+  candidateId,
+  canWrite,
+}: {
+  applications: AppWithDates[];
+  candidateId: string;
+  canWrite: boolean;
+}) {
+  const queryClient       = useQueryClient();
+  const [adding, setAdding]         = useState(false);
+  const [selectedJob, setSelectedJob] = useState("");
+
+  const { data: jobsData } = useQuery<{ data: { id: string; title: string; job_number?: string }[] }>({
+    queryKey: ["jobs-open"],
+    queryFn:  () => api.get("/jobs?status=open&limit=200"),
+  });
+  const openJobs = jobsData?.data ?? [];
+
+  const addToVacancy = useMutation({
+    mutationFn: ({ job_id }: { job_id: string }) =>
+      api.post("/applications", { job_id, candidate_id: candidateId, source: "manual" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] });
+      setAdding(false);
+      setSelectedJob("");
+    },
+  });
+
+  function handleAdd() {
+    if (!selectedJob) return;
+    addToVacancy.mutate({ job_id: selectedJob });
+  }
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+        <h3 className="text-sm font-semibold text-slate-900">
+          Vacancies Applied
+          <span className="ml-2 text-xs font-normal text-slate-400">({applications.length})</span>
+        </h3>
+        {canWrite && (
+          <button
+            onClick={() => setAdding((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold bg-[#e88e2e] hover:bg-[#d07d20] text-white px-3 py-1.5 rounded-lg transition-colors"
+          >
+            + Add to Vacancy
+          </button>
+        )}
+      </div>
+
+      {/* Add to vacancy inline form */}
+      {adding && (
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-orange-50/40">
+          <select
+            value={selectedJob}
+            onChange={(e) => setSelectedJob(e.target.value)}
+            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]"
+          >
+            <option value="">Select a vacancy…</option>
+            {openJobs.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.title}{j.job_number ? ` (#${j.job_number})` : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleAdd}
+            disabled={!selectedJob || addToVacancy.isPending}
+            className="px-4 py-2 text-sm font-semibold bg-[#e88e2e] text-white rounded-xl hover:bg-[#d07d20] disabled:opacity-40 transition-colors whitespace-nowrap"
+          >
+            {addToVacancy.isPending ? "Adding…" : "Add"}
+          </button>
+          <button
+            onClick={() => { setAdding(false); setSelectedJob(""); }}
+            className="px-3 py-2 text-sm text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Table */}
+      {applications.length === 0 ? (
+        <div className="py-10 text-center text-slate-400 text-sm">
+          No vacancy applications yet{canWrite && " — use the button above to link one"}.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                {["Vacancy / Job","Stage","Applied","Interview Date","ETS Date","Placement Date","Score"].map((h) => (
+                  <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <tr key={app.id} className="border-b hover:bg-slate-50/60 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-slate-900 text-sm">{app.job_title ?? "(No title)"}</p>
+                    {app.source && <p className="text-[10px] text-slate-400">{app.source}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}>
+                      {app.stage.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                    {format(new Date(app.applied_at), "d MMM yyyy")}
+                  </td>
+                  <td className="px-4 py-3">
+                    {canWrite ? (
+                      <InlineDateCellDetail
+                        appId={app.id}
+                        field="interview_date"
+                        value={app.interview_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-600">{app.interview_date ? format(new Date(app.interview_date), "d MMM yyyy") : "—"}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {canWrite ? (
+                      <InlineDateCellDetail
+                        appId={app.id}
+                        field="ets_date"
+                        value={app.ets_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-600">{app.ets_date ? format(new Date(app.ets_date), "d MMM yyyy") : "—"}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {canWrite ? (
+                      <InlineDateCellDetail
+                        appId={app.id}
+                        field="placement_date"
+                        value={app.placement_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-600">{app.placement_date ? format(new Date(app.placement_date), "d MMM yyyy") : "—"}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-500">
+                    {app.score != null && app.score > 0 ? `${app.score}/10` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

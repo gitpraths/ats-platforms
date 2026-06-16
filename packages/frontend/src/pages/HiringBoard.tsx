@@ -201,6 +201,21 @@ function PipelineView({
                           {app.score != null && app.score > 0 && (
                             <p className="text-xs text-yellow-500 mt-1">{app.score}/10</p>
                           )}
+                          {app.ets_date && (() => {
+                            const d = new Date(app.ets_date);
+                            const now = new Date();
+                            const soon = new Date(Date.now() + 7 * 86400000);
+                            const cls = d <= now
+                              ? "bg-red-100 text-red-700"
+                              : d <= soon
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-blue-50 text-blue-600";
+                            return (
+                              <span className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded ${cls}`}>
+                                ETS: {format(d, "d MMM yy")}
+                              </span>
+                            );
+                          })()}
                           <div className="mt-2">
                             <ScreenCandidateButton
                               candidateNotes={[app.candidate_name, app.candidate_email, app.notes].filter(Boolean).join(" | ")}
@@ -241,7 +256,8 @@ function ListView({
             <th className="py-3 pr-4">Job Posting</th>
             <th className="py-3 pr-4">Status</th>
             <th className="py-3 pr-4">Score</th>
-            <th className="py-3 pr-4">Source</th>
+            <th className="py-3 pr-4">Interview Date</th>
+            <th className="py-3 pr-4">ETS Date</th>
             <th className="py-3 pr-4">Applied</th>
             <th className="py-3"></th>
           </tr>
@@ -260,7 +276,16 @@ function ListView({
                 </span>
               </td>
               <td className="py-3 pr-4 text-slate-600">{app.score ?? "—"}</td>
-              <td className="py-3 pr-4 text-slate-500 text-xs">{app.source || "—"}</td>
+              <td className="py-3 pr-4 text-slate-600 text-xs whitespace-nowrap">
+                {app.interview_date ? format(new Date(app.interview_date), "d MMM yyyy") : "—"}
+              </td>
+              <td className="py-3 pr-4 text-xs whitespace-nowrap">
+                {app.ets_date ? (() => {
+                  const d = new Date(app.ets_date);
+                  const cls = d <= new Date() ? "text-red-600 font-semibold" : d <= new Date(Date.now() + 7 * 86400000) ? "text-amber-600 font-semibold" : "text-slate-600";
+                  return <span className={cls}>{format(d, "d MMM yyyy")}</span>;
+                })() : "—"}
+              </td>
               <td className="py-3 pr-4 text-slate-500 text-xs">
                 {app.applied_at ? format(new Date(app.applied_at), "MMM d, yyyy") : "—"}
               </td>

@@ -230,6 +230,9 @@ export interface Application {
   notes?: string;
   applied_at: string;
   updated_at: string;
+  interview_date?: string | null;
+  ets_date?: string | null;
+  placement_date?: string | null;
 }
 
 export interface CandidatePoolMeta {
@@ -272,6 +275,9 @@ export interface CandidatePoolRow {
   job_title?: string;
   latest_stage?: ApplicationStage | null;
   latest_application_id?: string | null;
+  latest_interview_date?: string | null;
+  latest_ets_date?: string | null;
+  latest_placement_date?: string | null;
   welfare_checks?: WelfareCheck[];
 }
 
