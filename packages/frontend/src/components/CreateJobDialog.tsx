@@ -1,8 +1,108 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, ChevronRight, ChevronLeft, Check, Hash } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Check, Hash, MapPin } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer, Candidate } from "../types";
+
+// ── Australian Address Autocomplete (Nominatim / OpenStreetMap — free) ─────────
+const AU_STATE: Record<string, string> = {
+  "New South Wales": "NSW", "Victoria": "VIC", "Queensland": "QLD",
+  "South Australia": "SA",  "Western Australia": "WA", "Tasmania": "TAS",
+  "Australian Capital Territory": "ACT", "Northern Territory": "NT",
+};
+
+function fmtResult(item: Record<string, any>): string {
+  const a = item.address ?? {};
+  const suburb = a.suburb ?? a.town ?? a.city_district ?? a.city ?? a.county ?? "";
+  const state  = AU_STATE[a.state] ?? a.state ?? "";
+  const post   = a.postcode ?? "";
+  if (!suburb && !state) return String(item.display_name ?? "").split(",")[0];
+  return [suburb, state, post].filter(Boolean).join(", ");
+}
+
+function AuAddressAutocomplete({
+  value, onChange, className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  const [query,   setQuery]   = useState(value);
+  const [results, setResults] = useState<Record<string, any>[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open,    setOpen]    = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrap  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const q = e.target.value;
+    setQuery(q);
+    onChange(q);
+    if (timer.current) clearTimeout(timer.current);
+    if (q.length < 2) { setResults([]); setOpen(false); return; }
+    timer.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res  = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=au&format=json&limit=8&addressdetails=1`,
+          { headers: { "Accept-Language": "en-AU" } }
+        );
+        const data = await res.json() as Record<string, any>[];
+        setResults(data);
+        setOpen(data.length > 0);
+      } catch { setResults([]); }
+      finally { setLoading(false); }
+    }, 350);
+  }
+
+  function select(item: Record<string, any>) {
+    const label = fmtResult(item);
+    setQuery(label);
+    onChange(label);
+    setResults([]);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={wrap} className="relative">
+      <input
+        value={query}
+        onChange={handleInput}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        className={className}
+        placeholder="e.g. Parramatta, NSW"
+        autoComplete="off"
+      />
+      {loading && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="w-3 h-3 border-2 border-[#e88e2e] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {open && results.length > 0 && (
+        <ul className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-52 overflow-y-auto text-sm">
+          {results.map((item, i) => (
+            <li
+              key={i}
+              onMouseDown={() => select(item)}
+              className="px-3 py-2 cursor-pointer hover:bg-orange-50 hover:text-[#e88e2e] flex items-center gap-2 transition-colors"
+            >
+              <MapPin size={12} className="text-slate-300 shrink-0" />
+              {fmtResult(item)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -195,8 +295,12 @@ function StepVacancyDetails({ form, set, employers }: {
         </div>
         <div>
           <Label>Work Location</Label>
-          <input value={form.work_location} onChange={(e) => set("work_location", e.target.value)}
-            className={cls} placeholder="e.g. Melbourne, VIC" />
+          <AuAddressAutocomplete
+            value={form.work_location}
+            onChange={(v) => set("work_location", v)}
+            className={cls}
+          />
+          <p className="text-xs text-slate-400 mt-1">Start typing a suburb or city — Australian suggestions will appear</p>
         </div>
       </div>
 

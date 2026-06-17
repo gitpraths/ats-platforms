@@ -73,7 +73,7 @@ function AdminMenu() {
           <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Management</p>
           <button onClick={() => go("/admin/users")}       className={item}><Users     size={14} className="text-slate-400" /> Users</button>
           <button onClick={() => go("/admin/departments")} className={item}><Building2 size={14} className="text-slate-400" /> Departments</button>
-          <button onClick={() => go("/admin/locations")}   className={item}><MapPinIcon size={14} className="text-slate-400" /> Locations</button>
+
           <button onClick={() => go("/admin/trainings")}   className={item}><Table2    size={14} className="text-slate-400" /> Trainings</button>
           <button onClick={() => go("/admin/xero")}        className={item}><Settings  size={14} className="text-slate-400" /> Xero</button>
           <div className="border-t border-slate-100 my-1" />
