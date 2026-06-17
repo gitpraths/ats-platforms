@@ -26,18 +26,18 @@ export default function Jobs() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Vacancies</h1>
         <div className="flex items-center gap-2">
-          <Link
-            to="/employers/new"
-            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 bg-white text-slate-700 hover:text-slate-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Building2 size={16} /> Add Employer
-          </Link>
           <button
             onClick={() => setDialogOpen(true)}
             className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} /> Add Vacancy
           </button>
+          <Link
+            to="/employers/new"
+            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Building2 size={16} /> Add Employer
+          </Link>
         </div>
       </div>
 
