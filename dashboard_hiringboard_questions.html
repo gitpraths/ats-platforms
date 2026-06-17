@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; color: #333; line-height: 1.6; }
+  h1 { color: #545454; border-bottom: 3px solid #e88e2e; padding-bottom: 10px; }
+  h2 { color: #545454; border-left: 4px solid #e88e2e; padding-left: 12px; margin-top: 30px; }
+  h3 { color: #e88e2e; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  td, th { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f5; }
+  tr:nth-child(even) { background: #fafafa; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 24px 0; }
+  .answer { background: #fff8f0; border: 1px dashed #e88e2e; border-radius: 6px; padding: 10px 16px; margin: 8px 0; min-height: 40px; }
+  blockquote { background: #fff8f0; border-left: 4px solid #e88e2e; margin: 0; padding: 10px 16px; }
+  li { margin: 4px 0; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Design Questions — Dashboard & Hiring Board</h1></p><p><p class="quote">Please fill in your answers in the <strong>Answer:</strong> sections below.  </p>
+<p class="quote">Once complete, share this back and I will build both features in one go.</p></p><p><hr></p><p><h2>SECTION 1 — Dashboard</h2></p><p><hr></p><p><h3>Q1 — Which graph should be removed?</h3></p><p>Currently the dashboard shows multiple graphs/cards.  
+You said: <em>"Remove Vacancy Graph"</em></p><p>Which one exactly should be removed?</p><p><li style="list-style:none">☐ The "Open Vacancies" count card (top summary row)</li>
+<li style="list-style:none">☐ The bar/pie chart showing Applications by Stage</li>
+<li style="list-style:none">☐ The graph showing total Jobs over time</li>
+<li style="list-style:none">☐ Other — please describe</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h3>Q2 — Where should the 3 Quick-Add Buttons appear?</h3></p><p>You said: <em>"Add 3 buttons below Main Menu — Add Candidate, Add Employer, Add Vacancy"</em></p><p>Should these buttons show:</p><p><li style="list-style:none">☐ On the <strong>Dashboard page only</strong></li>
+<li style="list-style:none">☐ On <strong>every page</strong> at the top (global toolbar)</li>
+<li style="list-style:none">☐ Other — please describe</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h3>Q3 — Training Graph — what does "completed" mean?</h3></p><p>You said: <em>"Graph showing No. of Type of Training completed — Month wise"</em></p><p><li style="list-style:none">☐ Completed = training <strong>status marked as Finished/Done</strong></li>
+<li style="list-style:none">☐ Completed = training <strong>enrolment created</strong> (regardless of status)</li>
+<li style="list-style:none">☐ Other — please describe</li></p><p>And should each training type show as a <strong>separate colour</strong> on the graph?</p><p><strong>Answer:</strong></p><p><hr></p><p><h3>Q4 — Referrals Graph — how many months and layout?</h3></p><p>You said: <em>"Graph showing candidates referred — Provider wise, Month wise"</em></p><p>How many months to show by default?</p><p><li style="list-style:none">☐ Last 3 months</li>
+<li style="list-style:none">☐ Last 6 months</li>
+<li style="list-style:none">☐ Last 12 months</li></p><p>And how should providers appear on the graph?</p><p><li style="list-style:none">☐ Each provider as a separate <strong>coloured bar</strong> (grouped bar chart)</li>
+<li style="list-style:none">☐ Each provider as a separate <strong>line</strong> (line chart)</li>
+<li style="list-style:none">☐ Stacked bars (all providers in one bar, different colours)</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h3>Q5 — KPI / Staff Placement Graph — which "Staff"?</h3></p><p>You said: <em>"Placement by Staff Graph / Month Wise (KPI)"</em></p><p>Which Staff does this refer to?</p><p><li style="list-style:none">☐ The <strong>Consultant</strong> assigned to the candidate</li>
+<li style="list-style:none">☐ The <strong>Recruiter / System User</strong> who added the candidate</li>
+<li style="list-style:none">☐ Both — show separately</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h2>SECTION 2 — Hiring Board / Important Updates Redesign</h2></p><p><hr></p><p><h3>Q6 — What should each tab show?</h3></p><p>You listed 5 tabs. Please confirm or correct my assumptions:</p><p><tr><td>Tab</td><td>My Assumption</td><td>Correct? (Y/N)</td><td>Your Correction</td></tr>
+|-----|--------------|----------------|-----------------|
+<tr><td><strong>Referral Date</strong></td><td>All candidates sorted by referral date (newest first)</td><td></td><td></td></tr>
+<tr><td><strong>Interview Dates</strong></td><td>All candidates who have an interview date set, sorted by date</td><td></td><td></td></tr>
+<tr><td><strong>ETS</strong></td><td>All candidates with an ETS date — overdue highlighted red</td><td></td><td></td></tr>
+<tr><td><strong>Placement</strong></td><td>All candidates with a placement date set</td><td></td><td></td></tr>
+<tr><td><strong>Welfare Checks</strong></td><td>Existing welfare check view (4-week, 12-week, 26-week, 52-week)</td><td></td><td></td></tr></p><p><hr></p><p><h3>Q7 — Should tabs show ALL dates or only upcoming/overdue?</h3></p><p>For example on the <strong>ETS tab</strong> — should it show:</p><p><li style="list-style:none">☐ <strong>All</strong> candidates with an ETS date (past + present + future)</li>
+<li style="list-style:none">☐ Only candidates with <strong>upcoming or overdue</strong> ETS dates (e.g. within next 30 days or already past)</li>
+<li style="list-style:none">☐ Let the user filter using a date range picker</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h3>Q8 — Columns to show in each tab</h3></p><p>Should all 5 tabs show the <strong>same columns</strong>, or different ones per tab?</p><p><strong>Suggested default columns (same for all tabs):</strong>
+<li>Candidate Name</li>
+<li>Provider</li>
+<li>Phone</li>
+<li>Email</li>
+<li>The relevant date for that tab (e.g. Interview Date on Interview tab)</li></p><p><li style="list-style:none">☐ Yes — same columns on all tabs</li>
+<li style="list-style:none">☐ No — different columns per tab (please list what you want per tab below)</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h3>Q9 — Inline date editing from Important Updates?</h3></p><p>Like the Candidates list — should you be able to <strong>click and edit dates directly</strong> from the Important Updates tabs without opening the candidate profile?</p><p><li style="list-style:none">☐ Yes — all date tabs (Interview, ETS, Placement) should be inline editable</li>
+<li style="list-style:none">☐ No — read-only here, must open profile to edit</li>
+<li style="list-style:none">☐ Only some tabs — please specify which</li></p><p><strong>Answer:</strong></p><p><hr></p><p><h2>Summary Checklist</h2></p><p><tr><td>#</td><td>Question</td><td>Answered</td></tr>
+|---|----------|---------|
+<tr><td>Q1</td><td>Which graph to remove</td><td>☐</td></tr>
+<tr><td>Q2</td><td>Where do 3 buttons appear</td><td>☐</td></tr>
+<tr><td>Q3</td><td>Training "completed" definition + layout</td><td>☐</td></tr>
+<tr><td>Q4</td><td>Referrals graph — months + layout</td><td>☐</td></tr>
+<tr><td>Q5</td><td>KPI Staff definition</td><td>☐</td></tr>
+<tr><td>Q6</td><td>5 tab content confirmation</td><td>☐</td></tr>
+<tr><td>Q7</td><td>All dates or upcoming only</td><td>☐</td></tr>
+<tr><td>Q8</td><td>Same or different columns per tab</td><td>☐</td></tr>
+<tr><td>Q9</td><td>Inline editing from Important Updates</td><td>☐</td></tr>
+
+</body>
+</html>

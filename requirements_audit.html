@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; max-width: 850px; margin: 40px auto; color: #333; line-height: 1.6; font-size: 13px; }
+  h1 { color: #545454; border-bottom: 3px solid #e88e2e; padding-bottom: 10px; font-size: 22px; }
+  h2 { color: #545454; border-left: 4px solid #e88e2e; padding-left: 12px; margin-top: 28px; font-size: 16px; }
+  h3 { color: #333; font-size: 14px; margin-top: 16px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+  td, th { border: 1px solid #ddd; padding: 6px 10px; text-align: left; }
+  th { background: #f5f5f5; font-weight: bold; }
+  tr:nth-child(even) { background: #fafafa; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 20px 0; }
+  .alert { border-radius: 6px; padding: 10px 14px; margin: 10px 0; }
+  .important { background: #fff8f0; border-left: 4px solid #e88e2e; }
+  .note { background: #f0f7ff; border-left: 4px solid #4a90d9; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<h1>Requirements Audit — Full Status Report</h1></p><p><span class="qline">Last updated: 16 June 2026  </span></div>
+<span class="qline"><strong>No code was changed</strong> — this is an analysis only.</span></div></p><p><hr></p><p><h2>Legend</h2>
+<tr><th>Symbol</th><td>Meaning</td></tr>
+|--------|---------|
+<tr><th><span style="color:green">✅</span></th><td>Done and live</td></tr>
+<tr><th><span style="color:orange">🔶</span></th><td>Partially done</td></tr>
+<tr><th><span style="color:red">❌</span></th><td>Not started / Pending</td></tr>
+<tr><th><span style="color:#888">❓</span></th><td>Needs clarification before building</td></tr></p><p><hr></p><p><h2>1. Color Scheme</h2></p><p><tr><th>Item</th><td>Status</td><td>Notes</td></tr>
+|------|--------|-------|
+<tr><th>Top Menu: `#545454` (dark grey)</th><td><span style="color:green">✅</span></td><td>Already applied</td></tr>
+<tr><th>Buttons: `#e88e2e` (orange)</th><td><span style="color:green">✅</span></td><td>Applied throughout</td></tr>
+<tr><th>Background: `#ffffff` (white)</th><td><span style="color:green">✅</span></td><td>Applied throughout</td></tr></p><p><hr></p><p><h2>2. Candidate Form</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Duplicate alert (same mobile / name)</th><td><span style="color:red">❌</span></td><td>Not built yet</td></tr>
+<tr><th>Stretch form width (too narrow)</th><td><span style="color:red">❌</span></td><td>Still narrow — needs CSS fix</td></tr>
+<tr><th>Date Referred</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>SR No (auto-generate)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>First Name</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Last Name</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Phone — Mandatory, 10 digits only</th><td><span style="color:orange">🔶</span></td><td>Field exists; 10-digit validation not enforced</td></tr>
+<tr><th>Email</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Post Code → Auto Suburb + State</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Change City → renamed Suburb</th><td><span style="color:green">✅</span></td><td>Done</td></tr>
+<tr><th>State</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Provider (Mandatory)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Training Course (multi-select)</th><td><span style="color:#888">❓</span></td><td>See Q1 below</td></tr>
+<tr><th>Consultant Name (dropdown per provider, add/save)</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Benchmark Hours (Mandatory)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Industry Preference (multi-select)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Car — Yes/No selection</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Clear Police Check — Yes/No</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>WWC — Yes/No</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Upload Resume</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Comments Box</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th><strong>REMOVE</strong> LinkedIn URL</th><td><span style="color:red">❌</span></td><td>Still in form</td></tr>
+<tr><th><strong>REMOVE</strong> Resume URL</th><td><span style="color:red">❌</span></td><td>Still in form</td></tr>
+<tr><th><strong>REMOVE</strong> Address fields</th><td><span style="color:red">❌</span></td><td>Still in form</td></tr>
+<tr><th><strong>REMOVE</strong> Work Status</th><td><span style="color:red">❌</span></td><td>Still in form</td></tr></p><p><hr></p><p><h2>3. Candidate List (Table View)</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Columns: Name, Email, Mobile, Provider, Referral Date</th><td><span style="color:green">✅</span></td><td>Showing</td></tr>
+<tr><th>Columns: Training Date</th><td><span style="color:green">✅</span></td><td>Showing</td></tr>
+<tr><th>Columns: Interview Date (inline edit)</th><td><span style="color:green">✅</span></td><td>Click to edit inline</td></tr>
+<tr><th>Columns: ETS Date (inline edit)</th><td><span style="color:green">✅</span></td><td>Click to edit inline</td></tr>
+<tr><th>Columns: Placement Date (inline edit)</th><td><span style="color:green">✅</span></td><td>Click to edit inline</td></tr>
+<tr><th>Column: Comments</th><td><span style="color:red">❌</span></td><td>Not yet visible in list</td></tr>
+<tr><th>"i" info icon on hover (extra candidate data)</th><td><span style="color:red">❌</span></td><td>Not built yet</td></tr>
+<tr><th>List sorted latest on top (by date added)</th><td><span style="color:green">✅</span></td><td>Sorted by date_referred / created_at DESC</td></tr>
+<tr><th>Search by Name</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Search by Phone</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Search by Email</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Search by Provider</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Search by Industry</th><td><span style="color:red">❌</span></td><td>Not yet in search</td></tr>
+<tr><th>Fix Floating Bar (sticky header/toolbar)</th><td><span style="color:red">❌</span></td><td>Not fixed yet</td></tr>
+<tr><th>Back to Candidates button (on profile)</th><td><span style="color:red">❌</span></td><td>Not added yet</td></tr></p><p><hr></p><p><h2>4. Candidate Profile</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Fill candidate details (edit form)</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Training Enrolment (Training tab)</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Vacancies tab — Add to Vacancy + Date</th><td><span style="color:green">✅</span></td><td>Just built — live</td></tr>
+<tr><th>Interview Date — update from Candidate tab</th><td><span style="color:green">✅</span></td><td>Inline edit on list</td></tr>
+<tr><th>ETS Date — update from Candidate tab</th><td><span style="color:green">✅</span></td><td>Inline edit on list</td></tr>
+<tr><th>ETS Date — shown on Hiring Board</th><td><span style="color:green">✅</span></td><td>Badge on cards</td></tr>
+<tr><th>Placement Date — update from Candidate tab</th><td><span style="color:green">✅</span></td><td>Inline edit on list</td></tr></p><p><hr></p><p><h2>5. Training Tab</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Training Enrolment (add/edit/status)</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Multiple training per candidate</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Data sync with Candidate Profile</th><td><span style="color:green">✅</span></td><td>Via Training tab</td></tr>
+<tr><th>Training types dropdown (5 types listed)</th><td><span style="color:#888">❓</span></td><td>See Q1 below</td></tr></p><p><strong>Listed training types (need clarification):</strong>
+<li>Accredited Training Program</li>
+<li>Call Centre Communications Pre-Employment Pathway Employer Linked</li>
+<li>Upskill Training Program (Non-Accredited)</li>
+<li>Placement Support Only</li>
+<li>Non-Accredited Training Program</li></p><p><hr></p><p><h2>6. Employer Tab</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Add Employer button</th><td><span style="color:green">✅</span></td><td>Exists</td></tr>
+<tr><th>Add Vacancy button on Employer page</th><td><span style="color:red">❌</span></td><td>Not there yet</td></tr>
+<tr><th>Employer Name</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Unique Employer ID (auto-generate)</th><td><span style="color:green">✅</span></td><td>Auto UUID</td></tr>
+<tr><th>Employer ABN</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Contact Name</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Contact Email</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Industry</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Website</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Description</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Simplified Address (Line 1, Line 2, City, Suburb, Postcode)</th><td><span style="color:red">❌</span></td><td>Still complex format</td></tr>
+<tr><th>Website URL validation (http://)</th><td><span style="color:red">❌</span></td><td>No validation</td></tr>
+<tr><th>Add Vacancy hyperlink/button once Employer created</th><td><span style="color:red">❌</span></td><td>Not built</td></tr></p><p><hr></p><p><h2>7. Jobs → Vacancy (Rename + Redesign)</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Rename "Jobs" to "Vacancy" throughout UI</th><td><span style="color:red">❌</span></td><td>Still shows "Jobs" in nav</td></tr>
+<tr><th>"Add Vacancy" + "Add Employer" buttons on Vacancy page</th><td><span style="color:red">❌</span></td><td>Only "Add Job" currently</td></tr>
+<tr><th>Unique Vacancy ID (auto-generate)</th><td><span style="color:green">✅</span></td><td>Auto UUID</td></tr>
+<tr><th>Job Title</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Employer link (or Add Employer if not found)</th><td><span style="color:orange">🔶</span></td><td>Employer link exists; "add if not found" missing</td></tr>
+<tr><th>Industry</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Pay Rate ($)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>No. of Positions</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Work Type (Full-time / Part-time / Casual)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Work Location</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Job Description</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Police Check (Yes/No/Not Required)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Drug & Alcohol Test (optional)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>WWC (Yes/No)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Car (Yes/No)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Public Transport Accessible</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Wage Subsidy (Yes/No)</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Comments</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Job Board URL</th><td><span style="color:green">✅</span></td><td>In form</td></tr>
+<tr><th>Auto-remove from Job Board when deactivated</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Step 2: Add Candidate to Vacancy from Vacancy page</th><td><span style="color:red">❌</span></td><td>Currently only from Candidate side</td></tr></p><p><hr></p><p><h2>8. Hiring Board → "Important Updates"</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Rename to "Important Updates"</th><td><span style="color:green">✅</span></td><td>Done</td></tr>
+<tr><th>List View as default</th><td><span style="color:green">✅</span></td><td>Done</td></tr>
+<tr><th>ETS Date badge on pipeline cards</th><td><span style="color:green">✅</span></td><td>Done (red/amber/blue)</td></tr>
+<tr><th>Interview Date column in list view</th><td><span style="color:green">✅</span></td><td>Done</td></tr>
+<tr><th><strong>Redesign with 5 separate tabs:</strong></th><td><span style="color:red">❌</span></td><td>Not built — see Q2</td></tr>
+<tr><th>— Tab: Referral Date (all candidates)</th><td><span style="color:red">❌</span></td><td></td></tr>
+<tr><th>— Tab: Interview Dates (all candidates)</th><td><span style="color:red">❌</span></td><td></td></tr>
+<tr><th>— Tab: ETS (all candidates)</th><td><span style="color:red">❌</span></td><td></td></tr>
+<tr><th>— Tab: Placement (all candidates)</th><td><span style="color:red">❌</span></td><td></td></tr>
+<tr><th>— Tab: Welfare Checks (all candidates)</th><td><span style="color:red">❌</span></td><td></td></tr></p><p><hr></p><p><h2>9. Dashboard</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>3 top buttons: Add Candidate, Add Employer, Add Vacancy</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Remove Vacancy Graph</th><td><span style="color:red">❌</span></td><td>Still showing</td></tr>
+<tr><th>Graph: Training type completed — month wise</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Graph: Candidates referred — provider wise, month wise</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Graph: Placements — provider wise</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Graph: Placements by Staff / month wise (KPI)</th><td><span style="color:red">❌</span></td><td>Not built</td></tr></p><p><hr></p><p><h2>10. Reports</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>Provider Report — site wise / monthly</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Staff KPI Placement Report</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Placement Report — month wise</th><td><span style="color:red">❌</span></td><td>Not built</td></tr>
+<tr><th>Vacancy Report</th><td><span style="color:red">❌</span></td><td>Not built</td></tr></p><p><hr></p><p><h2>11. General / Other</h2></p><p><tr><th>Requirement</th><td>Status</td><td>Notes</td></tr>
+|-------------|--------|-------|
+<tr><th>All phone numbers: digits only, 10 digits max</th><td><span style="color:orange">🔶</span></td><td>Field exists; strict validation not enforced</td></tr>
+<tr><th>Address autofill (Suburb + State from Postcode)</th><td><span style="color:green">✅</span></td><td>Working</td></tr>
+<tr><th>Candidate sync with Provider Referral Spreadsheet</th><td><span style="color:orange">🔶</span></td><td>Excel sync exists; missing-date notifications not built</td></tr>
+<tr><th>Mobile optimised (responsive)</th><td><span style="color:red">❌</span></td><td>Not done</td></tr>
+<tr><th>"Department" renamed to "Industry"</th><td><span style="color:#888">❓</span></td><td>See Q3</td></tr>
+<tr><th>Locations tab purpose</th><td><span style="color:#888">❓</span></td><td>See Q4</td></tr></p><p><hr></p><p><h2><span style="color:#888">❓</span> Open Questions — Need Your Input</h2></p><p><div class="alert important"><strong>⚠ Important:</strong> <strong>Q1 — Training Course in Candidate Form</strong>
+<span class="qline">You listed 5 training types:</span></div>
+<span class="qline">- Accredited Training Program</span></div>
+<span class="qline">- Call Centre Communications Pre-Employment Pathway</span></div>
+<span class="qline">- Upskill Training Program (Non-Accredited)</span></div>
+<span class="qline">- Placement Support Only</span></div>
+<span class="qline">- Non-Accredited Training Program</span></div>
+>
+<span class="qline"><strong>Are these the categories/types that should appear in the Training Course dropdown on the Candidate Form?</strong>  </span></div>
+<span class="qline">Or are these separate training course names in the Training tab?</span></div></p><p><div class="alert important"><strong>⚠ Important:</strong> <strong>Q2 — Hiring Board / Important Updates Redesign</strong>
+<span class="qline">You want 5 tabs: Referral Date, Interview Dates, ETS, Placement, Welfare Checks.</span></div>
+>
+<span class="qline"><strong>Should each tab show a flat list of ALL candidates who have that date set?</strong>  </span></div>
+<span class="qline">For example, the "Interview Dates" tab shows every candidate with an interview_date, sorted by date?  </span></div>
+<span class="qline">Or should it only show upcoming/overdue dates?</span></div></p><p><div class="alert important"><strong>⚠ Important:</strong> <strong>Q3 — Department → Industry</strong>
+<span class="qline">Should "Department" be completely renamed to "Industry" everywhere in the system?  </span></div>
+<span class="qline">(Currently "Department" is used in the Jobs/Vacancy form and some reports.)</span></div></p><p><div class="alert important"><strong>⚠ Important:</strong> <strong>Q4 — Locations Tab</strong>
+<span class="qline">The "Locations" section currently manages work locations linked to vacancies.  </span></div>
+<span class="qline">Is this for managing <strong>office/work locations only</strong>, or should it also manage <strong>candidate locations</strong>?  </span></div>
+<span class="qline">Should it remain visible in the menu, or be hidden?</span></div></p><p><div class="alert note"><strong>ℹ Note:</strong> <strong>Q5 — "i" Info on Hover (Candidate List)</strong>
+<span class="qline">You mentioned: <em>"remaining data from Candidate form can be shown as 'i' information on hover"</em></span></div>
+>
+<span class="qline">Should this be a tooltip that appears when hovering the row, or a small popover/panel that slides in when clicking the "i" icon?</span></div></p><p><div class="alert note"><strong>ℹ Note:</strong> <strong>Q6 — Mobile Optimisation</strong>
+<span class="qline">Is this for the <strong>web app to be responsive</strong> (works on phone browser)?  </span></div>
+<span class="qline">Or are you planning a <strong>separate native mobile app</strong> in the future?</span></div></p><p><hr></p><p><h2>Summary — Work Remaining</h2></p><p><tr><th>Category</th><td>Done</td><td>Pending</td></tr>
+|----------|------|---------|
+<tr><th>Color Scheme</th><td>3/3</td><td>0</td></tr>
+<tr><th>Candidate Form</th><td>14/18</td><td>4 (remove fields + alerts + width)</td></tr>
+<tr><th>Candidate List</th><td>11/14</td><td>3 (comments col, "i" hover, industry search)</td></tr>
+<tr><th>Candidate Profile</th><td>7/7</td><td>0 <span style="color:green">✅</span></td></tr>
+<tr><th>Training Tab</th><td>3/4</td><td>1 (training types)</td></tr>
+<tr><th>Employer Tab</th><td>8/13</td><td>5</td></tr>
+<tr><th>Vacancy (Jobs)</th><td>12/18</td><td>6</td></tr>
+<tr><th>Important Updates</th><td>6/11</td><td>5 (tab redesign)</td></tr>
+<tr><th>Dashboard</th><td>0/6</td><td>6</td></tr>
+<tr><th>Reports</th><td>0/4</td><td>4</td></tr>
+<tr><th>General / Other</th><td>3/6</td><td>3</td></tr>
+<tr><th><strong>TOTAL</strong></th><td><strong>69/114</strong></td><td><strong>37</strong></td></tr>
+
+</body>
+</html>
