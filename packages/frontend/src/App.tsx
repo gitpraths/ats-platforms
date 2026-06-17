@@ -161,6 +161,11 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-none">
         <div className="flex items-center gap-1">
+          <a href="/dashboard" className="flex items-center mr-3 pr-3 border-r border-slate-700 select-none">
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1 }}>
+              <span style={{ color: "#ffffff" }}>Work</span><span style={{ color: "#e88e2e" }}>Vision</span>
+            </span>
+          </a>
           <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
           <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Vacancies</NavLink>
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
