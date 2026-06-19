@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, ChevronRight, ChevronLeft, Check, Hash, MapPin } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Check, Hash, MapPin, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer, Candidate } from "../types";
 
@@ -100,6 +100,50 @@ function AuAddressAutocomplete({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// ── Job Board URL — clickable link with optional edit ────────────────────────
+function JobBoardUrlField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const displayUrl = value || "https://workvision.com.au/current-vacancies/";
+
+  if (editing) {
+    return (
+      <div className="flex gap-2 items-center">
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 border border-orange-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+          autoFocus
+        />
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 border border-slate-200 rounded-lg"
+        >Done</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
+      <ExternalLink size={16} className="text-[#e88e2e] shrink-0" />
+      <a
+        href={displayUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-1 text-sm text-[#e88e2e] font-medium hover:underline truncate"
+      >
+        {displayUrl}
+      </a>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="text-xs text-slate-400 hover:text-slate-600 shrink-0"
+      >Change</button>
     </div>
   );
 }
@@ -307,10 +351,7 @@ function StepVacancyDetails({ form, set, employers }: {
       {/* Job Board URL */}
       <div>
         <Label>Job Board URL</Label>
-        <input type="url" value={form.job_board_url}
-          onChange={(e) => set("job_board_url", e.target.value)}
-          className={cls} />
-        <p className="text-xs text-slate-400 mt-1">Pre-filled with WorkVision job board URL</p>
+        <JobBoardUrlField value={form.job_board_url} onChange={(v) => set("job_board_url", v)} />
       </div>
     </div>
   );
