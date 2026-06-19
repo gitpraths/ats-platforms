@@ -103,6 +103,7 @@ export default function Reports() {
   const [filterProvider, setFilterProvider] = useState("");
   const [filterStatus,   setFilterStatus]   = useState("");
   const [providerView,   setProviderView]   = useState<"site" | "monthly">("site");
+  const [hasSearched,    setHasSearched]    = useState(false);
 
   const [applied, setApplied] = useState({
     from: defaultFrom, to: defaultTo,
@@ -111,6 +112,7 @@ export default function Reports() {
 
   function applyFilters() {
     setApplied({ from, to, employer: filterEmployer, provider: filterProvider, status: filterStatus });
+    setHasSearched(true);
   }
 
   // ── Sort state ──────────────────────────────────────────────────────────────
@@ -134,7 +136,7 @@ export default function Reports() {
       if (applied.provider) p.set("provider_id", applied.provider);
       return api.get<ProviderReport[]>(`/reports/providers?${p}`);
     },
-    enabled:  tab === "provider",
+    enabled:  tab === "provider" && hasSearched,
   });
 
   const { data: placementReport = [], isLoading: loadingPlacements } = useQuery<PlacementReport[]>({
@@ -145,7 +147,7 @@ export default function Reports() {
       if (applied.provider) p.set("provider_id", applied.provider);
       return api.get<PlacementReport[]>(`/reports/placements?${p}`);
     },
-    enabled: tab === "placement_monthly" || tab === "provider",
+    enabled: (tab === "placement_monthly" || tab === "provider") && hasSearched,
   });
 
   const { data: staffReport = [], isLoading: loadingStaff } = useQuery<StaffReport[]>({
@@ -155,7 +157,7 @@ export default function Reports() {
       if (applied.employer) p.set("employer_id", applied.employer);
       return api.get<StaffReport[]>(`/reports/staff?${p}`);
     },
-    enabled:  tab === "staff",
+    enabled:  tab === "staff" && hasSearched,
   });
 
   const { data: vacancyReportResult, isLoading: loadingVacancies } = useQuery({
@@ -166,7 +168,7 @@ export default function Reports() {
       if (applied.status)   p.set("status", applied.status);
       return api.get<VacancyReport[]>(`/reports/vacancies?${p}`);
     },
-    enabled: tab === "vacancy",
+    enabled: tab === "vacancy" && hasSearched,
   });
   const vacancyReport: VacancyReport[] = Array.isArray(vacancyReportResult)
     ? vacancyReportResult
@@ -392,7 +394,7 @@ export default function Reports() {
                   {loadingProviders ? (
                     <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
                   ) : sortedProviders.length === 0 ? (
-                    <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">No data for this period.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
                   ) : sortedProviders.map((r) => (
                     <tr key={r.provider_id} className="hover:bg-slate-50">
                       <td className={tdCls}>
@@ -433,7 +435,7 @@ export default function Reports() {
                   {loadingPlacements ? (
                     <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
                   ) : placementsByMonth.length === 0 ? (
-                    <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-400">No data for this period.</td></tr>
+                    <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
                   ) : placementsByMonth.map((r) => {
                     const rate = r.total > 0 ? Math.round((r.confirmed / r.total) * 100) : 0;
                     return (
@@ -479,7 +481,7 @@ export default function Reports() {
               {loadingStaff ? (
                 <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : sortedStaff.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">No data for this period.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
               ) : sortedStaff.map((r) => {
                 const rate = r.total_applications > 0
                   ? Math.round((r.total_placements / r.total_applications) * 100)
@@ -534,7 +536,7 @@ export default function Reports() {
               {loadingPlacements ? (
                 <tr><td colSpan={12} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : placementReport.length === 0 ? (
-                <tr><td colSpan={12} className="px-4 py-10 text-center text-slate-400">No data for this period.</td></tr>
+                <tr><td colSpan={12} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
               ) : (() => {
                 // Group rows — add month label to first row of each month
                 const sorted = [...placementReport].sort(
@@ -607,7 +609,7 @@ export default function Reports() {
               {loadingVacancies ? (
                 <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : sortedVacancies.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">No vacancies for this period.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No vacancies found."}</td></tr>
               ) : sortedVacancies.map((r) => {
                 const loc = r.work_location || [r.city, r.state].filter(Boolean).join(", ") || "—";
                 const pay = r.pay_rate
