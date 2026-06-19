@@ -386,16 +386,6 @@ export default function JobEdit() {
           <p className="text-sm text-red-600">Failed to save. Please try again.</p>
         )}
 
-        <div className="flex gap-3 pb-6">
-          <button type="submit" disabled={updateJob.isPending}
-            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors">
-            <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
-          </button>
-          <Link to={`/jobs/${id}`}
-            className="px-5 py-2 text-sm text-slate-700 border border-slate-300 rounded-lg hover:bg-gray-50">
-            Cancel
-          </Link>
-        </div>
       </form>
     </div>
   );
