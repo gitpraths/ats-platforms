@@ -159,7 +159,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-none">
+      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-md">
         <div className="flex items-center gap-1">
           <a href="/dashboard" className="flex items-center mr-3 pr-3 border-r border-slate-700 select-none">
             <div className="flex flex-col leading-none">
@@ -188,7 +188,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <ProfileMenu />
         </div>
       </nav>
-      <main>{children}</main>
+      <main className="pt-12">{children}</main>
     </div>
   );
 }
