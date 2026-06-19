@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, CheckCircle, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
-import type { Placement, Candidate, Employer, Application } from "../types";
+import type { Placement, Candidate, Employer, Provider, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import WelfareCheckDots from "../components/WelfareCheckDots";
 import Pagination from "../components/Pagination";
+import SearchableSelect from "../components/SearchableSelect";
 
 interface PlacementsData {
   data: Placement[];
@@ -29,7 +30,7 @@ export default function Placements() {
   const canCreate = user?.role === "admin" || user?.role === "recruiter_admin" || user?.role === "recruiter";
 
   const [filterEmployer, setFilterEmployer] = useState("");
-  const [filterProvider, _setFilterProvider] = useState("");
+  const [filterProvider, setFilterProvider] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
@@ -63,6 +64,12 @@ export default function Placements() {
     queryFn: () => api.list<Employer>("/employers?limit=100"),
   });
   const employers = employersResult?.data ?? [];
+
+  const { data: providersResult } = useQuery({
+    queryKey: ["providers-select"],
+    queryFn: () => api.list<Provider>("/providers?limit=200"),
+  });
+  const providers = providersResult?.data ?? [];
 
   const { data: candidateAppsResult } = useQuery({
     queryKey: ["applications-for-candidate", createForm.candidate_id],
@@ -123,11 +130,20 @@ export default function Placements() {
         <input value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }}
           type="date" placeholder="To"
           className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-        <select value={filterEmployer} onChange={(e) => { setFilterEmployer(e.target.value); setPage(1); }}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
-          <option value="">All Employers</option>
-          {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-        </select>
+        <SearchableSelect
+          options={employers.map((e) => ({ value: e.id, label: e.name }))}
+          value={filterEmployer}
+          onChange={(v) => { setFilterEmployer(v); setPage(1); }}
+          allLabel="All Employers"
+          placeholder="Search employer..."
+        />
+        <SearchableSelect
+          options={providers.map((p) => ({ value: p.id, label: p.name }))}
+          value={filterProvider}
+          onChange={(v) => { setFilterProvider(v); setPage(1); }}
+          allLabel="All Providers"
+          placeholder="Search provider..."
+        />
       </div>
 
       {/* Table */}

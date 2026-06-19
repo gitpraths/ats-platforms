@@ -6,6 +6,7 @@ import { format, startOfMonth, parseISO } from "date-fns";
 import { api } from "../lib/api";
 import type { Employer, Provider, WelfareCheckType } from "../types";
 import WelfareCheckDots from "../components/WelfareCheckDots";
+import SearchableSelect from "../components/SearchableSelect";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = "provider" | "staff" | "placement_monthly" | "vacancy";
@@ -276,19 +277,23 @@ export default function Reports() {
             <>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Employer</label>
-                <select value={filterEmployer} onChange={(e) => setFilterEmployer(e.target.value)}
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                  <option value="">All Employers</option>
-                  {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-                </select>
+                <SearchableSelect
+                  options={employers.map((e) => ({ value: e.id, label: e.name }))}
+                  value={filterEmployer}
+                  onChange={setFilterEmployer}
+                  allLabel="All Employers"
+                  placeholder="Search employer..."
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Provider</label>
-                <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)}
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                  <option value="">All Providers</option>
-                  {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <SearchableSelect
+                  options={providers.map((p) => ({ value: p.id, label: p.name }))}
+                  value={filterProvider}
+                  onChange={setFilterProvider}
+                  allLabel="All Providers"
+                  placeholder="Search provider..."
+                />
               </div>
             </>
           )}
@@ -296,22 +301,28 @@ export default function Reports() {
             <>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Employer</label>
-                <select value={filterEmployer} onChange={(e) => setFilterEmployer(e.target.value)}
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                  <option value="">All Employers</option>
-                  {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-                </select>
+                <SearchableSelect
+                  options={employers.map((e) => ({ value: e.id, label: e.name }))}
+                  value={filterEmployer}
+                  onChange={setFilterEmployer}
+                  allLabel="All Employers"
+                  placeholder="Search employer..."
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
-                  <option value="">All Statuses</option>
-                  <option value="draft">Draft</option>
-                  <option value="published">Open</option>
-                  <option value="closed">Closed</option>
-                  <option value="archived">Archived</option>
-                </select>
+                <SearchableSelect
+                  options={[
+                    { value: "draft",     label: "Draft" },
+                    { value: "published", label: "Open" },
+                    { value: "closed",    label: "Closed" },
+                    { value: "archived",  label: "Archived" },
+                  ]}
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  allLabel="All Statuses"
+                  placeholder="Search status..."
+                />
               </div>
             </>
           )}
