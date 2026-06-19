@@ -9,8 +9,11 @@ reportsRouter.use(requireRole("admin", "recruiter_admin"));
 // ── GET /api/reports/providers ───────────────────────────
 reportsRouter.get("/providers", async (req, res, next) => {
   try {
-    const { from, to, page = 1, limit = 50 } = req.query;
+    const { from, to, provider_id, page = 1, limit = 50 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
+
+    // Optional WHERE clause to filter to one provider
+    const providerWhere = provider_id ? `WHERE pr.id = $5` : "";
 
     // Date filter goes into the JOIN condition so providers with zero candidates
     // are still returned (not excluded by a WHERE on the LEFT-joined table).
@@ -27,10 +30,13 @@ reportsRouter.get("/providers", async (req, res, next) => {
        LEFT JOIN candidates c ON c.provider_id = pr.id
          AND ($1::date IS NULL OR c.created_at::date >= $1::date)
          AND ($2::date IS NULL OR c.created_at::date <= $2::date)
+       ${providerWhere}
        GROUP BY pr.id, pr.name
        ORDER BY pr.name
        LIMIT $3 OFFSET $4`,
-      [from || null, to || null, Number(limit), offset]
+      provider_id
+        ? [from || null, to || null, Number(limit), offset, provider_id]
+        : [from || null, to || null, Number(limit), offset]
     );
 
     const data = rows.map((r) => ({
@@ -113,8 +119,11 @@ reportsRouter.get("/placements", async (req, res, next) => {
 // ── GET /api/reports/staff ───────────────────────────────
 reportsRouter.get("/staff", async (req, res, next) => {
   try {
-    const { from, to, page = 1, limit = 50 } = req.query;
+    const { from, to, employer_id, page = 1, limit = 50 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
+
+    // Optional employer filter added to the JOIN so staff with no jobs still appear
+    const employerCondition = employer_id ? `AND j.employer_id = $5` : "";
 
     // Date filter on jobs goes into the JOIN condition so staff members with
     // no jobs in the period still appear (not dropped by a WHERE on LEFT-joined jobs).
@@ -132,13 +141,16 @@ reportsRouter.get("/staff", async (req, res, next) => {
        LEFT JOIN jobs j           ON j.id = jr.job_id
          AND ($1::date IS NULL OR j.created_at::date >= $1::date)
          AND ($2::date IS NULL OR j.created_at::date <= $2::date)
+         ${employerCondition}
        LEFT JOIN applications a   ON a.job_id = j.id
        LEFT JOIN placements p     ON p.job_id = j.id
        WHERE u.role IN ('admin','recruiter_admin','recruiter')
        GROUP BY u.id, u.name, u.role
        ORDER BY u.name
        LIMIT $3 OFFSET $4`,
-      [from || null, to || null, Number(limit), offset]
+      employer_id
+        ? [from || null, to || null, Number(limit), offset, employer_id]
+        : [from || null, to || null, Number(limit), offset]
     );
 
     res.json({ success: true, data: rows });

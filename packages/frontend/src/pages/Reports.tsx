@@ -128,8 +128,12 @@ export default function Reports() {
 
   // ── Queries ─────────────────────────────────────────────────────────────────
   const { data: providerReport = [], isLoading: loadingProviders } = useQuery<ProviderReport[]>({
-    queryKey: ["report-providers", applied.from, applied.to],
-    queryFn:  () => api.get<ProviderReport[]>(`/reports/providers?from=${applied.from}&to=${applied.to}&limit=1000`),
+    queryKey: ["report-providers", applied.from, applied.to, applied.provider],
+    queryFn:  () => {
+      const p = new URLSearchParams({ from: applied.from, to: applied.to, limit: "1000" });
+      if (applied.provider) p.set("provider_id", applied.provider);
+      return api.get<ProviderReport[]>(`/reports/providers?${p}`);
+    },
     enabled:  tab === "provider",
   });
 
@@ -145,8 +149,12 @@ export default function Reports() {
   });
 
   const { data: staffReport = [], isLoading: loadingStaff } = useQuery<StaffReport[]>({
-    queryKey: ["report-staff", applied.from, applied.to],
-    queryFn:  () => api.get<StaffReport[]>(`/reports/staff?from=${applied.from}&to=${applied.to}&limit=1000`),
+    queryKey: ["report-staff", applied.from, applied.to, applied.employer],
+    queryFn:  () => {
+      const p = new URLSearchParams({ from: applied.from, to: applied.to, limit: "1000" });
+      if (applied.employer) p.set("employer_id", applied.employer);
+      return api.get<StaffReport[]>(`/reports/staff?${p}`);
+    },
     enabled:  tab === "staff",
   });
 
