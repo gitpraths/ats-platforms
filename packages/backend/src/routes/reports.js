@@ -184,16 +184,17 @@ reportsRouter.get("/vacancies", async (req, res, next) => {
          j.pay_rate,
          j.pay_rate_type,
          j.work_location,
-         j.city,
-         j.state,
+         l.city,
+         l.state,
          j.created_at,
          e.name AS employer_name,
          COUNT(DISTINCT a.id)::int AS application_count
        FROM jobs j
-       LEFT JOIN employers e    ON e.id = j.employer_id
+       LEFT JOIN employers  e ON e.id = j.employer_id
+       LEFT JOIN locations  l ON l.id = j.location_id
        LEFT JOIN applications a ON a.job_id = j.id
        ${where}
-       GROUP BY j.id, e.name
+       GROUP BY j.id, e.name, l.city, l.state
        ORDER BY j.created_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, Number(limit), offset]
