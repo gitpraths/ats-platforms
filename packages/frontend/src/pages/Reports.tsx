@@ -159,9 +159,9 @@ export default function Reports() {
   });
 
   const { data: vacancyReportResult, isLoading: loadingVacancies } = useQuery({
-    queryKey: ["report-vacancies", applied.from, applied.to, applied.employer, applied.status],
+    queryKey: ["report-vacancies", applied.employer, applied.status],
     queryFn:  () => {
-      const p = new URLSearchParams({ from: applied.from, to: applied.to, limit: "1000" });
+      const p = new URLSearchParams({ limit: "1000" });
       if (applied.employer) p.set("employer_id", applied.employer);
       if (applied.status)   p.set("status", applied.status);
       return api.get<VacancyReport[]>(`/reports/vacancies?${p}`);
@@ -641,7 +641,7 @@ export default function Reports() {
                     </td>
                     <td className={`${tdCls} font-semibold text-[#e88e2e]`}>{pay}</td>
                     <td className={`${tdCls} text-slate-500 whitespace-nowrap`}>
-                      {format(parseISO(r.created_at), "d MMM yyyy")}
+                      {r.created_at ? format(parseISO(r.created_at), "d MMM yyyy") : "—"}
                     </td>
                   </tr>
                 );
