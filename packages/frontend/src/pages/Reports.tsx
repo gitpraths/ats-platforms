@@ -281,7 +281,21 @@ export default function Reports() {
             <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
               className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
           </div>
-          {(tab === "placement_monthly" || tab === "provider") && (
+          {/* Provider tab: only Provider filter */}
+          {tab === "provider" && (
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Provider</label>
+              <SearchableSelect
+                options={providers.map((p) => ({ value: p.id, label: p.name }))}
+                value={filterProvider}
+                onChange={setFilterProvider}
+                allLabel="All Providers"
+                placeholder="Search provider..."
+              />
+            </div>
+          )}
+          {/* Placement Monthly tab: Employer + Provider */}
+          {tab === "placement_monthly" && (
             <>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Employer</label>
