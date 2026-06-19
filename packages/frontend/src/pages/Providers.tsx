@@ -5,6 +5,7 @@ import { Plus, Search, Users, Eye, Edit2 } from "lucide-react";
 import { api } from "../lib/api";
 import type { Provider } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import Pagination from "../components/Pagination";
 
 export default function Providers() {
   const { user } = useAuth();
@@ -127,18 +128,8 @@ export default function Providers() {
         </table>
       </div>
 
-      {/* Pagination */}
-      {total > 20 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-slate-500">
-          <span>Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total}</span>
-          <div className="flex gap-2">
-            <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-slate-50">Prev</button>
-            <button disabled={page * 20 >= total} onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-slate-50">Next</button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={Math.ceil((total || 1) / 20)}
+        total={total} perPage={20} onChange={setPage} label="providers" />
     </div>
   );
 }

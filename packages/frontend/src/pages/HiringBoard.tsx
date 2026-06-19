@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 import type { Application, ApplicationStage } from "../types";
 import { format } from "date-fns";
 import ScreenCandidateButton from "../components/ScreenCandidateButton";
+import Pagination, { PER_PAGE } from "../components/Pagination";
 
 const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "offer", "hired", "rejected"];
 
@@ -325,6 +326,7 @@ export default function HiringBoard() {
   const queryClient                       = useQueryClient();
   const [view, setView]                   = useState<"pipeline" | "list">("list");
   const [stageDialogApp, setStageDialogApp] = useState<Application | null>(null);
+  const [listPage, setListPage]           = useState(1);
 
   const { data: applications = [], isLoading } = useQuery<Application[]>({
     queryKey: ["applications"],
@@ -390,10 +392,26 @@ export default function HiringBoard() {
         />
       ) : (
         <div className="bg-white rounded-xl shadow-sm p-4">
+          <Pagination
+            page={listPage}
+            totalPages={Math.max(1, Math.ceil(applications.length / PER_PAGE))}
+            total={applications.length}
+            perPage={PER_PAGE}
+            onChange={setListPage}
+            label="applications"
+          />
           <ListView
-            applications={applications}
+            applications={applications.slice((listPage - 1) * PER_PAGE, listPage * PER_PAGE)}
             onOpenStageDialog={setStageDialogApp}
             onDelete={(id) => deleteApp.mutate(id)}
+          />
+          <Pagination
+            page={listPage}
+            totalPages={Math.max(1, Math.ceil(applications.length / PER_PAGE))}
+            total={applications.length}
+            perPage={PER_PAGE}
+            onChange={setListPage}
+            label="applications"
           />
         </div>
       )}

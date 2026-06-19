@@ -7,6 +7,7 @@ import { api } from "../lib/api";
 import type { Placement, Candidate, Employer, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import WelfareCheckDots from "../components/WelfareCheckDots";
+import Pagination from "../components/Pagination";
 
 interface PlacementsData {
   data: Placement[];
@@ -85,7 +86,9 @@ export default function Placements() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["placements"] }),
   });
 
-  const placements = placementsData?.data ?? [];
+  const placements      = placementsData?.data ?? [];
+  const placementTotal  = placementsData?.meta?.total ?? 0;
+  const placementPages  = Math.max(1, Math.ceil(placementTotal / 20));
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -191,6 +194,9 @@ export default function Placements() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={placementPages} total={placementTotal}
+        perPage={20} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
 
       {/* Create Placement Dialog */}
       {showCreate && (

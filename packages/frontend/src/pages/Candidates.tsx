@@ -9,6 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { useToast } from "../components/ui/use-toast";
 import type { CandidatePoolRow, CandidateWorkStatus, WelfareCheck, WelfareCheckType } from "../types";
+import Pagination from "../components/Pagination";
 
 type Tab        = "all" | "in_progress" | "placed" | "not_successful" | "inactive";
 type View       = "list" | "card";
@@ -516,19 +517,14 @@ export default function Candidates() {
       )}
 
       {/* ── Pagination ──────────────────────────────────────────── */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-3 py-1.5 text-sm border border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
-            ← Previous
-          </button>
-          <span className="text-sm text-slate-500 px-3">Page {page} of {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="px-3 py-1.5 text-sm border border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
-            Next →
-          </button>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={meta?.total ?? 0}
+        perPage={meta?.limit ?? 20}
+        onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        label="candidates"
+      />
     </div>
   );
 }

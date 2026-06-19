@@ -9,6 +9,7 @@ import type { CandidateTraining, TrainingStatus } from "../../types";
 import type { PrefilterToEnrolments } from "../../pages/Training";
 import { GenerateInvoiceDialog } from "./GenerateInvoiceDialog";
 import { useXeroInvoicesForEnrolment } from "../../hooks/useXero";
+import Pagination from "../Pagination";
 
 const ALL_STATUSES: TrainingStatus[] = ["enrolled", "in_progress", "completed", "withdrawn", "failed"];
 
@@ -209,28 +210,14 @@ export function EnrolmentsTab({
       </div>
 
       {/* Pagination */}
-      {total > 0 && (
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>{total} enrolment{total === 1 ? "" : "s"}</span>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-3 py-1 border border-slate-200 rounded disabled:opacity-40"
-            >
-              Prev
-            </button>
-            <span>Page {page} of {totalPages}</span>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="px-3 py-1 border border-slate-200 rounded disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        perPage={25}
+        onChange={setPage}
+        label="enrolments"
+      />
 
       {invoicingEnrolment && (
         <GenerateInvoiceDialog
