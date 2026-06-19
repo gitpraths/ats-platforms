@@ -144,3 +144,49 @@ reportsRouter.get("/staff", async (req, res, next) => {
     res.json({ success: true, data: rows });
   } catch (err) { next(err); }
 });
+
+// ── GET /api/reports/vacancies ───────────────────────────
+reportsRouter.get("/vacancies", async (req, res, next) => {
+  try {
+    const { from, to, status, employer_id, page = 1, limit = 200 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const conditions = [];
+    const params = [];
+    let idx = 1;
+
+    if (from)        { conditions.push(`j.created_at::date >= $${idx}::date`); params.push(from);        idx++; }
+    if (to)          { conditions.push(`j.created_at::date <= $${idx}::date`); params.push(to);          idx++; }
+    if (status)      { conditions.push(`j.status = $${idx}`);                  params.push(status);      idx++; }
+    if (employer_id) { conditions.push(`j.employer_id = $${idx}`);             params.push(employer_id); idx++; }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const { rows } = await pool.query(
+      `SELECT
+         j.id,
+         j.title,
+         j.status,
+         j.vacancy_type,
+         j.positions_count,
+         j.pay_rate,
+         j.pay_rate_type,
+         j.work_location,
+         j.city,
+         j.state,
+         j.created_at,
+         e.name AS employer_name,
+         COUNT(DISTINCT a.id)::int AS application_count
+       FROM jobs j
+       LEFT JOIN employers e    ON e.id = j.employer_id
+       LEFT JOIN applications a ON a.job_id = j.id
+       ${where}
+       GROUP BY j.id, e.name
+       ORDER BY j.created_at DESC
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, Number(limit), offset]
+    );
+
+    res.json({ success: true, data: rows });
+  } catch (err) { next(err); }
+});
