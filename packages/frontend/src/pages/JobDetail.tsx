@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Users, MapPin, Briefcase, Building2, Edit2, Trash2,
   History, X, ExternalLink, CheckCircle2, XCircle, ChevronDown,
-  ChevronUp, Clock, UserCheck, FileText,
+  ChevronUp, ChevronRight, Clock, UserCheck, FileText, Minus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
@@ -54,8 +54,8 @@ function ComplianceTag({ label, value }: { label: string; value?: string }) {
           : na  ? "border-slate-200 text-slate-400 bg-slate-50"
                : "border-red-200 text-red-500 bg-red-50"
     }`}>
-      {yes ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-      {label}
+      {yes ? <CheckCircle2 size={11} /> : na ? <Minus size={11} /> : <XCircle size={11} />}
+      {label}{na ? " (N/A)" : ""}
     </span>
   );
 }
@@ -327,6 +327,7 @@ export default function JobDetail() {
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STAGE_BADGE[app.stage]}`}>
                         {app.stage}
                       </span>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:text-[#e88e2e] transition-colors" />
                     </div>
                   </Link>
                 ))}
