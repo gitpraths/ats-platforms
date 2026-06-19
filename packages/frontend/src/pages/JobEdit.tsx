@@ -247,9 +247,19 @@ export default function JobEdit() {
       <Link to={`/jobs/${id}`} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4">
         <ArrowLeft size={15} /> Back to Vacancy
       </Link>
-      <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Edit Vacancy</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Edit Vacancy</h1>
+        <button
+          type="submit"
+          form="edit-vacancy-form"
+          disabled={updateJob.isPending}
+          className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+        >
+          <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="edit-vacancy-form" onSubmit={handleSubmit} className="space-y-6">
 
         {/* ── Section 1: Vacancy Details ── */}
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
