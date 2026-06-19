@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Users, MapPin, Briefcase, Calendar, Edit2, Trash2, History, X } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Briefcase, Building2, Edit2, Trash2, History, X, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -96,32 +96,38 @@ export default function JobDetail() {
               )}
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-slate-500 mt-1">
-              {job.department_name && (
-                <span className="flex items-center gap-1"><Briefcase size={13} />{job.department_name}</span>
+              {job.employer_name && (
+                <span className="flex items-center gap-1"><Building2 size={13} />{job.employer_name}</span>
               )}
-              {(job.city || job.is_remote) && (
+              {(job.work_location || job.city || job.is_remote) && (
                 <span className="flex items-center gap-1">
-                  <MapPin size={13} />{job.is_remote ? "Remote" : `${job.city}${job.state ? `, ${job.state}` : ""}`}
+                  <MapPin size={13} />
+                  {job.work_location || (job.is_remote ? "Remote" : `${job.city}${job.state ? `, ${job.state}` : ""}`)}
                 </span>
               )}
-              {job.job_type && (
-                <span className="capitalize">{job.job_type.replace("_", " ")}</span>
-              )}
-              {job.work_model && (
-                <span className="capitalize">{job.work_model}</span>
-              )}
-              {job.deadline && (
+              {job.vacancy_type && (
                 <span className="flex items-center gap-1">
-                  <Calendar size={13} />Deadline: {format(new Date(job.deadline), "MMM d, yyyy")}
+                  <Briefcase size={13} />
+                  <span className="capitalize">{job.vacancy_type.replace("_", "-")}</span>
                 </span>
               )}
             </div>
-            {(job.min_annual_salary || job.max_annual_salary) && (
-              <p className="text-sm text-slate-500 mt-1">
-                {job.currency_code} {Number(job.min_annual_salary).toLocaleString()}
-                {job.max_annual_salary && ` – ${Number(job.max_annual_salary).toLocaleString()}`} / year
-              </p>
-            )}
+            {/* Industry + Pay Rate */}
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              {job.industry && (
+                <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full font-medium">
+                  {job.industry}
+                </span>
+              )}
+              {job.pay_rate && (
+                <span className="text-sm font-semibold text-[#e88e2e]">
+                  ${Number(job.pay_rate).toLocaleString()}{job.pay_rate_type === "annual" ? "/yr" : "/hr"}
+                </span>
+              )}
+              {(job.positions_count ?? 0) > 0 && (
+                <span className="text-xs text-slate-500">{job.positions_count} {job.positions_count === 1 ? "Position" : "Positions"}</span>
+              )}
+            </div>
           </div>
 
           {/* Actions */}
@@ -151,29 +157,31 @@ export default function JobDetail() {
           )}
         </div>
 
-        {/* Salary + Skills */}
-        <div className="mt-4 grid sm:grid-cols-2 gap-4">
-          {(job as any).skills_required?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 mb-1">Required Skills</p>
-              <div className="flex flex-wrap gap-1">
-                {(job as any).skills_required.map((s: string) => (
-                  <span key={s} className="text-xs bg-blue-50 text-blue-700 rounded px-2 py-0.5">{s}</span>
-                ))}
-              </div>
+        {/* Compliance */}
+        {(job.police_check || job.drug_alcohol_test || job.wwc || job.car_required || job.public_transport || job.wage_subsidy_required) && (
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 mb-2">Compliance Requirements</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "Police Check",        value: job.police_check },
+                { label: "Drug & Alcohol Test",  value: job.drug_alcohol_test },
+                { label: "WWC",                  value: job.wwc },
+                { label: "Car Required",         value: job.car_required },
+                { label: "Public Transport",     value: job.public_transport },
+                { label: "Wage Subsidy",         value: job.wage_subsidy_required },
+              ].filter(({ value }) => value).map(({ label, value }) => (
+                <span key={label} className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${
+                  value === "yes" ? "border-green-200 text-green-700 bg-green-50" :
+                  value === "not_required" ? "border-slate-200 text-slate-400 bg-slate-50" :
+                  "border-red-200 text-red-500 bg-red-50"
+                }`}>
+                  {value === "yes" ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                  {label}
+                </span>
+              ))}
             </div>
-          )}
-          {(job as any).skills_desired?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 mb-1">Desired Skills</p>
-              <div className="flex flex-wrap gap-1">
-                {(job as any).skills_desired.map((s: string) => (
-                  <span key={s} className="text-xs border border-slate-400 text-slate-600 bg-transparent rounded px-2 py-0.5">{s}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
@@ -277,13 +285,27 @@ export default function JobDetail() {
           </div>
 
           {/* Vacancy Details */}
-          {(job.vacancy_type || job.positions_count || job.job_board_url || job.staff_working_status || job.end_date) && (
+          {(job.vacancy_type || job.positions_count || job.job_board_url || job.industry || job.pay_rate || job.comments) && (
             <div className="bg-white rounded-xl shadow-sm p-5 text-xs text-slate-500 space-y-2">
               <p className="text-sm font-semibold text-slate-700 mb-2">Vacancy Details</p>
+              {job.industry && (
+                <div className="flex justify-between">
+                  <span>Industry</span>
+                  <span className="text-slate-900">{job.industry}</span>
+                </div>
+              )}
               {job.vacancy_type && (
                 <div className="flex justify-between">
-                  <span>Type</span>
-                  <span className="text-slate-900 capitalize">{job.vacancy_type.replace("_", " ")}</span>
+                  <span>Work Type</span>
+                  <span className="text-slate-900 capitalize">{job.vacancy_type.replace("_", "-")}</span>
+                </div>
+              )}
+              {job.pay_rate && (
+                <div className="flex justify-between">
+                  <span>Pay Rate</span>
+                  <span className="text-[#e88e2e] font-semibold">
+                    ${Number(job.pay_rate).toLocaleString()}{job.pay_rate_type === "annual" ? "/yr" : "/hr"}
+                  </span>
                 </div>
               )}
               {job.positions_count && (
@@ -292,27 +314,17 @@ export default function JobDetail() {
                   <span className="text-slate-900">{job.positions_count}</span>
                 </div>
               )}
-              {job.end_date && (
-                <div className="flex justify-between">
-                  <span>End Date</span>
-                  <span className="text-slate-900">{format(new Date(job.end_date), "MMM d, yyyy")}</span>
-                </div>
-              )}
-              {job.staff_working_status && (
-                <div className="flex justify-between">
-                  <span>Staff Status</span>
-                  <span className="text-slate-900 capitalize">{job.staff_working_status.replace("_", " ")}</span>
+              {job.comments && (
+                <div className="pt-1">
+                  <p className="text-xs font-medium text-slate-600 mb-1">Comments</p>
+                  <p className="text-slate-700 whitespace-pre-wrap">{job.comments}</p>
                 </div>
               )}
               {job.job_board_url && (
                 <div className="pt-1">
-                  <a
-                    href={job.job_board_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline break-all"
-                  >
-                    View on Job Board ↗
+                  <a href={job.job_board_url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-[#e88e2e] hover:underline font-medium">
+                    <ExternalLink size={12} /> View on Job Board
                   </a>
                 </div>
               )}

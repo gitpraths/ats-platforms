@@ -174,6 +174,18 @@ export interface Job {
   vacancy_type?: string;
   staff_working_status?: string;
   end_date?: string;
+  // ATS-specific fields
+  industry?: string;
+  pay_rate?: number;
+  pay_rate_type?: string;
+  work_location?: string;
+  police_check?: string;
+  drug_alcohol_test?: string;
+  wwc?: string;
+  car_required?: string;
+  public_transport?: string;
+  wage_subsidy_required?: string;
+  comments?: string;
   created_at: string;
   updated_at: string;
 }

@@ -1,15 +1,147 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink, MapPin } from "lucide-react";
 import { api } from "../lib/api";
-import type { Job, Department, Location, Employer } from "../types";
-import SkillsInput from "../components/SkillsInput";
+import type { Job, Employer } from "../types";
 
-const JOB_TYPES   = ["full_time", "part_time", "contract", "internship"] as const;
-const WORK_MODELS = ["onsite", "remote", "hybrid"] as const;
-const CURRENCIES  = ["USD", "EUR", "CAD", "MXN"] as const;
+// ── Australian Address Autocomplete ──────────────────────────────────────────
+const AU_STATE: Record<string, string> = {
+  "New South Wales": "NSW", "Victoria": "VIC", "Queensland": "QLD",
+  "South Australia": "SA",  "Western Australia": "WA", "Tasmania": "TAS",
+  "Australian Capital Territory": "ACT", "Northern Territory": "NT",
+};
 
+function fmtResult(item: Record<string, any>): string {
+  const a = item.address ?? {};
+  const suburb = a.suburb ?? a.town ?? a.city_district ?? a.city ?? a.county ?? "";
+  const state  = AU_STATE[a.state] ?? a.state ?? "";
+  const post   = a.postcode ?? "";
+  if (!suburb && !state) return String(item.display_name ?? "").split(",")[0];
+  return [suburb, state, post].filter(Boolean).join(", ");
+}
+
+function AuAddressAutocomplete({ value, onChange, className }: {
+  value: string; onChange: (v: string) => void; className?: string;
+}) {
+  const [query,   setQuery]   = useState(value);
+  const [results, setResults] = useState<Record<string, any>[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open,    setOpen]    = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrap  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const q = e.target.value;
+    setQuery(q); onChange(q);
+    if (timer.current) clearTimeout(timer.current);
+    if (q.length < 2) { setResults([]); setOpen(false); return; }
+    timer.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res  = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=au&format=json&limit=8&addressdetails=1`,
+          { headers: { "Accept-Language": "en-AU" } }
+        );
+        const data = await res.json() as Record<string, any>[];
+        setResults(data); setOpen(data.length > 0);
+      } catch { setResults([]); }
+      finally { setLoading(false); }
+    }, 350);
+  }
+
+  function select(item: Record<string, any>) {
+    const label = fmtResult(item);
+    setQuery(label); onChange(label); setResults([]); setOpen(false);
+  }
+
+  return (
+    <div ref={wrap} className="relative">
+      <input value={query} onChange={handleInput} onFocus={() => results.length > 0 && setOpen(true)}
+        className={className} placeholder="e.g. Parramatta, NSW" autoComplete="off" />
+      {loading && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="w-3 h-3 border-2 border-[#e88e2e] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {open && results.length > 0 && (
+        <ul className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-52 overflow-y-auto text-sm">
+          {results.map((item, i) => (
+            <li key={i} onMouseDown={() => select(item)}
+              className="px-3 py-2 cursor-pointer hover:bg-orange-50 hover:text-[#e88e2e] flex items-center gap-2 transition-colors">
+              <MapPin size={12} className="text-slate-300 shrink-0" />
+              {fmtResult(item)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ── Job Board URL clickable link ──────────────────────────────────────────────
+function JobBoardUrlField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const displayUrl = value || "https://workvision.com.au/current-vacancies/";
+
+  if (editing) {
+    return (
+      <div className="flex gap-2 items-center">
+        <input type="url" value={value} onChange={(e) => onChange(e.target.value)} autoFocus
+          className="flex-1 border border-orange-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]" />
+        <button type="button" onClick={() => setEditing(false)}
+          className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 border border-slate-200 rounded-lg">Done</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
+      <ExternalLink size={16} className="text-[#e88e2e] shrink-0" />
+      <a href={displayUrl} target="_blank" rel="noopener noreferrer"
+        className="flex-1 text-sm text-[#e88e2e] font-medium hover:underline truncate">{displayUrl}</a>
+      <button type="button" onClick={() => setEditing(true)}
+        className="text-xs text-slate-400 hover:text-slate-600 shrink-0">Change</button>
+    </div>
+  );
+}
+
+// ── Shared UI helpers ─────────────────────────────────────────────────────────
+function Label({ children }: { children: React.ReactNode }) {
+  return <label className="block text-sm font-medium text-slate-700 mb-1">{children}</label>;
+}
+
+function YesNoSelect({ value, onChange, options }: {
+  value: string; onChange: (v: string) => void;
+  options?: { value: string; label: string }[];
+}) {
+  const opts = options ?? [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }];
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)}
+      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]">
+      <option value="">Select</option>
+      {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
+
+const WORK_TYPES = [
+  { value: "full_time",  label: "Full-time"  },
+  { value: "part_time",  label: "Part-time"  },
+  { value: "casual",     label: "Casual"     },
+  { value: "contract",   label: "Contract"   },
+  { value: "temporary",  label: "Temporary"  },
+];
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function JobEdit() {
   const { id }      = useParams<{ id: string }>();
   const navigate    = useNavigate();
@@ -20,16 +152,6 @@ export default function JobEdit() {
     queryFn:  () => api.get<Job>(`/jobs/${id}`),
   });
 
-  const { data: departments = [] } = useQuery<Department[]>({
-    queryKey: ["departments"],
-    queryFn:  () => api.get<Department[]>("/departments"),
-  });
-
-  const { data: locations = [] } = useQuery<Location[]>({
-    queryKey: ["locations"],
-    queryFn:  () => api.get<Location[]>("/locations"),
-  });
-
   const { data: employersResult } = useQuery({
     queryKey: ["employers-select"],
     queryFn:  () => api.list<Employer>("/employers?limit=100"),
@@ -37,54 +159,45 @@ export default function JobEdit() {
   const employers = employersResult?.data ?? [];
 
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    department_id: "",
-    location_id: "",
-    job_type: "full_time" as string,
-    work_model: "onsite" as string,
-    skills_required: [] as string[],
-    skills_desired: [] as string[],
-    cover_letter_required: false,
-    min_annual_salary: "",
-    max_annual_salary: "",
-    currency_code: "USD",
-    experience_years_min: "",
-    deadline: "",
-    team: "",
-    employer_id: "",
-    positions_count: 1,
-    job_board_url: "",
-    vacancy_type: "",
-    staff_working_status: "active",
-    end_date: "",
+    title:                "",
+    employer_id:          "",
+    industry:             "",
+    vacancy_type:         "",
+    pay_rate:             "",
+    pay_rate_type:        "per_hour",
+    positions_count:      1,
+    work_location:        "",
+    job_board_url:        "",
+    description:          "",
+    police_check:         "",
+    drug_alcohol_test:    "",
+    wwc:                  "",
+    car_required:         "",
+    public_transport:     "",
+    wage_subsidy_required: "",
+    comments:             "",
   });
 
-  // Populate form once job loads
   useEffect(() => {
     if (!job) return;
     setForm({
-      title:                  job.title ?? "",
-      description:            job.description ?? "",
-      department_id:          job.department_id ?? "",
-      location_id:            job.location_id ?? "",
-      job_type:               job.job_type ?? "full_time",
-      work_model:             job.work_model ?? "onsite",
-      skills_required:        job.skills_required ?? [],
-      skills_desired:         job.skills_desired ?? [],
-      cover_letter_required:  job.cover_letter_required ?? false,
-      min_annual_salary:      job.min_annual_salary?.toString() ?? "",
-      max_annual_salary:      job.max_annual_salary?.toString() ?? "",
-      currency_code:          job.currency_code ?? "USD",
-      experience_years_min:   job.experience_years_min?.toString() ?? "",
-      deadline:               job.deadline ? job.deadline.split("T")[0] : "",
-      team:                   job.team ?? "",
-      employer_id:            job.employer_id ?? "",
-      positions_count:        job.positions_count ?? 1,
-      job_board_url:          job.job_board_url ?? "",
-      vacancy_type:           job.vacancy_type ?? "",
-      staff_working_status:   job.staff_working_status ?? "active",
-      end_date:               job.end_date ? job.end_date.split("T")[0] : "",
+      title:                job.title ?? "",
+      employer_id:          job.employer_id ?? "",
+      industry:             job.industry ?? "",
+      vacancy_type:         job.vacancy_type ?? "",
+      pay_rate:             job.pay_rate?.toString() ?? "",
+      pay_rate_type:        job.pay_rate_type ?? "per_hour",
+      positions_count:      job.positions_count ?? 1,
+      work_location:        job.work_location ?? "",
+      job_board_url:        job.job_board_url ?? "",
+      description:          job.description ?? "",
+      police_check:         job.police_check ?? "",
+      drug_alcohol_test:    job.drug_alcohol_test ?? "",
+      wwc:                  job.wwc ?? "",
+      car_required:         job.car_required ?? "",
+      public_transport:     job.public_transport ?? "",
+      wage_subsidy_required: job.wage_subsidy_required ?? "",
+      comments:             job.comments ?? "",
     });
   }, [job]);
 
@@ -104,288 +217,172 @@ export default function JobEdit() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     updateJob.mutate({
-      title:                  form.title,
-      description:            form.description || undefined,
-      department_id:          form.department_id || undefined,
-      location_id:            form.location_id || undefined,
-      job_type:               form.job_type,
-      work_model:             form.work_model,
-      skills_required:        form.skills_required,
-      skills_desired:         form.skills_desired,
-      cover_letter_required:  form.cover_letter_required,
-      min_annual_salary:      form.min_annual_salary ? Number(form.min_annual_salary) : undefined,
-      max_annual_salary:      form.max_annual_salary ? Number(form.max_annual_salary) : undefined,
-      currency_code:          form.currency_code,
-      experience_years_min:   form.experience_years_min ? Number(form.experience_years_min) : undefined,
-      deadline:               form.deadline || undefined,
-      team:                   form.team || undefined,
-      employer_id:            form.employer_id || undefined,
-      positions_count:        form.positions_count,
-      job_board_url:          form.job_board_url || undefined,
-      vacancy_type:           form.vacancy_type || undefined,
-      staff_working_status:   form.staff_working_status,
-      end_date:               form.end_date || undefined,
+      title:                 form.title,
+      employer_id:           form.employer_id || undefined,
+      industry:              form.industry || undefined,
+      vacancy_type:          form.vacancy_type || undefined,
+      pay_rate:              form.pay_rate ? Number(form.pay_rate) : undefined,
+      pay_rate_type:         form.pay_rate_type || undefined,
+      positions_count:       form.positions_count,
+      work_location:         form.work_location || undefined,
+      job_board_url:         form.job_board_url || undefined,
+      description:           form.description || undefined,
+      police_check:          form.police_check || undefined,
+      drug_alcohol_test:     form.drug_alcohol_test || undefined,
+      wwc:                   form.wwc || undefined,
+      car_required:          form.car_required || undefined,
+      public_transport:      form.public_transport || undefined,
+      wage_subsidy_required: form.wage_subsidy_required || undefined,
+      comments:              form.comments || undefined,
     });
   }
 
   if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
-  if (!job)      return <p className="p-6 text-red-500">Job not found.</p>;
+  if (!job)      return <p className="p-6 text-red-500">Vacancy not found.</p>;
 
-  const inputCls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-  const labelCls = "block text-sm font-medium text-slate-700 mb-1";
+  const cls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]";
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <Link to={`/jobs/${id}`} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4">
-        <ArrowLeft size={15} /> Back to Job
+        <ArrowLeft size={15} /> Back to Vacancy
       </Link>
+      <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Edit Vacancy</h1>
 
-      <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Edit Job</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Title */}
-        <div>
-          <label className={labelCls}>Job Title *</label>
-          <input
-            required
-            value={form.title}
-            onChange={(e) => set("title", e.target.value)}
-            className={inputCls}
-            placeholder="e.g. Senior Software Engineer"
-          />
-        </div>
+        {/* ── Section 1: Vacancy Details ── */}
+        <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+          <p className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-3">Vacancy Details</p>
 
-        {/* Type + Model */}
-        <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Job Type *</label>
-            <select value={form.job_type} onChange={(e) => set("job_type", e.target.value)} className={inputCls}>
-              {JOB_TYPES.map((t) => (
-                <option key={t} value={t}>{t.replace("_", " ")}</option>
-              ))}
-            </select>
+            <Label>Job Title *</Label>
+            <input required value={form.title} onChange={(e) => set("title", e.target.value)}
+              className={cls} placeholder="e.g. Warehouse Storeperson" />
           </div>
-          <div>
-            <label className={labelCls}>Work Model *</label>
-            <select value={form.work_model} onChange={(e) => set("work_model", e.target.value)} className={inputCls}>
-              {WORK_MODELS.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Department + Location */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className={labelCls}>Department</label>
-            <select value={form.department_id} onChange={(e) => set("department_id", e.target.value)} className={inputCls}>
-              <option value="">— None —</option>
-              {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Location</label>
-            <select value={form.location_id} onChange={(e) => set("location_id", e.target.value)} className={inputCls}>
-              <option value="">— None —</option>
-              {locations.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.is_remote ? "Remote" : `${l.city}${l.state ? `, ${l.state}` : ""}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className={labelCls}>Description</label>
-          <textarea
-            rows={6}
-            value={form.description}
-            onChange={(e) => set("description", e.target.value)}
-            className={inputCls}
-            placeholder="Describe the role, responsibilities, and what you're looking for..."
-          />
-        </div>
-
-        {/* Skills */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <SkillsInput label="Required Skills" value={form.skills_required} onChange={(v) => set("skills_required", v)} />
-          </div>
-          <div>
-            <SkillsInput label="Desired Skills" value={form.skills_desired} onChange={(v) => set("skills_desired", v)} />
-          </div>
-        </div>
-
-        {/* Salary */}
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div>
-            <label className={labelCls}>Min Salary</label>
-            <input
-              type="number"
-              value={form.min_annual_salary}
-              onChange={(e) => set("min_annual_salary", e.target.value)}
-              className={inputCls}
-              placeholder="60000"
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Max Salary</label>
-            <input
-              type="number"
-              value={form.max_annual_salary}
-              onChange={(e) => set("max_annual_salary", e.target.value)}
-              className={inputCls}
-              placeholder="90000"
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Currency</label>
-            <select value={form.currency_code} onChange={(e) => set("currency_code", e.target.value)} className={inputCls}>
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {/* Experience + Team + Deadline */}
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div>
-            <label className={labelCls}>Min Experience (yrs)</label>
-            <input
-              type="number"
-              min={0}
-              value={form.experience_years_min}
-              onChange={(e) => set("experience_years_min", e.target.value)}
-              className={inputCls}
-              placeholder="3"
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Team</label>
-            <input
-              value={form.team}
-              onChange={(e) => set("team", e.target.value)}
-              className={inputCls}
-              placeholder="e.g. Platform"
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Deadline</label>
-            <input
-              type="date"
-              value={form.deadline}
-              onChange={(e) => set("deadline", e.target.value)}
-              className={inputCls}
-            />
-          </div>
-        </div>
-
-        {/* Vacancy Details */}
-        <div className="border-t pt-4">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Vacancy Details</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Employer</label>
-              <select
-                value={form.employer_id ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, employer_id: e.target.value }))}
-                className={inputCls}
-              >
+              <Label>Employer</Label>
+              <select value={form.employer_id} onChange={(e) => set("employer_id", e.target.value)} className={cls}>
                 <option value="">No Employer</option>
-                {employers.map((e) => (
-                  <option key={e.id} value={e.id}>{e.name}</option>
-                ))}
+                {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelCls}>Type of Vacancy</label>
-              <select
-                value={form.vacancy_type ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, vacancy_type: e.target.value }))}
-                className={inputCls}
-              >
+              <Label>Industry</Label>
+              <input value={form.industry} onChange={(e) => set("industry", e.target.value)}
+                className={cls} placeholder="e.g. Healthcare, Logistics" />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Work Type</Label>
+              <select value={form.vacancy_type} onChange={(e) => set("vacancy_type", e.target.value)} className={cls}>
                 <option value="">Select type</option>
-                <option value="full_time">Full Time</option>
-                <option value="part_time">Part Time</option>
-                <option value="casual">Casual</option>
-                <option value="contract">Contract</option>
-                <option value="temporary">Temporary</option>
+                {WORK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelCls}>No. of Positions</label>
-              <input
-                type="number"
-                min={1}
-                value={form.positions_count ?? 1}
-                onChange={(e) => setForm((f) => ({ ...f, positions_count: Number(e.target.value) }))}
-                className={inputCls}
-              />
+              <Label>No. of Positions</Label>
+              <input type="number" min={1} value={form.positions_count}
+                onChange={(e) => set("positions_count", Number(e.target.value))} className={cls} />
             </div>
-            <div>
-              <label className={labelCls}>End Date</label>
-              <input
-                type="date"
-                value={form.end_date ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
-                className={inputCls}
-              />
+          </div>
+
+          <div>
+            <Label>Pay Rate ($)</Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
+                <input type="number" min={0} step={0.01} value={form.pay_rate}
+                  onChange={(e) => set("pay_rate", e.target.value)}
+                  className={`${cls} pl-7`} placeholder="0.00" />
+              </div>
+              <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm">
+                {(["per_hour", "annual"] as const).map((t) => (
+                  <button key={t} type="button" onClick={() => set("pay_rate_type", t)}
+                    className={`px-3 py-2 font-medium transition-colors ${
+                      form.pay_rate_type === t
+                        ? "bg-[#e88e2e] text-white"
+                        : "bg-white text-slate-600 hover:bg-slate-50"
+                    }`}>
+                    {t === "per_hour" ? "Per Hour" : "Annual"}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>Staff Working Status</label>
-              <select
-                value={form.staff_working_status ?? "active"}
-                onChange={(e) => setForm((f) => ({ ...f, staff_working_status: e.target.value }))}
-                className={inputCls}
-              >
-                <option value="active">Active</option>
-                <option value="on_leave">On Leave</option>
-                <option value="resigned">Resigned</option>
-                <option value="terminated">Terminated</option>
-              </select>
-            </div>
-            <div className="sm:col-span-2">
-              <label className={labelCls}>Job Board URL</label>
-              <input
-                type="url"
-                value={form.job_board_url ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, job_board_url: e.target.value }))}
-                placeholder="https://seek.com.au/job/12345"
-                className={inputCls}
-              />
-            </div>
+          </div>
+
+          <div>
+            <Label>Work Location</Label>
+            <AuAddressAutocomplete value={form.work_location} onChange={(v) => set("work_location", v)} className={cls} />
+            <p className="text-xs text-slate-400 mt-1">Start typing a suburb or city — Australian suggestions will appear</p>
+          </div>
+
+          <div>
+            <Label>Job Board URL</Label>
+            <JobBoardUrlField value={form.job_board_url} onChange={(v) => set("job_board_url", v)} />
           </div>
         </div>
 
-        {/* Cover letter */}
-        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.cover_letter_required}
-            onChange={(e) => set("cover_letter_required", e.target.checked)}
-            className="w-4 h-4"
-          />
-          Require cover letter
-        </label>
+        {/* ── Section 2: Description & Compliance ── */}
+        <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+          <p className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-3">Description & Compliance</p>
+
+          <div>
+            <Label>Job Description</Label>
+            <textarea rows={6} value={form.description} onChange={(e) => set("description", e.target.value)}
+              className={cls} placeholder="Describe the role, responsibilities and requirements..." />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Police Check</Label>
+              <YesNoSelect value={form.police_check} onChange={(v) => set("police_check", v)}
+                options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }, { value: "not_required", label: "Not Required" }]} />
+            </div>
+            <div>
+              <Label>Drug & Alcohol Test</Label>
+              <YesNoSelect value={form.drug_alcohol_test} onChange={(v) => set("drug_alcohol_test", v)} />
+            </div>
+            <div>
+              <Label>WWC (Working With Children)</Label>
+              <YesNoSelect value={form.wwc} onChange={(v) => set("wwc", v)} />
+            </div>
+            <div>
+              <Label>Car Required</Label>
+              <YesNoSelect value={form.car_required} onChange={(v) => set("car_required", v)} />
+            </div>
+            <div>
+              <Label>Public Transport Accessible</Label>
+              <YesNoSelect value={form.public_transport} onChange={(v) => set("public_transport", v)} />
+            </div>
+            <div>
+              <Label>Wage Subsidy</Label>
+              <YesNoSelect value={form.wage_subsidy_required} onChange={(v) => set("wage_subsidy_required", v)} />
+            </div>
+          </div>
+
+          <div>
+            <Label>Comments</Label>
+            <textarea rows={3} value={form.comments} onChange={(e) => set("comments", e.target.value)}
+              className={cls} placeholder="Any additional notes..." />
+          </div>
+        </div>
 
         {updateJob.isError && (
           <p className="text-sm text-red-600">Failed to save. Please try again.</p>
         )}
 
-        <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={updateJob.isPending}
-            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-          >
+        <div className="flex gap-3 pb-6">
+          <button type="submit" disabled={updateJob.isPending}
+            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors">
             <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
           </button>
-          <Link
-            to={`/jobs/${id}`}
-            className="px-5 py-2 text-sm text-slate-700 border border-slate-300 rounded-lg hover:bg-gray-50"
-          >
+          <Link to={`/jobs/${id}`}
+            className="px-5 py-2 text-sm text-slate-700 border border-slate-300 rounded-lg hover:bg-gray-50">
             Cancel
           </Link>
         </div>
