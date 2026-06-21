@@ -276,7 +276,7 @@ export default function CandidateDetail() {
           {/* Back */}
           <div className="pt-4 pb-1">
             <Link to="/candidates"
-              className="inline-flex items-center gap-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5 transition-colors">
+              className="inline-flex items-center gap-2 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
               <ArrowLeft size={12} /> All Candidates
             </Link>
           </div>
@@ -335,7 +335,7 @@ export default function CandidateDetail() {
             {/* Edit */}
             {canWrite && (
               <button onClick={startEdit}
-                className="flex items-center gap-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5 transition-colors flex-shrink-0">
+                className="flex items-center gap-2 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors flex-shrink-0">
                 <Edit2 size={12} /> Edit
               </button>
             )}
