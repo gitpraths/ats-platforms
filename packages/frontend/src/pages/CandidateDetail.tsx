@@ -274,9 +274,9 @@ export default function CandidateDetail() {
         <div className="max-w-[1600px] mx-auto px-6">
 
           {/* Back */}
-          <div className="pt-2">
+          <div className="pt-4 pb-1">
             <Link to="/candidates"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 bg-slate-800/70 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 rounded-lg px-3 py-1.5 transition-all">
+              className="inline-flex items-center gap-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5 transition-colors">
               <ArrowLeft size={12} /> All Candidates
             </Link>
           </div>
