@@ -36,28 +36,82 @@ function tabCondition(tab) {
 // GET /api/candidate-pool
 candidatePoolRouter.get("/", async (req, res, next) => {
   try {
-    const { tab = "all", page: rawPage = 1, limit: rawLimit = 20, q = "", date_from = "" } = req.query;
-    const page = Math.max(1, Number(rawPage));
-    const limit = Math.min(100, Math.max(1, Number(rawLimit)));
+    const {
+      tab = "all",
+      page: rawPage = 1,
+      limit: rawLimit = 20,
+      q = "",
+      date_from      = "",
+      name_q         = "",
+      email_q        = "",
+      phone_q        = "",
+      provider_q     = "",
+      comments_q     = "",
+      referral_date  = "",
+      training_date  = "",
+      interview_date = "",
+      ets_date       = "",
+      placement_date = "",
+    } = req.query;
+
+    const page   = Math.max(1, Number(rawPage));
+    const limit  = Math.min(100, Math.max(1, Number(rawLimit)));
     const offset = (page - 1) * limit;
 
+    // ── Build dynamic WHERE conditions ───────────────────────
     const params = [];
     let idx = 1;
+    const conditions = [];
 
-    const searchCondition = q
-      ? `AND (
-          c.name           ILIKE $${idx} OR
-          c.email          ILIKE $${idx} OR
-          c.phone          ILIKE $${idx} OR
-          pr.name          ILIKE $${idx} OR
-          c.interested_job ILIKE $${idx}
-        )`
-      : "";
-    if (q) { params.push(`%${q}%`); idx++; }
+    // Legacy global search
+    if (q) {
+      conditions.push(
+        `(c.name ILIKE $${idx} OR c.email ILIKE $${idx} OR c.phone ILIKE $${idx} OR pr.name ILIKE $${idx})`
+      );
+      params.push(`%${q}%`); idx++;
+    }
 
-    const dateCondition = date_from ? `AND c.date_referred >= $${idx}` : "";
-    if (date_from) { params.push(date_from); idx++; }
+    // Referral date range (All Time / This Week / This Month pills)
+    if (date_from) { conditions.push(`c.date_referred >= $${idx++}`); params.push(date_from); }
 
+    // Text column filters
+    if (name_q)     { conditions.push(`c.name ILIKE $${idx++}`);                        params.push(`%${name_q}%`); }
+    if (email_q)    { conditions.push(`c.email ILIKE $${idx++}`);                       params.push(`%${email_q}%`); }
+    if (phone_q)    { conditions.push(`c.phone ILIKE $${idx++}`);                       params.push(`%${phone_q}%`); }
+    if (provider_q) { conditions.push(`pr.name ILIKE $${idx++}`);                      params.push(`%${provider_q}%`); }
+    if (comments_q) { conditions.push(`COALESCE(c.comments, c.notes) ILIKE $${idx++}`); params.push(`%${comments_q}%`); }
+
+    // Date column filters (exact date match)
+    if (referral_date)  { conditions.push(`c.date_referred = $${idx++}`);       params.push(referral_date); }
+    if (training_date)  { conditions.push(`c.training_start_date = $${idx++}`); params.push(training_date); }
+    if (interview_date) { conditions.push(`la.interview_date = $${idx++}`);     params.push(interview_date); }
+    if (ets_date)       { conditions.push(`la.ets_date = $${idx++}`);           params.push(ets_date); }
+    if (placement_date) { conditions.push(`la.placement_date = $${idx++}`);     params.push(placement_date); }
+
+    const colWhere = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
+
+    // Shared lateral joins used in both data + total count queries
+    const lateralJoins = `
+       LEFT JOIN providers pr    ON pr.id = c.provider_id
+       LEFT JOIN consultants con ON con.id = c.consultant_id
+       LEFT JOIN LATERAL (
+         SELECT id, job_id, employer_id, start_date, confirmed_by_employer
+         FROM placements
+         WHERE candidate_id = c.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) lp ON true
+       LEFT JOIN employers e ON e.id = lp.employer_id
+       LEFT JOIN jobs j ON j.id = lp.job_id
+       LEFT JOIN LATERAL (
+         SELECT id, stage, interview_date, ets_date, placement_date
+         FROM applications
+         WHERE candidate_id = c.id
+         ORDER BY updated_at DESC
+         LIMIT 1
+       ) la ON true`;
+
+    // ── Main data query ─────────────────────────────────
     const { rows } = await pool.query(
       `SELECT
          c.id, c.name, c.email, c.phone,
@@ -85,31 +139,14 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          la.ets_date       AS latest_ets_date,
          la.placement_date AS latest_placement_date
        FROM candidates c
-       LEFT JOIN providers pr ON pr.id = c.provider_id
-       LEFT JOIN consultants con ON con.id = c.consultant_id
-       LEFT JOIN LATERAL (
-         SELECT id, job_id, employer_id, start_date, confirmed_by_employer
-         FROM placements
-         WHERE candidate_id = c.id
-         ORDER BY created_at DESC
-         LIMIT 1
-       ) lp ON true
-       LEFT JOIN employers e ON e.id = lp.employer_id
-       LEFT JOIN jobs j ON j.id = lp.job_id
-       LEFT JOIN LATERAL (
-         SELECT id, stage, interview_date, ets_date, placement_date
-         FROM applications
-         WHERE candidate_id = c.id
-         ORDER BY updated_at DESC
-         LIMIT 1
-       ) la ON true
-       WHERE ${tabCondition(tab)} ${searchCondition} ${dateCondition}
+       ${lateralJoins}
+       WHERE ${tabCondition(tab)} ${colWhere}
        ORDER BY COALESCE(c.date_referred, c.created_at::date) DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, limit, offset]
     );
 
-    // Attach welfare checks for placed candidates
+    // ── Welfare checks for placed candidates ────────────────
     const placementIds = rows.map((r) => r.placement_id).filter(Boolean);
     const wcMap = {};
     if (placementIds.length) {
@@ -129,19 +166,17 @@ candidatePoolRouter.get("/", async (req, res, next) => {
       welfare_checks: r.placement_id ? (wcMap[r.placement_id] || []) : [],
     }));
 
-    // Tab counts (always against full dataset, search applied)
-    const countParams = q ? [`%${q}%`] : [];
-    const countSearch = q
-      ? `LEFT JOIN providers pr ON pr.id = c.provider_id
-         WHERE (
-           c.name           ILIKE $1 OR
-           c.email          ILIKE $1 OR
-           c.phone          ILIKE $1 OR
-           pr.name          ILIKE $1 OR
-           c.interested_job ILIKE $1
-         )`
-      : "";
+    // ── Total count (respects all column filters, for pagination) ─
+    const { rows: totalRows } = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM candidates c
+       ${lateralJoins}
+       WHERE ${tabCondition(tab)} ${colWhere}`,
+      params
+    );
+    const total = totalRows[0].total;
 
+    // ── Tab counts (unfiltered — always show overall tab totals) ──
     const { rows: countRows } = await pool.query(
       `SELECT
          COUNT(*)::int AS all_count,
@@ -164,9 +199,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
            AND c.work_status NOT IN ('placed','inactive')
          )::int AS not_successful_count,
          COUNT(*) FILTER (WHERE c.work_status = 'inactive')::int AS inactive_count
-       FROM candidates c
-       ${countSearch}`,
-      countParams
+       FROM candidates c`
     );
 
     const tabCounts = {
@@ -177,17 +210,10 @@ candidatePoolRouter.get("/", async (req, res, next) => {
       inactive:       countRows[0].inactive_count,
     };
 
-    const totalForTab = tabCounts[tab] ?? tabCounts.all;
-
     res.json({
       success: true,
       data,
-      meta: {
-        total: totalForTab,
-        page,
-        limit,
-        tab_counts: tabCounts,
-      },
+      meta: { total, page, limit, tab_counts: tabCounts },
     });
   } catch (err) { next(err); }
 });

@@ -1,7 +1,7 @@
-import { Fragment, useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef, useCallback } from "react";
 import { displayEmail } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
-import { List, Grid, Search, Calendar, X, Pencil, Info } from "lucide-react";
+import { List, Grid, Calendar, X, Pencil, Info, FilterX } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
@@ -18,6 +18,16 @@ type CandidatePoolRow = BaseCandidatePoolRow & {
   car?: string | null;
   police_check?: string | null;
   wwc?: string | null;
+};
+
+type ColFilters = {
+  name: string; email: string; phone: string; provider: string; comments: string;
+  referral_date: string; training_date: string; interview_date: string;
+  ets_date: string; placement_date: string;
+};
+const EMPTY_FILTERS: ColFilters = {
+  name: "", email: "", phone: "", provider: "", comments: "",
+  referral_date: "", training_date: "", interview_date: "", ets_date: "", placement_date: "",
 };
 
 type Tab        = "all" | "in_progress" | "placed" | "not_successful" | "inactive";
@@ -280,7 +290,45 @@ function getDateFrom(filter: DateFilter): string | undefined {
   return undefined;
 }
 
+// ── Column filter subcomponents ───────────────────────────────────────────────
+function ColInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full pl-2 pr-6 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#e88e2e] focus:border-[#e88e2e] bg-white placeholder-slate-300 font-normal"
+      />
+      {value && (
+        <button onClick={() => onChange("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
+          <X size={10} />
+        </button>
+      )}
+    </div>
+  );
+}
+function ColDate({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="relative">
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-2 pr-6 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#e88e2e] focus:border-[#e88e2e] bg-white text-slate-600 font-normal"
+      />
+      {value && (
+        <button onClick={() => onChange("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
+          <X size={10} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function Candidates() {
+
   const navigate    = useNavigate();
   const { user }    = useAuth();
   const queryClient = useQueryClient();
@@ -289,14 +337,50 @@ export default function Candidates() {
   const [view, setView] = useState<View>(
     () => (localStorage.getItem("candidatesView") as View) || "list"
   );
-  const [tab,             setTab]             = useState<Tab>("all");
-  const [q,               setQ]               = useState("");
-  const [search,          setSearch]          = useState("");
-  const [page,            setPage]            = useState(1);
-  const [dateFilter,      setDateFilter]      = useState<DateFilter>("all");
-  const [interviewFrom,   setInterviewFrom]   = useState("");
-  const [interviewTo,     setInterviewTo]     = useState("");
-  const [confirmingId,    setConfirmingId]    = useState<string | null>(null);
+  const [tab,          setTab]          = useState<Tab>("all");
+  const [page,         setPage]         = useState(1);
+  const [dateFilter,   setDateFilter]   = useState<DateFilter>("all");
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  // Per-column filter state
+  const [colFilters, setColFilters]         = useState<ColFilters>(EMPTY_FILTERS);
+  const [debounced,  setDebounced]          = useState<ColFilters>(EMPTY_FILTERS);
+
+  // Debounce text filters (350ms), apply date filters immediately
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebounced((prev) => ({
+        ...prev,
+        name:     colFilters.name,
+        email:    colFilters.email,
+        phone:    colFilters.phone,
+        provider: colFilters.provider,
+        comments: colFilters.comments,
+      }));
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [colFilters.name, colFilters.email, colFilters.phone, colFilters.provider, colFilters.comments]);
+
+  // Date filters apply immediately
+  useEffect(() => {
+    setDebounced((prev) => ({
+      ...prev,
+      referral_date:  colFilters.referral_date,
+      training_date:  colFilters.training_date,
+      interview_date: colFilters.interview_date,
+      ets_date:       colFilters.ets_date,
+      placement_date: colFilters.placement_date,
+    }));
+    setPage(1);
+  }, [colFilters.referral_date, colFilters.training_date, colFilters.interview_date, colFilters.ets_date, colFilters.placement_date]);
+
+  function setCol(key: keyof ColFilters, val: string) {
+    setColFilters((prev) => ({ ...prev, [key]: val }));
+  }
+  function clearAll() { setColFilters(EMPTY_FILTERS); setDebounced(EMPTY_FILTERS); setPage(1); }
+
+  const hasFilters = Object.values(colFilters).some(Boolean);
 
   const canCreate = ["admin", "recruiter_admin", "recruiter"].includes(user?.role ?? "");
 
@@ -310,12 +394,18 @@ export default function Candidates() {
   }, [q]);
 
   const { data, isLoading } = useCandidatePool({
-    tab,
-    page,
-    q: search,
+    tab, page,
     date_from:      getDateFrom(dateFilter),
-    interview_from: interviewFrom || undefined,
-    interview_to:   interviewTo   || undefined,
+    name_q:         debounced.name,
+    email_q:        debounced.email,
+    phone_q:        debounced.phone,
+    provider_q:     debounced.provider,
+    comments_q:     debounced.comments,
+    referral_date:  debounced.referral_date,
+    training_date:  debounced.training_date,
+    interview_date: debounced.interview_date,
+    ets_date:       debounced.ets_date,
+    placement_date: debounced.placement_date,
   });
 
   const rows       = data?.data ?? [];
@@ -387,28 +477,12 @@ export default function Candidates() {
         </div>
       </div>
 
-      {/* ── Search + Date filter row ─────────────────────────────── */}
+      {/* ── Top bar: date pills + clear all ──────────────────── */}
       <div className="flex flex-wrap gap-3 mb-4 items-center">
-        {/* Search input — live */}
-        <div className="relative flex-1 min-w-[220px] max-w-md">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name, email, phone, provider…"
-            className="w-full pl-9 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e] focus:border-transparent bg-white"
-          />
-          {q && (
-            <button onClick={() => { setQ(""); setSearch(""); }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
         {/* Referral date filter pills */}
         <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1">
           <Calendar size={13} className="text-slate-400 ml-1.5" />
+          <span className="text-xs text-slate-400 mr-1">Referred:</span>
           {DATE_FILTERS.map((df) => (
             <button key={df.id} onClick={() => { setDateFilter(df.id); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
@@ -421,20 +495,13 @@ export default function Candidates() {
           ))}
         </div>
 
-        {/* Interview date range filter */}
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
-          <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Interview:</span>
-          <input type="date" value={interviewFrom} onChange={(e) => { setInterviewFrom(e.target.value); setPage(1); }}
-            className="text-xs border-0 outline-none text-slate-600 bg-transparent" />
-          <span className="text-slate-300 text-xs">→</span>
-          <input type="date" value={interviewTo} onChange={(e) => { setInterviewTo(e.target.value); setPage(1); }}
-            className="text-xs border-0 outline-none text-slate-600 bg-transparent" />
-          {(interviewFrom || interviewTo) && (
-            <button onClick={() => { setInterviewFrom(""); setInterviewTo(""); setPage(1); }} className="text-slate-400 hover:text-slate-600 ml-1">
-              <X size={12} />
-            </button>
-          )}
-        </div>
+        {/* Clear all column filters */}
+        {hasFilters && (
+          <button onClick={clearAll}
+            className="flex items-center gap-1.5 text-xs font-medium text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl px-3 py-2 transition">
+            <FilterX size={13} /> Clear All Filters
+          </button>
+        )}
       </div>
 
       {/* ── Status Tabs ─────────────────────────────────────────── */}
@@ -479,17 +546,62 @@ export default function Candidates() {
           )}
         </div>
       ) : view === "list" ? (
-        /* ── List View — Focused 11-column table ── */
+        /* ── List View — focused table with per-column search ── */
         <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
+              {/* Row 1: Column labels */}
               <tr>
                 {["SR #","Candidate","Email","Mobile","Provider","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
-                  <th key={h}
-                    className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
-                    {h}
-                  </th>
+                  <th key={h} className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
+              </tr>
+              {/* Row 2: Per-column search inputs */}
+              <tr className="border-t border-slate-100">
+                {/* SR # — no search */}
+                <th className="px-3 pb-2 pt-1" />
+                {/* Candidate */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColInput value={colFilters.name}     onChange={(v) => setCol("name", v)}     placeholder="Name…" />
+                </th>
+                {/* Email */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColInput value={colFilters.email}    onChange={(v) => setCol("email", v)}    placeholder="Email…" />
+                </th>
+                {/* Mobile */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColInput value={colFilters.phone}    onChange={(v) => setCol("phone", v)}    placeholder="Mobile…" />
+                </th>
+                {/* Provider */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColInput value={colFilters.provider} onChange={(v) => setCol("provider", v)} placeholder="Provider…" />
+                </th>
+                {/* Referral Date */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColDate value={colFilters.referral_date}  onChange={(v) => setCol("referral_date", v)} />
+                </th>
+                {/* Training Date */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColDate value={colFilters.training_date}  onChange={(v) => setCol("training_date", v)} />
+                </th>
+                {/* Interview Date */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColDate value={colFilters.interview_date} onChange={(v) => setCol("interview_date", v)} />
+                </th>
+                {/* ETS Date */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColDate value={colFilters.ets_date}       onChange={(v) => setCol("ets_date", v)} />
+                </th>
+                {/* Placement Date */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColDate value={colFilters.placement_date} onChange={(v) => setCol("placement_date", v)} />
+                </th>
+                {/* Comments */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColInput value={colFilters.comments} onChange={(v) => setCol("comments", v)} placeholder="Comments…" />
+                </th>
+                {/* Actions — no search */}
+                <th className="px-3 pb-2 pt-1" />
               </tr>
             </thead>
             <tbody>
