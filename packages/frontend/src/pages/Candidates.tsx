@@ -384,14 +384,7 @@ export default function Candidates() {
 
   const canCreate = ["admin", "recruiter_admin", "recruiter"].includes(user?.role ?? "");
 
-  // ── Live search with 350ms debounce ──────────────────────────────────────────
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(q);
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [q]);
+
 
   const { data, isLoading } = useCandidatePool({
     tab, page,
@@ -448,11 +441,6 @@ export default function Candidates() {
               <span className="ml-2 text-lg text-slate-400 font-normal">({tabCounts.all})</span>
             )}
           </h1>
-          {search && (
-            <p className="text-sm text-slate-400 mt-0.5">
-              Showing results for "<span className="text-slate-600 font-medium">{search}</span>"
-            </p>
-          )}
         </div>
         <div className="flex items-center gap-2">
           {/* View toggle */}
@@ -534,14 +522,13 @@ export default function Candidates() {
         </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-16">
-          <Search size={36} className="text-slate-200 mx-auto mb-3" />
+          <Info size={36} className="text-slate-200 mx-auto mb-3" />
           <p className="text-slate-400">
-            {search ? `No candidates found for "${search}"` : "No candidates found."}
+            {hasFilters ? "No candidates match the current filters." : "No candidates found."}
           </p>
-          {search && (
-            <button onClick={() => { setQ(""); setSearch(""); }}
-              className="mt-2 text-sm text-[#e88e2e] hover:underline">
-              Clear search
+          {hasFilters && (
+            <button onClick={clearAll} className="mt-2 text-sm text-[#e88e2e] hover:underline">
+              Clear all filters
             </button>
           )}
         </div>
