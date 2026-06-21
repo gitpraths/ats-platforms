@@ -1,15 +1,24 @@
-import { Fragment, useState, useEffect } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { displayEmail } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
-import { List, Grid, Search, Calendar, X, Pencil } from "lucide-react";
+import { List, Grid, Search, Calendar, X, Pencil, Info } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { useToast } from "../components/ui/use-toast";
-import type { CandidatePoolRow, CandidateWorkStatus, WelfareCheck, WelfareCheckType } from "../types";
+import type { CandidatePoolRow as BaseCandidatePoolRow, CandidateWorkStatus, WelfareCheck, WelfareCheckType } from "../types";
 import Pagination from "../components/Pagination";
+
+// Extend base type with extra fields returned by API but not yet in the type definition
+type CandidatePoolRow = BaseCandidatePoolRow & {
+  sr_no?: string | null;
+  comments?: string | null;
+  car?: string | null;
+  police_check?: string | null;
+  wwc?: string | null;
+};
 
 type Tab        = "all" | "in_progress" | "placed" | "not_successful" | "inactive";
 type View       = "list" | "card";
@@ -62,19 +71,115 @@ function welfareBandStatus(check: WelfareCheck | undefined, today: string): stri
   return `Due ${format(new Date(check.due_date), "d MMM")}`;
 }
 
-interface CandidateRow {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  provider_name?: string;
-  provider_contact_name?: string;
-  provider_contact_email?: string;
-  consultant_name?: string;
-  status: string;
+// Pipeline stage derived from candidate's date progression
+function getPipelineStage(row: CandidatePoolRow): { label: string; color: string; bg: string } {
+  if (row.latest_placement_date) return { label: "Placed",     color: "text-green-700", bg: "bg-green-500" };
+  if (row.latest_ets_date)        return { label: "ETS",        color: "text-amber-700", bg: "bg-amber-500" };
+  if (row.latest_interview_date)  return { label: "Interview",  color: "text-blue-700",  bg: "bg-blue-500"  };
+  return                                 { label: "Referred",   color: "text-slate-500", bg: "bg-slate-300" };
 }
 
-function WelfareSubRow({ checks, colSpan }: { checks: WelfareCheck[]; colSpan: number }) {
+// Tooltip showing extra candidate info on hover
+function InfoTooltip({ row }: { row: CandidatePoolRow }) {
+  const [show, setShow]   = useState(false);
+  const [pos,  setPos]    = useState({ x: 0, y: 0 });
+  const btnRef            = useRef<HTMLButtonElement>(null);
+
+  function handleEnter() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ x: r.right + 10, y: r.top - 8 });
+    }
+    setShow(true);
+  }
+
+  const yesNo = (v?: string | null) =>
+    v === "yes" ? <span className="text-green-600 font-semibold">Yes</span>
+               : v === "no"  ? <span className="text-red-500 font-semibold">No</span>
+               : <span className="text-slate-400">—</span>;
+
+  return (
+    <div className="relative inline-block">
+      <button
+        ref={btnRef}
+        onMouseEnter={handleEnter}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => e.stopPropagation()}
+        className="ml-1.5 text-slate-300 hover:text-[#e88e2e] transition-colors"
+      >
+        <Info size={12} />
+      </button>
+      {show && (
+        <div
+          className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-64 text-xs"
+          style={{ left: pos.x, top: pos.y }}
+          onMouseEnter={() => setShow(true)}
+          onMouseLeave={() => setShow(false)}
+        >
+          <p className="font-semibold text-slate-700 mb-2 border-b pb-1.5">Extra Details</p>
+          <div className="space-y-1.5">
+            {(row.suburb || row.state) && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Location</span>
+                <span className="font-medium text-slate-700">{[row.suburb || row.city, row.state].filter(Boolean).join(", ")}</span>
+              </div>
+            )}
+            {row.consultant_name && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Consultant</span>
+                <span className="font-medium text-slate-700">{row.consultant_name}</span>
+              </div>
+            )}
+            {row.benchmark_hours && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Benchmark</span>
+                <span className="font-medium text-slate-700">{row.benchmark_hours}h / week</span>
+              </div>
+            )}
+            {(row.industry_preference ?? []).length > 0 && (
+              <div className="flex justify-between gap-2">
+                <span className="text-slate-400 flex-shrink-0">Industry</span>
+                <span className="font-medium text-slate-700 text-right">{row.industry_preference!.join(", ")}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-slate-400">Car</span>
+              {yesNo(row.car)}
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Police Check</span>
+              {yesNo(row.police_check)}
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">WWC</span>
+              {yesNo(row.wwc)}
+            </div>
+            {row.wage_subsidy && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Wage Subsidy</span>
+                <span className="font-semibold text-green-600">Yes</span>
+              </div>
+            )}
+            {row.employer_name && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Employer</span>
+                <span className="font-medium text-slate-700">{row.employer_name}</span>
+              </div>
+            )}
+            {row.job_title && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Job Role</span>
+                <span className="font-medium text-slate-700">{row.job_title}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WelfareSubRow({ checks, colSpan }: { checks: WelfareCheck[]; colSpan: number }) {  // colSpan updated to 12 for new focused table
   const today   = new Date().toISOString().split("T")[0];
   const checkMap = Object.fromEntries(checks.map((c) => [c.check_type, c])) as Record<string, WelfareCheck>;
   return (
@@ -184,12 +289,14 @@ export default function Candidates() {
   const [view, setView] = useState<View>(
     () => (localStorage.getItem("candidatesView") as View) || "list"
   );
-  const [tab,        setTab]        = useState<Tab>("all");
-  const [q,          setQ]          = useState("");
-  const [search,     setSearch]     = useState("");
-  const [page,       setPage]       = useState(1);
-  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [tab,             setTab]             = useState<Tab>("all");
+  const [q,               setQ]               = useState("");
+  const [search,          setSearch]          = useState("");
+  const [page,            setPage]            = useState(1);
+  const [dateFilter,      setDateFilter]      = useState<DateFilter>("all");
+  const [interviewFrom,   setInterviewFrom]   = useState("");
+  const [interviewTo,     setInterviewTo]     = useState("");
+  const [confirmingId,    setConfirmingId]    = useState<string | null>(null);
 
   const canCreate = ["admin", "recruiter_admin", "recruiter"].includes(user?.role ?? "");
 
@@ -206,7 +313,9 @@ export default function Candidates() {
     tab,
     page,
     q: search,
-    date_from: getDateFrom(dateFilter),
+    date_from:      getDateFrom(dateFilter),
+    interview_from: interviewFrom || undefined,
+    interview_to:   interviewTo   || undefined,
   });
 
   const rows       = data?.data ?? [];
@@ -297,7 +406,7 @@ export default function Candidates() {
           )}
         </div>
 
-        {/* Date filter pills */}
+        {/* Referral date filter pills */}
         <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1">
           <Calendar size={13} className="text-slate-400 ml-1.5" />
           {DATE_FILTERS.map((df) => (
@@ -310,6 +419,21 @@ export default function Candidates() {
               {df.label}
             </button>
           ))}
+        </div>
+
+        {/* Interview date range filter */}
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
+          <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Interview:</span>
+          <input type="date" value={interviewFrom} onChange={(e) => { setInterviewFrom(e.target.value); setPage(1); }}
+            className="text-xs border-0 outline-none text-slate-600 bg-transparent" />
+          <span className="text-slate-300 text-xs">→</span>
+          <input type="date" value={interviewTo} onChange={(e) => { setInterviewTo(e.target.value); setPage(1); }}
+            className="text-xs border-0 outline-none text-slate-600 bg-transparent" />
+          {(interviewFrom || interviewTo) && (
+            <button onClick={() => { setInterviewFrom(""); setInterviewTo(""); setPage(1); }} className="text-slate-400 hover:text-slate-600 ml-1">
+              <X size={12} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -355,12 +479,12 @@ export default function Candidates() {
           )}
         </div>
       ) : view === "list" ? (
-        /* ── List View ── */
+        /* ── List View — Focused 11-column table ── */
         <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Name","Date Referred","Suburb/State","Mobile","Provider","Consultant","Status","Benchmark","Industry","Wage Sub","Training Dates","Interview Date","ETS Date","Placement Date","Job Start","Employer","Job Role",""].map((h) => (
+                {["SR #","Candidate","Email","Mobile","Provider","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
                   <th key={h}
                     className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
                     {h}
@@ -369,112 +493,119 @@ export default function Candidates() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <Fragment key={row.id}>
-                  <tr onClick={() => navigate(`/candidates/${row.id}`)}
-                    className="hover:bg-orange-50/40 cursor-pointer border-b transition">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                          {row.name.charAt(0).toUpperCase()}
+              {rows.map((row) => {
+                const stage = getPipelineStage(row);
+                return (
+                  <Fragment key={row.id}>
+                    <tr onClick={() => navigate(`/candidates/${row.id}`)}
+                      className="hover:bg-orange-50/40 cursor-pointer border-b transition group">
+
+                      {/* SR # */}
+                      <td className="px-4 py-3 text-xs text-slate-400 font-mono whitespace-nowrap">
+                        {(row as any).sr_no || "—"}
+                      </td>
+
+                      {/* Candidate name + pipeline dot + info icon */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            {row.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
+                              <InfoTooltip row={row} />
+                            </div>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${stage.bg}`} />
+                              <span className={`text-[10px] font-medium ${stage.color}`}>{stage.label}</span>
+                            </div>
+                          </div>
                         </div>
-                        <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
-                      {row.date_referred ? format(new Date(row.date_referred), "d MMM yyyy") : "—"}
-                    </td>
-                    {/* Suburb / State */}
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
-                      {[row.suburb || row.city, row.state].filter(Boolean).join(", ") || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.phone || "—"}</td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.provider_name || "—"}</td>
-                    <td className="px-4 py-3">
-                      {row.consultant_name
-                        ? <span className="text-slate-700 whitespace-nowrap">{row.consultant_name}</span>
-                        : <span className="text-slate-400">—</span>}
-                    </td>
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      <span className={`text-xs rounded-full px-2.5 py-0.5 font-medium whitespace-nowrap ${
-                        STATUS_BADGE[row.work_status as CandidateWorkStatus] ?? "bg-slate-100 text-slate-600"
-                      }`}>
-                        {getStatusLabel(row)}
-                      </span>
-                    </td>
-                    {/* Benchmark Hrs */}
-                    <td className="px-4 py-3 text-center">
-                      {row.benchmark_hours
-                        ? <span className="text-xs font-semibold text-slate-700">{row.benchmark_hours}<span className="text-slate-400 font-normal">h</span></span>
-                        : <span className="text-slate-300">—</span>}
-                    </td>
-                    {/* Industry */}
-                    <td className="px-4 py-3">
-                      {(row.industry_preference ?? []).length > 0
-                        ? <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-100 whitespace-nowrap">{row.industry_preference![0]}</span>
-                        : <span className="text-slate-300">—</span>}
-                    </td>
-                    {/* Wage Subsidy */}
-                    <td className="px-4 py-3 text-center">
-                      {row.wage_subsidy
-                        ? <span className="text-xs font-bold text-green-600">✓</span>
-                        : <span className="text-slate-300">—</span>}
-                    </td>
-                    {/* Training Dates */}
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                      {row.training_start_date
-                        ? `${format(new Date(row.training_start_date), "d MMM yyyy")}${row.training_end_date ? ` – ${format(new Date(row.training_end_date), "d MMM yyyy")}` : ""}`
-                        : "—"}
-                    </td>
-                    {/* Interview Date — inline editable */}
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <InlineDateCell
-                        appId={row.latest_application_id}
-                        field="interview_date"
-                        value={row.latest_interview_date}
-                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
-                      />
-                    </td>
-                    {/* ETS Date — inline editable */}
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <InlineDateCell
-                        appId={row.latest_application_id}
-                        field="ets_date"
-                        value={row.latest_ets_date}
-                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
-                      />
-                    </td>
-                    {/* Placement Date — inline editable */}
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <InlineDateCell
-                        appId={row.latest_application_id}
-                        field="placement_date"
-                        value={row.latest_placement_date}
-                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                      {row.job_start_date ? format(new Date(row.job_start_date), "d MMM yyyy") : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.employer_name || "—"}</td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.job_title || "—"}</td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      {row.placement_id && !row.confirmed_by_employer && canCreate && (
-                        <button
-                          onClick={() => { setConfirmingId(row.placement_id!); sendConfirmation.mutate(row.placement_id!); }}
-                          disabled={confirmingId === row.placement_id}
-                          className="text-xs text-slate-600 border border-slate-200 rounded-lg px-2 py-1 hover:bg-slate-50 whitespace-nowrap disabled:opacity-50 transition">
-                          {confirmingId === row.placement_id ? "Sending…" : "Email to Confirm"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                  {row.placement_id && (row.welfare_checks?.length ?? 0) > 0 && (
-                    <WelfareSubRow checks={row.welfare_checks!} colSpan={18} />
-                  )}
-                </Fragment>
-              ))}
+                      </td>
+
+                      {/* Email */}
+                      <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
+                        {row.email ? displayEmail(row.email) : "—"}
+                      </td>
+
+                      {/* Mobile */}
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">{row.phone || "—"}</td>
+
+                      {/* Provider */}
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
+                        {row.provider_name
+                          ? <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">{row.provider_name}</span>
+                          : <span className="text-slate-300">—</span>}
+                      </td>
+
+                      {/* Referral Date */}
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
+                        {row.date_referred ? format(new Date(row.date_referred), "d MMM yy") : "—"}
+                      </td>
+
+                      {/* Training Date */}
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
+                        {row.training_start_date
+                          ? <span>{format(new Date(row.training_start_date), "d MMM yy")}{row.training_end_date ? <span className="text-slate-300"> – {format(new Date(row.training_end_date), "d MMM yy")}</span> : ""}</span>
+                          : <span className="text-slate-300">—</span>}
+                      </td>
+
+                      {/* Interview Date — inline editable */}
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <InlineDateCell
+                          appId={row.latest_application_id}
+                          field="interview_date"
+                          value={row.latest_interview_date}
+                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                        />
+                      </td>
+
+                      {/* ETS Date — inline editable */}
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <InlineDateCell
+                          appId={row.latest_application_id}
+                          field="ets_date"
+                          value={row.latest_ets_date}
+                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                        />
+                      </td>
+
+                      {/* Placement Date — inline editable */}
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <InlineDateCell
+                          appId={row.latest_application_id}
+                          field="placement_date"
+                          value={row.latest_placement_date}
+                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                        />
+                      </td>
+
+                      {/* Comments */}
+                      <td className="px-4 py-3 text-slate-500 text-xs max-w-[160px]">
+                        {(row as any).comments
+                          ? <span className="truncate block" title={(row as any).comments}>{(row as any).comments}</span>
+                          : <span className="text-slate-300">—</span>}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        {row.placement_id && !row.confirmed_by_employer && canCreate && (
+                          <button
+                            onClick={() => { setConfirmingId(row.placement_id!); sendConfirmation.mutate(row.placement_id!); }}
+                            disabled={confirmingId === row.placement_id}
+                            className="text-xs text-slate-600 border border-slate-200 rounded-lg px-2 py-1 hover:bg-slate-50 whitespace-nowrap disabled:opacity-50 transition">
+                            {confirmingId === row.placement_id ? "Sending…" : "Email to Confirm"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    {row.placement_id && (row.welfare_checks?.length ?? 0) > 0 && (
+                      <WelfareSubRow checks={row.welfare_checks!} colSpan={12} />
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
