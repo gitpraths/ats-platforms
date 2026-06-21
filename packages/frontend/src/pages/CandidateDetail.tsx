@@ -79,7 +79,7 @@ export default function CandidateDetail() {
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
   const canWrite = user?.role !== "provider";
 
-  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications"|"vacancies">("overview");
+  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<CandidateFormData>(EMPTY_FORM);
   const [saveError, setSaveError] = useState("");
@@ -235,7 +235,6 @@ export default function CandidateDetail() {
 
   const tabs = [
     { key: "overview",   label: "Overview"   },
-    { key: "vacancies",  label: "Vacancies"  },
     { key: "training",   label: "Training"   },
   ] as const;
 
@@ -486,6 +485,13 @@ export default function CandidateDetail() {
                   </div>
                 )}
 
+                {/* ── Vacancies (inline) ─────────────────────────── */}
+                <VacanciesTab
+                  applications={candidate.applications ?? []}
+                  candidateId={id ?? ""}
+                  canWrite={canWrite}
+                />
+
                 {/* ── Application History — fills remaining height ── */}
                 {(() => {
                   const realApps = candidate.applications ?? [];
@@ -709,15 +715,6 @@ export default function CandidateDetail() {
             <div className="bg-white border border-slate-200 rounded-2xl p-6" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
               <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
             </div>
-          )}
-
-          {/* ══ VACANCIES ══════════════════════════════════ */}
-          {activeTab === "vacancies" && (
-            <VacanciesTab
-              applications={candidate?.applications ?? []}
-              candidateId={id ?? ""}
-              canWrite={canWrite}
-            />
           )}
         </div>
         </div>
