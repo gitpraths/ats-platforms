@@ -90,7 +90,77 @@ function getPipelineStage(row: CandidatePoolRow): { label: string; color: string
 }
 
 // Tooltip showing extra candidate info on hover
+// ── CellTooltip — appears on hover over any table cell ───────────────────────
+function CellTooltip({
+  children,
+  title,
+  items,
+}: {
+  children: React.ReactNode;
+  title: string;
+  items: { key: string; value: React.ReactNode }[];
+}) {
+  const [show, setShow] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const visibleItems = items.filter((i) => {
+    if (i.value === null || i.value === undefined || i.value === "") return false;
+    if (typeof i.value === "string" && i.value.trim() === "") return false;
+    return true;
+  });
+
+  function handleEnter() {
+    if (ref.current) setRect(ref.current.getBoundingClientRect());
+    setShow(true);
+  }
+
+  if (visibleItems.length === 0) return <>{children}</>;
+
+  const above = rect ? rect.bottom > window.innerHeight - 180 : false;
+
+  return (
+    <div ref={ref} onMouseEnter={handleEnter} onMouseLeave={() => setShow(false)}>
+      {children}
+      {show && rect && (
+        <div
+          className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-xl text-xs pointer-events-none"
+          style={
+            above
+              ? { left: Math.min(rect.left, window.innerWidth - 224), bottom: window.innerHeight - rect.top + 6 }
+              : { left: Math.min(rect.left, window.innerWidth - 224), top: rect.bottom + 6 }
+          }
+        >
+          {/* Arrow */}
+          <div
+            className={`absolute left-4 w-0 h-0 border-x-[6px] border-x-transparent ${
+              above
+                ? "bottom-[-6px] border-t-[6px] border-t-white"
+                : "top-[-6px] border-b-[6px] border-b-white"
+            }`}
+            style={above ? { filter: "drop-shadow(0 1px 0 #e2e8f0)" } : { filter: "drop-shadow(0 -1px 0 #e2e8f0)" }}
+          />
+          <div className="p-3 w-52">
+            <p className="font-semibold text-slate-700 border-b border-slate-100 pb-1.5 mb-2 text-[11px] uppercase tracking-wide">
+              {title}
+            </p>
+            <div className="space-y-1.5">
+              {visibleItems.map((i) => (
+                <div key={i.key} className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">{i.key}</span>
+                  <span className="font-medium text-slate-700 text-right">{i.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InfoTooltip({ row }: { row: CandidatePoolRow }) {
+
   const [show, setShow]   = useState(false);
   const [pos,  setPos]    = useState({ x: 0, y: 0 });
   const btnRef            = useRef<HTMLButtonElement>(null);
@@ -606,21 +676,31 @@ export default function Candidates() {
 
                       {/* Candidate name + pipeline dot + info icon */}
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                            {row.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
-                              <InfoTooltip row={row} />
+                        <CellTooltip
+                          title="Candidate"
+                          items={[
+                            { key: "SR #",  value: (row as any).sr_no },
+                            { key: "Email", value: row.email },
+                            { key: "Mobile",value: row.phone },
+                            { key: "State", value: row.state },
+                          ]}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                              {row.name.charAt(0).toUpperCase()}
                             </div>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${stage.bg}`} />
-                              <span className={`text-[10px] font-medium ${stage.color}`}>{stage.label}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
+                                <InfoTooltip row={row} />
+                              </div>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${stage.bg}`} />
+                                <span className={`text-[10px] font-medium ${stage.color}`}>{stage.label}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </CellTooltip>
                       </td>
 
                       {/* Email */}
@@ -633,14 +713,32 @@ export default function Candidates() {
 
                       {/* Provider */}
                       <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
-                        {row.provider_name
-                          ? <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">{row.provider_name}</span>
-                          : <span className="text-slate-300">—</span>}
+                        <CellTooltip
+                          title="Provider"
+                          items={[
+                            { key: "Consultant", value: row.consultant_name },
+                            { key: "Contact",    value: (row as any).provider_contact_name },
+                            { key: "Email",      value: (row as any).provider_contact_email },
+                          ]}
+                        >
+                          {row.provider_name
+                            ? <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">{row.provider_name}</span>
+                            : <span className="text-slate-300">—</span>}
+                        </CellTooltip>
                       </td>
 
                       {/* Referral Date */}
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
-                        {row.date_referred ? format(new Date(row.date_referred), "d MMM yy") : "—"}
+                        <CellTooltip
+                          title="Referral Details"
+                          items={[
+                            { key: "Benchmark",  value: row.benchmark_hours ? `${row.benchmark_hours}h / week` : null },
+                            { key: "Industry",   value: (row.industry_preference ?? []).join(", ") || null },
+                            { key: "Wage Sub.",  value: row.wage_subsidy ? "Yes" : null },
+                          ]}
+                        >
+                          {row.date_referred ? format(new Date(row.date_referred), "d MMM yy") : "—"}
+                        </CellTooltip>
                       </td>
 
                       {/* Training Date */}
@@ -650,14 +748,24 @@ export default function Candidates() {
                           : <span className="text-slate-300">—</span>}
                       </td>
 
-                      {/* Interview Date — inline editable */}
+                      {/* Interview Date — inline editable + tooltip */}
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <InlineDateCell
-                          appId={row.latest_application_id}
-                          field="interview_date"
-                          value={row.latest_interview_date}
-                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
-                        />
+                        <CellTooltip
+                          title="Pipeline Dates"
+                          items={[
+                            { key: "Employer",  value: row.employer_name },
+                            { key: "Job Title", value: row.job_title },
+                            { key: "ETS Date",  value: row.latest_ets_date       ? format(new Date(row.latest_ets_date),       "d MMM yy") : null },
+                            { key: "Placed",    value: row.latest_placement_date ? format(new Date(row.latest_placement_date), "d MMM yy") : null },
+                          ]}
+                        >
+                          <InlineDateCell
+                            appId={row.latest_application_id}
+                            field="interview_date"
+                            value={row.latest_interview_date}
+                            onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                          />
+                        </CellTooltip>
                       </td>
 
                       {/* ETS Date — inline editable */}
