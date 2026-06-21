@@ -276,7 +276,7 @@ export default function CandidateDetail() {
           {/* Back */}
           <div className="pt-2">
             <Link to="/candidates"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 bg-slate-800/70 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 rounded-lg px-3 py-1.5 transition-all">
               <ArrowLeft size={12} /> All Candidates
             </Link>
           </div>
