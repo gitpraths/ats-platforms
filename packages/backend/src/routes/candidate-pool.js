@@ -61,9 +61,11 @@ candidatePoolRouter.get("/", async (req, res, next) => {
     const { rows } = await pool.query(
       `SELECT
          c.id, c.name, c.email, c.phone,
+         c.sr_no,
          c.city, c.state, c.suburb, c.date_referred,
          c.work_status,
-         COALESCE(c.comments, c.notes) AS notes,
+         c.car, c.police_check, c.wwc,
+         COALESCE(c.comments, c.notes) AS comments,
          c.benchmark_hours,
          c.wage_subsidy,
          c.industry_preference,
