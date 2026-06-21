@@ -676,31 +676,21 @@ export default function Candidates() {
 
                       {/* Candidate name + pipeline dot + info icon */}
                       <td className="px-4 py-3">
-                        <CellTooltip
-                          title="Candidate"
-                          items={[
-                            { key: "SR #",  value: (row as any).sr_no },
-                            { key: "Email", value: row.email },
-                            { key: "Mobile",value: row.phone },
-                            { key: "State", value: row.state },
-                          ]}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                              {row.name.charAt(0).toUpperCase()}
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            {row.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
+                              <InfoTooltip row={row} />
                             </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
-                                <InfoTooltip row={row} />
-                              </div>
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${stage.bg}`} />
-                                <span className={`text-[10px] font-medium ${stage.color}`}>{stage.label}</span>
-                              </div>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${stage.bg}`} />
+                              <span className={`text-[10px] font-medium ${stage.color}`}>{stage.label}</span>
                             </div>
                           </div>
-                        </CellTooltip>
+                        </div>
                       </td>
 
                       {/* Email */}
