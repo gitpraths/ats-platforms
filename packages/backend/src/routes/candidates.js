@@ -176,7 +176,7 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
     if (!benchmark_hours) return res.status(400).json({ success: false, error: "Benchmark hours is required" });
 
     // Auto-generate sr_no
-    const srResult = await pool.query("SELECT 'C-' || LPAD(nextval('candidate_sr_seq')::TEXT, 4, '0') AS sr_no");
+    const srResult = await pool.query("SELECT 'JS-' || LPAD(nextval('candidate_sr_seq')::TEXT, 3, '0') AS sr_no");
     const sr_no = srResult.rows[0].sr_no;
 
     const { rows } = await pool.query(
