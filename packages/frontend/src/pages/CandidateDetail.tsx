@@ -881,6 +881,17 @@ export function VacanciesTab({
     },
   });
 
+  const updateStage = useMutation({
+    mutationFn: ({ appId, stage }: { appId: string; stage: string }) =>
+      api.patch(`/applications/${appId}`, { stage }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] }),
+  });
+
+  const deleteApplication = useMutation({
+    mutationFn: (appId: string) => api.delete(`/applications/${appId}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] }),
+  });
+
   function handleAdd() {
     if (!selectedJob) return;
     addToVacancy.mutate({ job_id: selectedJob });
@@ -945,7 +956,7 @@ export function VacanciesTab({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Vacancy / Job","Stage","Applied","Interview Date","ETS Date","Placement Date","Score"].map((h) => (
+                {["Vacancy / Job","Stage","Applied","Interview Date","ETS Date","Placement Date","Score",""].map((h) => (
                   <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -958,9 +969,21 @@ export function VacanciesTab({
                     {app.source && <p className="text-[10px] text-slate-400">{app.source}</p>}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}>
-                      {app.stage.replace("_", " ")}
-                    </span>
+                    {canWrite ? (
+                      <select
+                        value={app.stage}
+                        onChange={(e) => updateStage.mutate({ appId: app.id, stage: e.target.value })}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
+                      >
+                        {["applied","screening","interview","offer","hired","rejected"].map((s) => (
+                          <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}>
+                        {app.stage.replace("_", " ")}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
                     {format(new Date(app.applied_at), "d MMM yyyy")}
@@ -1004,6 +1027,16 @@ export function VacanciesTab({
                   <td className="px-4 py-3 text-xs text-slate-500">
                     {app.score != null && app.score > 0 ? `${app.score}/10` : "—"}
                   </td>
+                  {canWrite && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => { if (confirm(`Remove this vacancy application?`)) deleteApplication.mutate(app.id); }}
+                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove application">
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
