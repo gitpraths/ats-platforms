@@ -290,14 +290,14 @@ export function CandidateFormPanel({
           <div>
             <Label required>First Name</Label>
             <input value={form.first_name}
-              onChange={(e) => set("first_name", e.target.value)}
+              onChange={(e) => set("first_name", e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
               onBlur={() => checkDuplicateName(form.first_name, form.last_name)}
               className={CLS} placeholder="Jane" />
           </div>
           <div>
             <Label>Last Name</Label>
             <input value={form.last_name}
-              onChange={(e) => set("last_name", e.target.value)}
+              onChange={(e) => set("last_name", e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
               onBlur={() => checkDuplicateName(form.first_name, form.last_name)}
               className={CLS} placeholder="Smith" />
           </div>
