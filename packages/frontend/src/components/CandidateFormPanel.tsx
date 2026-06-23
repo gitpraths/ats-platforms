@@ -146,6 +146,7 @@ export function CandidateFormPanel({
   const [dupPhone, setDupPhone]   = useState<{ name: string; email: string } | null>(null);
   const [dupName,  setDupName]    = useState<{ name: string; email: string } | null>(null);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
+  const [suburbOptions,   setSuburbOptions]   = useState<{ suburb: string; state: string }[]>([]);
   const [showAddConsultant, setShowAddConsultant] = useState(false);
   const [extraConsultants, setExtraConsultants]   = useState<Consultant[]>([]);
   const [resumeFile, setResumeFile]     = useState<File | null>(null);
@@ -187,7 +188,15 @@ export function CandidateFormPanel({
     setPostcodeLoading(true);
     try {
       const res = await api.get<{ suburb: string; state: string }[]>(`/postcodes/${postcode}`);
-      if (res && res.length > 0) setForm((f) => ({ ...f, suburb: res[0].suburb, state: res[0].state }));
+      if (res && res.length === 1) {
+        // Single match — auto-fill
+        setForm((f) => ({ ...f, suburb: res[0].suburb, state: res[0].state }));
+        setSuburbOptions([]);
+      } else if (res && res.length > 1) {
+        // Multiple matches — show dropdown, pre-fill state from first result
+        setSuburbOptions(res);
+        setForm((f) => ({ ...f, suburb: "", state: res[0].state }));
+      }
     } catch { /* silent */ } finally { setPostcodeLoading(false); }
   }, [setForm]);
 
@@ -323,8 +332,25 @@ export function CandidateFormPanel({
           </div>
           <div>
             <Label>Suburb</Label>
-            <input value={form.suburb} onChange={(e) => set("suburb", e.target.value)}
-              className={CLS} placeholder="Auto-filled" />
+            {suburbOptions.length > 1 ? (
+              <select
+                value={form.suburb}
+                onChange={(e) => {
+                  const picked = suburbOptions.find((o) => o.suburb === e.target.value);
+                  if (picked) { set("suburb", picked.suburb); set("state", picked.state); }
+                  setSuburbOptions([]);
+                }}
+                className={CLS}
+              >
+                <option value="">— Select suburb —</option>
+                {suburbOptions.map((o) => (
+                  <option key={o.suburb} value={o.suburb}>{o.suburb}</option>
+                ))}
+              </select>
+            ) : (
+              <input value={form.suburb} onChange={(e) => set("suburb", e.target.value)}
+                className={CLS} placeholder="Auto-filled" />
+            )}
           </div>
           <div>
             <Label>State</Label>
