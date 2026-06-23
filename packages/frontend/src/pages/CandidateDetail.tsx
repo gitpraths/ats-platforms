@@ -956,7 +956,7 @@ export function VacanciesTab({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Vacancy / Job","Stage","Applied","Interview Date","ETS Date","Placement Date","Score",""].map((h) => (
+                {["Vacancy / Job","Stage","Applied","Interview Date","ETS Date","Placement Date",""].map((h) => (
                   <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -1023,9 +1023,6 @@ export function VacanciesTab({
                     ) : (
                       <span className="text-xs text-slate-600">{app.placement_date ? format(new Date(app.placement_date), "d MMM yyyy") : "—"}</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-500">
-                    {app.score != null && app.score > 0 ? `${app.score}/10` : "—"}
                   </td>
                   {canWrite && (
                     <td className="px-4 py-3 text-right">
