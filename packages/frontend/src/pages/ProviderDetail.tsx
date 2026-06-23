@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX, UserCog, Link2, CheckCircle2, X, Search } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX, UserCog, Link2, CheckCircle2, X, Search, Plus, Trash2 } from "lucide-react";
 import { api } from "../lib/api";
 import type { Provider, Candidate, XeroContact } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -114,6 +114,9 @@ export default function ProviderDetail() {
           </div>
         </dl>
       </div>
+
+      {/* Consultants */}
+      <ConsultantsSection providerId={id!} isAdmin={isAdmin} />
 
       {/* Recent candidates */}
       <div className="bg-white rounded-xl shadow-sm p-6">
@@ -281,6 +284,128 @@ function XeroContactSection({ provider }: { provider: { id: string; name: string
             </button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+interface Consultant { id: string; name: string; email?: string | null; phone?: string | null; }
+
+function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdmin: boolean }) {
+  const queryClient = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [name,   setName]   = useState("");
+  const [email,  setEmail]  = useState("");
+  const [phone,  setPhone]  = useState("");
+
+  const { data: consultants = [], isLoading } = useQuery<Consultant[]>({
+    queryKey: ["consultants", providerId],
+    queryFn:  () => api.get<Consultant[]>(`/consultants?provider_id=${providerId}`),
+  });
+
+  const addConsultant = useMutation({
+    mutationFn: () =>
+      api.post("/consultants", { provider_id: providerId, name: name.trim(), email: email.trim() || undefined, phone: phone.trim() || undefined }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultants", providerId] });
+      setName(""); setEmail(""); setPhone(""); setAdding(false);
+    },
+  });
+
+  const deleteConsultant = useMutation({
+    mutationFn: (cid: string) => api.delete(`/consultants/${cid}`),
+    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ["consultants", providerId] }),
+  });
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-slate-900 tracking-tight">
+          Consultants
+          {consultants.length > 0 && (
+            <span className="ml-2 text-xs font-normal text-slate-400">({consultants.length})</span>
+          )}
+        </h2>
+        {isAdmin && !adding && (
+          <button onClick={() => setAdding(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
+            <Plus size={12} /> Add Consultant
+          </button>
+        )}
+      </div>
+
+      {/* Add form */}
+      {adding && (
+        <div className="mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <p className="text-xs font-semibold text-slate-600 mb-3">New Consultant</p>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Name <span className="text-red-500">*</span></label>
+              <input value={name} onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
+                placeholder="Full name"
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Email</label>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email"
+                placeholder="email@example.com"
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Phone</label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} type="tel"
+                placeholder="0412 345 678"
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => addConsultant.mutate()}
+              disabled={!name.trim() || addConsultant.isPending}
+              className="text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-4 py-1.5 transition-colors disabled:opacity-50">
+              {addConsultant.isPending ? "Saving…" : "Save"}
+            </button>
+            <button onClick={() => { setAdding(false); setName(""); setEmail(""); setPhone(""); }}
+              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-4 py-1.5 hover:bg-slate-100 transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      {isLoading ? (
+        <p className="text-sm text-slate-400">Loading…</p>
+      ) : consultants.length === 0 ? (
+        <p className="text-sm text-slate-400">No consultants added yet.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-slate-500 border-b">
+              <th className="pb-2">Name</th>
+              <th className="pb-2">Email</th>
+              <th className="pb-2">Phone</th>
+              {isAdmin && <th className="pb-2" />}
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {consultants.map((c) => (
+              <tr key={c.id} className="hover:bg-slate-50">
+                <td className="py-2 font-medium text-slate-900">{c.name}</td>
+                <td className="py-2 text-slate-500">{c.email || "—"}</td>
+                <td className="py-2 text-slate-500">{c.phone || "—"}</td>
+                {isAdmin && (
+                  <td className="py-2 text-right">
+                    <button
+                      onClick={() => { if (confirm(`Remove ${c.name}?`)) deleteConsultant.mutate(c.id); }}
+                      className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
