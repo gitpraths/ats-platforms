@@ -423,9 +423,14 @@ export function CandidateFormPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label required>Benchmark Hours / Week</Label>
-            <input type="number" min={1} max={168} value={form.benchmark_hours}
+            <select value={form.benchmark_hours}
               onChange={(e) => set("benchmark_hours", e.target.value)}
-              className={CLS} placeholder="38" />
+              className={CLS}>
+              <option value="">— Select hours —</option>
+              {[8, 15, 20, 25, 30, 38].map((h) => (
+                <option key={h} value={h}>{h} hrs / week</option>
+              ))}
+            </select>
           </div>
           <div>
             <Label>Wage Subsidy</Label>
