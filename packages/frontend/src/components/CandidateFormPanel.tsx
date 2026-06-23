@@ -382,15 +382,6 @@ export function CandidateFormPanel({
               <option value="not_suitable">Not Suitable</option>
             </select>
           </div>
-          <div>
-            <Label>Work Status</Label>
-            <select value={form.work_status} onChange={(e) => set("work_status", e.target.value)} className={CLS}>
-              <option value="job_seeking">Job Seeking</option>
-              <option value="employed">Employed</option>
-              <option value="placed">Placed</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
         </div>
       </div>
 
