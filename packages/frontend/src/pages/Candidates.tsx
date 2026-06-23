@@ -777,14 +777,22 @@ export default function Candidates() {
                         />
                       </td>
 
-                      {/* Placement Date — inline editable */}
+                      {/* Placement Date — inline editable + tooltip */}
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <InlineDateCell
-                          appId={row.latest_application_id}
-                          field="placement_date"
-                          value={row.latest_placement_date}
-                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
-                        />
+                        <CellTooltip
+                          title="Placed At"
+                          items={[
+                            { key: "Company",   value: row.employer_name },
+                            { key: "Job Title", value: row.job_title },
+                          ]}
+                        >
+                          <InlineDateCell
+                            appId={row.latest_application_id}
+                            field="placement_date"
+                            value={row.latest_placement_date}
+                            onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                          />
+                        </CellTooltip>
                       </td>
 
                       {/* Comments */}
