@@ -231,6 +231,19 @@ export function CandidateFormPanel({
     );
   }
 
+  const [otherIndustry,   setOtherIndustry]   = useState("");
+  const [showOtherInput,  setShowOtherInput]   = useState(false);
+
+  function addOtherIndustry() {
+    const val = otherIndustry.trim();
+    if (!val) { setShowOtherInput(false); return; }
+    if (!form.industry_preference.includes(val)) {
+      set("industry_preference", [...form.industry_preference, val]);
+    }
+    setOtherIndustry("");
+    setShowOtherInput(false);
+  }
+
 
   // Expose resume file upward via a custom event so parent can access it
   // (simpler than prop-drilling; parent reads from a ref or callback)
@@ -477,7 +490,38 @@ export function CandidateFormPanel({
                 );
               })
             )}
+
+            {/* Other pill */}
+            {!showOtherInput && (
+              <button type="button" onClick={() => setShowOtherInput(true)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-300 text-slate-500 hover:border-[#e88e2e] hover:text-[#e88e2e] transition">
+                + Other
+              </button>
+            )}
           </div>
+
+          {/* Other text input — shown when Other is clicked */}
+          {showOtherInput && (
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                autoFocus
+                value={otherIndustry}
+                onChange={(e) => setOtherIndustry(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addOtherIndustry(); } }}
+                placeholder="Type industry name and press Enter"
+                className="flex-1 border border-[#e88e2e] rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40"
+              />
+              <button type="button" onClick={addOtherIndustry}
+                className="text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
+                Add
+              </button>
+              <button type="button" onClick={() => { setShowOtherInput(false); setOtherIndustry(""); }}
+                className="text-xs text-slate-500 hover:text-slate-700 px-2">
+                Cancel
+              </button>
+            </div>
+          )}
+
           {form.industry_preference.length > 0 && (
             <p className="text-xs text-[#e88e2e] mt-1">
               {form.industry_preference.length} selected: {form.industry_preference.join(", ")}
