@@ -170,11 +170,6 @@ export function CandidateFormPanel({
     });
   const industries = industriesData ?? [];
 
-  const { data: trainingsData } = useQuery({
-    queryKey: ["trainings-select"],
-    queryFn: () => api.get<Training[]>("/trainings"),
-  });
-  const trainings = trainingsData ?? [];
 
   const { data: consultantsData, refetch: refetchConsultants } = useQuery({
     queryKey: ["consultants", form.provider_id],
@@ -226,13 +221,6 @@ export function CandidateFormPanel({
     );
   }
 
-  function toggleTraining(id: string) {
-    set("training_ids",
-      form.training_ids.includes(id)
-        ? form.training_ids.filter((t) => t !== id)
-        : [...form.training_ids, id]
-    );
-  }
 
   // Expose resume file upward via a custom event so parent can access it
   // (simpler than prop-drilling; parent reads from a ref or callback)
@@ -393,35 +381,9 @@ export function CandidateFormPanel({
         </div>
       </div>
 
-      {/* ── Section 4: Training & Work Preferences ── */}
+      {/* ── Section 4: Work Preferences ── */}
       <div className={sectionCls}>
-        <p className={sectionTitle}>Training & Preferences</p>
-
-        {/* Training multi-select */}
-        <div>
-          <Label>Training Course</Label>
-          <div className="border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto">
-            {trainings.length === 0 ? (
-              <p className="text-sm text-slate-400">No training courses available.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-1.5">
-                {trainings.map((t) => {
-                  const selected = form.training_ids.includes(t.id);
-                  return (
-                    <label key={t.id}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition ${selected ? "bg-orange-50 text-[#e88e2e]" : "hover:bg-slate-50 text-slate-700"}`}>
-                      <input type="checkbox" checked={selected} onChange={() => toggleTraining(t.id)} className="accent-[#e88e2e]" />
-                      {t.name}{t.code ? ` (${t.code})` : ""}
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          {form.training_ids.length > 0 && (
-            <p className="text-xs text-[#e88e2e] mt-1">{form.training_ids.length} course{form.training_ids.length > 1 ? "s" : ""} selected</p>
-          )}
-        </div>
+        <p className={sectionTitle}>Work Preferences</p>
 
         {/* Benchmark Hours */}
         <div className="grid grid-cols-2 gap-4">
