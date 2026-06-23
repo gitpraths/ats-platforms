@@ -166,7 +166,7 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
       date_referred, benchmark_hours,
       industry_preference, car, police_check, wwc,
       comments, notes,
-      wage_subsidy, wage_subsidy_amount, interested_job,
+      wage_subsidy, wage_subsidy_amount, interested_job, intention_to_work,
     } = req.body;
 
     const fullName = name || [first_name, last_name].filter(Boolean).join(" ");
@@ -187,8 +187,8 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
           benchmark_hours, industry_preference,
           car, police_check, wwc,
           comments, notes, interested_job,
-          wage_subsidy, wage_subsidy_amount, work_status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+          wage_subsidy, wage_subsidy_amount, work_status, intention_to_work)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
        RETURNING *`,
       [
         sr_no, fullName, first_name || null, last_name || null,
@@ -200,6 +200,7 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
         car || "no", police_check || "no", wwc || "no",
         comments || notes || null, notes || comments || null, interested_job || null,
         wage_subsidy ?? false, wage_subsidy_amount || null, "job_seeking",
+        intention_to_work || "suitable",
       ]
     );
     res.status(201).json({ success: true, data: rows[0] });
@@ -221,7 +222,7 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
       benchmark_hours, industry_preference,
       car, police_check, wwc,
       comments, notes, interested_job,
-      wage_subsidy, wage_subsidy_amount, work_status,
+      wage_subsidy, wage_subsidy_amount, work_status, intention_to_work,
     } = req.body;
 
     const fullName = name || (first_name && last_name ? `${first_name} ${last_name}` : (first_name || undefined));
@@ -250,8 +251,9 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
          wage_subsidy        = COALESCE($19, wage_subsidy),
          wage_subsidy_amount = COALESCE($20, wage_subsidy_amount),
          work_status         = COALESCE($21, work_status),
+         intention_to_work   = COALESCE($22, intention_to_work),
          updated_at          = NOW()
-       WHERE id = $22 RETURNING *`,
+       WHERE id = $23 RETURNING *`,
       [
         fullName || null,
         first_name || null,
@@ -274,6 +276,7 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
         wage_subsidy !== undefined ? wage_subsidy : null,
         wage_subsidy_amount || null,
         work_status || null,
+        intention_to_work || null,
         req.params.id,
       ]
     );

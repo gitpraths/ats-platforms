@@ -667,7 +667,11 @@ export default function Candidates() {
                 return (
                   <Fragment key={row.id}>
                     <tr onClick={() => navigate(`/candidates/${row.id}`)}
-                      className="hover:bg-orange-50/40 cursor-pointer border-b transition group">
+                      className={`cursor-pointer border-b transition group ${
+                        (row as any).intention_to_work === "not_suitable"
+                          ? "bg-red-50/60 hover:bg-red-50"
+                          : "hover:bg-orange-50/40"
+                      }`}>
 
                       {/* SR # */}
                       <td className="px-4 py-3 text-xs text-slate-400 font-mono whitespace-nowrap">
@@ -682,7 +686,12 @@ export default function Candidates() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-slate-900 whitespace-nowrap">{row.name}</span>
+                              <span className={`font-medium whitespace-nowrap ${
+                                (row as any).intention_to_work === "not_suitable" ? "text-red-700" : "text-slate-900"
+                              }`}>{row.name}</span>
+                              {(row as any).intention_to_work === "not_suitable" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">Not Suitable</span>
+                              )}
                               <InfoTooltip row={row} />
                             </div>
                             <div className="flex items-center gap-1 mt-0.5">

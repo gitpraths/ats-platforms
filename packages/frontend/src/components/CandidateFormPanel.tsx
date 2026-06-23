@@ -30,6 +30,7 @@ export interface CandidateFormData {
   wage_subsidy_amount: string;
   comments:            string;
   work_status:         string;
+  intention_to_work:   string;
 }
 
 export const EMPTY_FORM: CandidateFormData = {
@@ -38,7 +39,7 @@ export const EMPTY_FORM: CandidateFormData = {
   training_ids: [], benchmark_hours: "", industry_preference: [],
   car: "", police_check: "", wwc: "",
   wage_subsidy: false, wage_subsidy_amount: "",
-  comments: "", work_status: "job_seeking",
+  comments: "", work_status: "job_seeking", intention_to_work: "suitable",
 };
 
 // ── Shared Styles ──────────────────────────────────────────────────────────────
@@ -359,8 +360,15 @@ export function CandidateFormPanel({
           </div>
         </div>
 
-        {/* Work Status */}
+        {/* Job Seeker Intention to Work + Work Status */}
         <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Job Seeker Intention to Work</Label>
+            <select value={form.intention_to_work} onChange={(e) => set("intention_to_work", e.target.value)} className={CLS}>
+              <option value="suitable">Suitable</option>
+              <option value="not_suitable">Not Suitable</option>
+            </select>
+          </div>
           <div>
             <Label>Work Status</Label>
             <select value={form.work_status} onChange={(e) => set("work_status", e.target.value)} className={CLS}>
