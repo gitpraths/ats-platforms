@@ -498,7 +498,7 @@ export default function CandidateDetail() {
                   const isDummy  = realApps.length === 0;
                   const displayApps = isDummy ? [
                     { id: "_d1", job_title: "Customer Service Officer", stage: "interview" as ApplicationStage, applied_at: "2026-05-20", score: 7, source: "provider" },
-                    { id: "_d2", job_title: "Administration Assistant",  stage: "screening" as ApplicationStage, applied_at: "2026-04-15", score: 5, source: "manual"   },
+                    { id: "_d2", job_title: "Administration Assistant",  stage: "interview" as ApplicationStage, applied_at: "2026-04-15", score: 5, source: "manual"   },
                     { id: "_d3", job_title: "Retail Sales Associate",    stage: "applied"  as ApplicationStage, applied_at: "2026-03-10", score: 0, source: "job_board" },
                   ] : realApps;
                   return (
@@ -1017,8 +1017,8 @@ export function VacanciesTab({
                         onChange={(e) => updateStage.mutate({ appId: app.id, stage: e.target.value })}
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
                       >
-                        {(["applied","interview","ets","hired","rejected"] as const).map((s) => (
-                          <option key={s} value={s}>{stageLabel(s)}</option>
+                        {((["applied","interview","ets","hired","rejected"] as const) as string[]).concat(app.stage === "screening" ? ["screening"] : []).map((s) => (
+                          <option key={s} value={s}>{stageLabel(s)}{s === "screening" ? " (change me)" : ""}</option>
                         ))}
                       </select>
                     ) : (
