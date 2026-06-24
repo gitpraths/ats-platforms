@@ -9,7 +9,7 @@ import { stageLabel } from "../lib/utils";
 import ScreenCandidateButton from "../components/ScreenCandidateButton";
 import Pagination, { PER_PAGE } from "../components/Pagination";
 
-const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "ets", "hired", "rejected"];
+const STAGES: ApplicationStage[] = ["applied", "interview", "ets", "hired", "rejected"];
 
 const STAGE_STYLES: Record<ApplicationStage, { col: string; badge: string }> = {
   applied:   { col: "bg-blue-50 border-blue-200",   badge: "border border-blue-400 text-blue-600 bg-transparent" },

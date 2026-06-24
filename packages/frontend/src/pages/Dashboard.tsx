@@ -9,7 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { stageLabel } from "../lib/utils";
 import type { Application } from "../types";
 
-const STAGE_ORDER = ["applied", "screening", "interview", "ets", "hired", "rejected"] as const;
+const STAGE_ORDER = ["applied", "interview", "ets", "hired", "rejected"] as const;
 
 const STAGE_BADGE: Record<string, string> = {
   applied:   "border border-blue-400 text-blue-600 bg-transparent",
