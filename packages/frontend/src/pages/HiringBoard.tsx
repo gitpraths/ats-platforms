@@ -8,13 +8,13 @@ import { format } from "date-fns";
 import ScreenCandidateButton from "../components/ScreenCandidateButton";
 import Pagination, { PER_PAGE } from "../components/Pagination";
 
-const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "offer", "hired", "rejected"];
+const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "ets", "hired", "rejected"];
 
 const STAGE_STYLES: Record<ApplicationStage, { col: string; badge: string }> = {
   applied:   { col: "bg-blue-50 border-blue-200",   badge: "border border-blue-400 text-blue-600 bg-transparent" },
   screening: { col: "bg-purple-50 border-purple-200", badge: "border border-purple-400 text-purple-600 bg-transparent" },
   interview: { col: "bg-yellow-50 border-yellow-200", badge: "border border-amber-400 text-amber-600 bg-transparent" },
-  offer:     { col: "bg-orange-50 border-orange-200", badge: "border border-orange-400 text-orange-600 bg-transparent" },
+  ets:       { col: "bg-orange-50 border-orange-200", badge: "border border-orange-400 text-orange-600 bg-transparent" },
   hired:     { col: "bg-green-50 border-green-200",  badge: "border border-green-500 text-green-700 bg-transparent" },
   rejected:  { col: "bg-red-50 border-red-200",      badge: "border border-red-400 text-red-500 bg-transparent" },
 };

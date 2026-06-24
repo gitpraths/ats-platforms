@@ -349,7 +349,7 @@ function getStatusLabel(row: CandidatePoolRow): string {
   if (row.work_status === "placed")   return "Placed";
   if (row.work_status === "inactive") return "Inactive";
   if (row.work_status === "employed") return "Employed";
-  if (row.latest_stage && ["applied","screening","interview","offer"].includes(row.latest_stage)) return "In Progress";
+  if (row.latest_stage && ["applied","screening","interview","ets"].includes(row.latest_stage)) return "In Progress";
   return "Job Seeking";
 }
 

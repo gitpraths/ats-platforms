@@ -11,7 +11,7 @@ function tabCondition(tab) {
       return `EXISTS (
         SELECT 1 FROM applications a
         WHERE a.candidate_id = c.id
-          AND a.stage IN ('applied','screening','interview','offer')
+          AND a.stage IN ('applied','screening','interview','ets')
       )`;
     case "placed":
       return `c.work_status = 'placed'`;
@@ -19,7 +19,7 @@ function tabCondition(tab) {
       return `NOT EXISTS (
           SELECT 1 FROM applications a
           WHERE a.candidate_id = c.id
-            AND a.stage IN ('applied','screening','interview','offer')
+            AND a.stage IN ('applied','screening','interview','ets')
         )
         AND EXISTS (
           SELECT 1 FROM applications a2
@@ -183,14 +183,14 @@ candidatePoolRouter.get("/", async (req, res, next) => {
          COUNT(*) FILTER (WHERE EXISTS (
            SELECT 1 FROM applications a
            WHERE a.candidate_id = c.id
-             AND a.stage IN ('applied','screening','interview','offer')
+             AND a.stage IN ('applied','screening','interview','ets')
          ))::int AS in_progress_count,
          COUNT(*) FILTER (WHERE c.work_status = 'placed')::int AS placed_count,
          COUNT(*) FILTER (WHERE
            NOT EXISTS (
              SELECT 1 FROM applications a
              WHERE a.candidate_id = c.id
-               AND a.stage IN ('applied','screening','interview','offer')
+               AND a.stage IN ('applied','screening','interview','ets')
            )
            AND EXISTS (
              SELECT 1 FROM applications a2

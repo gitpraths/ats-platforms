@@ -5,7 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 export const applicationsRouter = Router();
 applicationsRouter.use(requireAuth);
 
-const VALID_STAGES = ["applied", "screening", "interview", "offer", "hired", "rejected"];
+const VALID_STAGES = ["applied", "screening", "interview", "ets", "hired", "rejected"];
 
 // ── GET /api/applications ────────────────────────────────────────────────────
 // Supports filters: job_id, candidate (name search), job_title (title search)
@@ -110,6 +110,20 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 
     if (updates.length === 0)
       return res.status(400).json({ success: false, error: "No updatable fields provided" });
+
+    // Auto-advance stage based on date set (only if no explicit stage passed)
+    if (stage === undefined) {
+      const STAGE_ORDER = ["applied", "screening", "interview", "ets", "hired", "rejected"];
+      const currentStage = appRows[0].stage;
+      let autoStage = null;
+      if (placement_date)   autoStage = "hired";
+      else if (interview_date) autoStage = "interview";
+      else if (ets_date)    autoStage = "ets";
+      if (autoStage && STAGE_ORDER.indexOf(autoStage) > STAGE_ORDER.indexOf(currentStage)) {
+        params.push(autoStage);
+        updates.push(`stage = $${params.length}`);
+      }
+    }
 
     params.push(req.params.id);
     const { rows } = await pool.query(

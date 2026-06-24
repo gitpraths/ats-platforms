@@ -8,13 +8,13 @@ import { useDashboardStats } from "../hooks/useDashboardStats";
 import { useAuth } from "../contexts/AuthContext";
 import type { Application } from "../types";
 
-const STAGE_ORDER = ["applied", "screening", "interview", "offer", "hired", "rejected"] as const;
+const STAGE_ORDER = ["applied", "screening", "interview", "ets", "hired", "rejected"] as const;
 
 const STAGE_BADGE: Record<string, string> = {
   applied:   "border border-blue-400 text-blue-600 bg-transparent",
   screening: "border border-purple-400 text-purple-600 bg-transparent",
   interview: "border border-amber-400 text-amber-600 bg-transparent",
-  offer:     "border border-orange-400 text-orange-600 bg-transparent",
+  ets:       "border border-orange-400 text-orange-600 bg-transparent",
   hired:     "border border-green-500 text-green-700 bg-transparent",
   rejected:  "border border-red-400 text-red-500 bg-transparent",
 };
@@ -23,7 +23,7 @@ const STAGE_STEP: Record<string, string> = {
   applied:   "border-blue-200 text-blue-700 bg-blue-50",
   screening: "border-purple-200 text-purple-700 bg-purple-50",
   interview: "border-amber-200 text-amber-700 bg-amber-50",
-  offer:     "border-orange-200 text-orange-700 bg-orange-50",
+  ets:       "border-orange-200 text-orange-700 bg-orange-50",
   hired:     "border-green-200 text-green-700 bg-green-50",
 };
 
@@ -31,7 +31,7 @@ const STAGE_DOT: Record<string, string> = {
   applied:   "bg-blue-500",
   screening: "bg-purple-500",
   interview: "bg-amber-500",
-  offer:     "bg-orange-500",
+  ets:       "bg-orange-500",
   hired:     "bg-green-500",
   rejected:  "bg-red-500",
 };

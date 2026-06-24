@@ -219,7 +219,7 @@ export type ApplicationStage =
   | "applied"
   | "screening"
   | "interview"
-  | "offer"
+  | "ets"
   | "hired"
   | "rejected";
 

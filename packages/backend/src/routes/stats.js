@@ -41,7 +41,7 @@ statsRouter.get("/", async (req, res, next) => {
            COUNT(*) FILTER (WHERE a.stage = 'applied')    AS applied_count,
            COUNT(*) FILTER (WHERE a.stage = 'screening')  AS screening_count,
            COUNT(*) FILTER (WHERE a.stage = 'interview')  AS interview_count,
-           COUNT(*) FILTER (WHERE a.stage = 'offer')      AS offer_count,
+           COUNT(*) FILTER (WHERE a.stage = 'ets')        AS ets_count,
            COUNT(*) FILTER (WHERE a.stage = 'hired')      AS hired_count,
            COUNT(*) FILTER (WHERE a.stage = 'rejected')   AS rejected_count
          FROM applications a

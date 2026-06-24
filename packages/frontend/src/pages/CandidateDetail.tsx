@@ -33,7 +33,7 @@ const STAGE_BADGE: Record<ApplicationStage, string> = {
   applied:   "border border-blue-400 text-blue-600 bg-transparent",
   screening: "border border-purple-400 text-purple-600 bg-transparent",
   interview: "border border-amber-400 text-amber-600 bg-transparent",
-  offer:     "border border-orange-400 text-orange-600 bg-transparent",
+  ets:       "border border-orange-400 text-orange-600 bg-transparent",
   hired:     "border border-green-500 text-green-700 bg-transparent",
   rejected:  "border border-red-400 text-red-500 bg-transparent",
 };
@@ -796,7 +796,7 @@ const STAGE_BADGE2: Record<string, string> = {
   applied:   "bg-blue-100 text-blue-700",
   screening: "bg-purple-100 text-purple-700",
   interview: "bg-amber-100 text-amber-700",
-  offer:     "bg-orange-100 text-orange-700",
+  ets:       "bg-orange-100 text-orange-700",
   hired:     "bg-green-100 text-green-700",
   rejected:  "bg-red-100 text-red-500",
 };
@@ -975,8 +975,8 @@ export function VacanciesTab({
                         onChange={(e) => updateStage.mutate({ appId: app.id, stage: e.target.value })}
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
                       >
-                        {["applied","screening","interview","offer","hired","rejected"].map((s) => (
-                          <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                        {["applied","screening","interview","ets","hired","rejected"].map((s) => (
+                          <option key={s} value={s}>{s === "ets" ? "ETS" : s.charAt(0).toUpperCase() + s.slice(1)}</option>
                         ))}
                       </select>
                     ) : (
