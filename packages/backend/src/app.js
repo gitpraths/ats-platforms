@@ -84,8 +84,11 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
 
 // ── Static uploads ────────────────────────────────────────────────────────────
-const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+// UPLOAD_DIR env var = Railway Volume mount path (e.g. /data/uploads)
+// Falls back to local uploads/ folder for development
+const UPLOADS_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 mkdirSync(path.join(UPLOADS_DIR, "candidates"), { recursive: true });
+mkdirSync(path.join(UPLOADS_DIR, "avatars"),    { recursive: true });
 app.use("/uploads", express.static(UPLOADS_DIR));
 
 // ── Health check ─────────────────────────────────────────────────────────────

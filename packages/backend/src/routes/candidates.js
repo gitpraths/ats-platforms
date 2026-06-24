@@ -22,8 +22,8 @@ const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-// Resolve uploads dir relative to CWD (where the server process starts)
-const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
+// Resolve uploads dir — uses Railway Volume path if UPLOAD_DIR is set
+const UPLOADS_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 
 function getDocUpload(candidateId) {
   const dir = path.join(UPLOADS_ROOT, "candidates", candidateId);

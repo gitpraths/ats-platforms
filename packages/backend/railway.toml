@@ -8,3 +8,10 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+# ── Persistent Volume ─────────────────────────────────────────────────────────
+# Resumes and documents are stored here and survive redeploys/restarts.
+# After creating the volume in Railway dashboard, set:
+#   UPLOAD_DIR = /data/uploads
+[[volumes]]
+mountPath = "/data"
