@@ -17,7 +17,7 @@ const STAGE_BADGE: Record<ApplicationStage, string> = {
   applied:   "bg-blue-50   border border-blue-300   text-blue-700",
   screening: "bg-purple-50 border border-purple-300 text-purple-700",
   interview: "bg-amber-50  border border-amber-300  text-amber-700",
-  offer:     "bg-orange-50 border border-orange-300 text-orange-700",
+  ets:       "bg-orange-50 border border-orange-300 text-orange-700",
   hired:     "bg-green-50  border border-green-300  text-green-700",
   rejected:  "bg-red-50    border border-red-300    text-red-500",
 };

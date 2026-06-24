@@ -16,7 +16,7 @@ export interface DashboardStats {
       applied: number;
       screening: number;
       interview: number;
-      offer: number;
+      ets: number;
       hired: number;
       rejected: number;
     };
