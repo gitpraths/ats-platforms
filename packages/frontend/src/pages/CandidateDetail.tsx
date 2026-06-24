@@ -806,17 +806,25 @@ function InlineDateCellDetail({
   field,
   value,
   onSaved,
+  validate,
 }: {
   appId: string;
   field: "interview_date" | "ets_date" | "placement_date";
   value?: string | null;
   onSaved: () => void;
+  validate?: (newDate: string | null) => string | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newVal = e.target.value || null;
+    setError(null);
+    if (validate) {
+      const err = validate(newVal);
+      if (err) { setError(err); return; }
+    }
     setSaving(true);
     try {
       await api.patch(`/applications/${appId}`, { [field]: newVal });
@@ -827,14 +835,17 @@ function InlineDateCellDetail({
 
   if (editing) {
     return (
-      <input
-        type="date"
-        autoFocus
-        defaultValue={value ?? ""}
-        onBlur={() => setEditing(false)}
-        onChange={handleChange}
-        className="border border-[#e88e2e] rounded-lg px-2 py-1 text-xs focus:outline-none w-36"
-      />
+      <div className="flex flex-col gap-1">
+        <input
+          type="date"
+          autoFocus
+          defaultValue={value ?? ""}
+          onBlur={() => { setEditing(false); setError(null); }}
+          onChange={handleChange}
+          className="border border-[#e88e2e] rounded-lg px-2 py-1 text-xs focus:outline-none w-36"
+        />
+        {error && <span className="text-[10px] text-red-500 leading-tight max-w-[150px]">{error}</span>}
+      </div>
     );
   }
 
@@ -1007,6 +1018,11 @@ export function VacanciesTab({
                         field="ets_date"
                         value={app.ets_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        validate={(d) => {
+                          if (!app.interview_date) return "Set Interview Date first";
+                          if (d && app.interview_date && d < app.interview_date) return "ETS must be after Interview Date";
+                          return null;
+                        }}
                       />
                     ) : (
                       <span className="text-xs text-slate-600">{app.ets_date ? format(new Date(app.ets_date), "d MMM yyyy") : "—"}</span>
@@ -1019,6 +1035,12 @@ export function VacanciesTab({
                         field="placement_date"
                         value={app.placement_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        validate={(d) => {
+                          if (!app.interview_date) return "Set Interview Date first";
+                          if (!app.ets_date) return "Set ETS Date first";
+                          if (d && app.ets_date && d < app.ets_date) return "Placement must be after ETS Date";
+                          return null;
+                        }}
                       />
                     ) : (
                       <span className="text-xs text-slate-600">{app.placement_date ? format(new Date(app.placement_date), "d MMM yyyy") : "—"}</span>

@@ -288,14 +288,17 @@ function InlineDateCell({
   field,
   value,
   onSaved,
+  validate,
 }: {
   appId: string | null | undefined;
   field: "interview_date" | "ets_date" | "placement_date";
   value: string | null | undefined;
   onSaved: () => void;
+  validate?: (newDate: string | null) => string | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
   if (!appId) {
     return <span className="text-slate-200 text-xs">—</span>;
@@ -303,6 +306,11 @@ function InlineDateCell({
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newVal = e.target.value || null;
+    setError(null);
+    if (validate) {
+      const err = validate(newVal);
+      if (err) { setError(err); return; }
+    }
     setSaving(true);
     try {
       await api.patch(`/applications/${appId}`, { [field]: newVal });
@@ -317,14 +325,17 @@ function InlineDateCell({
 
   if (editing) {
     return (
-      <input
-        type="date"
-        autoFocus
-        defaultValue={value ?? ""}
-        onBlur={() => setEditing(false)}
-        onChange={handleChange}
-        className="border border-[#e88e2e] rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 w-32"
-      />
+      <div className="flex flex-col gap-1">
+        <input
+          type="date"
+          autoFocus
+          defaultValue={value ?? ""}
+          onBlur={() => { setEditing(false); setError(null); }}
+          onChange={handleChange}
+          className="border border-[#e88e2e] rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 w-32"
+        />
+        {error && <span className="text-[10px] text-red-500 leading-tight max-w-[130px]">{error}</span>}
+      </div>
     );
   }
 
@@ -769,12 +780,17 @@ export default function Candidates() {
 
                       {/* ETS Date — inline editable */}
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <InlineDateCell
-                          appId={row.latest_application_id}
-                          field="ets_date"
-                          value={row.latest_ets_date}
-                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
-                        />
+                          <InlineDateCell
+                            appId={row.latest_application_id}
+                            field="ets_date"
+                            value={row.latest_ets_date}
+                            onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                            validate={(d) => {
+                              if (!row.latest_interview_date) return "Set Interview Date first";
+                              if (d && row.latest_interview_date && d < row.latest_interview_date) return "ETS must be after Interview Date";
+                              return null;
+                            }}
+                          />
                       </td>
 
                       {/* Placement Date — inline editable + tooltip */}
@@ -791,6 +807,12 @@ export default function Candidates() {
                             field="placement_date"
                             value={row.latest_placement_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                            validate={(d) => {
+                              if (!row.latest_interview_date) return "Set Interview Date first";
+                              if (!row.latest_ets_date) return "Set ETS Date first";
+                              if (d && row.latest_ets_date && d < row.latest_ets_date) return "Placement must be after ETS Date";
+                              return null;
+                            }}
                           />
                         </CellTooltip>
                       </td>
