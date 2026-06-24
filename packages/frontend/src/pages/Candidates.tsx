@@ -289,12 +289,14 @@ function InlineDateCell({
   value,
   onSaved,
   validate,
+  allowClear,
 }: {
   appId: string | null | undefined;
   field: "interview_date" | "ets_date" | "placement_date";
   value: string | null | undefined;
   onSaved: () => void;
   validate?: (newDate: string | null) => string | null;
+  allowClear?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
@@ -302,6 +304,17 @@ function InlineDateCell({
 
   if (!appId) {
     return <span className="text-slate-200 text-xs">—</span>;
+  }
+
+  async function clearValue() {
+    setError(null);
+    setSaving(true);
+    try {
+      await api.patch(`/applications/${appId}`, { [field]: null });
+      onSaved();
+    } catch (e: any) {
+      setError(e?.message ?? "Error");
+    } finally { setSaving(false); }
   }
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -315,8 +328,8 @@ function InlineDateCell({
     try {
       await api.patch(`/applications/${appId}`, { [field]: newVal });
       onSaved();
-    } catch {
-      // silent — toast shown by global error handler if needed
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? e?.message ?? "Save failed");
     } finally {
       setSaving(false);
       setEditing(false);
@@ -340,19 +353,33 @@ function InlineDateCell({
   }
 
   return (
-    <button
-      onClick={(e) => { e.stopPropagation(); setEditing(true); }}
-      disabled={saving}
-      className="group flex items-center gap-1 text-xs text-left transition-colors hover:text-[#e88e2e]"
-    >
-      {saving ? (
-        <span className="text-slate-400">Saving…</span>
-      ) : value ? (
-        <><span className="font-medium text-slate-700 group-hover:text-[#e88e2e]">{format(new Date(value), "d MMM yy")}</span><Pencil size={9} className="text-slate-300 group-hover:text-[#e88e2e] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" /></>
-      ) : (
-        <span className="text-slate-300 group-hover:text-[#e88e2e]/60 italic">+ set</span>
-      )}
-    </button>
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+          disabled={saving}
+          className="group flex items-center gap-1 text-xs text-left transition-colors hover:text-[#e88e2e]"
+        >
+          {saving ? (
+            <span className="text-slate-400">Saving…</span>
+          ) : value ? (
+            <><span className="font-medium text-slate-700 group-hover:text-[#e88e2e]">{format(new Date(value), "d MMM yy")}</span><Pencil size={9} className="text-slate-300 group-hover:text-[#e88e2e] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" /></>
+          ) : (
+            <span className="text-slate-300 group-hover:text-[#e88e2e]/60 italic">+ set</span>
+          )}
+        </button>
+        {allowClear && value && !saving && (
+          <button
+            onClick={(e) => { e.stopPropagation(); if (confirm("Remove this placement date?")) clearValue(); }}
+            className="text-slate-300 hover:text-red-500 transition-colors ml-0.5"
+            title="Clear placement date"
+          >
+            <X size={10} />
+          </button>
+        )}
+      </div>
+      {error && <span className="text-[10px] text-red-500 leading-tight max-w-[160px]">{error}</span>}
+    </div>
   );
 }
 
@@ -807,6 +834,7 @@ export default function Candidates() {
                             field="placement_date"
                             value={row.latest_placement_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                            allowClear
                             validate={(d) => {
                               if (!row.latest_interview_date) return "Set Interview Date first";
                               if (!row.latest_ets_date) return "Set ETS Date first";

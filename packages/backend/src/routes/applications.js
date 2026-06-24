@@ -111,14 +111,37 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     if (updates.length === 0)
       return res.status(400).json({ success: false, error: "No updatable fields provided" });
 
+    // ── 1-active-placement-at-a-time validation ────────────────────────────────
+    // If trying to SET a placement_date (not clear it), block if candidate already placed elsewhere
+    if (placement_date) {
+      const { rows: existingPlacement } = await pool.query(
+        `SELECT id FROM applications
+         WHERE candidate_id = $1 AND id != $2 AND placement_date IS NOT NULL`,
+        [appRows[0].candidate_id, req.params.id]
+      );
+      if (existingPlacement.length > 0)
+        return res.status(400).json({
+          success: false,
+          error: "This candidate already has an active placement. Remove it first before adding a new one."
+        });
+    }
+
     // Auto-advance stage based on date set (only if no explicit stage passed)
     if (stage === undefined) {
       const STAGE_ORDER = ["applied", "screening", "interview", "ets", "hired", "rejected"];
       const currentStage = appRows[0].stage;
       let autoStage = null;
-      if (placement_date)   autoStage = "hired";
+      if (placement_date)      autoStage = "hired";
+      else if (placement_date === null && appRows[0].placement_date) {
+        // Placement date being CLEARED — revert stage
+        const cur = appRows[0];
+        autoStage = cur.ets_date ? "ets" : cur.interview_date ? "interview" : "applied";
+        params.push(autoStage);
+        updates.push(`stage = $${params.length}`);
+        autoStage = null; // already pushed
+      }
       else if (interview_date) autoStage = "interview";
-      else if (ets_date)    autoStage = "ets";
+      else if (ets_date)       autoStage = "ets";
       if (autoStage && STAGE_ORDER.indexOf(autoStage) > STAGE_ORDER.indexOf(currentStage)) {
         params.push(autoStage);
         updates.push(`stage = $${params.length}`);

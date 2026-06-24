@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { displayEmail } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../lib/api";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
@@ -807,16 +807,29 @@ function InlineDateCellDetail({
   value,
   onSaved,
   validate,
+  allowClear,
 }: {
   appId: string;
   field: "interview_date" | "ets_date" | "placement_date";
   value?: string | null;
   onSaved: () => void;
   validate?: (newDate: string | null) => string | null;
+  allowClear?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState<string | null>(null);
+
+  async function clearValue() {
+    setError(null);
+    setSaving(true);
+    try {
+      await api.patch(`/applications/${appId}`, { [field]: null });
+      onSaved();
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? e?.message ?? "Error");
+    } finally { setSaving(false); }
+  }
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newVal = e.target.value || null;
@@ -829,7 +842,9 @@ function InlineDateCellDetail({
     try {
       await api.patch(`/applications/${appId}`, { [field]: newVal });
       onSaved();
-    } catch { /* silent */ }
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? e?.message ?? "Save failed");
+    }
     finally { setSaving(false); setEditing(false); }
   }
 
@@ -850,17 +865,31 @@ function InlineDateCellDetail({
   }
 
   return (
-    <button
-      onClick={() => setEditing(true)}
-      disabled={saving}
-      className="group flex items-center gap-1 text-xs transition-colors hover:text-[#e88e2e] text-left"
-    >
-      {saving ? <span className="text-slate-400">Saving…</span>
-        : value
-          ? <><span className="font-medium text-slate-800">{format(new Date(value), "d MMM yyyy")}</span>
-              <Pencil size={9} className="ml-0.5 text-slate-300 group-hover:text-[#e88e2e] opacity-0 group-hover:opacity-100 transition-opacity" /></>
-          : <span className="italic text-slate-300 group-hover:text-[#e88e2e]/60">+ set</span>}
-    </button>
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setEditing(true)}
+          disabled={saving}
+          className="group flex items-center gap-1 text-xs transition-colors hover:text-[#e88e2e] text-left"
+        >
+          {saving ? <span className="text-slate-400">Saving…</span>
+            : value
+              ? <><span className="font-medium text-slate-800">{format(new Date(value), "d MMM yyyy")}</span>
+                  <Pencil size={9} className="ml-0.5 text-slate-300 group-hover:text-[#e88e2e] opacity-0 group-hover:opacity-100 transition-opacity" /></>
+              : <span className="italic text-slate-300 group-hover:text-[#e88e2e]/60">+ set</span>}
+        </button>
+        {allowClear && value && !saving && (
+          <button
+            onClick={() => { if (confirm("Remove this placement date?")) clearValue(); }}
+            className="text-slate-300 hover:text-red-500 transition-colors"
+            title="Clear placement date"
+          >
+            <X size={10} />
+          </button>
+        )}
+      </div>
+      {error && <span className="text-[10px] text-red-500 leading-tight max-w-[150px]">{error}</span>}
+    </div>
   );
 }
 
@@ -1035,6 +1064,7 @@ export function VacanciesTab({
                         field="placement_date"
                         value={app.placement_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        allowClear
                         validate={(d) => {
                           if (!app.interview_date) return "Set Interview Date first";
                           if (!app.ets_date) return "Set ETS Date first";
