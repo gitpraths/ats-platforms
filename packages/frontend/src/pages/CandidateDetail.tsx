@@ -665,8 +665,9 @@ export default function CandidateDetail() {
                           const isImg    = mime.startsWith("image/");
                           const isWord   = mime.includes("word") || mime.includes("officedocument");
                           const iconBg   = isPdf ? "bg-red-50 text-red-500" : isImg ? "bg-sky-50 text-sky-500" : isWord ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-500";
-                          const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view`;
-                          const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download`;
+                          const token       = localStorage.getItem("token") ?? "";
+                          const viewUrl     = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/view?token=${token}`;
+                          const downloadUrl = `${BASE_URL}/api/candidates/${id}/documents/${doc.id}/download?token=${token}`;
                           return (
                             <div key={doc.id} className="flex items-center gap-3 px-5 py-1.5 hover:bg-blue-50/30 transition-colors">
                               <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
