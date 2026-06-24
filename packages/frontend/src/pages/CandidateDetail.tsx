@@ -102,9 +102,12 @@ export default function CandidateDetail() {
       .then((r) => (r as unknown as { data?: CandidateDocument[] }).data ?? (r as unknown as CandidateDocument[])),
   });
 
-  const { data: notes = [] } = useQuery<CandidateNote[]>({
+  const { data: notes = [], error: notesError, refetch: refetchNotes } = useQuery<CandidateNote[]>({
     queryKey: ["candidate-notes", id],
     queryFn:  () => api.get<CandidateNote[]>(`/candidates/${id}/notes`),
+    enabled:  !!id,
+    refetchOnMount: true,
+    staleTime: 0,
   });
 
   const [noteBody, setNoteBody]         = useState("");
@@ -754,7 +757,13 @@ export default function CandidateDetail() {
                   <h3 className="text-sm font-semibold text-slate-900">Communication Notes</h3>
                   <p className="text-xs text-slate-400 mt-0.5">{notes.length} {notes.length === 1 ? "note" : "notes"} logged</p>
                 </div>
+                <button onClick={() => refetchNotes()} className="text-xs text-slate-400 hover:text-slate-600 border border-slate-200 rounded-lg px-2.5 py-1 transition-colors">↻ Refresh</button>
               </div>
+              {notesError && (
+                <div className="px-6 py-3 bg-red-50 border-b border-red-100 text-xs text-red-600">
+                  Failed to load notes: {(notesError as Error).message} — <button onClick={() => refetchNotes()} className="underline font-semibold">Try again</button>
+                </div>
+              )}
 
               {/* Compose box */}
               {canWrite && (
