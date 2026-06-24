@@ -104,8 +104,7 @@ export default function CandidateDetail() {
 
   const { data: notes = [] } = useQuery<CandidateNote[]>({
     queryKey: ["candidate-notes", id],
-    queryFn:  () => api.get<{ data: CandidateNote[] }>(`/candidates/${id}/notes`)
-      .then((r) => (r as unknown as { data: CandidateNote[] }).data ?? []),
+    queryFn:  () => api.get<CandidateNote[]>(`/candidates/${id}/notes`),
   });
 
   const [noteBody, setNoteBody]         = useState("");
