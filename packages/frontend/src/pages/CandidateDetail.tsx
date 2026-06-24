@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { api } from "../lib/api";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
-import type { Candidate, ApplicationStage, CandidateDocument, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
+import type { Candidate, ApplicationStage, CandidateDocument, CandidateNote, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useCandidateTrainings,
@@ -79,7 +79,7 @@ export default function CandidateDetail() {
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
   const canWrite = user?.role !== "provider";
 
-  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications">("overview");
+  const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications"|"notes">("overview");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<CandidateFormData>(EMPTY_FORM);
   const [saveError, setSaveError] = useState("");
@@ -100,6 +100,33 @@ export default function CandidateDetail() {
     queryKey: ["candidate-docs", id],
     queryFn:  () => api.get<CandidateDocument[]>(`/candidates/${id}/documents`)
       .then((r) => (r as unknown as { data?: CandidateDocument[] }).data ?? (r as unknown as CandidateDocument[])),
+  });
+
+  const { data: notes = [] } = useQuery<CandidateNote[]>({
+    queryKey: ["candidate-notes", id],
+    queryFn:  () => api.get<{ data: CandidateNote[] }>(`/candidates/${id}/notes`)
+      .then((r) => (r as unknown as { data: CandidateNote[] }).data ?? []),
+  });
+
+  const [noteBody, setNoteBody]         = useState("");
+  const [noteSubmitting, setNoteSubmitting] = useState(false);
+  const [noteError, setNoteError]       = useState("");
+
+  async function submitNote() {
+    if (!noteBody.trim()) return;
+    setNoteSubmitting(true); setNoteError("");
+    try {
+      await api.post(`/candidates/${id}/notes`, { body: noteBody.trim() });
+      setNoteBody("");
+      queryClient.invalidateQueries({ queryKey: ["candidate-notes", id] });
+    } catch (e: any) {
+      setNoteError(e?.response?.data?.error ?? "Failed to save note");
+    } finally { setNoteSubmitting(false); }
+  }
+
+  const deleteNote = useMutation({
+    mutationFn: (noteId: string) => api.delete(`/candidates/${id}/notes/${noteId}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["candidate-notes", id] }),
   });
 
   const updateCandidate = useMutation({
@@ -236,6 +263,7 @@ export default function CandidateDetail() {
   const tabs = [
     { key: "overview",   label: "Overview"   },
     { key: "training",   label: "Training"   },
+    { key: "notes",      label: "Notes"      },
   ] as const;
 
   // ── When editing: full-page light layout (same look as Create Candidate) ──
@@ -717,6 +745,101 @@ export default function CandidateDetail() {
               <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
             </div>
           )}
+
+          {/* ── Notes Tab ──────────────────────────────────────────────────── */}
+          {activeTab === "notes" && (
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Communication Notes</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{notes.length} {notes.length === 1 ? "note" : "notes"} logged</p>
+                </div>
+              </div>
+
+              {/* Compose box */}
+              {canWrite && (
+                <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+                  <textarea
+                    value={noteBody}
+                    onChange={(e) => setNoteBody(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submitNote(); }}
+                    placeholder="Add a communication note… (Ctrl+Enter to save)"
+                    rows={3}
+                    className="w-full text-sm text-slate-800 bg-white border border-slate-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] placeholder:text-slate-400 transition"
+                  />
+                  {noteError && <p className="text-xs text-red-500 mt-1">{noteError}</p>}
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-slate-400">{noteBody.length > 0 ? `${noteBody.length} chars` : "Tip: Ctrl+Enter to save quickly"}</span>
+                    <button
+                      onClick={submitNote}
+                      disabled={noteSubmitting || !noteBody.trim()}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white bg-[#e88e2e] hover:bg-[#d07d20] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg px-4 py-2 transition-colors"
+                    >
+                      {noteSubmitting ? "Saving…" : "Add Note"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Notes timeline */}
+              <div className="divide-y divide-slate-50">
+                {notes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <svg className="w-8 h-8 mb-3 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h6m-6 4h10M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                    </svg>
+                    <p className="text-sm font-medium text-slate-400">No notes yet</p>
+                    <p className="text-xs text-slate-300 mt-0.5">Add the first communication note above</p>
+                  </div>
+                ) : (
+                  notes.map((note) => {
+                    const initials = note.author_name
+                      ? note.author_name.split(" ").slice(0,2).map(w => w[0]).join("").toUpperCase()
+                      : "?";
+                    const colours = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-amber-500","bg-pink-500","bg-cyan-500"];
+                    const colourIdx = note.author_id.charCodeAt(0) % colours.length;
+                    const avatarBg  = colours[colourIdx];
+                    const noteDate  = new Date(note.created_at);
+                    const dateStr   = noteDate.toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" });
+                    const timeStr   = noteDate.toLocaleTimeString("en-AU", { hour:"2-digit", minute:"2-digit" });
+
+                    return (
+                      <div key={note.id} className="flex gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors group">
+                        {/* Avatar */}
+                        <div className={`w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <span className="text-xs font-bold text-white">{initials}</span>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-sm font-semibold text-slate-900">{note.author_name}</span>
+                            <span className="text-xs text-slate-400">·</span>
+                            <span className="text-xs text-slate-400">{dateStr}</span>
+                            <span className="text-xs text-slate-400">{timeStr}</span>
+                          </div>
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{note.body}</p>
+                        </div>
+
+                        {/* Delete (admin only) */}
+                        {isAdmin && (
+                          <button
+                            onClick={() => { if (confirm("Delete this note?")) deleteNote.mutate(note.id); }}
+                            className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-slate-300 hover:text-red-500 transition-all mt-0.5"
+                            title="Delete note"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
         </div>
 

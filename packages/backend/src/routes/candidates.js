@@ -400,3 +400,63 @@ candidatesRouter.delete("/:id/documents/:doc_id", requireRole("admin", "recruite
     res.json({ success: true });
   } catch (err) { next(err); }
 });
+
+// ── Notes (Xero-style communication log) ─────────────────────────────────────
+
+// GET /api/candidates/:id/notes  — list all notes newest first
+candidatesRouter.get("/:id/notes", async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT n.id, n.candidate_id, n.body, n.created_at, n.updated_at,
+              u.id AS author_id, u.name AS author_name, u.email AS author_email
+         FROM candidate_notes n
+         JOIN users u ON u.id = n.created_by
+        WHERE n.candidate_id = $1
+        ORDER BY n.created_at DESC`,
+      [req.params.id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) { next(err); }
+});
+
+// POST /api/candidates/:id/notes  — add a new note
+candidatesRouter.post("/:id/notes", async (req, res, next) => {
+  try {
+    const { body } = req.body;
+    if (!body || !body.trim()) {
+      return res.status(400).json({ success: false, error: "Note body is required" });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO candidate_notes (candidate_id, body, created_by)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [req.params.id, body.trim(), req.user.id]
+    );
+    // Return with author info
+    const { rows: full } = await pool.query(
+      `SELECT n.id, n.candidate_id, n.body, n.created_at, n.updated_at,
+              u.id AS author_id, u.name AS author_name, u.email AS author_email
+         FROM candidate_notes n
+         JOIN users u ON u.id = n.created_by
+        WHERE n.id = $1`,
+      [rows[0].id]
+    );
+    res.status(201).json({ success: true, data: full[0] });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/candidates/:id/notes/:note_id  — admin/recruiter_admin only
+candidatesRouter.delete(
+  "/:id/notes/:note_id",
+  requireRole("admin", "recruiter_admin"),
+  async (req, res, next) => {
+    try {
+      const { rows } = await pool.query(
+        `DELETE FROM candidate_notes WHERE id = $1 AND candidate_id = $2 RETURNING id`,
+        [req.params.note_id, req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ success: false, error: "Note not found" });
+      res.json({ success: true });
+    } catch (err) { next(err); }
+  }
+);

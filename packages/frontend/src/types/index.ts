@@ -121,6 +121,17 @@ export interface CandidateDocument {
   created_at: string;
 }
 
+export interface CandidateNote {
+  id:           string;
+  candidate_id: string;
+  body:         string;
+  author_id:    string;
+  author_name:  string;
+  author_email: string;
+  created_at:   string;
+  updated_at:   string;
+}
+
 export interface Department {
   id: string;
   name: string;
