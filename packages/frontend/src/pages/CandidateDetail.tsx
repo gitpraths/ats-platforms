@@ -535,7 +535,7 @@ export default function CandidateDetail() {
                                 <span className="text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg px-2.5 py-1">{app.score}/10</span>
                               )}
                               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>
-                                {app.stage.replace("_", " ")}
+                                {stageLabel(app.stage)}
                               </span>
                             </div>
                           </div>
@@ -792,6 +792,12 @@ type AppWithDates = {
   score?: number;
 };
 
+function stageLabel(s: string) {
+  if (!s) return "—";
+  if (s === "ets") return "ETS";
+  return s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ");
+}
+
 const STAGE_BADGE2: Record<string, string> = {
   applied:   "bg-blue-100 text-blue-700",
   screening: "bg-purple-100 text-purple-700",
@@ -1013,15 +1019,15 @@ export function VacanciesTab({
                       <select
                         value={app.stage}
                         onChange={(e) => updateStage.mutate({ appId: app.id, stage: e.target.value })}
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
                       >
                         {["applied","screening","interview","ets","hired","rejected"].map((s) => (
-                          <option key={s} value={s}>{s === "ets" ? "ETS" : s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                          <option key={s} value={s}>{stageLabel(s)}</option>
                         ))}
                       </select>
                     ) : (
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}>
-                        {app.stage.replace("_", " ")}
+                        {stageLabel(app.stage)}
                       </span>
                     )}
                   </td>
