@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { displayEmail } from "../lib/utils";
+import { displayEmail, stageLabel } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
@@ -792,11 +792,7 @@ type AppWithDates = {
   score?: number;
 };
 
-function stageLabel(s: string) {
-  if (!s) return "—";
-  if (s === "ets") return "ETS";
-  return s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ");
-}
+
 
 const STAGE_BADGE2: Record<string, string> = {
   applied:   "bg-blue-100 text-blue-700",
@@ -1021,7 +1017,7 @@ export function VacanciesTab({
                         onChange={(e) => updateStage.mutate({ appId: app.id, stage: e.target.value })}
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
                       >
-                        {["applied","screening","interview","ets","hired","rejected"].map((s) => (
+                        {(["applied","interview","ets","hired","rejected"] as const).map((s) => (
                           <option key={s} value={s}>{stageLabel(s)}</option>
                         ))}
                       </select>

@@ -5,6 +5,7 @@ import { MoreHorizontal, List, Columns } from "lucide-react";
 import { api } from "../lib/api";
 import type { Application, ApplicationStage } from "../types";
 import { format } from "date-fns";
+import { stageLabel } from "../lib/utils";
 import ScreenCandidateButton from "../components/ScreenCandidateButton";
 import Pagination, { PER_PAGE } from "../components/Pagination";
 
@@ -52,7 +53,7 @@ function StageDialog({
               className="w-full border rounded-lg px-3 py-2 text-sm"
             >
               {STAGES.map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                <option key={s} value={s}>{stageLabel(s)}</option>
               ))}
             </select>
           </div>
@@ -161,7 +162,7 @@ function PipelineView({
         {STAGES.map((stage) => (
           <div key={stage} className="min-w-[210px] flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{stage}</span>
+              <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{stageLabel(stage)}</span>
               <span className="text-xs text-slate-400 bg-slate-100 rounded-full px-2">{byStage(stage).length}</span>
             </div>
             <Droppable droppableId={stage}>

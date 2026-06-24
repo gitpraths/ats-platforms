@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useDashboardStats } from "../hooks/useDashboardStats";
 import { useAuth } from "../contexts/AuthContext";
+import { stageLabel } from "../lib/utils";
 import type { Application } from "../types";
 
 const STAGE_ORDER = ["applied", "screening", "interview", "ets", "hired", "rejected"] as const;
@@ -140,7 +141,7 @@ export default function Dashboard() {
             <div key={stage} className="flex items-center gap-1 flex-1 min-w-[80px]">
               <div className={`flex-1 text-center px-3 py-3 rounded-lg border ${STAGE_STEP[stage] ?? "border-slate-200 text-slate-600 bg-slate-50"}`}>
                 <p className="text-xl font-bold">{count}</p>
-                <p className="text-xs capitalize mt-0.5 opacity-80">{stage}</p>
+                <p className="text-xs mt-0.5 opacity-80">{stageLabel(stage)}</p>
               </div>
               {i < arr.length - 1 && <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />}
             </div>
@@ -212,7 +213,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STAGE_BADGE[app.stage]}`}>
-                    {app.stage}
+                    {stageLabel(app.stage)}
                   </span>
                   <span className="text-xs text-slate-400 whitespace-nowrap">
                     {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
