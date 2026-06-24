@@ -1,5 +1,7 @@
 // v2
 import express from "express";
+import path from "path";
+import { mkdirSync } from "fs";
 import cors from "cors";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -82,7 +84,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
 
 // ── Static uploads ────────────────────────────────────────────────────────────
-app.use("/uploads", express.static("uploads"));
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+mkdirSync(path.join(UPLOADS_DIR, "candidates"), { recursive: true });
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => res.json({ success: true, status: "ok" }));

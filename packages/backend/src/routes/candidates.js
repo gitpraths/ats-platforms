@@ -22,8 +22,11 @@ const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
+// Resolve uploads dir relative to CWD (where the server process starts)
+const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
+
 function getDocUpload(candidateId) {
-  const dir = path.join(__dirname, "../../../../uploads/candidates", candidateId);
+  const dir = path.join(UPLOADS_ROOT, "candidates", candidateId);
   fs.mkdirSync(dir, { recursive: true });
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, dir),
@@ -354,7 +357,7 @@ candidatesRouter.get("/:id/documents/:doc_id/download", async (req, res, next) =
       [req.params.doc_id, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
-    const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
+    const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
     res.download(filePath, rows[0].file_name);
   } catch (err) { next(err); }
 });
@@ -368,7 +371,8 @@ candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
       [req.params.doc_id, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
-    const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
+    const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
+
     const mimeType = rows[0].mime_type || "application/octet-stream";
     res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Disposition", `inline; filename="${rows[0].file_name}"`);
@@ -389,7 +393,8 @@ candidatesRouter.delete("/:id/documents/:doc_id", requireRole("admin", "recruite
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
 
-    const filePath = path.join(__dirname, "../../../../", rows[0].file_path);
+    const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
+
     fs.unlink(filePath, () => {});
 
     res.json({ success: true });
