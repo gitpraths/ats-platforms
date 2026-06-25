@@ -1,9 +1,8 @@
 import { useState, useRef } from "react";
-import { displayEmail, stageLabel } from "../lib/utils";
+import { displayEmail, stageLabel, fmtDate, fmtDateTime } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
-import { format } from "date-fns";
 import { api } from "../lib/api";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
@@ -355,7 +354,7 @@ export default function CandidateDetail() {
                 {ext.date_referred && (
                   <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
                     <Calendar size={11} className="text-slate-500 flex-shrink-0" />
-                    Referred {format(new Date(ext.date_referred), "d MMM yyyy")}
+                    Referred {fmtDate(ext.date_referred)}
                   </span>
                 )}
               </div>
@@ -630,7 +629,7 @@ export default function CandidateDetail() {
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-slate-900 truncate">{app.job_title}</p>
                               <p className="text-xs text-slate-400 mt-0.5">
-                                Applied {format(new Date(app.applied_at), "dd MMM yyyy")}
+                                Applied {fmtDate(app.applied_at)}
                                 {app.source && ` · ${app.source}`}
                               </p>
                             </div>
@@ -780,7 +779,7 @@ export default function CandidateDetail() {
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-slate-900 truncate">{doc.file_name}</p>
                                 <p className="text-[10px] text-slate-400">
-                                  {format(new Date(doc.created_at), "dd MMM yyyy")}
+                                  {fmtDate(doc.created_at)}
                                   {doc.file_size && ` · ${Math.round(doc.file_size / 1024)} KB`}
                                 </p>
                               </div>
@@ -982,7 +981,7 @@ function InlineDateCellDetail({
         >
           {saving ? <span className="text-slate-400">Saving…</span>
             : value
-              ? <><span className="font-medium text-slate-800">{format(new Date(value), "d MMM yyyy")}</span>
+              ? <><span className="font-medium text-slate-800">{fmtDate(value)}</span>
                   <Pencil size={9} className="ml-0.5 text-slate-300 group-hover:text-[#e88e2e] opacity-0 group-hover:opacity-100 transition-opacity" /></>
               : <span className="italic text-slate-300 group-hover:text-[#e88e2e]/60">+ set</span>}
         </button>
@@ -1134,7 +1133,7 @@ export function VacanciesTab({
                     )}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                    {format(new Date(app.applied_at), "d MMM yyyy")}
+                    {fmtDate(app.applied_at)}
                   </td>
                   <td className="px-4 py-3">
                     {canWrite ? (
@@ -1145,7 +1144,7 @@ export function VacanciesTab({
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                       />
                     ) : (
-                      <span className="text-xs text-slate-600">{app.interview_date ? format(new Date(app.interview_date), "d MMM yyyy") : "—"}</span>
+                      <span className="text-xs text-slate-600">{fmtDate(app.interview_date)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -1162,7 +1161,7 @@ export function VacanciesTab({
                         }}
                       />
                     ) : (
-                      <span className="text-xs text-slate-600">{app.ets_date ? format(new Date(app.ets_date), "d MMM yyyy") : "—"}</span>
+                      <span className="text-xs text-slate-600">{fmtDate(app.ets_date)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -1181,7 +1180,7 @@ export function VacanciesTab({
                         }}
                       />
                     ) : (
-                      <span className="text-xs text-slate-600">{app.placement_date ? format(new Date(app.placement_date), "d MMM yyyy") : "—"}</span>
+                      <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
                     )}
                   </td>
                   {canWrite && (
@@ -1264,8 +1263,8 @@ export function TrainingTab({ candidateId, canWrite, candidateName }: { candidat
                       {e.status.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.start_date ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.end_date ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.start_date)}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.end_date)}</td>
                   <td className="px-4 py-2.5 text-slate-500">{e.certificate_no ?? "—"}</td>
                   <td className="px-4 py-2.5 text-right">
                     {canWrite && (

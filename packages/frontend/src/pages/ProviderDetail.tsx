@@ -7,6 +7,7 @@ import type { Provider, Candidate, XeroContact } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useXeroContactSearch, useCreateXeroContact, useLinkProviderToXero } from "../hooks/useXero";
 import { format } from "date-fns";
+import { fmtDate } from "../lib/utils";
 import SpreadsheetSyncPanel from "../components/SpreadsheetSyncPanel";
 
 interface ProviderDetailData extends Provider {
@@ -147,7 +148,7 @@ export default function ProviderDetail() {
                       {c.work_status?.replace("_", " ") ?? "job seeking"}
                     </span>
                   </td>
-                  <td className="py-2 text-slate-500">{format(new Date(c.created_at), "MMM d, yyyy")}</td>
+                  <td className="py-2 text-slate-500">{fmtDate(c.created_at)}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
-import { displayEmail } from "../lib/utils";
+import { displayEmail, fmtDate } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Calendar, X, Pencil, Info, FilterX } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -78,7 +78,7 @@ function welfareBandStatus(check: WelfareCheck | undefined, today: string): stri
   if (!check) return "—";
   if (check.completed_at) return "Done";
   if (check.due_date <= today) return "Overdue";
-  return `Due ${format(new Date(check.due_date), "d MMM")}`;
+  return `Due ${fmtDate(check.due_date)}`;
 }
 
 // Pipeline stage derived from candidate's date progression
@@ -363,7 +363,7 @@ function InlineDateCell({
           {saving ? (
             <span className="text-slate-400">Saving…</span>
           ) : value ? (
-            <><span className="font-medium text-slate-700 group-hover:text-[#e88e2e]">{format(new Date(value), "d MMM yy")}</span><Pencil size={9} className="text-slate-300 group-hover:text-[#e88e2e] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" /></>
+            <><span className="font-medium text-slate-700 group-hover:text-[#e88e2e]">{fmtDate(value)}</span><Pencil size={9} className="text-slate-300 group-hover:text-[#e88e2e] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" /></>
           ) : (
             <span className="text-slate-300 group-hover:text-[#e88e2e]/60 italic">+ set</span>
           )}
@@ -774,14 +774,14 @@ export default function Candidates() {
                             { key: "Wage Sub.",  value: row.wage_subsidy ? "Yes" : null },
                           ]}
                         >
-                          {row.date_referred ? format(new Date(row.date_referred), "d MMM yy") : "—"}
+                          {row.date_referred ? fmtDate(row.date_referred) : "—"}
                         </CellTooltip>
                       </td>
 
                       {/* Training Date */}
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
                         {row.training_start_date
-                          ? <span>{format(new Date(row.training_start_date), "d MMM yy")}{row.training_end_date ? <span className="text-slate-300"> – {format(new Date(row.training_end_date), "d MMM yy")}</span> : ""}</span>
+                          ? <span>{fmtDate(row.training_start_date)}{row.training_end_date ? <span className="text-slate-300"> – {fmtDate(row.training_end_date)}</span> : ""}</span>
                           : <span className="text-slate-300">—</span>}
                       </td>
 
@@ -792,8 +792,8 @@ export default function Candidates() {
                           items={[
                             { key: "Employer",  value: row.employer_name },
                             { key: "Job Title", value: row.job_title },
-                            { key: "ETS Date",  value: row.latest_ets_date       ? format(new Date(row.latest_ets_date),       "d MMM yy") : null },
-                            { key: "Placed",    value: row.latest_placement_date ? format(new Date(row.latest_placement_date), "d MMM yy") : null },
+                            { key: "ETS Date",  value: row.latest_ets_date       ? fmtDate(row.latest_ets_date)       : null },
+                            { key: "Placed",    value: row.latest_placement_date ? fmtDate(row.latest_placement_date) : null },
                           ]}
                         >
                           <InlineDateCell

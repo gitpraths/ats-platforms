@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle, Clock, AlertTriangle, Mail, Check } from "lucide-react";
 import { format } from "date-fns";
+import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, WelfareCheck, WelfareCheckType } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -131,7 +132,7 @@ export default function PlacementDetail() {
         <div className="bg-white rounded-xl shadow-sm p-4">
           <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Placement</p>
           <p className="text-sm font-medium text-slate-900">
-            Start: {format(new Date(placement.start_date), "MMM d, yyyy")}
+            Start: {fmtDate(placement.start_date)}
           </p>
           {placement.notes && <p className="text-xs text-slate-500 mt-1">{placement.notes}</p>}
         </div>
@@ -153,10 +154,10 @@ export default function PlacementDetail() {
                     <p className="font-medium text-slate-900 text-sm">{CHECK_LABELS[wc.check_type as WelfareCheckType]}</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${status.cls}`}>{status.label}</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">Due: {format(new Date(wc.due_date), "MMM d, yyyy")}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Due: {fmtDate(wc.due_date)}</p>
                   {wc.completed_at && (
                     <p className="text-xs text-green-600 mt-0.5">
-                      Completed: {format(new Date(wc.completed_at), "MMM d, yyyy")}
+                      Completed: {fmtDate(wc.completed_at)}
                     </p>
                   )}
                   {wc.employer_response && (
@@ -164,7 +165,7 @@ export default function PlacementDetail() {
                   )}
                   {wc.email_sent_at && (
                     <p className="text-xs text-slate-400 mt-1">
-                      Email sent {format(new Date(wc.email_sent_at), "MMM d, yyyy")}
+                      Email sent {fmtDate(wc.email_sent_at)}
                     </p>
                   )}
                 </div>

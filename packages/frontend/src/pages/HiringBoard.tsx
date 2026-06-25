@@ -5,7 +5,7 @@ import { MoreHorizontal, List, Columns } from "lucide-react";
 import { api } from "../lib/api";
 import type { Application, ApplicationStage } from "../types";
 import { format } from "date-fns";
-import { stageLabel } from "../lib/utils";
+import { stageLabel, fmtDate } from "../lib/utils";
 import ScreenCandidateButton from "../components/ScreenCandidateButton";
 import Pagination, { PER_PAGE } from "../components/Pagination";
 
@@ -192,7 +192,7 @@ function PipelineView({
                               <p className="text-xs text-slate-500 truncate">{app.candidate_email}</p>
                               <p className="text-xs text-slate-400 mt-1 truncate">{app.job_title}</p>
                               <p className="text-xs text-slate-400 mt-1">
-                                {app.applied_at ? format(new Date(app.applied_at), "MMM d, yyyy") : ""}
+                                {app.applied_at ? fmtDate(app.applied_at) : ""}
                               </p>
                               {app.source && (
                                 <span className="inline-block mt-1 text-xs border border-slate-400 text-slate-600 bg-transparent rounded px-1">{app.source}</span>
@@ -279,7 +279,7 @@ function ListView({
               </td>
               <td className="py-3 pr-4 text-slate-600">{app.score ?? "—"}</td>
               <td className="py-3 pr-4 text-slate-600 text-xs whitespace-nowrap">
-                {app.interview_date ? format(new Date(app.interview_date), "d MMM yyyy") : "—"}
+                {app.interview_date ? fmtDate(app.interview_date) : "—"}
               </td>
               <td className="py-3 pr-4 text-xs whitespace-nowrap">
                 {app.ets_date ? (() => {
@@ -289,7 +289,7 @@ function ListView({
                 })() : "—"}
               </td>
               <td className="py-3 pr-4 text-slate-500 text-xs">
-                {app.applied_at ? format(new Date(app.applied_at), "MMM d, yyyy") : "—"}
+                {app.applied_at ? fmtDate(app.applied_at) : "—"}
               </td>
               <td className="py-3">
                 <div className="flex items-center gap-2">

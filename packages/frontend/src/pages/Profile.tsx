@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Shield } from "lucide-react";
 import { format } from "date-fns";
+import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { User } from "../types";
@@ -146,7 +147,7 @@ export default function Profile() {
           <div className="flex justify-between">
             <span className="text-slate-500">Member since</span>
             <span className="text-slate-800 font-medium">
-              {user?.created_at ? format(new Date(user.created_at), "MMM d, yyyy") : "—"}
+              {user?.created_at ? fmtDate(user.created_at) : "—"}
             </span>
           </div>
           <div className="flex justify-between">

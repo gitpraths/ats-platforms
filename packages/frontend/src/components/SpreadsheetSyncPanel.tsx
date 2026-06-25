@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
+import { fmtDate, fmtDateTime } from "../lib/utils";
 import {
   CheckCircle2, XCircle, Loader2, Unplug, RefreshCw,
   Link2, Search, FileSpreadsheet, ChevronRight, ArrowLeft,
@@ -170,7 +171,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
             </span>
             {provider.last_synced_at && (
               <span className="text-xs text-slate-400 ml-2">
-                Last synced {format(new Date(provider.last_synced_at), "d MMM yyyy, h:mm a")}
+                Last synced {fmtDateTime(provider.last_synced_at)}
               </span>
             )}
           </>
@@ -339,7 +340,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                               <p className="text-sm font-medium text-slate-800 truncate">{file.name}</p>
                               {file.last_modified && (
                                 <p className="text-xs text-slate-400">
-                                  Modified {format(new Date(file.last_modified), "d MMM yyyy")}
+                                  Modified {fmtDate(file.last_modified)}
                                 </p>
                               )}
                             </div>
@@ -509,7 +510,7 @@ export default function SpreadsheetSyncPanel({ provider, isAdmin }: Props) {
                     <Loader2 size={13} className="text-blue-400 mt-0.5 shrink-0 animate-spin" />
                   )}
                   <span>
-                    {format(new Date(log.started_at), "d MMM h:mm a")}
+                    {fmtDateTime(log.started_at)}
                     {log.status === "failed"
                       ? ` — Failed: ${log.error_message}`
                       : ` — ${log.candidates_created} created, ${log.candidates_updated} updated, ${log.rows_written_back} written back`}

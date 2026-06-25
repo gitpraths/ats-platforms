@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, CheckCircle, Mail } from "lucide-react";
 import { format } from "date-fns";
+import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, Candidate, Employer, Provider, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -181,7 +182,7 @@ export default function Placements() {
                   <td className="px-4 py-3 text-slate-600">{p.employer_name || "—"}</td>
                   <td className="px-4 py-3 text-slate-600">{p.provider_name || "—"}</td>
                   <td className="px-4 py-3 text-slate-700">
-                    {format(new Date(p.start_date), "MMM d, yyyy")}
+                    {fmtDate(p.start_date)}
                   </td>
                   <td className="px-4 py-3">
                     <WelfareCheckDots checks={p.welfare_checks ?? []} />

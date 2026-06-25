@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Pencil, Trash2, Check, X, Search } from "lucide-react";
 import { format } from "date-fns";
+import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { User, UserRole } from "../types";
@@ -166,7 +167,7 @@ export default function AdminUsers() {
                         </div>
                       </td>
                       <td className="px-4 py-2 text-slate-400 text-xs">
-                        {u.created_at ? format(new Date(u.created_at), "MMM d, yyyy") : "—"}
+                        {u.created_at ? fmtDate(u.created_at) : "—"}
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex gap-1 justify-end">
@@ -212,7 +213,7 @@ export default function AdminUsers() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-400 text-xs">
-                        {u.created_at ? format(new Date(u.created_at), "MMM d, yyyy") : "—"}
+                        {u.created_at ? fmtDate(u.created_at) : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1 justify-end">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGenerateXeroInvoice } from "../../hooks/useXero";
 import { ApiError } from "../../lib/api";
 import type { CandidateTraining, XeroContact } from "../../types";
+import { fmtDate } from "../../lib/utils";
 
 interface Props {
   enrolment: CandidateTraining & { candidate_name?: string };
@@ -21,8 +22,8 @@ export function GenerateInvoiceDialog({ enrolment, candidateName, defaultUnitPri
 
   const description =
     `${enrolment.training_name}${candidateName ? ` — ${candidateName}` : ""}` +
-    `${enrolment.start_date ? ` — ${enrolment.start_date}` : ""}` +
-    `${enrolment.end_date ? ` to ${enrolment.end_date}` : ""}`;
+    `${enrolment.start_date ? ` — ${fmtDate(enrolment.start_date)}` : ""}` +
+    `${enrolment.end_date ? ` to ${fmtDate(enrolment.end_date)}` : ""}`;
 
   function submit(xeroContactId?: string) {
     setError("");
@@ -76,7 +77,7 @@ export function GenerateInvoiceDialog({ enrolment, candidateName, defaultUnitPri
       <dl className="text-sm text-slate-600 space-y-1 mb-4">
         <div className="flex"><dt className="w-28 text-slate-400">Candidate</dt><dd className="text-slate-900">{candidateName}</dd></div>
         <div className="flex"><dt className="w-28 text-slate-400">Course</dt><dd>{enrolment.training_name}</dd></div>
-        <div className="flex"><dt className="w-28 text-slate-400">Dates</dt><dd>{enrolment.start_date ?? "—"} → {enrolment.end_date ?? "—"}</dd></div>
+        <div className="flex"><dt className="w-28 text-slate-400">Dates</dt><dd>{fmtDate(enrolment.start_date)} → {fmtDate(enrolment.end_date)}</dd></div>
       </dl>
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>

@@ -7,6 +7,7 @@ import {
   ChevronUp, ChevronRight, Clock, UserCheck, FileText, Minus,
 } from "lucide-react";
 import { format } from "date-fns";
+import { fmtDate, fmtDateTime } from "../lib/utils";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Job, Application, ApplicationStage } from "../types";
@@ -390,7 +391,7 @@ export default function JobDetail() {
                           {a.comment && <p className="text-xs text-slate-500 italic mt-0.5">{a.comment}</p>}
                           <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
                             <Clock size={10} />
-                            {a.user_name} · {format(new Date(a.created_at), "MMM d, yyyy HH:mm")}
+                            {a.user_name} · {fmtDateTime(a.created_at)}
                           </p>
                         </div>
                       ))
@@ -441,7 +442,7 @@ export default function JobDetail() {
                 {job.created_at && (
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500">Created</span>
-                    <span className="text-slate-900 font-medium">{format(new Date(job.created_at), "MMM d, yyyy")}</span>
+                    <span className="text-slate-900 font-medium">{fmtDate(job.created_at)}</span>
                   </div>
                 )}
                 {job.experience_years_min && (

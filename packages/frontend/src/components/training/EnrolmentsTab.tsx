@@ -10,6 +10,7 @@ import type { PrefilterToEnrolments } from "../../pages/Training";
 import { GenerateInvoiceDialog } from "./GenerateInvoiceDialog";
 import { useXeroInvoicesForEnrolment } from "../../hooks/useXero";
 import Pagination from "../Pagination";
+import { fmtDate } from "../../lib/utils";
 
 const ALL_STATUSES: TrainingStatus[] = ["enrolled", "in_progress", "completed", "withdrawn", "failed"];
 
@@ -188,8 +189,8 @@ export function EnrolmentsTab({
                       {e.status.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.start_date ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.end_date ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.start_date)}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.end_date)}</td>
                   <td className="px-4 py-2.5 text-slate-500">{e.certificate_no ?? "—"}</td>
                   <td className="px-4 py-2.5 text-right">
                     <InvoiceCell enrolment={e} onGenerate={setInvoicingEnrolment} />
