@@ -92,7 +92,17 @@ export default function PlacementDetail() {
   });
 
   const updatePlacement = useMutation({
-    mutationFn: (body: { employment_status?: string | null; end_date?: string | null; notes?: string }) =>
+    mutationFn: (body: {
+      employment_status?: string | null;
+      end_date?: string | null;
+      notes?: string;
+      wagesub_status?: string | null;
+      wagesub_4wk_paid_at?: string | null;
+      wagesub_13wk_paid_at?: string | null;
+      wagesub_26wk_paid_at?: string | null;
+      wagesub_notes?: string | null;
+      [key: string]: string | null | undefined;
+    }) =>
       api.patch<Placement>(`/placements/${id}`, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["placement", id] });
