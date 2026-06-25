@@ -1411,16 +1411,19 @@ function EnrolmentDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-slate-500">Start date</label>
-              <input type="date" value={startDate ?? ""} onChange={(e) => setStartDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          {/* Start / End date — only shown on new enrolment, not on edit */}
+          {!enrolment && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-500">Start date</label>
+                <input type="date" value={startDate ?? ""} onChange={(e) => setStartDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">End date</label>
+                <input type="date" value={endDate ?? ""} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-slate-500">End date</label>
-              <input type="date" value={endDate ?? ""} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-          </div>
+          )}
 
           {/* Certificate fields — only when status = completed */}
           {status === "completed" && (
