@@ -36,8 +36,13 @@ import { pool } from "./config/db.js";
 // ── DB migrations (safe to re-run on every boot) ──────────────────────────────
 pool.query(`
   ALTER TABLE placements
-    ADD COLUMN IF NOT EXISTS employment_status TEXT,
-    ADD COLUMN IF NOT EXISTS end_date          DATE
+    ADD COLUMN IF NOT EXISTS employment_status  TEXT,
+    ADD COLUMN IF NOT EXISTS end_date           DATE,
+    ADD COLUMN IF NOT EXISTS wagesub_status     TEXT,
+    ADD COLUMN IF NOT EXISTS wagesub_4wk_paid_at  DATE,
+    ADD COLUMN IF NOT EXISTS wagesub_13wk_paid_at DATE,
+    ADD COLUMN IF NOT EXISTS wagesub_26wk_paid_at DATE,
+    ADD COLUMN IF NOT EXISTS wagesub_notes      TEXT
 `).catch((err) => console.error("[migration] placements columns:", err.message));
 
 const app = express();

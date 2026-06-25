@@ -232,23 +232,43 @@ placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
 });
 
 // ── PATCH /api/placements/:id ─────────────────────────────
-// Lightweight update: employment_status, end_date, notes
+// Lightweight update: employment_status, end_date, notes, wagesub fields
 placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { employment_status, end_date, notes } = req.body;
+    const {
+      employment_status, end_date, notes,
+      wagesub_status,
+      wagesub_4wk_paid_at, wagesub_13wk_paid_at, wagesub_26wk_paid_at,
+      wagesub_notes,
+    } = req.body;
 
     const { rows: existing } = await client.query("SELECT id FROM placements WHERE id = $1", [req.params.id]);
     if (!existing[0]) return res.status(404).json({ success: false, error: "Placement not found" });
 
     const { rows } = await client.query(
       `UPDATE placements
-       SET employment_status = COALESCE($1, employment_status),
-           end_date          = $2,
-           notes             = COALESCE($3, notes),
-           updated_at        = NOW()
-       WHERE id = $4 RETURNING *`,
-      [employment_status ?? null, end_date ?? null, notes ?? null, req.params.id]
+       SET employment_status    = COALESCE($1,  employment_status),
+           end_date             = $2,
+           notes                = COALESCE($3,  notes),
+           wagesub_status       = COALESCE($4,  wagesub_status),
+           wagesub_4wk_paid_at  = $5,
+           wagesub_13wk_paid_at = $6,
+           wagesub_26wk_paid_at = $7,
+           wagesub_notes        = COALESCE($8,  wagesub_notes),
+           updated_at           = NOW()
+       WHERE id = $9 RETURNING *`,
+      [
+        employment_status    ?? null,
+        end_date             ?? null,
+        notes                ?? null,
+        wagesub_status       ?? null,
+        wagesub_4wk_paid_at  !== undefined ? (wagesub_4wk_paid_at  || null) : undefined,
+        wagesub_13wk_paid_at !== undefined ? (wagesub_13wk_paid_at || null) : undefined,
+        wagesub_26wk_paid_at !== undefined ? (wagesub_26wk_paid_at || null) : undefined,
+        wagesub_notes        ?? null,
+        req.params.id,
+      ]
     );
 
     pool.query(

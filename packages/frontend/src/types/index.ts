@@ -102,6 +102,11 @@ export interface Placement {
   start_date: string;
   end_date?: string | null;
   employment_status?: string | null;
+  wagesub_status?: string | null;
+  wagesub_4wk_paid_at?: string | null;
+  wagesub_13wk_paid_at?: string | null;
+  wagesub_26wk_paid_at?: string | null;
+  wagesub_notes?: string | null;
   confirmed_by_employer: boolean;
   confirmation_sent_at?: string | null;
   notes?: string;
