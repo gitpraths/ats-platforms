@@ -1205,7 +1205,12 @@ export function VacanciesTab({
 }
 
 export function TrainingTab({ candidateId, canWrite, candidateName }: { candidateId: string; canWrite: boolean; candidateName: string }) {
-  const { data: enrolments = [], isLoading } = useCandidateTrainings(candidateId);
+  const { data: rawEnrolments = [], isLoading } = useCandidateTrainings(candidateId);
+  const enrolments = [...rawEnrolments].sort((a, b) => {
+    const aVal = a.created_at ?? a.id ?? "";
+    const bVal = b.created_at ?? b.id ?? "";
+    return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [editingEnrolment, setEditingEnrolment] = useState<CandidateTraining | null>(null);
   const [invoicingEnrolment, setInvoicingEnrolment] = useState<CandidateTraining | null>(null);
