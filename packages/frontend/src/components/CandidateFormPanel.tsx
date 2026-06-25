@@ -540,9 +540,9 @@ export function CandidateFormPanel({
         </div>
       </div>
 
-      {/* ── Section 6: Documents & Notes ── */}
+      {/* ── Section 6: Documents ── */}
       <div className={sectionCls}>
-        <p className={sectionTitle}>Documents & Notes</p>
+        <p className={sectionTitle}>Documents</p>
 
         {showResumeUpload && (
           <div>
@@ -579,13 +579,6 @@ export function CandidateFormPanel({
             </div>
           </div>
         )}
-
-        <div>
-          <Label>Comments <span className="text-slate-400 font-normal">(Xero Notes)</span></Label>
-          <textarea value={form.comments} onChange={(e) => set("comments", e.target.value)}
-            rows={4} className={CLS}
-            placeholder="Additional notes or comments about this candidate..." />
-        </div>
       </div>
 
       {/* ── Actions ── */}
