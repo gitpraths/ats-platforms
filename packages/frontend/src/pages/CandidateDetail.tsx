@@ -1334,6 +1334,9 @@ function EnrolmentDialog({
   const [startDate, setStartDate] = useState(enrolment?.start_date ?? "");
   const [endDate, setEndDate] = useState(enrolment?.end_date ?? "");
   const [certificateNo, setCertificateNo] = useState(enrolment?.certificate_no ?? "");
+  const [certificateReceived, setCertificateReceived] = useState<"yes"|"no"|"">(
+    enrolment?.certificate_received === true ? "yes" : enrolment?.certificate_received === false ? "no" : ""
+  );
   const [notes, setNotes] = useState(enrolment?.notes ?? "");
   const [error, setError] = useState("");
 
@@ -1356,6 +1359,7 @@ function EnrolmentDialog({
       start_date: startDate || null,
       end_date: endDate || null,
       certificate_no: certificateNo || null,
+      certificate_received: status === "completed" ? (certificateReceived === "yes" ? true : certificateReceived === "no" ? false : null) : null,
       notes: notes || null,
     };
 
@@ -1392,16 +1396,21 @@ function EnrolmentDialog({
               ))}
             </select>
           </div>
-          <div>
-            <label className="text-xs text-slate-500">Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as TrainingStatus)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
-              <option value="enrolled">Enrolled</option>
-              <option value="in_progress">In progress</option>
-              <option value="completed">Completed</option>
-              <option value="withdrawn">Withdrawn</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
+
+          {/* Status — only shown when EDITING, hidden on new enrolment */}
+          {enrolment && (
+            <div>
+              <label className="text-xs text-slate-500">Status</label>
+              <select value={status} onChange={(e) => { setStatus(e.target.value as TrainingStatus); setCertificateReceived(""); }} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+                <option value="enrolled">Enrolled</option>
+                <option value="in_progress">In progress</option>
+                <option value="completed">Completed</option>
+                <option value="withdrawn">Withdrawn</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-slate-500">Start date</label>
@@ -1412,11 +1421,29 @@ function EnrolmentDialog({
               <input type="date" value={endDate ?? ""} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
+
+          {/* Certificate fields — only when status = completed */}
           {status === "completed" && (
-            <div>
-              <label className="text-xs text-slate-500">Certificate #</label>
-              <input value={certificateNo ?? ""} onChange={(e) => setCertificateNo(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
+            <>
+              <div>
+                <label className="text-xs text-slate-500 font-medium">Certificate Received?</label>
+                <select
+                  value={certificateReceived}
+                  onChange={(e) => setCertificateReceived(e.target.value as "yes"|"no"|"")}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mt-0.5"
+                >
+                  <option value="">— Select —</option>
+                  <option value="yes">Yes — certificate received</option>
+                  <option value="no">No — not yet received</option>
+                </select>
+              </div>
+              {certificateReceived === "yes" && (
+                <div>
+                  <label className="text-xs text-slate-500">Certificate #</label>
+                  <input value={certificateNo ?? ""} onChange={(e) => setCertificateNo(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="e.g. CERT-2024-001" />
+                </div>
+              )}
+            </>
           )}
           <div>
             <label className="text-xs text-slate-500">Notes</label>

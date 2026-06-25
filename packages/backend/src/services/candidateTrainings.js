@@ -49,7 +49,7 @@ export async function getEnrolment(id) {
   return rows[0] || null;
 }
 
-export async function createEnrolment({ candidate_id, training_id, status, start_date, end_date, certificate_no, notes, created_by }) {
+export async function createEnrolment({ candidate_id, training_id, status, start_date, end_date, certificate_no, certificate_received, notes, created_by }) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -57,10 +57,10 @@ export async function createEnrolment({ candidate_id, training_id, status, start
     const completed_at = effectiveStatus === "completed" ? new Date().toISOString().slice(0, 10) : null;
     const { rows } = await client.query(
       `INSERT INTO candidate_trainings
-         (candidate_id, training_id, status, start_date, end_date, completed_at, certificate_no, notes, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         (candidate_id, training_id, status, start_date, end_date, completed_at, certificate_no, certificate_received, notes, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id`,
-      [candidate_id, training_id, effectiveStatus, start_date || null, end_date || null, completed_at, certificate_no || null, notes || null, created_by || null]
+      [candidate_id, training_id, effectiveStatus, start_date || null, end_date || null, completed_at, certificate_no || null, certificate_received ?? null, notes || null, created_by || null]
     );
     await syncCandidateActiveTraining(candidate_id, client);
     await client.query("COMMIT");
@@ -91,20 +91,22 @@ export async function updateEnrolment(id, fields) {
 
     await client.query(
       `UPDATE candidate_trainings
-          SET status         = COALESCE($1, status),
-              start_date     = COALESCE($2, start_date),
-              end_date       = COALESCE($3, end_date),
-              completed_at   = COALESCE($4, completed_at),
-              certificate_no = COALESCE($5, certificate_no),
-              notes          = COALESCE($6, notes),
-              updated_at     = NOW()
-        WHERE id = $7`,
+          SET status               = COALESCE($1, status),
+              start_date           = COALESCE($2, start_date),
+              end_date             = COALESCE($3, end_date),
+              completed_at         = COALESCE($4, completed_at),
+              certificate_no       = COALESCE($5, certificate_no),
+              certificate_received = COALESCE($6, certificate_received),
+              notes                = COALESCE($7, notes),
+              updated_at           = NOW()
+        WHERE id = $8`,
       [
         fields.status ?? null,
         fields.start_date ?? null,
         fields.end_date ?? null,
         completed_at ?? null,
         fields.certificate_no ?? null,
+        fields.certificate_received ?? null,
         fields.notes ?? null,
         id,
       ]

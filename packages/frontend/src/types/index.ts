@@ -329,6 +329,7 @@ export interface CandidateTraining {
   end_date: string | null;
   completed_at: string | null;
   certificate_no: string | null;
+  certificate_received: boolean | null;
   notes: string | null;
   created_by: string | null;
   created_at: string;
