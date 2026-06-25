@@ -58,7 +58,8 @@ placementsRouter.get("/", async (req, res, next) => {
 
     const { rows } = await pool.query(
       `SELECT p.id, p.application_id, p.candidate_id, p.job_id, p.employer_id,
-              p.start_date, p.confirmed_by_employer, p.confirmation_sent_at,
+              p.start_date, p.end_date, p.employment_status,
+              p.confirmed_by_employer, p.confirmation_sent_at,
               p.notes, p.created_at, p.updated_at,
               c.name AS candidate_name, c.work_status AS candidate_work_status,
               c.provider_id,
@@ -224,6 +225,40 @@ placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     await client.query("ROLLBACK");
+    next(err);
+  } finally {
+    client.release();
+  }
+});
+
+// ── PATCH /api/placements/:id ─────────────────────────────
+// Lightweight update: employment_status, end_date, notes
+placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const { employment_status, end_date, notes } = req.body;
+
+    const { rows: existing } = await client.query("SELECT id FROM placements WHERE id = $1", [req.params.id]);
+    if (!existing[0]) return res.status(404).json({ success: false, error: "Placement not found" });
+
+    const { rows } = await client.query(
+      `UPDATE placements
+       SET employment_status = COALESCE($1, employment_status),
+           end_date          = $2,
+           notes             = COALESCE($3, notes),
+           updated_at        = NOW()
+       WHERE id = $4 RETURNING *`,
+      [employment_status ?? null, end_date ?? null, notes ?? null, req.params.id]
+    );
+
+    pool.query(
+      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by)
+       VALUES ('placement', $1, 'updated', $2)`,
+      [req.params.id, req.user.id]
+    ).catch(() => {});
+
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
     next(err);
   } finally {
     client.release();

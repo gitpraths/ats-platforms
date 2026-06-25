@@ -31,6 +31,14 @@ import { errorHandler }       from "./middleware/errorHandler.js";
 import { requestLogger }      from "./middleware/requestLogger.js";
 import { requestId }          from "./middleware/requestId.js";
 import { startWelfareCheckCron } from "./services/welfare-check-cron.js";
+import { pool } from "./config/db.js";
+
+// ── DB migrations (safe to re-run on every boot) ──────────────────────────────
+pool.query(`
+  ALTER TABLE placements
+    ADD COLUMN IF NOT EXISTS employment_status TEXT,
+    ADD COLUMN IF NOT EXISTS end_date          DATE
+`).catch((err) => console.error("[migration] placements columns:", err.message));
 
 const app = express();
 
