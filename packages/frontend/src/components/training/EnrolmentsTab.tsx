@@ -178,7 +178,14 @@ export function EnrolmentsTab({
             <tbody className="divide-y divide-slate-100">
               {rows.map((e) => (
                 <tr key={e.id}>
-                  <td className="px-4 py-2.5 text-slate-900">{e.candidate_name}</td>
+                  <td className="px-4 py-2.5">
+                    <Link
+                      to={`/candidates/${e.candidate_id}`}
+                      className="text-[#e88e2e] hover:underline font-medium"
+                    >
+                      {e.candidate_name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-2.5 text-slate-700">
                     {e.training_name}
                     {e.training_code && <span className="text-xs text-slate-400 ml-1">({e.training_code})</span>}
