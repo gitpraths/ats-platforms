@@ -233,134 +233,126 @@ export default function PlacementDetail() {
       </div>
 
       {/* Wage Subsidy Section */}
-      {(() => {
-        const WAGESUB_STATUSES = [
-          { value: "pending",     label: "Pending",     cls: "bg-slate-100 text-slate-600 border-slate-300" },
-          { value: "approved",    label: "Approved",    cls: "bg-blue-100 text-blue-700 border-blue-300" },
-          { value: "in_progress", label: "In Progress", cls: "bg-amber-100 text-amber-700 border-amber-300" },
-          { value: "claimed",     label: "Claimed",     cls: "bg-purple-100 text-purple-700 border-purple-300" },
-          { value: "paid",        label: "Paid",        cls: "bg-green-100 text-green-700 border-green-300" },
-        ];
-
-        function addWeeks(dateStr: string, weeks: number): string {
-          const d = new Date(dateStr);
-          d.setDate(d.getDate() + weeks * 7);
-          return d.toISOString().split("T")[0];
-        }
-
-        const milestones: { label: string; weeks: number; paidAt: string | null | undefined; field: "wagesub_4wk_paid_at" | "wagesub_13wk_paid_at" | "wagesub_26wk_paid_at" }[] = [
-          { label: "4-Week Instalment",  weeks: 4,  paidAt: placement.wagesub_4wk_paid_at,  field: "wagesub_4wk_paid_at"  },
-          { label: "13-Week Instalment", weeks: 13, paidAt: placement.wagesub_13wk_paid_at, field: "wagesub_13wk_paid_at" },
-          { label: "26-Week Instalment", weeks: 26, paidAt: placement.wagesub_26wk_paid_at, field: "wagesub_26wk_paid_at" },
-        ];
-
-        const currentStatus = WAGESUB_STATUSES.find((s) => s.value === placement.wagesub_status);
-
-        return (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-              <h2 className="font-semibold text-slate-900 tracking-tight">Wage Subsidy</h2>
-              {canAct && (
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-500 font-medium">Status:</label>
-                  <select
-                    value={placement.wagesub_status ?? ""}
-                    onChange={(e) => updatePlacement.mutate({ wagesub_status: e.target.value || null })}
-                    className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                  >
-                    <option value="">— Not set —</option>
-                    {WAGESUB_STATUSES.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                  {currentStatus && (
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${currentStatus.cls}`}>
-                      {currentStatus.label}
-                    </span>
-                  )}
-                </div>
-              )}
-              {!canAct && currentStatus && (
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${currentStatus.cls}`}>
-                  {currentStatus.label}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 className="font-semibold text-slate-900 tracking-tight">Wage Subsidy</h2>
+          {canAct && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-500 font-medium">Status:</label>
+              <select
+                value={placement.wagesub_status ?? ""}
+                onChange={(e) => updatePlacement.mutate({ wagesub_status: e.target.value || null })}
+                className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+              >
+                <option value="">— Not set —</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="in_progress">In Progress</option>
+                <option value="claimed">Claimed</option>
+                <option value="paid">Paid</option>
+              </select>
+              {placement.wagesub_status && (
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                  placement.wagesub_status === "pending"     ? "bg-slate-100 text-slate-600 border-slate-300" :
+                  placement.wagesub_status === "approved"    ? "bg-blue-100 text-blue-700 border-blue-300" :
+                  placement.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700 border-amber-300" :
+                  placement.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700 border-purple-300" :
+                  placement.wagesub_status === "paid"        ? "bg-green-100 text-green-700 border-green-300" :
+                  "bg-slate-100 text-slate-600 border-slate-300"
+                }`}>
+                  {placement.wagesub_status === "in_progress" ? "In Progress" :
+                   placement.wagesub_status.charAt(0).toUpperCase() + placement.wagesub_status.slice(1)}
                 </span>
               )}
             </div>
+          )}
+        </div>
 
-            {/* Milestones */}
-            <div className="space-y-3 mb-4">
-              {milestones.map((m) => {
-                const dueDate = addWeeks(placement.start_date, m.weeks);
-                const isPaid = !!m.paidAt;
-                const isOverdue = !isPaid && dueDate <= today;
-                return (
-                  <div key={m.field} className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${
-                    isPaid ? "border-green-200 bg-green-50/40" :
-                    isOverdue ? "border-amber-200 bg-amber-50/30" :
-                    "border-slate-100"
-                  }`}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                        isPaid ? "bg-green-500" : isOverdue ? "bg-amber-400" : "bg-slate-300"
-                      }`} />
-                      <div>
-                        <p className="text-sm font-medium text-slate-800">{m.label}</p>
-                        <p className="text-xs text-slate-500">
-                          Due: {fmtDate(dueDate)}
-                          {isPaid && (
-                            <span className="ml-2 text-green-600 font-medium">
-                              · Paid {fmtDate(m.paidAt!)}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        isPaid ? "bg-green-100 text-green-700" :
-                        isOverdue ? "bg-amber-100 text-amber-700" :
-                        "bg-slate-100 text-slate-500"
-                      }`}>
-                        {isPaid ? "✓ Paid" : isOverdue ? "Due" : "Upcoming"}
-                      </span>
-                      {canAct && !isPaid && (
-                        <button
-                          onClick={() => updatePlacement.mutate({ [m.field]: new Date().toISOString().split("T")[0] } as Parameters<typeof updatePlacement.mutate>[0])}
-                          disabled={updatePlacement.isPending}
-                          className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                          Mark Paid
-                        </button>
-                      )}
-                      {canAct && isPaid && (
-                        <button
-                          onClick={() => updatePlacement.mutate({ [m.field]: null } as Parameters<typeof updatePlacement.mutate>[0])}
-                          disabled={updatePlacement.isPending}
-                          className="text-xs px-2 py-1 border border-slate-200 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-50"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+        {/* 4-Week Instalment */}
+        {["4wk", "13wk", "26wk"].map((key) => {
+          const weeks = key === "4wk" ? 4 : key === "13wk" ? 13 : 26;
+          const label = key === "4wk" ? "4-Week Instalment" : key === "13wk" ? "13-Week Instalment" : "26-Week Instalment";
+          const paidAtKey = `wagesub_${key}_paid_at` as "wagesub_4wk_paid_at" | "wagesub_13wk_paid_at" | "wagesub_26wk_paid_at";
+          const paidAt = placement[paidAtKey];
+
+          const d = new Date(placement.start_date);
+          d.setDate(d.getDate() + weeks * 7);
+          const dueDate = d.toISOString().split("T")[0];
+
+          const isPaid = !!paidAt;
+          const isOverdue = !isPaid && dueDate <= today;
+
+          return (
+            <div key={key} className={`flex items-center justify-between gap-3 p-3 rounded-xl border mb-3 ${
+              isPaid ? "border-green-200 bg-green-50/40" :
+              isOverdue ? "border-amber-200 bg-amber-50/30" :
+              "border-slate-100"
+            }`}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                  isPaid ? "bg-green-500" : isOverdue ? "bg-amber-400" : "bg-slate-300"
+                }`} />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{label}</p>
+                  <p className="text-xs text-slate-500">
+                    Due: {fmtDate(dueDate)}
+                    {isPaid && (
+                      <span className="ml-2 text-green-600 font-medium">· Paid {fmtDate(paidAt!)}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  isPaid ? "bg-green-100 text-green-700" :
+                  isOverdue ? "bg-amber-100 text-amber-700" :
+                  "bg-slate-100 text-slate-500"
+                }`}>
+                  {isPaid ? "✓ Paid" : isOverdue ? "Due" : "Upcoming"}
+                </span>
+                {canAct && !isPaid && (
+                  <button
+                    onClick={() => {
+                      const body: Record<string, string | null> = {};
+                      body[paidAtKey] = new Date().toISOString().split("T")[0];
+                      updatePlacement.mutate(body);
+                    }}
+                    disabled={updatePlacement.isPending}
+                    className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Mark Paid
+                  </button>
+                )}
+                {canAct && isPaid && (
+                  <button
+                    onClick={() => {
+                      const body: Record<string, string | null> = {};
+                      body[paidAtKey] = null;
+                      updatePlacement.mutate(body);
+                    }}
+                    disabled={updatePlacement.isPending}
+                    className="text-xs px-2 py-1 border border-slate-200 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
+          );
+        })}
 
-            {/* Wagesub Notes */}
-            {canAct && (
-              <WagesubNotes
-                value={placement.wagesub_notes ?? ""}
-                onSave={(val) => updatePlacement.mutate({ wagesub_notes: val })}
-                isPending={updatePlacement.isPending}
-              />
-            )}
-            {!canAct && placement.wagesub_notes && (
-              <p className="text-xs text-slate-500 italic mt-2">{placement.wagesub_notes}</p>
-            )}
-          </div>
-        );
-      })()}
+        {/* Wagesub Notes */}
+        {canAct && (
+          <WagesubNotes
+            value={placement.wagesub_notes ?? ""}
+            onSave={(val) => updatePlacement.mutate({ wagesub_notes: val })}
+            isPending={updatePlacement.isPending}
+          />
+        )}
+        {!canAct && placement.wagesub_notes && (
+          <p className="text-xs text-slate-500 italic mt-2">{placement.wagesub_notes}</p>
+        )}
+      </div>
 
       {/* Welfare Check Timeline */}
       <div className="bg-white rounded-xl shadow-sm p-6">
