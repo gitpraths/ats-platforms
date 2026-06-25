@@ -7,7 +7,6 @@ import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, WelfareCheck, WelfareCheckType } from "../types";
 import { useAuth } from "../contexts/AuthContext";
-import WelfareCheckDots from "../components/WelfareCheckDots";
 
 const CHECK_LABELS: Record<WelfareCheckType, string> = {
   day_1:   "Day 1 Check",
@@ -16,6 +15,14 @@ const CHECK_LABELS: Record<WelfareCheckType, string> = {
   month_3: "3 Month Check",
   month_6: "6 Month Check",
 };
+
+/** Calculate full weeks elapsed since a YYYY-MM-DD date string. Returns -1 if invalid. */
+function weeksOnPlacement(startDate: string): number {
+  if (!startDate) return -1;
+  const start = new Date(startDate);
+  if (isNaN(start.getTime())) return -1;
+  return Math.floor((Date.now() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+}
 
 export default function PlacementDetail() {
   const { id } = useParams<{ id: string }>();
@@ -104,9 +111,24 @@ export default function PlacementDetail() {
               </Link>
             </p>
           )}
-          <div className="flex items-center gap-2 mt-2">
-            <WelfareCheckDots checks={wcs} />
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ml-2 ${
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            {(() => {
+              const wks = weeksOnPlacement(placement.start_date);
+              if (wks < 0) return null;
+              if (wks < 26) return (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-700 border border-orange-200">
+                  {wks} week{wks !== 1 ? "s" : ""} on placement
+                  <span className="text-xs font-normal opacity-80">· Check employment status</span>
+                </span>
+              );
+              return (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700 border border-green-200">
+                  {wks} weeks on placement
+                  <span className="text-xs font-normal opacity-80">· ✓ 26wk milestone reached</span>
+                </span>
+              );
+            })()}
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               placement.confirmed_by_employer
                 ? "border border-green-500 text-green-700 bg-transparent"
                 : "border border-amber-400 text-amber-600 bg-transparent"
