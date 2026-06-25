@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle, Clock, AlertTriangle, Mail, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, AlertTriangle, Mail, Check, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
@@ -25,6 +25,11 @@ export default function PlacementDetail() {
 
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [employerResponse, setEmployerResponse] = useState("");
+  const [showEdit, setShowEdit] = useState(false);
+  const [editStatus, setEditStatus] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editError, setEditError] = useState("");
 
   const { data: placement, isLoading } = useQuery<Placement>({
     queryKey: ["placement", id],
@@ -49,6 +54,17 @@ export default function PlacementDetail() {
   const sendWelfareEmail = useMutation({
     mutationFn: (checkId: string) => api.post(`/welfare-checks/${checkId}/send-email`, {}),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["placement", id] }),
+  });
+
+  const updatePlacement = useMutation({
+    mutationFn: (body: { employment_status?: string | null; end_date?: string | null; notes?: string }) =>
+      api.patch<Placement>(`/placements/${id}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["placement", id] });
+      queryClient.invalidateQueries({ queryKey: ["placements"] });
+      setShowEdit(false);
+    },
+    onError: (err: Error) => setEditError(err.message),
   });
 
   if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
@@ -99,12 +115,28 @@ export default function PlacementDetail() {
             </span>
           </div>
         </div>
-        {canAct && !placement.confirmed_by_employer && (
-          <button onClick={() => sendConfirmation.mutate()}
-            disabled={sendConfirmation.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#e88e2e] text-white rounded-lg text-sm hover:bg-[#d07d20] disabled:opacity-50">
-            <Mail size={14} /> {sendConfirmation.isPending ? "Sending..." : "Send Confirmation Email"}
-          </button>
+        {canAct && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setEditStatus(placement.employment_status ?? "");
+                setEditEndDate(placement.end_date ?? "");
+                setEditNotes(placement.notes ?? "");
+                setEditError("");
+                setShowEdit(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm hover:bg-slate-50"
+            >
+              <Pencil size={14} /> Edit
+            </button>
+            {!placement.confirmed_by_employer && (
+              <button onClick={() => sendConfirmation.mutate()}
+                disabled={sendConfirmation.isPending}
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#e88e2e] text-white rounded-lg text-sm hover:bg-[#d07d20] disabled:opacity-50">
+                <Mail size={14} /> {sendConfirmation.isPending ? "Sending..." : "Send Confirmation Email"}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -131,9 +163,21 @@ export default function PlacementDetail() {
         </div>
         <div className="bg-white rounded-xl shadow-sm p-4">
           <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Placement</p>
-          <p className="text-sm font-medium text-slate-900">
-            Start: {fmtDate(placement.start_date)}
-          </p>
+          <p className="text-sm font-medium text-slate-900">Start: {fmtDate(placement.start_date)}</p>
+          {placement.end_date && (
+            <p className="text-sm text-slate-600 mt-0.5">End: {fmtDate(placement.end_date)}</p>
+          )}
+          {placement.employment_status && (
+            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-semibold ${
+              placement.employment_status === "active" ? "bg-green-100 text-green-700" :
+              placement.employment_status === "resigned" ? "bg-orange-100 text-orange-700" :
+              placement.employment_status === "terminated" ? "bg-red-100 text-red-700" :
+              placement.employment_status === "completed" ? "bg-blue-100 text-blue-700" :
+              "bg-slate-100 text-slate-600"
+            }`}>
+              {placement.employment_status.charAt(0).toUpperCase() + placement.employment_status.slice(1)}
+            </span>
+          )}
           {placement.notes && <p className="text-xs text-slate-500 mt-1">{placement.notes}</p>}
         </div>
       </div>
@@ -212,6 +256,71 @@ export default function PlacementDetail() {
                 disabled={markComplete.isPending}
                 className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
                 {markComplete.isPending ? "Saving..." : "Confirm Complete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Placement Dialog */}
+      {showEdit && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Edit Placement</h2>
+            {editError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3">{editError}</p>
+            )}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Employment Status</label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  <option value="">— Select status —</option>
+                  <option value="active">Active</option>
+                  <option value="resigned">Resigned</option>
+                  <option value="terminated">Terminated</option>
+                  <option value="on_leave">On Leave</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={editEndDate}
+                  onChange={(e) => setEditEndDate(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+                <p className="text-[11px] text-slate-400 mt-0.5">Set for resignations, terminations or placement end</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Add reason for status change, context..."
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-4">
+              <button
+                onClick={() => setShowEdit(false)}
+                className="px-4 py-2 text-sm text-slate-600 border rounded-lg hover:bg-slate-50"
+              >Cancel</button>
+              <button
+                onClick={() => updatePlacement.mutate({
+                  employment_status: editStatus || null,
+                  end_date: editEndDate || null,
+                  notes: editNotes || undefined,
+                })}
+                disabled={updatePlacement.isPending}
+                className="px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50"
+              >
+                {updatePlacement.isPending ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

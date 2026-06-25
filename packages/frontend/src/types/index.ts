@@ -100,6 +100,8 @@ export interface Placement {
   provider_id?: string;
   provider_name?: string;
   start_date: string;
+  end_date?: string | null;
+  employment_status?: string | null;
   confirmed_by_employer: boolean;
   confirmation_sent_at?: string | null;
   notes?: string;

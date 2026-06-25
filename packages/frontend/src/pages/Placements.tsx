@@ -7,7 +7,7 @@ import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, Candidate, Employer, Provider, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
-import WelfareCheckDots from "../components/WelfareCheckDots";
+
 import Pagination from "../components/Pagination";
 import SearchableSelect from "../components/SearchableSelect";
 
@@ -22,6 +22,15 @@ interface CreateForm {
   start_date: string;
   notes: string;
   application_id: string;
+}
+
+/** Calculate full weeks elapsed since a YYYY-MM-DD date string. Returns -1 if invalid. */
+function weeksOnPlacement(startDate: string): number {
+  if (!startDate) return -1;
+  const start = new Date(startDate);
+  if (isNaN(start.getTime())) return -1;
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.floor((Date.now() - start.getTime()) / msPerWeek);
 }
 
 export default function Placements() {
@@ -157,7 +166,7 @@ export default function Placements() {
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Employer</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Provider</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Start Date</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Welfare</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Weeks</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Confirmed</th>
               <th className="px-4 py-3" />
             </tr>
@@ -185,7 +194,26 @@ export default function Placements() {
                     {fmtDate(p.start_date)}
                   </td>
                   <td className="px-4 py-3">
-                    <WelfareCheckDots checks={p.welfare_checks ?? []} />
+                    {(() => {
+                      const wks = weeksOnPlacement(p.start_date);
+                      if (wks < 0) return <span className="text-slate-300 text-xs">—</span>;
+                      if (wks < 26) return (
+                        <span className="inline-flex flex-col gap-0.5">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200">
+                            {wks} wk{wks !== 1 ? "s" : ""}
+                          </span>
+                          <span className="text-[10px] text-orange-500 font-medium">Check status</span>
+                        </span>
+                      );
+                      return (
+                        <span className="inline-flex flex-col gap-0.5">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                            {wks} wks
+                          </span>
+                          <span className="text-[10px] text-green-600 font-medium">✓ 26wk+</span>
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     {p.confirmed_by_employer
