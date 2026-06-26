@@ -187,7 +187,7 @@ statsRouter.get("/training-by-type", async (_req, res, next) => {
       WHERE ct.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
         AND ct.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
-      ORDER BY DATE_TRUNC('month', ct.created_at), t.name
+      ORDER BY 1, 2
     `);
     res.json({ success: true, data: pivotToMonths(rows, months) });
   } catch (err) { next(err); }
@@ -208,7 +208,7 @@ statsRouter.get("/candidates-by-provider", async (_req, res, next) => {
       WHERE c.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
         AND c.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
-      ORDER BY DATE_TRUNC('month', c.created_at), group_key
+      ORDER BY 1, 2
     `);
     res.json({ success: true, data: pivotToMonths(rows, months) });
   } catch (err) { next(err); }
@@ -230,7 +230,7 @@ statsRouter.get("/placements-by-provider", async (_req, res, next) => {
       WHERE pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
         AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
-      ORDER BY DATE_TRUNC('month', pl.created_at), group_key
+      ORDER BY 1, 2
     `);
     res.json({ success: true, data: pivotToMonths(rows, months) });
   } catch (err) { next(err); }
@@ -252,7 +252,7 @@ statsRouter.get("/placements-by-staff", async (_req, res, next) => {
         AND pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
         AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
-      ORDER BY DATE_TRUNC('month', pl.created_at), u.name
+      ORDER BY 1, 2
     `);
     res.json({ success: true, data: pivotToMonths(rows, months) });
   } catch (err) { next(err); }
