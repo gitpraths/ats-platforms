@@ -22,6 +22,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { stageLabel } from "../lib/utils";
 import type { Application } from "../types";
 import CreateJobDialog from "../components/CreateJobDialog";
+import AddCandidateDialog from "../components/AddCandidateDialog";
+import AddEmployerDialog from "../components/AddEmployerDialog";
 
 // ── Colour palette for grouped bar charts ─────────────────────────────────────
 const BAR_COLOURS = [
@@ -147,7 +149,9 @@ export default function Dashboard() {
   const { data: placProvData }    = usePlacementsByProvider();
   const { data: placStaffData }   = usePlacementsByStaff();
 
-  const [jobDialogOpen, setJobDialogOpen] = useState(false);
+  const [jobDialogOpen, setJobDialogOpen]           = useState(false);
+  const [candidateDialogOpen, setCandidateDialogOpen] = useState(false);
+  const [employerDialogOpen, setEmployerDialogOpen]   = useState(false);
 
   const { data: applications = [] } = useQuery<Application[]>({
     queryKey: ["applications-recent"],
@@ -197,14 +201,14 @@ export default function Dashboard() {
         <div className="flex items-center gap-3 flex-shrink-0">
           <button
             id="quick-add-candidate"
-            onClick={() => navigate("/candidates/new")}
+            onClick={() => setCandidateDialogOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
           >
             <UserPlus size={15} />+ Add Candidate
           </button>
           <button
             id="quick-add-employer"
-            onClick={() => navigate("/employers/new")}
+            onClick={() => setEmployerDialogOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
           >
             <Building2 size={15} />+ Add Employer
@@ -219,8 +223,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Create Job Dialog */}
-      <CreateJobDialog isOpen={jobDialogOpen} onClose={() => setJobDialogOpen(false)} />
+      {/* Dialogs */}
+      <CreateJobDialog    isOpen={jobDialogOpen}       onClose={() => setJobDialogOpen(false)} />
+      <AddCandidateDialog isOpen={candidateDialogOpen} onClose={() => setCandidateDialogOpen(false)} />
+      <AddEmployerDialog  isOpen={employerDialogOpen}  onClose={() => setEmployerDialogOpen(false)} />
 
       {/* ── Row 1: Core stat cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
