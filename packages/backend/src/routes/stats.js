@@ -159,34 +159,35 @@ function pivotToMonths(rawRows, last6Months) {
 }
 
 // Build the ordered list of last 6 month labels (oldest first)
+// Use hardcoded abbreviations to exactly match Postgres TO_CHAR(..., 'Mon YYYY')
 function last6MonthLabels() {
+  const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const labels = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
     d.setDate(1);
     d.setMonth(d.getMonth() - i);
-    labels.push(d.toLocaleString("en-AU", { month: "short", year: "numeric" }));
+    labels.push(`${MON[d.getMonth()]} ${d.getFullYear()}`);
   }
   return labels;
 }
 
 // GET /api/stats/training-by-type
-// Completed trainings grouped by training name, last 6 months
+// Trainings grouped by training name, last 6 months (uses created_at so all statuses are included)
 statsRouter.get("/training-by-type", async (_req, res, next) => {
   try {
     const months = last6MonthLabels();
     const { rows } = await pool.query(`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', ct.completed_at), 'Mon YYYY') AS month,
-        t.name                                                      AS group_key,
-        COUNT(ct.id)::int                                           AS count
+        TO_CHAR(DATE_TRUNC('month', ct.created_at), 'Mon YYYY') AS month,
+        t.name                                                    AS group_key,
+        COUNT(ct.id)::int                                         AS count
       FROM candidate_trainings ct
       JOIN trainings t ON t.id = ct.training_id
-      WHERE ct.status = 'completed'
-        AND ct.completed_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
-        AND ct.completed_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      WHERE ct.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND ct.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
-      ORDER BY DATE_TRUNC('month', ct.completed_at), t.name
+      ORDER BY DATE_TRUNC('month', ct.created_at), t.name
     `);
     res.json({ success: true, data: pivotToMonths(rows, months) });
   } catch (err) { next(err); }
