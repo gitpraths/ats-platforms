@@ -1,31 +1,57 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Briefcase, Users, ClipboardList, CheckCircle, MapPin, Building2, AlertTriangle, UserCheck, ChevronRight } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
+} from "recharts";
+import {
+  Briefcase, Users, ClipboardList, CheckCircle, MapPin, Building2,
+  AlertTriangle, UserCheck, UserPlus, PlusSquare, ChevronRight,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { useDashboardStats } from "../hooks/useDashboardStats";
+import {
+  useDashboardStats,
+  useTrainingByType,
+  useCandidatesByProvider,
+  usePlacementsByProvider,
+  usePlacementsByStaff,
+  type ChartMonth,
+} from "../hooks/useDashboardStats";
 import { useAuth } from "../contexts/AuthContext";
 import { stageLabel } from "../lib/utils";
 import type { Application } from "../types";
+import CreateJobDialog from "../components/CreateJobDialog";
+
+// ── Colour palette for grouped bar charts ─────────────────────────────────────
+const BAR_COLOURS = [
+  "#6366f1", // indigo
+  "#10b981", // emerald
+  "#f59e0b", // amber
+  "#0ea5e9", // sky
+  "#f97316", // orange
+  "#8b5cf6", // violet
+  "#14b8a6", // teal
+  "#ef4444", // red
+];
 
 const STAGE_ORDER = ["applied", "interview", "ets", "hired", "rejected"] as const;
 
-const STAGE_BADGE: Record<string, string> = {
-  applied:   "border border-blue-400 text-blue-600 bg-transparent",
-  screening: "border border-purple-400 text-purple-600 bg-transparent",
-  interview: "border border-amber-400 text-amber-600 bg-transparent",
-  ets:       "border border-orange-400 text-orange-600 bg-transparent",
-  hired:     "border border-green-500 text-green-700 bg-transparent",
-  rejected:  "border border-red-400 text-red-500 bg-transparent",
+const STAGE_CHIP: Record<string, string> = {
+  applied:   "bg-blue-50 text-blue-700 border border-blue-200",
+  interview: "bg-amber-50 text-amber-700 border border-amber-200",
+  ets:       "bg-orange-50 text-orange-700 border border-orange-200",
+  hired:     "bg-green-50 text-green-700 border border-green-200",
+  rejected:  "bg-red-50 text-red-700 border border-red-200",
 };
 
-const STAGE_STEP: Record<string, string> = {
-  applied:   "border-blue-200 text-blue-700 bg-blue-50",
-  screening: "border-purple-200 text-purple-700 bg-purple-50",
-  interview: "border-amber-200 text-amber-700 bg-amber-50",
-  ets:       "border-orange-200 text-orange-700 bg-orange-50",
-  hired:     "border-green-200 text-green-700 bg-green-50",
+const STAGE_BADGE: Record<string, string> = {
+  applied:   "border border-blue-400 text-blue-600",
+  screening: "border border-purple-400 text-purple-600",
+  interview: "border border-amber-400 text-amber-600",
+  ets:       "border border-orange-400 text-orange-600",
+  hired:     "border border-green-500 text-green-700",
+  rejected:  "border border-red-400 text-red-500",
 };
 
 const STAGE_DOT: Record<string, string> = {
@@ -37,36 +63,113 @@ const STAGE_DOT: Record<string, string> = {
   rejected:  "bg-red-500",
 };
 
+// ── Grouped Bar Chart card ────────────────────────────────────────────────────
+function GroupedBarCard({
+  title,
+  subtitle,
+  data,
+}: {
+  title: string;
+  subtitle?: string;
+  data: ChartMonth[] | undefined;
+}) {
+  const groups =
+    data && data.length > 0
+      ? Object.keys(data.reduce((acc, row) => ({ ...acc, ...row }), {})).filter(
+          (k) => k !== "month"
+        )
+      : [];
+
+  const isEmpty = !data || data.length === 0 || groups.length === 0;
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <div className="mb-4">
+        <h2 className="font-semibold text-slate-900 tracking-tight text-sm">{title}</h2>
+        {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+      </div>
+      {isEmpty ? (
+        <div className="flex items-center justify-center h-[220px]">
+          <p className="text-sm text-slate-400">No data for the last 6 months</p>
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={data} barGap={2} barCategoryGap="28%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+            <XAxis
+              dataKey="month"
+              tick={{ fontSize: 11, fill: "#94A3B8" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "#94A3B8" }}
+              allowDecimals={false}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              contentStyle={{
+                borderRadius: "10px",
+                border: "1px solid #E2E8F0",
+                fontSize: "12px",
+                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.07)",
+              }}
+            />
+            <Legend
+              iconType="circle"
+              iconSize={8}
+              wrapperStyle={{ fontSize: "11px", paddingTop: "12px", color: "#64748B" }}
+            />
+            {groups.map((key, i) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                name={key}
+                fill={BAR_COLOURS[i % BAR_COLOURS.length]}
+                radius={[4, 4, 0, 0]}
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { user }        = useAuth();
-  const { data: stats } = useDashboardStats();
+  const navigate               = useNavigate();
+  const { user }               = useAuth();
+  const { data: stats }        = useDashboardStats();
+  const { data: trainingData }    = useTrainingByType();
+  const { data: candidatesData }  = useCandidatesByProvider();
+  const { data: placProvData }    = usePlacementsByProvider();
+  const { data: placStaffData }   = usePlacementsByStaff();
+
+  const [jobDialogOpen, setJobDialogOpen] = useState(false);
 
   const { data: applications = [] } = useQuery<Application[]>({
     queryKey: ["applications-recent"],
     queryFn:  () => api.get<Application[]>("/applications"),
   });
 
-  const openJobs       = stats?.jobs.published        ?? 0;
-  const activeApps     = stats?.applications.active   ?? 0;
-  const hiredThisMonth = stats?.applications.hired_this_month ?? 0;
-  const totalCandidates = stats?.candidates.total     ?? 0;
-  const totalPlacements = stats?.placements?.total    ?? 0;
-  const confirmedPlacements = stats?.placements?.confirmed ?? 0;
-  const placementsThisMonth = stats?.placements?.this_month ?? 0;
-  const overdueWelfare  = stats?.placements?.overdue_welfare ?? 0;
-  const activeProviders = stats?.providers?.active    ?? 0;
-  const activeEmployers = stats?.employers?.active    ?? 0;
+  const hour         = new Date().getHours();
+  const timeGreeting = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+  const todayLabel   = new Date().toLocaleDateString("en-AU", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
 
-  const staffRows = stats?.placements_by_staff ?? [];
-  const isAdminRole = user?.role === "admin" || user?.role === "recruiter_admin";
-  const maxStaffTotal = staffRows.length > 0
-    ? Math.max(...staffRows.map((r) => r.total_placements), 1)
-    : 1;
-
-  const statusCounts = ["draft", "published", "archived"].map((s) => ({
-    status: s.charAt(0).toUpperCase() + s.slice(1),
-    count:  stats?.jobs[s as "draft" | "published" | "archived"] ?? 0,
-  }));
+  const openJobs            = stats?.jobs.published              ?? 0;
+  const activeApps          = stats?.applications.active         ?? 0;
+  const hiredThisMonth      = stats?.applications.hired_this_month ?? 0;
+  const totalCandidates     = stats?.candidates.total            ?? 0;
+  const totalPlacements     = stats?.placements?.total           ?? 0;
+  const confirmedPlacements = stats?.placements?.confirmed       ?? 0;
+  const placementsThisMonth = stats?.placements?.this_month      ?? 0;
+  const overdueWelfare      = stats?.placements?.overdue_welfare ?? 0;
+  const activeProviders     = stats?.providers?.active           ?? 0;
+  const activeEmployers     = stats?.employers?.active           ?? 0;
 
   const pipelineCounts = STAGE_ORDER.map((stage) => ({
     stage,
@@ -78,24 +181,62 @@ export default function Dashboard() {
     .slice(0, 10);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
-          Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, {user?.name?.split(" ")[0]}
-        </h1>
-        <p className="text-sm text-slate-500 mt-0.5">Here's your recruiting overview</p>
+    <div className="p-6 space-y-5 max-w-7xl mx-auto">
+
+      {/* ── Hero Welcome Card ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-8 py-6 flex items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            Good {timeGreeting}, {user?.name?.split(" ")[0]} 👋
+          </h1>
+          <p className="text-sm text-slate-500 mt-1.5">
+            {todayLabel} · Here's your recruiting overview
+          </p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button
+            id="quick-add-candidate"
+            onClick={() => navigate("/candidates/new")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
+          >
+            <UserPlus size={15} />+ Add Candidate
+          </button>
+          <button
+            id="quick-add-employer"
+            onClick={() => navigate("/employers/new")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
+          >
+            <Building2 size={15} />+ Add Employer
+          </button>
+          <button
+            id="quick-add-vacancy"
+            onClick={() => setJobDialogOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
+          >
+            <PlusSquare size={15} />+ Add Vacancy
+          </button>
+        </div>
       </div>
 
-      {/* Row 1: Core stats */}
+      {/* Create Job Dialog */}
+      <CreateJobDialog isOpen={jobDialogOpen} onClose={() => setJobDialogOpen(false)} />
+
+      {/* ── Row 1: Core stat cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open Vacancies",        value: openJobs,        icon: Briefcase,    border: "border-l-4 border-blue-500",   iconCls: "text-blue-600",   link: "/jobs" },
-          { label: "Active Applications", value: activeApps,      icon: ClipboardList,border: "border-l-4 border-purple-500", iconCls: "text-purple-600", link: "/hiring-board" },
-          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  border: "border-l-4 border-green-500",  iconCls: "text-green-600",  link: "/hiring-board" },
-          { label: "Total Candidates",    value: totalCandidates, icon: Users,        border: "border-l-4 border-slate-400",  iconCls: "text-slate-500",  link: "/candidates" },
-        ].map(({ label, value, icon: Icon, border, iconCls, link }) => (
-          <Link key={label} to={link} className={`bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition ${border}`}>
-            <Icon size={22} className={iconCls} />
+          { label: "Open Vacancies",      value: openJobs,        icon: Briefcase,    iconBg: "bg-blue-50",   iconCls: "text-blue-600",   link: "/jobs" },
+          { label: "Active Applications", value: activeApps,      icon: ClipboardList,iconBg: "bg-purple-50", iconCls: "text-purple-600", link: "/hiring-board" },
+          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  link: "/hiring-board" },
+          { label: "Total Candidates",    value: totalCandidates, icon: Users,        iconBg: "bg-slate-100", iconCls: "text-slate-500",  link: "/candidates" },
+        ].map(({ label, value, icon: Icon, iconBg, iconCls, link }) => (
+          <Link
+            key={label}
+            to={link}
+            className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:border-slate-300 transition group"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg} group-hover:scale-105 transition-transform duration-200`}>
+              <Icon size={20} className={iconCls} />
+            </div>
             <div>
               <p className="text-2xl font-bold text-slate-900">{value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{label}</p>
@@ -104,16 +245,22 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Row 2: Placements & Provider stats */}
+      {/* ── Row 2: Placement & provider stats ────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Placements",     value: totalPlacements,     icon: UserCheck,  border: "border-l-4 border-indigo-500", iconCls: "text-indigo-600", link: "/placements" },
-          { label: "Placements This Month",value: placementsThisMonth, icon: CheckCircle,border: "border-l-4 border-teal-500",   iconCls: "text-teal-600",   link: "/placements" },
-          { label: "Active Providers",     value: activeProviders,     icon: MapPin,     border: "border-l-4 border-orange-500", iconCls: "text-orange-600", link: "/providers" },
-          { label: "Active Employers",     value: activeEmployers,     icon: Building2,  border: "border-l-4 border-cyan-500",   iconCls: "text-cyan-600",   link: "/employers" },
-        ].map(({ label, value, icon: Icon, border, iconCls, link }) => (
-          <Link key={label} to={link} className={`bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition ${border}`}>
-            <Icon size={22} className={iconCls} />
+          { label: "Total Placements",      value: totalPlacements,     icon: UserCheck, iconBg: "bg-indigo-50", iconCls: "text-indigo-600", link: "/placements" },
+          { label: "Placements This Month", value: placementsThisMonth, icon: CheckCircle,iconBg: "bg-teal-50",  iconCls: "text-teal-600",   link: "/placements" },
+          { label: "Active Providers",      value: activeProviders,     icon: MapPin,    iconBg: "bg-orange-50", iconCls: "text-orange-600", link: "/providers" },
+          { label: "Active Employers",      value: activeEmployers,     icon: Building2, iconBg: "bg-cyan-50",   iconCls: "text-cyan-600",   link: "/employers" },
+        ].map(({ label, value, icon: Icon, iconBg, iconCls, link }) => (
+          <Link
+            key={label}
+            to={link}
+            className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:border-slate-300 transition group"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg} group-hover:scale-105 transition-transform duration-200`}>
+              <Icon size={20} className={iconCls} />
+            </div>
             <div>
               <p className="text-2xl font-bold text-slate-900">{value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{label}</p>
@@ -124,95 +271,142 @@ export default function Dashboard() {
 
       {/* Overdue welfare alert */}
       {overdueWelfare > 0 && (
-        <Link to="/placements"
-          className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 hover:bg-yellow-100 transition">
-          <AlertTriangle size={18} className="text-yellow-600 flex-shrink-0" />
-          <p className="text-sm text-yellow-800 font-medium">
+        <Link
+          to="/placements"
+          className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 hover:bg-amber-100 transition"
+        >
+          <AlertTriangle size={18} className="text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-800 font-medium">
             {overdueWelfare} welfare check{overdueWelfare > 1 ? "s" : ""} overdue or due today — action required.
           </p>
         </Link>
       )}
 
-      {/* Hiring Pipeline — step flow */}
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Hiring Pipeline</h2>
-        <div className="flex items-center overflow-x-auto pb-1 gap-1">
-          {pipelineCounts.filter(({ stage }) => stage !== "rejected").map(({ stage, count }, i, arr) => (
-            <div key={stage} className="flex items-center gap-1 flex-1 min-w-[80px]">
-              <div className={`flex-1 text-center px-3 py-3 rounded-lg border ${STAGE_STEP[stage] ?? "border-slate-200 text-slate-600 bg-slate-50"}`}>
-                <p className="text-xl font-bold">{count}</p>
-                <p className="text-xs mt-0.5 opacity-80">{stageLabel(stage)}</p>
-              </div>
-              {i < arr.length - 1 && <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />}
-            </div>
-          ))}
+      {/* ── Hiring Pipeline ───────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="mb-5">
+          <h2 className="font-semibold text-slate-900 tracking-tight">Hiring Pipeline</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Current stage distribution</p>
         </div>
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
-          <span className="text-xs text-slate-400">Rejected:</span>
-          <span className="text-xs px-2 py-0.5 rounded-full border border-red-400 text-red-500">
-            {pipelineCounts.find(({ stage }) => stage === "rejected")?.count ?? 0}
-          </span>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {pipelineCounts
+            .filter(({ stage }) => stage !== "rejected")
+            .map(({ stage, count }, i, arr) => (
+              <div key={stage} className="flex items-center gap-2 flex-1 min-w-[110px]">
+                <div
+                  className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium ${
+                    STAGE_CHIP[stage] ?? "bg-slate-50 text-slate-600 border border-slate-200"
+                  }`}
+                >
+                  <span>{stageLabel(stage)}</span>
+                  <span className="text-lg font-bold ml-2">{count}</span>
+                </div>
+                {i < arr.length - 1 && (
+                  <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />
+                )}
+              </div>
+            ))}
+          <div className="flex items-center gap-2">
+            <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />
+            <div
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium min-w-[110px] ${STAGE_CHIP["rejected"]}`}
+            >
+              <span>Rejected</span>
+              <span className="text-lg font-bold ml-2">
+                {pipelineCounts.find(({ stage }) => stage === "rejected")?.count ?? 0}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Jobs by Status Chart */}
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-4">Vacancies by Status</h2>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={statusCounts} barSize={40}>
-              <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#334155" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Placement Summary */}
-        <div className="bg-slate-700 rounded-xl shadow-sm p-5 text-white">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-semibold tracking-tight">Placement Summary</h2>
-            <Link to="/placements" className="text-xs text-slate-400 hover:text-white transition">View all</Link>
+      {/* ── Placement Summary ─────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-semibold text-slate-900 tracking-tight">Placement Summary</h2>
+            <p className="text-xs text-slate-400 mt-0.5">All-time overview</p>
           </div>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-3xl font-bold">{totalPlacements}</p>
-              <p className="text-xs text-slate-400 mt-1">Total</p>
+          <Link to="/placements" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
+            View all →
+          </Link>
+        </div>
+        <div className="grid grid-cols-3 divide-x divide-slate-100">
+          <div className="text-center px-6">
+            <p className="text-4xl font-bold text-slate-900">{totalPlacements}</p>
+            <p className="text-sm text-slate-500 mt-1.5">Total Placements</p>
+          </div>
+          <div className="text-center px-6">
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-4xl font-bold text-emerald-600">{confirmedPlacements}</p>
+              <CheckCircle size={20} className="text-emerald-500 mb-0.5" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-green-400">{confirmedPlacements}</p>
-              <p className="text-xs text-slate-400 mt-1">Confirmed</p>
-            </div>
-            <div>
-              <p className={`text-3xl font-bold ${overdueWelfare > 0 ? "text-yellow-400" : "text-white"}`}>
+            <p className="text-sm text-slate-500 mt-1.5">Confirmed</p>
+          </div>
+          <div className="text-center px-6">
+            <div className="flex items-center justify-center gap-2">
+              <p className={`text-4xl font-bold ${overdueWelfare > 0 ? "text-amber-500" : "text-slate-900"}`}>
                 {overdueWelfare}
               </p>
-              <p className="text-xs text-slate-400 mt-1">Overdue Checks</p>
+              {overdueWelfare > 0 && (
+                <AlertTriangle size={18} className="text-amber-500 mb-0.5" />
+              )}
             </div>
+            <p className="text-sm text-slate-500 mt-1.5">Overdue Checks</p>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity Feed */}
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold text-slate-900 tracking-tight">Recent Activity</h2>
-          <Link to="/hiring-board" className="text-xs text-slate-500 hover:text-slate-900 transition">View board</Link>
+      {/* ── Four Grouped Bar Charts ───────────────────────────────────────── */}
+      <div className="grid lg:grid-cols-2 gap-5">
+        <GroupedBarCard
+          title="① Training Completed — Month Wise"
+          subtitle="Last 6 months · Completed status"
+          data={trainingData}
+        />
+        <GroupedBarCard
+          title="② Candidates Referred — Provider Wise"
+          subtitle="Last 6 months · By provider"
+          data={candidatesData}
+        />
+      </div>
+      <div className="grid lg:grid-cols-2 gap-5">
+        <GroupedBarCard
+          title="③ Placements — Provider Wise"
+          subtitle="Last 6 months · By provider"
+          data={placProvData}
+        />
+        <GroupedBarCard
+          title="④ Placement by Staff — KPI / Month Wise"
+          subtitle="Last 6 months · Recruiter performance"
+          data={placStaffData}
+        />
+      </div>
+
+      {/* ── Recent Activity ───────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-semibold text-slate-900 tracking-tight">Recent Activity</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Latest application updates</p>
+          </div>
+          <Link to="/hiring-board" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
+            View board →
+          </Link>
         </div>
         {recent.length === 0 ? (
-          <p className="text-sm text-slate-400 py-4">No applications yet.</p>
+          <p className="text-sm text-slate-400 py-6 text-center">No applications yet.</p>
         ) : (
           <div className="divide-y divide-slate-100">
             {recent.map((app) => (
               <div key={app.id} className="flex items-center gap-3 py-3">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STAGE_DOT[app.stage] ?? "bg-slate-400"}`} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 truncate">{app.candidate_name}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{app.candidate_name}</p>
                   <p className="text-xs text-slate-500 truncate">{app.job_title}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STAGE_BADGE[app.stage]}`}>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium bg-transparent ${STAGE_BADGE[app.stage]}`}>
                     {stageLabel(app.stage)}
                   </span>
                   <span className="text-xs text-slate-400 whitespace-nowrap">
@@ -225,48 +419,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Placements by Staff */}
-      {staffRows.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h2 className="font-semibold text-slate-900 tracking-tight mb-4">
-            {isAdminRole ? "Placements by Staff" : "Your Placements"}
-          </h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">This Month</th>
-                <th className="py-2 px-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {staffRows.map((row) => {
-                const isMe = row.user_id === user?.id;
-                return (
-                  <tr key={row.user_id} className={isMe ? "bg-blue-50" : ""}>
-                    <td className="py-2 px-3 text-slate-900 font-medium">
-                      {row.name}
-                      {isMe && <span className="ml-2 text-xs text-blue-500 font-normal">you</span>}
-                    </td>
-                    <td className="py-2 px-3 text-right text-slate-700">{row.placements_this_month}</td>
-                    <td className="py-2 px-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="flex-1 max-w-[80px] bg-slate-100 rounded-full h-1.5">
-                          <div
-                            className="bg-indigo-500 h-1.5 rounded-full"
-                            style={{ width: `${(row.total_placements / maxStaffTotal) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-slate-700 font-semibold w-6 text-right">{row.total_placements}</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }

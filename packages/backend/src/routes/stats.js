@@ -144,3 +144,115 @@ statsRouter.get("/", async (req, res, next) => {
     });
   } catch (err) { next(err); }
 });
+
+// ── Helper: pivot raw rows into Recharts-ready month objects ─────────────────
+// rawRows: [{ month: 'Jan 2026', group_key: 'Provider A', count: 3 }, ...]
+// Returns: [{ month: 'Jan 2026', 'Provider A': 3, ... }, ...]
+function pivotToMonths(rawRows, last6Months) {
+  const map = {};
+  for (const m of last6Months) map[m] = { month: m };
+  for (const row of rawRows) {
+    if (!map[row.month]) map[row.month] = { month: row.month };
+    map[row.month][row.group_key] = row.count;
+  }
+  return last6Months.map((m) => map[m]);
+}
+
+// Build the ordered list of last 6 month labels (oldest first)
+function last6MonthLabels() {
+  const labels = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    labels.push(d.toLocaleString("en-AU", { month: "short", year: "numeric" }));
+  }
+  return labels;
+}
+
+// GET /api/stats/training-by-type
+// Completed trainings grouped by training name, last 6 months
+statsRouter.get("/training-by-type", async (_req, res, next) => {
+  try {
+    const months = last6MonthLabels();
+    const { rows } = await pool.query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', ct.completed_at), 'Mon YYYY') AS month,
+        t.name                                                      AS group_key,
+        COUNT(ct.id)::int                                           AS count
+      FROM candidate_trainings ct
+      JOIN trainings t ON t.id = ct.training_id
+      WHERE ct.status = 'completed'
+        AND ct.completed_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND ct.completed_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      GROUP BY 1, 2
+      ORDER BY DATE_TRUNC('month', ct.completed_at), t.name
+    `);
+    res.json({ success: true, data: pivotToMonths(rows, months) });
+  } catch (err) { next(err); }
+});
+
+// GET /api/stats/candidates-by-provider
+// Candidates registered/referred grouped by provider name, last 6 months
+statsRouter.get("/candidates-by-provider", async (_req, res, next) => {
+  try {
+    const months = last6MonthLabels();
+    const { rows } = await pool.query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', c.created_at), 'Mon YYYY') AS month,
+        COALESCE(p.name, 'No Provider')                         AS group_key,
+        COUNT(c.id)::int                                         AS count
+      FROM candidates c
+      LEFT JOIN providers p ON p.id = c.provider_id
+      WHERE c.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND c.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      GROUP BY 1, 2
+      ORDER BY DATE_TRUNC('month', c.created_at), group_key
+    `);
+    res.json({ success: true, data: pivotToMonths(rows, months) });
+  } catch (err) { next(err); }
+});
+
+// GET /api/stats/placements-by-provider
+// Placements grouped by provider name, last 6 months
+statsRouter.get("/placements-by-provider", async (_req, res, next) => {
+  try {
+    const months = last6MonthLabels();
+    const { rows } = await pool.query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', pl.created_at), 'Mon YYYY') AS month,
+        COALESCE(pr.name, 'No Provider')                         AS group_key,
+        COUNT(pl.id)::int                                         AS count
+      FROM placements pl
+      JOIN candidates c  ON c.id  = pl.candidate_id
+      LEFT JOIN providers pr ON pr.id = c.provider_id
+      WHERE pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      GROUP BY 1, 2
+      ORDER BY DATE_TRUNC('month', pl.created_at), group_key
+    `);
+    res.json({ success: true, data: pivotToMonths(rows, months) });
+  } catch (err) { next(err); }
+});
+
+// GET /api/stats/placements-by-staff
+// Placements grouped by staff member (KPI), last 6 months
+statsRouter.get("/placements-by-staff", async (_req, res, next) => {
+  try {
+    const months = last6MonthLabels();
+    const { rows } = await pool.query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', pl.created_at), 'Mon YYYY') AS month,
+        u.name                                                    AS group_key,
+        COUNT(pl.id)::int                                         AS count
+      FROM placements pl
+      JOIN users u ON u.id = pl.created_by
+      WHERE u.role IN ('admin', 'recruiter_admin', 'recruiter')
+        AND pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      GROUP BY 1, 2
+      ORDER BY DATE_TRUNC('month', pl.created_at), u.name
+    `);
+    res.json({ success: true, data: pivotToMonths(rows, months) });
+  } catch (err) { next(err); }
+});

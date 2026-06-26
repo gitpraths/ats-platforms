@@ -63,7 +63,7 @@ function AdminMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       >
         <Settings size={15} /> Admin <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -108,16 +108,16 @@ function ProfileMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 hover:bg-slate-800 rounded-lg px-2 py-1.5 transition"
+        className="flex items-center gap-2 hover:bg-slate-100 rounded-lg px-2 py-1.5 transition"
       >
         {avatarSrc ? (
           <img src={avatarSrc} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
         ) : (
-          <div className="w-7 h-7 rounded-full bg-slate-600 text-white flex items-center justify-center text-xs font-bold">
+          <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold">
             {initials}
           </div>
         )}
-        <span className="text-sm text-slate-300 hidden sm:block">{user?.name}</span>
+        <span className="text-sm text-slate-700 hidden sm:block">{user?.name}</span>
         <ChevronDown size={14} className="text-gray-400" />
       </button>
 
@@ -153,18 +153,20 @@ function Layout({ children }: { children: React.ReactNode }) {
                           || user?.role === "recruiter";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-      isActive ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
+    `flex items-center gap-1.5 px-3 text-sm font-medium transition border-b-2 ${
+      isActive
+        ? "border-orange-500 text-slate-900 font-semibold"
+        : "border-transparent text-slate-500 hover:text-slate-900"
     }`;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-md">
-        <div className="flex items-center gap-1">
-          <a href="/dashboard" className="flex items-center mr-3 pr-3 border-r border-slate-700 select-none">
+    <div className="min-h-screen bg-[#F1F5F9]">
+      <nav className="bg-white border-b border-slate-200 px-4 h-14 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-sm">
+        <div className="flex items-stretch h-full gap-0">
+          <a href="/dashboard" className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none">
             <div className="flex flex-col leading-none">
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.02em" }}>
-                <span style={{ color: "#ffffff" }}>Work</span><span style={{ color: "#e88e2e" }}>Vision</span>
+                <span style={{ color: "#0F172A" }}>Work</span><span style={{ color: "#e88e2e" }}>Vision</span>
               </span>
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.6rem", color: "#94a3b8", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "1px" }}>Australia</span>
             </div>
@@ -188,7 +190,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <ProfileMenu />
         </div>
       </nav>
-      <main className="pt-12">{children}</main>
+      <main className="pt-14">{children}</main>
     </div>
   );
 }

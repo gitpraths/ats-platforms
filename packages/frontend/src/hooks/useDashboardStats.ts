@@ -46,6 +46,9 @@ export interface DashboardStats {
   }[];
 }
 
+// Recharts pivot row: { month: 'Jan 2026', 'Provider A': 3, ... }
+export type ChartMonth = Record<string, string | number>;
+
 export function useDashboardStats() {
   return useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -53,3 +56,36 @@ export function useDashboardStats() {
     staleTime: 30_000,
   });
 }
+
+export function useTrainingByType() {
+  return useQuery<ChartMonth[]>({
+    queryKey: ["dashboard-training-by-type"],
+    queryFn:  () => api.get<ChartMonth[]>("/stats/training-by-type"),
+    staleTime: 60_000,
+  });
+}
+
+export function useCandidatesByProvider() {
+  return useQuery<ChartMonth[]>({
+    queryKey: ["dashboard-candidates-by-provider"],
+    queryFn:  () => api.get<ChartMonth[]>("/stats/candidates-by-provider"),
+    staleTime: 60_000,
+  });
+}
+
+export function usePlacementsByProvider() {
+  return useQuery<ChartMonth[]>({
+    queryKey: ["dashboard-placements-by-provider"],
+    queryFn:  () => api.get<ChartMonth[]>("/stats/placements-by-provider"),
+    staleTime: 60_000,
+  });
+}
+
+export function usePlacementsByStaff() {
+  return useQuery<ChartMonth[]>({
+    queryKey: ["dashboard-placements-by-staff"],
+    queryFn:  () => api.get<ChartMonth[]>("/stats/placements-by-staff"),
+    staleTime: 60_000,
+  });
+}
+
