@@ -224,15 +224,15 @@ export default function Dashboard() {
       {/* ── Row 1: Core stat cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open Vacancies",      value: openJobs,        icon: Briefcase,    iconBg: "bg-blue-50",   iconCls: "text-blue-600",   link: "/jobs" },
-          { label: "Active Applications", value: activeApps,      icon: ClipboardList,iconBg: "bg-purple-50", iconCls: "text-purple-600", link: "/hiring-board" },
-          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  link: "/hiring-board" },
-          { label: "Total Candidates",    value: totalCandidates, icon: Users,        iconBg: "bg-slate-100", iconCls: "text-slate-500",  link: "/candidates" },
-        ].map(({ label, value, icon: Icon, iconBg, iconCls, link }) => (
+          { label: "Open Vacancies",      value: openJobs,        icon: Briefcase,    iconBg: "bg-blue-50",   iconCls: "text-blue-600",   topBorder: "border-t-blue-500",   link: "/jobs" },
+          { label: "Active Applications", value: activeApps,      icon: ClipboardList,iconBg: "bg-purple-50", iconCls: "text-purple-600", topBorder: "border-t-purple-500", link: "/hiring-board" },
+          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  topBorder: "border-t-emerald-500",link: "/hiring-board" },
+          { label: "Total Candidates",    value: totalCandidates, icon: Users,        iconBg: "bg-slate-100", iconCls: "text-slate-500",  topBorder: "border-t-slate-400",  link: "/candidates" },
+        ].map(({ label, value, icon: Icon, iconBg, iconCls, topBorder, link }) => (
           <Link
             key={label}
             to={link}
-            className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:border-slate-300 transition group"
+            className={`bg-white rounded-xl border border-slate-200 border-t-4 ${topBorder} shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition group`}
           >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg} group-hover:scale-105 transition-transform duration-200`}>
               <Icon size={20} className={iconCls} />
@@ -248,15 +248,15 @@ export default function Dashboard() {
       {/* ── Row 2: Placement & provider stats ────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Placements",      value: totalPlacements,     icon: UserCheck, iconBg: "bg-indigo-50", iconCls: "text-indigo-600", link: "/placements" },
-          { label: "Placements This Month", value: placementsThisMonth, icon: CheckCircle,iconBg: "bg-teal-50",  iconCls: "text-teal-600",   link: "/placements" },
-          { label: "Active Providers",      value: activeProviders,     icon: MapPin,    iconBg: "bg-orange-50", iconCls: "text-orange-600", link: "/providers" },
-          { label: "Active Employers",      value: activeEmployers,     icon: Building2, iconBg: "bg-cyan-50",   iconCls: "text-cyan-600",   link: "/employers" },
-        ].map(({ label, value, icon: Icon, iconBg, iconCls, link }) => (
+          { label: "Total Placements",      value: totalPlacements,     icon: UserCheck,  iconBg: "bg-indigo-50", iconCls: "text-indigo-600", topBorder: "border-t-indigo-500", link: "/placements" },
+          { label: "Placements This Month", value: placementsThisMonth, icon: CheckCircle,iconBg: "bg-teal-50",   iconCls: "text-teal-600",   topBorder: "border-t-teal-500",  link: "/placements" },
+          { label: "Active Providers",      value: activeProviders,     icon: MapPin,     iconBg: "bg-orange-50", iconCls: "text-orange-600", topBorder: "border-t-orange-500",link: "/providers" },
+          { label: "Active Employers",      value: activeEmployers,     icon: Building2,  iconBg: "bg-cyan-50",   iconCls: "text-cyan-600",   topBorder: "border-t-cyan-500",  link: "/employers" },
+        ].map(({ label, value, icon: Icon, iconBg, iconCls, topBorder, link }) => (
           <Link
             key={label}
             to={link}
-            className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:border-slate-300 transition group"
+            className={`bg-white rounded-xl border border-slate-200 border-t-4 ${topBorder} shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition group`}
           >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg} group-hover:scale-105 transition-transform duration-200`}>
               <Icon size={20} className={iconCls} />
