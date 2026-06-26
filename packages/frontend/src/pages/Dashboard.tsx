@@ -181,7 +181,8 @@ export default function Dashboard() {
     .slice(0, 10);
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
 
       {/* ── Hero Welcome Card ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-8 py-6 flex items-center justify-between gap-6">
@@ -419,6 +420,7 @@ export default function Dashboard() {
         )}
       </div>
 
+      </div>
     </div>
   );
 }
