@@ -293,18 +293,22 @@ export default function CandidateDetail() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-[#f1f4f8]">
+    <div className="min-h-screen bg-[#F1F5F9] p-4 sm:p-6">
+      <div className="max-w-[1600px] mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] overflow-hidden flex flex-col">
 
       {/* ═══════════════════════════════════════════════════════
           HEADER — Candidate Workspace
       ═══════════════════════════════════════════════════════ */}
-      <div style={{background: 'linear-gradient(135deg, #060d1f 0%, #0b1629 45%, #0f1e3a 100%)'}} className="relative overflow-hidden flex-shrink-0">
+      <div
+        style={{ background: '#FFF7ED', borderBottom: '3px solid #e88e2e' }}
+        className="flex-shrink-0"
+      >
         <div className="max-w-[1600px] mx-auto px-6">
 
           {/* Back */}
           <div className="pt-4 pb-1">
             <Link to="/candidates"
-              className="inline-flex items-center gap-2 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
+              className="inline-flex items-center gap-2 text-xs font-medium text-[#e88e2e] border border-[#e88e2e] hover:bg-orange-50 rounded-lg px-3 py-1.5 transition-colors">
               <ArrowLeft size={12} /> All Candidates
             </Link>
           </div>
@@ -312,16 +316,16 @@ export default function CandidateDetail() {
           {/* Candidate Identity */}
           <div className="flex items-start gap-4 pt-2 pb-2">
             {/* Avatar */}
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#b8711a] flex items-center justify-center text-lg font-bold text-white shadow-lg ring-1 ring-white/10 flex-shrink-0">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#b8711a] flex items-center justify-center text-lg font-bold text-white shadow-md flex-shrink-0">
               {initials}
             </div>
 
             {/* Name + meta */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1.5">
-                <h1 className="text-xl font-bold text-white tracking-tight leading-none">{candidate.name}</h1>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">{candidate.name}</h1>
                 {ext.sr_no && (
-                  <span className="text-[11px] font-mono text-slate-500 bg-slate-800/80 border border-slate-700 px-2 py-0.5 rounded">
+                  <span className="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">
                     #{ext.sr_no}
                   </span>
                 )}
@@ -331,29 +335,29 @@ export default function CandidateDetail() {
               </div>
 
               {/* Pipe-separated metadata */}
-              <div className="flex items-center flex-wrap divide-x divide-slate-700">
-                <span className="flex items-center gap-1.5 text-xs text-slate-300 pr-3">
-                  <Mail size={11} className="text-slate-500 flex-shrink-0" />{displayEmail(candidate.email)}
+              <div className="flex items-center flex-wrap divide-x divide-orange-200">
+                <span className="flex items-center gap-1.5 text-xs text-slate-600 pr-3">
+                  <Mail size={11} className="text-orange-400 flex-shrink-0" />{displayEmail(candidate.email)}
                 </span>
                 {candidate.phone && (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
-                    <Phone size={11} className="text-slate-500 flex-shrink-0" />{candidate.phone}
+                  <span className="flex items-center gap-1.5 text-xs text-slate-600 px-3">
+                    <Phone size={11} className="text-orange-400 flex-shrink-0" />{candidate.phone}
                   </span>
                 )}
                 {(ext.suburb || candidate.city || candidate.state) && (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
-                    <MapPin size={11} className="text-slate-500 flex-shrink-0" />
+                  <span className="flex items-center gap-1.5 text-xs text-slate-600 px-3">
+                    <MapPin size={11} className="text-orange-400 flex-shrink-0" />
                     {[ext.suburb || candidate.city, candidate.state].filter(Boolean).join(", ")}
                   </span>
                 )}
                 {candidate.provider_name && (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
-                    <Building2 size={11} className="text-slate-500 flex-shrink-0" />{candidate.provider_name}
+                  <span className="flex items-center gap-1.5 text-xs text-slate-600 px-3">
+                    <Building2 size={11} className="text-orange-400 flex-shrink-0" />{candidate.provider_name}
                   </span>
                 )}
                 {ext.date_referred && (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-300 px-3">
-                    <Calendar size={11} className="text-slate-500 flex-shrink-0" />
+                  <span className="flex items-center gap-1.5 text-xs text-slate-600 px-3">
+                    <Calendar size={11} className="text-orange-400 flex-shrink-0" />
                     Referred {fmtDate(ext.date_referred)}
                   </span>
                 )}
@@ -371,13 +375,13 @@ export default function CandidateDetail() {
 
           {/* Tab Nav */}
           {!editing && (
-            <div className="flex border-t border-slate-800/80">
+            <div className="flex">
               {tabs.map((t) => (
                 <button key={t.key} onClick={() => setActiveTab(t.key)}
-                  className={`px-5 py-1.5 text-sm font-medium transition-all border-b-2 -mb-px ${
+                  className={`px-5 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
                     activeTab === t.key
-                      ? "border-blue-400 text-white"
-                      : "border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-600"
+                      ? "border-[#e88e2e] text-[#e88e2e]"
+                      : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
                   }`}>
                   {t.label}
                 </button>
@@ -877,6 +881,7 @@ export default function CandidateDetail() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
