@@ -1108,7 +1108,7 @@ export function VacanciesTab({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Vacancy / Job","Stage","Applied","Interview Date","ETS Date","Placement Date",""].map((h) => (
+                {["Vacancy / Job","Status","Applied","Interview Date","ETS Date","Placement Date",""].map((h) => (
                   <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>

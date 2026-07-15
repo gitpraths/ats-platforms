@@ -46,7 +46,7 @@ function StageDialog({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Stage</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
             <select
               value={stage}
               onChange={(e) => setStage(e.target.value as ApplicationStage)}
