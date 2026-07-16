@@ -263,7 +263,7 @@ export default function CandidateDetail() {
 
   const tabs = [
     { key: "overview",   label: "Overview"   },
-    { key: "training",   label: "Training"   },
+    { key: "training",   label: "Training Program"   },
   ] as const;
 
   // ── When editing: full-page light layout (same look as Create Candidate) ──

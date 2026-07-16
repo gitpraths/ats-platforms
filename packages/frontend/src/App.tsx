@@ -176,7 +176,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
           <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
           {isAdminOrRecruiter && (
-            <NavLink to="/training" className={navClass}>Training</NavLink>
+            <NavLink to="/training" className={navClass}>Training Program</NavLink>
           )}
           <NavLink to="/placements"   className={navClass}><UserCheck size={15} />Placements</NavLink>
           <NavLink to="/providers"    className={navClass}><MapPinIcon size={15} />Providers</NavLink>

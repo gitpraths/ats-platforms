@@ -24,7 +24,7 @@ export default function Training() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Training</h1>
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Training Program</h1>
         <p className="text-sm text-slate-500 mt-0.5">Track enrolments and run cohort enrolments</p>
       </div>
 

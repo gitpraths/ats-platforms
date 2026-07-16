@@ -39,7 +39,7 @@ export default function AdminTrainings() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Trainings</h1>
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Training Programs</h1>
           <p className="text-sm text-slate-500 mt-0.5">Manage the catalogue of training courses</p>
         </div>
         {canEdit && (
@@ -47,7 +47,7 @@ export default function AdminTrainings() {
             onClick={() => setCreating(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#e88e2e] text-white text-sm rounded-lg hover:bg-[#d07d20]"
           >
-            <Plus size={14} /> New Training
+            <Plus size={14} /> New Training Program
           </button>
         )}
       </div>
