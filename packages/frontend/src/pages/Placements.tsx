@@ -50,8 +50,9 @@ export default function Placements() {
   });
   const [createError, setCreateError] = useState("");
 
+  const PER_PAGE = 50;
   const params = new URLSearchParams({
-    page: String(page), limit: "20",
+    page: String(page), limit: String(PER_PAGE),
     ...(filterEmployer && { employer_id: filterEmployer }),
     ...(filterProvider && { provider_id: filterProvider }),
     ...(from && { from }),
@@ -105,7 +106,7 @@ export default function Placements() {
 
   const placements      = placementsData?.data ?? [];
   const placementTotal  = placementsData?.meta?.total ?? 0;
-  const placementPages  = Math.max(1, Math.ceil(placementTotal / 20));
+  const placementPages  = Math.max(1, Math.ceil(placementTotal / PER_PAGE));
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -155,6 +156,14 @@ export default function Placements() {
           placeholder="Search provider..."
         />
       </div>
+
+      {/* Record count */}
+      {!isLoading && (
+        <p className="text-xs text-slate-500 mb-2">
+          Showing {placements.length} of <span className="font-semibold text-slate-700">{placementTotal}</span> placement{placementTotal !== 1 ? "s" : ""}
+          {placementPages > 1 && ` — Page ${page} of ${placementPages}`}
+        </p>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
@@ -259,7 +268,7 @@ export default function Placements() {
       </div>
 
       <Pagination page={page} totalPages={placementPages} total={placementTotal}
-        perPage={20} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
+        perPage={PER_PAGE} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
 
       {/* Create Placement Dialog */}
       {showCreate && (
