@@ -100,6 +100,21 @@ export default function EmployerDetail() {
             <dd className="mt-0.5 text-slate-900">{employer.contact_phone || "—"}</dd>
           </div>
           <div>
+            <dt className="text-xs font-medium text-slate-500 uppercase">ABN</dt>
+            <dd className="mt-0.5 text-slate-900">
+              {employer.abn ? (
+                <div className="flex items-center gap-2">
+                  <span>{employer.abn}</span>
+                  <a href={`https://abr.business.gov.au/ABN/View?abn=${employer.abn.replace(/\s+/g, "")}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-[#e88e2e] hover:underline flex items-center gap-0.5">
+                    <ExternalLink size={12} /> Lookup
+                  </a>
+                </div>
+              ) : "—"}
+            </dd>
+          </div>
+          <div>
             <dt className="text-xs font-medium text-slate-500 uppercase">Address</dt>
             <dd className="mt-0.5 text-slate-900">{employer.address || "—"}</dd>
           </div>

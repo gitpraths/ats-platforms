@@ -64,6 +64,7 @@ export interface Employer {
   contact_email?: string;
   contact_phone?: string;
   address?: string;
+  abn?: string;
   is_active: boolean;
   open_jobs_count?: number;
   total_jobs_count?: number;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer } from "../types";
 
@@ -13,7 +13,7 @@ export default function EmployerCreate() {
 
   const [form, setForm] = useState({
     name: "", industry: "", website: "", description: "",
-    contact_name: "", contact_email: "", contact_phone: "", address: "", is_active: true,
+    contact_name: "", contact_email: "", contact_phone: "", address: "", abn: "", is_active: true,
   });
   const [error, setError] = useState("");
 
@@ -35,6 +35,7 @@ export default function EmployerCreate() {
         contact_email: existing.contact_email ?? "",
         contact_phone: existing.contact_phone ?? "",
         address:       existing.address       ?? "",
+        abn:           existing.abn           ?? "",
         is_active:     existing.is_active     ?? true,
       });
     }
@@ -120,6 +121,18 @@ export default function EmployerCreate() {
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Contact Phone</label>
               <input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block text-xs font-medium text-slate-600">ABN</label>
+                <a href="https://abr.business.gov.au" target="_blank" rel="noopener noreferrer"
+                  className="text-[#e88e2e] hover:text-[#d07d20] flex items-center gap-0.5 text-[10px] font-medium"
+                  title="Lookup ABN">
+                  <ExternalLink size={10} /> Lookup
+                </a>
+              </div>
+              <input value={form.abn} onChange={(e) => set("abn", e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>
           </div>
