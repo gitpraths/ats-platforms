@@ -142,6 +142,16 @@ placementsRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
 
     await client.query("BEGIN");
 
+    // Enforce business rule: Single Active Placement
+    const { rows: existing } = await client.query(
+      `SELECT id FROM placements WHERE candidate_id = $1 AND end_date IS NULL`,
+      [candidate_id]
+    );
+    if (existing.length > 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ success: false, error: "This candidate already has an active placement. Please end their current placement before creating a new one." });
+    }
+
     const { rows } = await client.query(
       `INSERT INTO placements (application_id, candidate_id, job_id, employer_id, start_date, notes, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
