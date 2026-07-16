@@ -427,14 +427,39 @@ export function CandidateFormPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label required>Benchmark Hours / Week</Label>
-            <select value={form.benchmark_hours}
-              onChange={(e) => set("benchmark_hours", e.target.value)}
-              className={CLS}>
-              <option value="">— Select hours —</option>
-              {[8, 15, 20, 25, 30, 38].map((h) => (
-                <option key={h} value={h}>{h} hrs / week</option>
-              ))}
-            </select>
+            {(() => {
+              const PRESET = ["8","15","20","25","30","38"];
+              const isOther = form.benchmark_hours !== "" && !PRESET.includes(String(form.benchmark_hours));
+              return (
+                <>
+                  <select
+                    value={isOther ? "other" : form.benchmark_hours}
+                    onChange={(e) => {
+                      if (e.target.value === "other") set("benchmark_hours", "other");
+                      else set("benchmark_hours", e.target.value);
+                    }}
+                    className={CLS}>
+                    <option value="">— Select hours —</option>
+                    {[8, 15, 20, 25, 30, 38].map((h) => (
+                      <option key={h} value={h}>{h} hrs / week</option>
+                    ))}
+                    <option value="other">Other</option>
+                  </select>
+                  {(isOther || form.benchmark_hours === "other") && (
+                    <input
+                      type="number"
+                      min={1}
+                      max={168}
+                      placeholder="Enter custom hours per week"
+                      value={isOther ? form.benchmark_hours : ""}
+                      onChange={(e) => set("benchmark_hours", e.target.value)}
+                      className={`${CLS} mt-2`}
+                      autoFocus
+                    />
+                  )}
+                </>
+              );
+            })()}
           </div>
           <div>
             <Label>Wage Subsidy</Label>
