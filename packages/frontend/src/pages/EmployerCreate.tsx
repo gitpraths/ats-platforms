@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save } from "lucide-react";
@@ -17,25 +17,28 @@ export default function EmployerCreate() {
   });
   const [error, setError] = useState("");
 
-  useQuery<Employer>({
+  const { data: existing } = useQuery<Employer>({
     queryKey: ["employer", id],
     queryFn: () => api.get<Employer>(`/employers/${id}`),
     enabled: isEdit,
-    // @ts-expect-error react-query onSuccess
-    onSuccess: (data: Employer) => {
-      setForm({
-        name:          data.name,
-        industry:      data.industry ?? "",
-        website:       data.website ?? "",
-        description:   data.description ?? "",
-        contact_name:  data.contact_name ?? "",
-        contact_email: data.contact_email ?? "",
-        contact_phone: data.contact_phone ?? "",
-        address:       data.address ?? "",
-        is_active:     data.is_active,
-      });
-    },
   });
+
+  // Pre-fill form when existing data loads
+  useEffect(() => {
+    if (existing) {
+      setForm({
+        name:          existing.name          ?? "",
+        industry:      existing.industry      ?? "",
+        website:       existing.website       ?? "",
+        description:   existing.description   ?? "",
+        contact_name:  existing.contact_name  ?? "",
+        contact_email: existing.contact_email ?? "",
+        contact_phone: existing.contact_phone ?? "",
+        address:       existing.address       ?? "",
+        is_active:     existing.is_active     ?? true,
+      });
+    }
+  }, [existing]);
 
   const save = useMutation({
     mutationFn: (body: typeof form) =>

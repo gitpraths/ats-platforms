@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save } from "lucide-react";
@@ -17,24 +17,25 @@ export default function ProviderCreate() {
   const [error, setError] = useState("");
 
   // Load existing data in edit mode
-  useQuery<Provider>({
+  const { data: existing } = useQuery<Provider>({
     queryKey: ["provider", id],
     queryFn: () => api.get<Provider>(`/providers/${id}`),
     enabled: isEdit,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    select: (data: any) => data,
-    // @ts-expect-error react-query onSuccess deprecated but used for simplicity
-    onSuccess: (data: Provider) => {
-      setForm({
-        name:         data.name,
-        contact_name: data.contact_name ?? "",
-        email:        data.email ?? "",
-        phone:        data.phone ?? "",
-        address:      data.address ?? "",
-        is_active:    data.is_active,
-      });
-    },
   });
+
+  // Pre-fill form when existing data loads
+  useEffect(() => {
+    if (existing) {
+      setForm({
+        name:         existing.name         ?? "",
+        contact_name: existing.contact_name ?? "",
+        email:        existing.email        ?? "",
+        phone:        existing.phone        ?? "",
+        address:      existing.address      ?? "",
+        is_active:    existing.is_active    ?? true,
+      });
+    }
+  }, [existing]);
 
   const save = useMutation({
     mutationFn: (body: typeof form) =>
