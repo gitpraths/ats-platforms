@@ -168,14 +168,15 @@ export default function Placements() {
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Start Date</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Weeks</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Confirmed</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Wage Subsidy</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {isLoading ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
             ) : placements.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">No placements found.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">No placements found.</td></tr>
             ) : (
               placements.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
@@ -219,6 +220,23 @@ export default function Placements() {
                     {p.confirmed_by_employer
                       ? <CheckCircle size={15} className="text-green-600" />
                       : <span className="text-xs text-slate-400">Pending</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    {p.wagesub_status ? (
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                        p.wagesub_status === "pending"     ? "bg-slate-100 text-slate-600 border-slate-300" :
+                        p.wagesub_status === "approved"    ? "bg-blue-100 text-blue-700 border-blue-300" :
+                        p.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700 border-amber-300" :
+                        p.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700 border-purple-300" :
+                        p.wagesub_status === "paid"        ? "bg-green-100 text-green-700 border-green-300" :
+                        "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}>
+                        {p.wagesub_status === "in_progress" ? "In Progress" :
+                         p.wagesub_status.charAt(0).toUpperCase() + p.wagesub_status.slice(1)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-300">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
