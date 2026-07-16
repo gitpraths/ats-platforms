@@ -58,13 +58,13 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
 
 function YesNoToggle({ value, onChange, required }: {
   value: "yes" | "no" | "";
-  onChange: (v: "yes" | "no") => void;
+  onChange: (v: "yes" | "no" | "") => void;
   required?: boolean;
 }) {
   return (
     <div className="flex border border-slate-200 rounded-xl overflow-hidden">
       {(["yes", "no"] as const).map((v) => (
-        <button key={v} type="button" onClick={() => onChange(v)}
+        <button key={v} type="button" onClick={() => onChange(value === v ? "" : v)}
           className={`flex-1 py-2 text-sm font-medium transition ${
             value === v
               ? v === "yes" ? "bg-green-500 text-white" : "bg-red-400 text-white"
@@ -551,8 +551,8 @@ export function CandidateFormPanel({
         <p className={sectionTitle}>Compliance & Requirements</p>
         <div className="grid grid-cols-3 gap-6">
           <div>
-            <Label required>Car Available</Label>
-            <YesNoToggle value={form.car} onChange={(v) => set("car", v)} required />
+            <Label>Car Available</Label>
+            <YesNoToggle value={form.car} onChange={(v) => set("car", v)} />
           </div>
           <div>
             <Label>Police Check</Label>

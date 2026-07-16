@@ -96,7 +96,6 @@ export default function CandidateNew() {
     if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) { setError("Phone must be 10 digits."); return; }
     if (!form.provider_id)     { setError("Provider is required."); return; }
     if (!form.benchmark_hours) { setError("Benchmark hours is required."); return; }
-    if (!form.car)             { setError("Car preference is required."); return; }
     // Pass a frozen snapshot of the form — no stale-closure risk inside mutationFn
     create.mutate({ ...form });
   }
