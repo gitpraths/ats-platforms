@@ -8,7 +8,7 @@ import { useCandidatePool } from "../hooks/useCandidatePool";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { useToast } from "../components/ui/use-toast";
-import type { CandidatePoolRow as BaseCandidatePoolRow, CandidateWorkStatus, WelfareCheck, WelfareCheckType } from "../types";
+import type { CandidatePoolRow as BaseCandidatePoolRow, CandidateWorkStatus } from "../types";
 import Pagination from "../components/Pagination";
 
 // Extend base type with extra fields returned by API but not yet in the type definition
@@ -55,31 +55,7 @@ const STATUS_BADGE: Record<string, string> = {
   inactive:    "bg-slate-100 text-slate-500",
 };
 
-const WELFARE_ORDER: WelfareCheckType[] = ["day_1", "week_1", "month_1", "month_3", "month_6"];
-const WELFARE_LABELS: Record<WelfareCheckType, string> = {
-  day_1:   "Day 1",
-  week_1:  "Week 1",
-  month_1: "1 Month",
-  month_3: "3 Months",
-  month_6: "6 Months",
-};
 
-function welfareBandClass(check: WelfareCheck | undefined, today: string): string {
-  if (!check) return "bg-gray-100 text-gray-400";
-  if (check.completed_at) return "bg-green-100 text-green-700";
-  const overdue = check.due_date <= today;
-  const soon    = !overdue && new Date(check.due_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  if (overdue) return "bg-red-100 text-red-700";
-  if (soon)    return "bg-amber-100 text-amber-700";
-  return "bg-slate-100 text-slate-500";
-}
-
-function welfareBandStatus(check: WelfareCheck | undefined, today: string): string {
-  if (!check) return "—";
-  if (check.completed_at) return "Done";
-  if (check.due_date <= today) return "Overdue";
-  return `Due ${fmtDate(check.due_date)}`;
-}
 
 // Pipeline stage derived from candidate's date progression
 function getPipelineStage(row: CandidatePoolRow): { label: string; color: string; bg: string } {
@@ -259,28 +235,7 @@ function InfoTooltip({ row }: { row: CandidatePoolRow }) {
   );
 }
 
-function WelfareSubRow({ checks, colSpan }: { checks: WelfareCheck[]; colSpan: number }) {  // colSpan updated to 12 for new focused table
-  const today   = new Date().toISOString().split("T")[0];
-  const checkMap = Object.fromEntries(checks.map((c) => [c.check_type, c])) as Record<string, WelfareCheck>;
-  return (
-    <tr>
-      <td colSpan={colSpan} className="px-4 py-1.5 bg-slate-50 border-b">
-        <div className="flex gap-1">
-          {WELFARE_ORDER.map((type) => {
-            const check = checkMap[type];
-            return (
-              <div key={type}
-                className={`flex-1 text-center text-xs rounded-lg px-2 py-1 font-medium ${welfareBandClass(check, today)}`}>
-                <div>{WELFARE_LABELS[type]}</div>
-                <div className="font-normal opacity-75">{welfareBandStatus(check, today)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </td>
-    </tr>
-  );
-}
+
 
 // ── Inline Date Cell ──────────────────────────────────────────────────────────
 function InlineDateCell({
@@ -864,9 +819,7 @@ export default function Candidates() {
                         )}
                       </td>
                     </tr>
-                    {row.placement_id && (row.welfare_checks?.length ?? 0) > 0 && (
-                      <WelfareSubRow checks={row.welfare_checks!} colSpan={12} />
-                    )}
+
                   </Fragment>
                 );
               })}
