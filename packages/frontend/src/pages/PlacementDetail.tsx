@@ -278,29 +278,36 @@ export default function PlacementDetail() {
           )}
         </div>
 
-        {/* 4-Week Instalment */}
-        {["4wk", "13wk", "26wk"].map((key) => {
-          const weeks = key === "4wk" ? 4 : key === "13wk" ? 13 : 26;
-          const label = key === "4wk" ? "4-Week Instalment" : key === "13wk" ? "13-Week Instalment" : "26-Week Instalment";
-          const paidAtKey = `wagesub_${key}_paid_at` as "wagesub_4wk_paid_at" | "wagesub_13wk_paid_at" | "wagesub_26wk_paid_at";
-          const paidAt = placement[paidAtKey];
+        {/* Wage Subsidy Instalments — sequential: 4wk → 13wk → 26wk */}
+        {[
+          { key: "4wk",  weeks: 4,  label: "4-Week Instalment",  prevKey: null           },
+          { key: "13wk", weeks: 13, label: "13-Week Instalment", prevKey: "4wk"          },
+          { key: "26wk", weeks: 26, label: "26-Week Instalment", prevKey: "13wk"         },
+        ].map(({ key, weeks, label, prevKey }) => {
+          const paidAtKey  = `wagesub_${key}_paid_at`  as "wagesub_4wk_paid_at" | "wagesub_13wk_paid_at" | "wagesub_26wk_paid_at";
+          const prevPaidKey = prevKey ? `wagesub_${prevKey}_paid_at` as "wagesub_4wk_paid_at" | "wagesub_13wk_paid_at" | "wagesub_26wk_paid_at" : null;
+
+          const paidAt     = placement[paidAtKey];
+          const prevPaidAt = prevPaidKey ? placement[prevPaidKey] : true; // 4wk has no prev, always unlocked
+
+          const isPaid     = !!paidAt;
+          const isLocked   = !isPaid && !prevPaidAt;  // blocked until previous is marked paid
 
           const d = new Date(placement.start_date);
           d.setDate(d.getDate() + weeks * 7);
-          const dueDate = d.toISOString().split("T")[0];
-
-          const isPaid = !!paidAt;
-          const isOverdue = !isPaid && dueDate <= today;
+          const dueDate  = d.toISOString().split("T")[0];
+          const isOverdue = !isPaid && !isLocked && dueDate <= today;
 
           return (
             <div key={key} className={`flex items-center justify-between gap-3 p-3 rounded-xl border mb-3 ${
-              isPaid ? "border-green-200 bg-green-50/40" :
+              isPaid   ? "border-green-200 bg-green-50/40"  :
+              isLocked ? "border-slate-100 bg-slate-50/50 opacity-60" :
               isOverdue ? "border-amber-200 bg-amber-50/30" :
               "border-slate-100"
             }`}>
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                  isPaid ? "bg-green-500" : isOverdue ? "bg-amber-400" : "bg-slate-300"
+                  isPaid ? "bg-green-500" : isLocked ? "bg-slate-200" : isOverdue ? "bg-amber-400" : "bg-slate-300"
                 }`} />
                 <div>
                   <p className="text-sm font-medium text-slate-800">{label}</p>
@@ -309,18 +316,24 @@ export default function PlacementDetail() {
                     {isPaid && (
                       <span className="ml-2 text-green-600 font-medium">· Paid {fmtDate(paidAt!)}</span>
                     )}
+                    {isLocked && (
+                      <span className="ml-2 text-slate-400 italic">
+                        · Complete {prevKey === "4wk" ? "4-Week" : "13-Week"} instalment first
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  isPaid ? "bg-green-100 text-green-700" :
-                  isOverdue ? "bg-amber-100 text-amber-700" :
+                  isPaid    ? "bg-green-100 text-green-700"  :
+                  isLocked  ? "bg-slate-100 text-slate-400"  :
+                  isOverdue ? "bg-amber-100 text-amber-700"  :
                   "bg-slate-100 text-slate-500"
                 }`}>
-                  {isPaid ? "✓ Paid" : isOverdue ? "Due" : "Upcoming"}
+                  {isPaid ? "✓ Paid" : isLocked ? "🔒 Locked" : isOverdue ? "Due" : "Upcoming"}
                 </span>
-                {canAct && !isPaid && (
+                {canAct && !isPaid && !isLocked && (
                   <button
                     onClick={() => {
                       const body: Record<string, string | null> = {};
