@@ -43,14 +43,15 @@ export default function Placements() {
   const [filterProvider, setFilterProvider] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [page, setPage] = useState(1);
+  const [page, setPage]       = useState(1);
+  const [perPage, setPerPage] = useState(50);
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>({
     candidate_id: "", job_id: "", employer_id: "", start_date: "", notes: "", application_id: "",
   });
   const [createError, setCreateError] = useState("");
 
-  const PER_PAGE = 50;
+  const PER_PAGE = perPage;
   const params = new URLSearchParams({
     page: String(page), limit: String(PER_PAGE),
     ...(filterEmployer && { employer_id: filterEmployer }),
@@ -157,12 +158,36 @@ export default function Placements() {
         />
       </div>
 
-      {/* Record count */}
-      {!isLoading && (
-        <p className="text-xs text-slate-500 mb-2">
-          Showing {placements.length} of <span className="font-semibold text-slate-700">{placementTotal}</span> placement{placementTotal !== 1 ? "s" : ""}
-          {placementPages > 1 && ` — Page ${page} of ${placementPages}`}
+      {/* ── Pagination toolbar ── */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-slate-500">
+          {isLoading ? "Loading…" : (
+            <>
+              <span className="font-semibold text-slate-700">{placementTotal}</span> placement{placementTotal !== 1 ? "s" : ""}
+              {placementPages > 1 && (
+                <span className="ml-1 text-slate-400">— page {page} of {placementPages}</span>
+              )}
+            </>
+          )}
         </p>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500">Show</label>
+          <select
+            value={perPage}
+            onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+            className="border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e] bg-white"
+          >
+            {[20, 50, 100].map((n) => (
+              <option key={n} value={n}>{n} per page</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Top pagination (only shown when multiple pages) */}
+      {placementPages > 1 && (
+        <Pagination page={page} totalPages={placementPages} total={placementTotal}
+          perPage={PER_PAGE} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
       )}
 
       {/* Table */}
