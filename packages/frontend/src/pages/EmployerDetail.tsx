@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 interface EmployerDetailData extends Employer {
   jobs: Pick<Job, "id" | "title" | "status" | "job_type" | "positions_count">[];
+  placements?: { id: string; start_date: string; job_title: string; candidate_name: string }[];
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -112,7 +113,7 @@ export default function EmployerDetail() {
       </div>
 
       {/* Jobs */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="font-semibold text-slate-900 tracking-tight mb-4 flex items-center gap-2">
           <Briefcase size={15} /> Vacancies
         </h2>
@@ -140,6 +141,36 @@ export default function EmployerDetail() {
                       {j.status}
                     </span>
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Placements */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="font-semibold text-slate-900 tracking-tight mb-4 flex items-center gap-2">
+          Placements
+        </h2>
+        {!employer.placements?.length ? (
+          <p className="text-sm text-slate-400">No placements linked to this employer.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-slate-500 border-b">
+                <th className="pb-2">Candidate</th>
+                <th className="pb-2">Vacancy</th>
+                <th className="pb-2">Start Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {employer.placements.map((p) => (
+                <tr key={p.id} className="hover:bg-slate-50 cursor-pointer"
+                  onClick={() => navigate(`/placements/${p.id}`)}>
+                  <td className="py-2 font-medium text-slate-900">{p.candidate_name}</td>
+                  <td className="py-2 text-slate-500">{p.job_title}</td>
+                  <td className="py-2 text-slate-500">{p.start_date ? new Date(p.start_date).toLocaleDateString() : "—"}</td>
                 </tr>
               ))}
             </tbody>

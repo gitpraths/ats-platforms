@@ -69,7 +69,17 @@ employersRouter.get("/:id", async (req, res, next) => {
       [req.params.id]
     );
 
-    res.json({ success: true, data: { ...rows[0], jobs } });
+    const { rows: placements } = await pool.query(
+      `SELECT p.id, p.start_date, j.title AS job_title, c.name AS candidate_name
+       FROM placements p
+       JOIN jobs j ON p.job_id = j.id
+       JOIN candidates c ON p.candidate_id = c.id
+       WHERE p.employer_id = $1
+       ORDER BY p.start_date DESC`,
+      [req.params.id]
+    );
+
+    res.json({ success: true, data: { ...rows[0], jobs, placements } });
   } catch (err) { next(err); }
 });
 
