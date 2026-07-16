@@ -691,8 +691,11 @@ export default function CandidateDetail() {
 
                 {/* Verification / Compliance */}
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
-                  <div className="px-5 py-2.5 bg-green-50 border-b border-green-100">
+                  <div className="px-5 py-2.5 bg-green-50 border-b border-green-100 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-green-900">Verification</h3>
+                    <button onClick={startEdit} className="text-green-700 hover:text-green-900 transition-colors" title="Edit Verification Details">
+                      <Edit2 size={14} />
+                    </button>
                   </div>
                   <div className="px-4 py-2 divide-y divide-slate-100">
                     {([
@@ -714,7 +717,7 @@ export default function CandidateDetail() {
                             isNo  ? "bg-red-100 text-red-700 ring-1 ring-red-300" :
                             "bg-slate-200/80 text-slate-500"
                           }`}>
-                            {isYes ? "Verified" : isNo ? "Not Done" : "Unknown"}
+                            {isYes ? "Yes" : isNo ? "No" : "Unknown"}
                           </span>
                         </div>
                       );
