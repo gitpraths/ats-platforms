@@ -31,12 +31,10 @@ function StageDialog({
   onSave: (stage: ApplicationStage, score: number | null, notes: string) => void;
 }) {
   const [stage, setStage] = useState<ApplicationStage>(app.stage);
-  const [score, setScore] = useState<string>(app.score != null ? String(app.score) : "");
   const [notes, setNotes] = useState<string>(app.notes ?? "");
 
   function handleSave() {
-    const parsedScore = score.trim() !== "" ? Number(score) : null;
-    onSave(stage, parsedScore, notes);
+    onSave(stage, null, notes);
   }
 
   return (
@@ -56,19 +54,6 @@ function StageDialog({
                 <option key={s} value={s}>{stageLabel(s)}</option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Score (0–10)</label>
-            <input
-              type="number"
-              min={0}
-              max={10}
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-              placeholder="e.g. 7"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
           </div>
 
           <div>
@@ -200,9 +185,7 @@ function PipelineView({
                             </div>
                             <CardMenu app={app} onChangeStage={() => onOpenStageDialog(app)} onDelete={() => onDelete(app.id)} />
                           </div>
-                          {app.score != null && app.score > 0 && (
-                            <p className="text-xs text-yellow-500 mt-1">{app.score}/10</p>
-                          )}
+
                           {app.ets_date && (() => {
                             const d = new Date(app.ets_date);
                             const now = new Date();
@@ -257,7 +240,6 @@ function ListView({
             <th className="py-3 pr-4">Applicant</th>
             <th className="py-3 pr-4">Job Posting</th>
             <th className="py-3 pr-4">Status</th>
-            <th className="py-3 pr-4">Score</th>
             <th className="py-3 pr-4">Interview Date</th>
             <th className="py-3 pr-4">ETS Date</th>
             <th className="py-3 pr-4">Applied</th>
@@ -277,7 +259,6 @@ function ListView({
                   {app.stage}
                 </span>
               </td>
-              <td className="py-3 pr-4 text-slate-600">{app.score ?? "—"}</td>
               <td className="py-3 pr-4 text-slate-600 text-xs whitespace-nowrap">
                 {app.interview_date ? fmtDate(app.interview_date) : "—"}
               </td>

@@ -322,9 +322,6 @@ export default function JobDetail() {
                       <p className="text-xs text-slate-400 truncate">{app.candidate_email}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {app.score != null && app.score > 0 && (
-                        <span className="text-xs text-slate-400 font-medium">{app.score}/10</span>
-                      )}
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STAGE_BADGE[app.stage]}`}>
                         {app.stage}
                       </span>
