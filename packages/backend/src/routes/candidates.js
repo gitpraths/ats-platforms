@@ -358,7 +358,9 @@ candidatesRouter.get("/:id/documents/:doc_id/download", async (req, res, next) =
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
     const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
-    res.download(filePath, rows[0].file_name);
+    res.download(filePath, rows[0].file_name, (err) => {
+      if (err && !res.headersSent) next(err);
+    });
   } catch (err) { next(err); }
 });
 
@@ -374,9 +376,13 @@ candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
     const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
 
     const mimeType = rows[0].mime_type || "application/octet-stream";
-    res.setHeader("Content-Type", mimeType);
-    res.setHeader("Content-Disposition", `inline; filename="${rows[0].file_name}"`);
-    res.sendFile(path.resolve(filePath), (err) => {
+    const safeName = encodeURIComponent(rows[0].file_name);
+    res.sendFile(path.resolve(filePath), {
+      headers: {
+        "Content-Type": mimeType,
+        "Content-Disposition": `inline; filename*=UTF-8''${safeName}`
+      }
+    }, (err) => {
       if (err) next(err);
     });
   } catch (err) { next(err); }
