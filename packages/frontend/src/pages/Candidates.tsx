@@ -597,17 +597,17 @@ export default function Candidates() {
         </div>
       ) : view === "list" ? (
         /* ── List View — focused table with per-column search ── */
-        <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-sm">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b">
+            <thead className="bg-slate-50 border-b sticky top-14 z-20 shadow-[0_1px_0_0_#f1f5f9]">
               {/* Row 1: Column labels */}
-              <tr>
+              <tr className="bg-slate-50">
                 {["SR #","Candidate","Email","Mobile","Provider","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
                   <th key={h} className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
               {/* Row 2: Per-column search inputs */}
-              <tr className="border-t border-slate-100">
+              <tr className="border-t border-slate-100 bg-slate-50">
                 {/* SR # — no search */}
                 <th className="px-3 pb-2 pt-1" />
                 {/* Candidate */}
@@ -828,7 +828,7 @@ export default function Candidates() {
         </div>
       ) : (
         /* ── Card View ── */
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
           {rows.map((row) => (
             <button key={row.id} onClick={() => navigate(`/candidates/${row.id}`)}
               className="bg-white rounded-2xl shadow-sm p-4 text-left hover:shadow-md hover:border-orange-200 border border-transparent transition">
@@ -865,14 +865,16 @@ export default function Candidates() {
       )}
 
       {/* ── Pagination ──────────────────────────────────────────── */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        total={meta?.total ?? 0}
-        perPage={meta?.limit ?? 20}
-        onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-        label="candidates"
-      />
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={meta?.total ?? 0}
+          perPage={meta?.limit ?? 20}
+          onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          label="candidates"
+        />
+      </div>
     </div>
   );
 }

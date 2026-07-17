@@ -1406,19 +1406,6 @@ function EnrolmentDialog({
             </select>
           </div>
 
-          {/* Status — only shown when EDITING, hidden on new enrolment */}
-          {enrolment && (
-            <div>
-              <label className="text-xs text-slate-500">Status</label>
-              <select value={status} onChange={(e) => { setStatus(e.target.value as TrainingStatus); setCertificateReceived(""); }} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
-                <option value="enrolled">Enrolled</option>
-                <option value="in_progress">In progress</option>
-                <option value="completed">Completed</option>
-                <option value="withdrawn">Withdrawn</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
-          )}
 
           {/* Start / End date — only shown on new enrolment, not on edit */}
           {!enrolment && (

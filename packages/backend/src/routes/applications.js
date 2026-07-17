@@ -128,22 +128,23 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 
     // Auto-advance stage based on date set (only if no explicit stage passed)
     if (stage === undefined) {
-      const STAGE_ORDER = ["applied", "screening", "interview", "ets", "hired", "rejected"];
       const currentStage = appRows[0].stage;
-      let autoStage = null;
-      if (placement_date)      autoStage = "hired";
-      else if (placement_date === null && appRows[0].placement_date) {
-        // Placement date being CLEARED — revert stage
-        const cur = appRows[0];
-        autoStage = cur.ets_date ? "ets" : cur.interview_date ? "interview" : "applied";
-        params.push(autoStage);
-        updates.push(`stage = $${params.length}`);
-        autoStage = null; // already pushed
+      const finalPlacement = placement_date !== undefined ? placement_date : appRows[0].placement_date;
+      const finalEts       = ets_date !== undefined ? ets_date : appRows[0].ets_date;
+      const finalInterview = interview_date !== undefined ? interview_date : appRows[0].interview_date;
+
+      let targetStage = "applied";
+      if (finalPlacement) targetStage = "hired";
+      else if (finalEts) targetStage = "ets";
+      else if (finalInterview) targetStage = "interview";
+      // screening remains unchanged if dates are cleared, unless we want to reset completely to applied.
+      // We'll reset to 'applied' if all dates are missing and it was beyond 'screening'.
+      if (targetStage === "applied" && currentStage === "screening") {
+        targetStage = "screening"; // Preserve manual screening stage
       }
-      else if (interview_date) autoStage = "interview";
-      else if (ets_date)       autoStage = "ets";
-      if (autoStage && STAGE_ORDER.indexOf(autoStage) > STAGE_ORDER.indexOf(currentStage)) {
-        params.push(autoStage);
+
+      if (currentStage !== "rejected" && targetStage !== currentStage) {
+        params.push(targetStage);
         updates.push(`stage = $${params.length}`);
       }
     }

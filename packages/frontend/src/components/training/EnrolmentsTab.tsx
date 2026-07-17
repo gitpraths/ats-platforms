@@ -155,14 +155,14 @@ export function EnrolmentsTab({
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm">
         {isLoading ? (
           <p className="p-6 text-slate-500">Loading...</p>
         ) : rows.length === 0 ? (
           <p className="p-6 text-center text-slate-400">No enrolments match these filters.</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 sticky top-14 z-10 shadow-[0_1px_0_0_#f1f5f9]">
               <tr>
                 <th className="text-left px-4 py-2.5">Candidate</th>
                 <th className="text-left px-4 py-2.5">Course</th>
@@ -218,14 +218,16 @@ export function EnrolmentsTab({
       </div>
 
       {/* Pagination */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        total={total}
-        perPage={25}
-        onChange={setPage}
-        label="enrolments"
-      />
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          perPage={25}
+          onChange={setPage}
+          label="enrolments"
+        />
+      </div>
 
       {invoicingEnrolment && (
         <GenerateInvoiceDialog
