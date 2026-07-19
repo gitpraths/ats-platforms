@@ -135,10 +135,13 @@ export default function Jobs() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
 
-  const { data: jobs = [], isLoading } = useQuery<Job[]>({
-    queryKey: ["jobs"],
-    queryFn:  () => api.get<Job[]>("/jobs"),
+  const { data, isLoading } = useQuery({
+    queryKey: ["jobs", page],
+    queryFn:  () => api.list<Job>(`/jobs?page=${page}&limit=${PER_PAGE}`),
   });
+  
+  const jobs = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
 
   function formatPayRate(job: Job) {
     if (!job.pay_rate) return null;
@@ -146,9 +149,9 @@ export default function Jobs() {
     return `$${Number(job.pay_rate).toLocaleString()}${suffix}`;
   }
 
-  const totalPages  = Math.max(1, Math.ceil(jobs.length / PER_PAGE));
+  const totalPages  = Math.max(1, Math.ceil(total / PER_PAGE));
   const safePage    = Math.min(page, totalPages);
-  const paged       = jobs.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+  const paged       = jobs; // Backend already paginated
 
   function goTo(p: number) {
     setPage(Math.max(1, Math.min(p, totalPages)));
@@ -184,7 +187,7 @@ export default function Jobs() {
       ) : (
         <>
           {/* Top pagination */}
-          <Pagination page={safePage} totalPages={totalPages} total={jobs.length}
+          <Pagination page={safePage} totalPages={totalPages} total={total}
             perPage={PER_PAGE} onChange={goTo} />
 
           {/* Vacancy cards */}
@@ -270,7 +273,7 @@ export default function Jobs() {
           </div>
 
           {/* Bottom pagination */}
-          <Pagination page={safePage} totalPages={totalPages} total={jobs.length}
+          <Pagination page={safePage} totalPages={totalPages} total={total}
             perPage={PER_PAGE} onChange={goTo} />
         </>
       )}

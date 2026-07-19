@@ -60,13 +60,20 @@ jobsRouter.get("/", async (req, res, next) => {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
+    const countParams = params.slice(0, params.length - 2); // remove limit and offset
+    const { rows: [{ total }] } = await pool.query(
+      `SELECT COUNT(*)::int AS total 
+       FROM jobs j
+       ${where}`,
+      countParams
+    );
 
     // Attach recruiters to each job
     const jobs = await Promise.all(
       rows.map(async (job) => ({ ...job, recruiters: await getRecruiters(job.id) }))
     );
 
-    res.json({ success: true, data: jobs });
+    res.json({ success: true, data: jobs, meta: { total, page: Number(page), limit: Number(limit) } });
   } catch (err) { next(err); }
 });
 
