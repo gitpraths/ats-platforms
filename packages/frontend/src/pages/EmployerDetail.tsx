@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Edit2, ExternalLink, Briefcase } from "lucide-react";
+import { ArrowLeft, Edit2, ExternalLink, Briefcase, Plus } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer, Job } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import CreateJobDialog from "../components/CreateJobDialog";
 
 interface EmployerDetailData extends Employer {
   jobs: Pick<Job, "id" | "title" | "status" | "job_type" | "positions_count">[];
@@ -20,6 +22,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function EmployerDetail() {
   const { id } = useParams<{ id: string }>();
+  const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
@@ -129,9 +132,17 @@ export default function EmployerDetail() {
 
       {/* Jobs */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h2 className="font-semibold text-slate-900 tracking-tight mb-4 flex items-center gap-2">
-          <Briefcase size={15} /> Vacancies
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+            <Briefcase size={15} /> Vacancies
+          </h2>
+          {isAdmin && (
+            <button onClick={() => setJobDialogOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#e88e2e] text-white rounded-lg text-sm font-medium hover:bg-[#d07d20] transition">
+              <Plus size={14} /> Add Vacancy
+            </button>
+          )}
+        </div>
         {!employer.jobs?.length ? (
           <p className="text-sm text-slate-400">No vacancies linked to this employer.</p>
         ) : (
@@ -192,6 +203,11 @@ export default function EmployerDetail() {
           </table>
         )}
       </div>
+
+      <CreateJobDialog
+        isOpen={jobDialogOpen}
+        onClose={() => setJobDialogOpen(false)}
+      />
     </div>
   );
 }
