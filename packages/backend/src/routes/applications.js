@@ -37,10 +37,12 @@ applicationsRouter.get("/", async (req, res, next) => {
          c.city         AS candidate_city,
          c.state        AS candidate_state,
          d.name         AS department_name,
+         e.name         AS employer_name,
          l.city, l.state, l.country, l.is_remote
        FROM applications a
        JOIN jobs       j ON a.job_id       = j.id
        JOIN candidates c ON a.candidate_id = c.id
+       LEFT JOIN employers e ON j.employer_id = e.id
        LEFT JOIN departments d ON j.department_id = d.id
        LEFT JOIN locations   l ON j.location_id   = l.id
        ${conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""}

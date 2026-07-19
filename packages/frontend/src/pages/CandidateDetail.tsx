@@ -17,6 +17,7 @@ import {
 import { useTrainings } from "../hooks/useTrainings";
 import { GenerateInvoiceDialog } from "../components/training/GenerateInvoiceDialog";
 import { useXeroInvoicesForEnrolment } from "../hooks/useXero";
+import { CellTooltip } from "../components/CellTooltip";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 
@@ -907,6 +908,7 @@ type AppWithDates = {
   ets_date?: string | null;
   placement_date?: string | null;
   source?: string;
+  employer_name?: string;
   score?: number;
 };
 
@@ -1187,23 +1189,33 @@ export function VacanciesTab({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {canWrite ? (
-                      <InlineDateCellDetail
-                        appId={app.id}
-                        field="placement_date"
-                        value={app.placement_date}
-                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
-                        allowClear
-                        validate={(d) => {
-                          if (!app.interview_date) return "Set Interview Date first";
-                          if (!app.ets_date) return "Set ETS Date first";
-                          if (d && app.ets_date && d < app.ets_date) return "Placement must be after ETS Date";
-                          return null;
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
-                    )}
+                    <CellTooltip
+                      title="Placed At"
+                      items={[
+                        { key: "Company",   value: app.employer_name || "—" },
+                        { key: "Job Title", value: app.job_title || "—" },
+                      ]}
+                    >
+                      <div className="w-full">
+                        {canWrite ? (
+                          <InlineDateCellDetail
+                            appId={app.id}
+                            field="placement_date"
+                            value={app.placement_date}
+                            onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                            allowClear
+                            validate={(d) => {
+                              if (!app.interview_date) return "Set Interview Date first";
+                              if (!app.ets_date) return "Set ETS Date first";
+                              if (d && app.ets_date && d < app.ets_date) return "Placement must be after ETS Date";
+                              return null;
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
+                        )}
+                      </div>
+                    </CellTooltip>
                   </td>
                   {canWrite && (
                     <td className="px-4 py-3 text-right">

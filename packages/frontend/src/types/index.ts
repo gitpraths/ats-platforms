@@ -250,6 +250,7 @@ export interface Application {
   candidate_id: string;
   candidate_name?: string;
   candidate_email?: string;
+  employer_name?: string;
   // Flattened job location fields returned by GET /applications
   department_name?: string;
   city?: string;
