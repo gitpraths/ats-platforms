@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, ExternalLink } from "lucide-react";
@@ -13,15 +13,36 @@ export default function EmployerCreate() {
 
   const [form, setForm] = useState({
     name: "", industry: "", website: "", description: "",
-    contact_name: "", contact_email: "", contact_phone: "", address: "", abn: "", is_active: true,
+    contact_name: "", contact_email: "", contact_phone: "", address: "", postcode: "", suburb: "", state: "", abn: "", is_active: true,
   });
   const [error, setError] = useState("");
+  const [postcodeLoading, setPostcodeLoading] = useState(false);
+  const [suburbOptions, setSuburbOptions] = useState<{ suburb: string; state: string }[]>([]);
 
-  const { data: existing } = useQuery<Employer>({
+  const { data: existing } = useQuery<Employer & { postcode?: string; suburb?: string; state?: string }>({
     queryKey: ["employer", id],
     queryFn: () => api.get<Employer>(`/employers/${id}`),
     enabled: isEdit,
   });
+
+  const lookupPostcode = useCallback(async (postcode: string) => {
+    if (postcode.length !== 4) return;
+    setPostcodeLoading(true);
+    try {
+      const res = await api.get<{ suburb: string; state: string }[]>(`/postcodes/${postcode}`);
+      if (res && res.length === 1) {
+        setForm((f) => ({ ...f, suburb: res[0].suburb, state: res[0].state }));
+        setSuburbOptions([]);
+      } else if (res && res.length > 1) {
+        setSuburbOptions(res);
+        setForm((f) => ({ ...f, suburb: "", state: res[0].state }));
+      }
+    } catch {
+      // Ignore errors for now
+    } finally {
+      setPostcodeLoading(false);
+    }
+  }, []);
 
   // Pre-fill form when existing data loads
   useEffect(() => {
@@ -35,6 +56,9 @@ export default function EmployerCreate() {
         contact_email: existing.contact_email ?? "",
         contact_phone: existing.contact_phone ?? "",
         address:       existing.address       ?? "",
+        postcode:      existing.postcode      ?? "",
+        suburb:        existing.suburb        ?? "",
+        state:         existing.state         ?? "",
         abn:           existing.abn           ?? "",
         is_active:     existing.is_active     ?? true,
       });
@@ -142,10 +166,67 @@ export default function EmployerCreate() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Address</label>
-          <textarea value={form.address} onChange={(e) => set("address", e.target.value)} rows={2}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+        <div className="border-t pt-4">
+          <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Location</p>
+          <div className="grid sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Postcode</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={4}
+                  value={form.postcode}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    set("postcode", val);
+                    if (val.length === 4) lookupPostcode(val);
+                  }}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 pr-8"
+                  placeholder="e.g. 2000"
+                />
+                {postcodeLoading && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#e88e2e] border-t-transparent rounded-full animate-spin" />
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Suburb</label>
+              {suburbOptions.length > 0 ? (
+                <select
+                  value={form.suburb}
+                  onChange={(e) => set("suburb", e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  <option value="" disabled>Select suburb...</option>
+                  {suburbOptions.map((opt) => (
+                    <option key={opt.suburb} value={opt.suburb}>{opt.suburb}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={form.suburb}
+                  onChange={(e) => set("suburb", e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50"
+                />
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">State</label>
+              <input
+                type="text"
+                value={form.state}
+                onChange={(e) => set("state", e.target.value.toUpperCase())}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50"
+                placeholder="e.g. NSW"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Street Address</label>
+            <textarea value={form.address} onChange={(e) => set("address", e.target.value)} rows={2}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+          </div>
         </div>
 
         {isEdit && (

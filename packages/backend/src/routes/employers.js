@@ -86,14 +86,14 @@ employersRouter.get("/:id", async (req, res, next) => {
 // ── POST /api/employers ──────────────────────────────────
 employersRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
   try {
-    const { name, industry, website, description, contact_name, contact_email, contact_phone, address, abn } = req.body;
+    const { name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, abn } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
 
     const { rows } = await pool.query(
-      `INSERT INTO employers (name, industry, website, description, contact_name, contact_email, contact_phone, address, abn)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO employers (name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, abn)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [name, industry || null, website || null, description || null,
-       contact_name || null, contact_email || null, contact_phone || null, address || null, abn || null]
+       contact_name || null, contact_email || null, contact_phone || null, address || null, postcode || null, suburb || null, state || null, abn || null]
     );
 
     pool.query(
@@ -109,7 +109,7 @@ employersRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, r
 // ── PUT /api/employers/:id ───────────────────────────────
 employersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
   try {
-    const { name, industry, website, description, contact_name, contact_email, contact_phone, address, is_active, abn } = req.body;
+    const { name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, is_active, abn } = req.body;
 
     const { rows } = await pool.query(
       `UPDATE employers
@@ -121,11 +121,14 @@ employersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req,
            contact_email = COALESCE($6,  contact_email),
            contact_phone = COALESCE($7,  contact_phone),
            address       = COALESCE($8,  address),
-           is_active     = COALESCE($9,  is_active),
-           abn           = COALESCE($10, abn),
+           postcode      = COALESCE($9,  postcode),
+           suburb        = COALESCE($10, suburb),
+           state         = COALESCE($11, state),
+           is_active     = COALESCE($12, is_active),
+           abn           = COALESCE($13, abn),
            updated_at    = NOW()
-       WHERE id = $11 RETURNING *`,
-      [name, industry, website, description, contact_name, contact_email, contact_phone, address, is_active, abn, req.params.id]
+       WHERE id = $14 RETURNING *`,
+      [name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, is_active, abn, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Employer not found" });
 
