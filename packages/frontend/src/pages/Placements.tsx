@@ -184,11 +184,9 @@ export default function Placements() {
         </div>
       </div>
 
-      {/* Top pagination (only shown when multiple pages) */}
-      {placementPages > 1 && (
-        <Pagination page={page} totalPages={placementPages} total={placementTotal}
-          perPage={PER_PAGE} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
-      )}
+      {/* Top pagination */}
+      <Pagination page={page} totalPages={placementPages} total={placementTotal}
+        perPage={PER_PAGE} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
