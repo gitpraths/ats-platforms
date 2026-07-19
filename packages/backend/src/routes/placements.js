@@ -77,6 +77,14 @@ placementsRouter.get("/", async (req, res, next) => {
       [...params, Number(limit), offset]
     );
 
+    const { rows: [{ total }] } = await pool.query(
+      `SELECT COUNT(*)::int AS total 
+       FROM placements p
+       JOIN candidates c  ON c.id = p.candidate_id
+       ${where}`,
+      params
+    );
+
     // Attach welfare check dots
     const ids = rows.map((r) => r.id);
     let wcMap = {};
@@ -94,7 +102,7 @@ placementsRouter.get("/", async (req, res, next) => {
 
     const data = rows.map((r) => ({ ...r, welfare_checks: wcMap[r.id] || [] }));
 
-    res.json({ success: true, data });
+    res.json({ success: true, data, meta: { total, page: Number(page), limit: Number(limit) } });
   } catch (err) { next(err); }
 });
 

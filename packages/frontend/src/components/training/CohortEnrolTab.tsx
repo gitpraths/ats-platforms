@@ -167,13 +167,11 @@ export function CohortEnrolTab({ onViewEnrolments }: { onViewEnrolments: (f: Pre
                 })
               )}
             </div>
-            {candidatesTotal > 20 && (
-              <div className="flex items-center justify-end gap-2 text-xs text-slate-500 mt-2">
-                <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-2 py-0.5 border border-slate-200 rounded disabled:opacity-40">Prev</button>
-                <span>Page {page} of {candidatesPages}</span>
-                <button disabled={page >= candidatesPages} onClick={() => setPage((p) => Math.min(candidatesPages, p + 1))} className="px-2 py-0.5 border border-slate-200 rounded disabled:opacity-40">Next</button>
-              </div>
-            )}
+            <div className="flex items-center justify-end gap-2 text-xs text-slate-500 mt-2">
+              <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-2 py-0.5 border border-slate-200 rounded disabled:opacity-40">Prev</button>
+              <span>Page {page} of {candidatesPages}</span>
+              <button disabled={page >= candidatesPages} onClick={() => setPage((p) => Math.min(candidatesPages, p + 1))} className="px-2 py-0.5 border border-slate-200 rounded disabled:opacity-40">Next</button>
+            </div>
           </section>
         </div>
 

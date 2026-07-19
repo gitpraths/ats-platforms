@@ -21,9 +21,10 @@ export function usePagination<T>(items: T[], page: number) {
 export default function Pagination({
   page, totalPages, total, perPage, onChange, label = "items",
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  // Always render so the user can see the total count and the paging controls
+  // if (totalPages <= 1) return null;
 
-  const from = (page - 1) * perPage + 1;
+  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
   const to   = Math.min(page * perPage, total);
 
   function pageNumbers(): (number | "...")[] {
