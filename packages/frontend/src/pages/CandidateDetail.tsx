@@ -294,7 +294,7 @@ export default function CandidateDetail() {
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] p-4 sm:p-6">
-      <div className="max-w-[1600px] mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] overflow-hidden flex flex-col">
+      <div className="w-full border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] overflow-hidden flex flex-col">
 
       {/* ═══════════════════════════════════════════════════════
           HEADER — Candidate Workspace
@@ -303,7 +303,7 @@ export default function CandidateDetail() {
         style={{ background: '#FFF7ED', borderBottom: '3px solid #e88e2e' }}
         className="flex-shrink-0"
       >
-        <div className="max-w-[1600px] mx-auto px-6">
+        <div className="w-full px-6">
 
           {/* Back */}
           <div className="pt-4 pb-1">
@@ -395,7 +395,7 @@ export default function CandidateDetail() {
           TAB CONTENT
       ═══════════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="max-w-[1600px] mx-auto px-6 py-3">
+        <div className="w-full px-6 py-3">
 
           {/* ══ OVERVIEW ══════════════════════════════════════ */}
           {activeTab === "overview" && (
