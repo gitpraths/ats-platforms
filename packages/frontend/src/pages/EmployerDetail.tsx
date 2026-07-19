@@ -151,11 +151,12 @@ export default function EmployerDetail() {
                 <th className="pb-2">Type</th>
                 <th className="pb-2">Positions</th>
                 <th className="pb-2">Status</th>
+                <th className="pb-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {employer.jobs.map((j) => (
-                <tr key={j.id} className="hover:bg-slate-50 cursor-pointer"
+                <tr key={j.id} className="hover:bg-slate-50 cursor-pointer group"
                   onClick={() => navigate(`/jobs/${j.id}`)}>
                   <td className="py-2 font-medium text-slate-900">{j.title}</td>
                   <td className="py-2 text-slate-500">{j.job_type?.replace("_", " ") || "—"}</td>
@@ -164,6 +165,15 @@ export default function EmployerDetail() {
                     <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[j.status] ?? "border border-slate-400 text-slate-600 bg-transparent"}`}>
                       {j.status}
                     </span>
+                  </td>
+                  <td className="py-2 text-right">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/jobs/${j.id}/edit`); }}
+                      className="p-1.5 text-slate-400 hover:text-[#e88e2e] hover:bg-orange-50 rounded-lg transition opacity-0 group-hover:opacity-100"
+                      title="Edit Vacancy"
+                    >
+                      <Edit2 size={14} />
+                    </button>
                   </td>
                 </tr>
               ))}
