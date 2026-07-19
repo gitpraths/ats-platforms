@@ -55,14 +55,25 @@ applicationsRouter.get("/", async (req, res, next) => {
 // ── POST /api/applications ───────────────────────────────────────────────────
 applicationsRouter.post("/", async (req, res, next) => {
   try {
-    const { job_id, candidate_id, source } = req.body;
+    const { job_id, candidate_id, source, stage, interview_date, ets_date, placement_date, applied_at } = req.body;
     if (!job_id || !candidate_id)
       return res.status(400).json({ success: false, error: "job_id and candidate_id are required" });
 
+    // Build dynamic insert to handle optional dates
+    const cols = ["job_id", "candidate_id", "source", "score", "stage"];
+    const vals = [job_id, candidate_id, source || "manual", 0, stage || "applied"];
+    
+    if (interview_date) { cols.push("interview_date"); vals.push(interview_date); }
+    if (ets_date)       { cols.push("ets_date");       vals.push(ets_date); }
+    if (placement_date) { cols.push("placement_date"); vals.push(placement_date); }
+    if (applied_at)     { cols.push("applied_at");     vals.push(applied_at); }
+
+    const placeholders = vals.map((_, i) => `$${i + 1}`).join(", ");
+    
     const { rows } = await pool.query(
-      `INSERT INTO applications (job_id, candidate_id, stage, source, score)
-       VALUES ($1, $2, 'applied', $3, 0) RETURNING *`,
-      [job_id, candidate_id, source || "manual"]
+      `INSERT INTO applications (${cols.join(", ")})
+       VALUES (${placeholders}) RETURNING *`,
+      vals
     );
     res.status(201).json({ success: true, data: rows[0] });
   } catch (err) {
@@ -76,7 +87,7 @@ applicationsRouter.post("/", async (req, res, next) => {
 // ── PATCH /api/applications/:id ──────────────────────────────────────────────
 applicationsRouter.patch("/:id", async (req, res, next) => {
   try {
-    const { stage, score, notes, interview_date, ets_date, placement_date } = req.body;
+    const { stage, score, notes, interview_date, ets_date, placement_date, applied_at } = req.body;
 
     // Verify user is recruiter for this application's job
     const { rows: appRows } = await pool.query(
@@ -99,11 +110,40 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     if (stage && !VALID_STAGES.includes(stage))
       return res.status(400).json({ success: false, error: `stage must be one of: ${VALID_STAGES.join(", ")}` });
 
+    let targetStage = stage !== undefined ? stage : appRows[0].stage;
+    
+    // If dates are provided, auto-compute targetStage (unless explicitly rejected)
+    if (interview_date !== undefined || ets_date !== undefined || placement_date !== undefined) {
+      const finalPlacement = placement_date !== undefined ? placement_date : appRows[0].placement_date;
+      const finalEts       = ets_date !== undefined ? ets_date : appRows[0].ets_date;
+      const finalInterview = interview_date !== undefined ? interview_date : appRows[0].interview_date;
+
+      let computedStage = "applied";
+      if (finalPlacement) computedStage = "hired";
+      else if (finalEts) computedStage = "ets";
+      else if (finalInterview) computedStage = "interview";
+
+      if (computedStage === "applied" && appRows[0].stage === "screening") {
+        computedStage = "screening";
+      }
+
+      if (appRows[0].stage !== "rejected") {
+        targetStage = computedStage;
+      }
+    }
+
     const updates = [];
     const params  = [];
-    if (stage !== undefined)          { params.push(stage);                  updates.push(`stage          = $${params.length}`); }
+    
+    // We only update stage if it changed from the DB, or if explicitly requested
+    if (targetStage !== appRows[0].stage || stage !== undefined) {
+      params.push(targetStage);
+      updates.push(`stage = $${params.length}`);
+    }
+
     if (score !== undefined)          { params.push(score);                  updates.push(`score          = $${params.length}`); }
     if (notes !== undefined)          { params.push(notes);                  updates.push(`notes          = $${params.length}`); }
+    if (applied_at !== undefined)     { params.push(applied_at);             updates.push(`applied_at     = $${params.length}`); }
     if (interview_date !== undefined) { params.push(interview_date || null); updates.push(`interview_date = $${params.length}`); }
     if (ets_date !== undefined)       { params.push(ets_date || null);       updates.push(`ets_date       = $${params.length}`); }
     if (placement_date !== undefined) { params.push(placement_date || null); updates.push(`placement_date = $${params.length}`); }
@@ -112,7 +152,6 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
       return res.status(400).json({ success: false, error: "No updatable fields provided" });
 
     // ── 1-active-placement-at-a-time validation ────────────────────────────────
-    // If trying to SET a placement_date (not clear it), block if candidate already placed elsewhere
     if (placement_date) {
       const { rows: existingPlacement } = await pool.query(
         `SELECT id FROM applications
@@ -124,29 +163,6 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
           success: false,
           error: "This candidate already has an active placement. Remove it first before adding a new one."
         });
-    }
-
-    // Auto-advance stage based on date set (only if no explicit stage passed)
-    if (stage === undefined) {
-      const currentStage = appRows[0].stage;
-      const finalPlacement = placement_date !== undefined ? placement_date : appRows[0].placement_date;
-      const finalEts       = ets_date !== undefined ? ets_date : appRows[0].ets_date;
-      const finalInterview = interview_date !== undefined ? interview_date : appRows[0].interview_date;
-
-      let targetStage = "applied";
-      if (finalPlacement) targetStage = "hired";
-      else if (finalEts) targetStage = "ets";
-      else if (finalInterview) targetStage = "interview";
-      // screening remains unchanged if dates are cleared, unless we want to reset completely to applied.
-      // We'll reset to 'applied' if all dates are missing and it was beyond 'screening'.
-      if (targetStage === "applied" && currentStage === "screening") {
-        targetStage = "screening"; // Preserve manual screening stage
-      }
-
-      if (currentStage !== "rejected" && targetStage !== currentStage) {
-        params.push(targetStage);
-        updates.push(`stage = $${params.length}`);
-      }
     }
 
     params.push(req.params.id);

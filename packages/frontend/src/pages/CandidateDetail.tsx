@@ -930,7 +930,7 @@ function InlineDateCellDetail({
   allowClear,
 }: {
   appId: string;
-  field: "interview_date" | "ets_date" | "placement_date";
+  field: "applied_at" | "interview_date" | "ets_date" | "placement_date";
   value?: string | null;
   onSaved: () => void;
   validate?: (newDate: string | null) => string | null;
@@ -1145,8 +1145,17 @@ export function VacanciesTab({
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                    {fmtDate(app.applied_at)}
+                  <td className="px-4 py-3">
+                    {canWrite ? (
+                      <InlineDateCellDetail
+                        appId={app.id}
+                        field="applied_at"
+                        value={app.applied_at}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-500 whitespace-nowrap">{fmtDate(app.applied_at)}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {canWrite ? (

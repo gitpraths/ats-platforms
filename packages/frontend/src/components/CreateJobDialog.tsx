@@ -181,17 +181,20 @@ interface FormState {
   // Step 3
   candidate_id:    string;
   candidate_name:  string;
+  applied_at:      string;
   interview_date:  string;
   ets_date:        string;
   placement_date:  string;
 }
+
+const todayString = new Date().toISOString().split("T")[0];
 
 const EMPTY: FormState = {
   title: "", employer_id: "", industry: "", pay_rate: "", pay_rate_type: "per_hour",
   positions_count: 1, work_type: "Full-time", work_location: "", job_board_url: WORKVISION_BOARD_URL,
   description: "", police_check: "not_required", drug_alcohol_test: "no", wwc: "no",
   car_required: "no", public_transport: "no", wage_subsidy_required: "no", comments: "",
-  candidate_id: "", candidate_name: "", interview_date: "", ets_date: "", placement_date: "",
+  candidate_id: "", candidate_name: "", applied_at: todayString, interview_date: "", ets_date: "", placement_date: "",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -478,7 +481,12 @@ function StepCandidateAssignment({ form, set }: {
       </div>
 
       {/* Dates */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Applied Date</Label>
+          <input type="date" value={form.applied_at}
+            onChange={(e) => set("applied_at", e.target.value)} className={cls} />
+        </div>
         <div>
           <Label>Interview Date</Label>
           <input type="date" value={form.interview_date}
@@ -495,7 +503,7 @@ function StepCandidateAssignment({ form, set }: {
             onChange={(e) => set("placement_date", e.target.value)} className={cls} />
         </div>
       </div>
-      <p className="text-xs text-slate-400">ETS = Expected To Start</p>
+      <p className="text-xs text-slate-400 mt-1">ETS = Expected To Start</p>
     </div>
   );
 }
@@ -524,6 +532,7 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
             job_id:         data.id,
             candidate_id:   form.candidate_id,
             stage:          form.interview_date ? "interview" : "applied",
+            applied_at:     form.applied_at     || undefined,
             interview_date: form.interview_date || undefined,
             ets_date:       form.ets_date       || undefined,
             placement_date: form.placement_date || undefined,
