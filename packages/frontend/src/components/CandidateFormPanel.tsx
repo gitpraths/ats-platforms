@@ -565,7 +565,21 @@ export function CandidateFormPanel({
         </div>
       </div>
 
-      {/* ── Section 6: Documents ── */}
+      {/* ── Section 6: Comments ── */}
+      <div className={sectionCls}>
+        <p className={sectionTitle}>Comments</p>
+        <div>
+          <Label>General Comments / Notes</Label>
+          <textarea
+            value={form.comments}
+            onChange={(e) => set("comments", e.target.value)}
+            className={`${CLS} min-h-[100px] resize-y`}
+            placeholder="Enter any additional notes or comments here..."
+          />
+        </div>
+      </div>
+
+      {/* ── Section 7: Documents ── */}
       <div className={sectionCls}>
         <p className={sectionTitle}>Documents</p>
 
