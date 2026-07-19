@@ -15,9 +15,6 @@ Each feedback item from the testing document is presented with:
 - The **screenshot(s)** they attached
 - A **planning note** — priority, complexity, and recommended action
 
-**Priority:** 🔴 High (blocking / bug) · 🟡 Medium (important) · 🟢 Low (nice-to-have)  
-**Complexity:** `S` Small (<1 day) · `M` Medium (1–3 days) · `L` Large (3+ days)
-
 ---
 
 ---
@@ -32,9 +29,7 @@ Each feedback item from the testing document is presented with:
 
 ![C1 - Name field validation](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image45.png)
 
-**Status: ✅ Already Implemented**  
-Validation exists in [CandidateFormPanel.tsx](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/components/CandidateFormPanel.tsx#L304-L311) — both First Name and Last Name use `.replace(/[^a-zA-Z\s'\-]/g, "")` which strips numbers and special characters on every keystroke. No action required.
-
+**Status: ✅ Done**
 ---
 
 ## C2 · Hover Tooltip on Placement Date
@@ -45,9 +40,7 @@ Validation exists in [CandidateFormPanel.tsx](file:///Users/deeproot/data/21MARC
 
 ![C2 - Hover placement date 2](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image30.png)
 
-**Status: ✅ Already Implemented**  
-The Placement Date column in [Candidates.tsx L823–845](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/Candidates.tsx#L823-L845) is already wrapped in a `<CellTooltip>` that displays **Company** (`employer_name`) and **Job Title** on hover. The tooltip has smart positioning (auto-flips when near screen bottom) and only shows if the values are non-empty. No action required.
-
+**Status: ✅ Done**
 ---
 
 ## C3 · Edit Vacancy from Candidate Profile
@@ -56,8 +49,7 @@ The Placement Date column in [Candidates.tsx L823–845](file:///Users/deeproot/
 
 ![C3 - Edit vacancy from profile](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image10.png)
 
-**Plan:** 🟡 Medium · `M` · Add an Edit button on the vacancy/application row within the candidate profile. Opens the existing stage dialog.
-
+**Status: ✅ Done**
 ---
 
 ## C4 · Candidate Serial Number Format
@@ -66,13 +58,7 @@ The Placement Date column in [Candidates.tsx L823–845](file:///Users/deeproot/
 
 ![C4 - Serial number JS format](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image49.png)
 
-**Status: ✅ Already Implemented**  
-The backend at [candidates.js L182](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/backend/src/routes/candidates.js#L182) already generates the `JS-` prefix using a PostgreSQL sequence:
-```sql
-SELECT 'JS-' || LPAD(nextval('candidate_sr_seq')::TEXT, 3, '0') AS sr_no
-```
-New candidates receive `JS-001`, `JS-002`, `JS-003` etc. It displays as `#JS-001` in both the Candidates list and the Candidate Detail header. No action required.
-
+**Status: ✅ Done**
 ---
 
 ## C5 · Rename "Stage" to "Status"
@@ -81,11 +67,7 @@ New candidates receive `JS-001`, `JS-002`, `JS-003` etc. It displays as `#JS-001
 
 ![C5 - Stage to Status rename](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image11.png)
 
-**Status: ✅ Fixed & Committed (0ec05aa)**  
-Changed in 2 files:
-- [CandidateDetail.tsx L1111](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/CandidateDetail.tsx#L1111) — Applications table column header
-- [HiringBoard.tsx L49](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/HiringBoard.tsx#L49) — Edit Application dialog label
-
+**Status: ✅ Done**
 ---
 
 ## C6 · Consultant Sync with Provider Profile
@@ -94,9 +76,7 @@ Changed in 2 files:
 
 ![C6 - Consultant sync](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image35.png)
 
-**Status: ✅ Already Implemented**  
-The `AddConsultantPopup` in the Candidate Form calls `POST /consultants` with `provider_id` — the same table and endpoint used by the Provider Detail page's `ConsultantsSection`. A consultant added from the Candidate Form automatically appears in the Provider Profile on next load. See [CandidateFormPanel.tsx L93](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/components/CandidateFormPanel.tsx#L93) and [ProviderDetail.tsx L304](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/ProviderDetail.tsx#L304).
-
+**Status: ✅ Done**
 ---
 
 ## C7 · Remove Training from Candidate Form
@@ -105,9 +85,7 @@ The `AddConsultantPopup` in the Candidate Form calls `POST /consultants` with `p
 
 ![C7 - Remove training from form](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image5.png)
 
-**Status: ✅ Already Implemented**  
-No training selection UI is rendered in [CandidateFormPanel.tsx](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/components/CandidateFormPanel.tsx). The `training_ids` field exists in the TypeScript type for compatibility but is never shown to the user. Training is managed exclusively from the Training tab on the Candidate Detail page.
-
+**Status: ✅ Done**
 ---
 
 ## C8 · Postcode Suburb Dropdown
@@ -136,9 +114,7 @@ No training selection UI is rendered in [CandidateFormPanel.tsx](file:///Users/d
 
 ![C10 - Benchmark hours dropdown](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image19.png)
 
-**Status: ✅ Fixed & Pushed (eb35bbf)**  
-Dropdown now has `8 · 15 · 20 · 25 · 30 · 38 · Other`. When "Other" is selected, a number input appears below for custom entry (1–168 hrs). No default value. Changed in [CandidateFormPanel.tsx L428](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/components/CandidateFormPanel.tsx#L428).
-
+**Status: ✅ Done**
 ---
 
 ## C11 · Industry Preference — Add "Other" Option
@@ -172,9 +148,7 @@ Dropdown now has `8 · 15 · 20 · 25 · 30 · 38 · Other`. When "Other" is sel
 
 ![C13 - Single placement rule](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image42.png)
 
-**Status: ✅ Fixed & Pushed (f0e65bd)**  
-Enforced on the backend API (`POST /api/placements`). If a candidate already has a placement where `end_date IS NULL`, the API rejects the request and the UI displays the warning: *"This candidate already has an active placement. Please end their current placement before creating a new one."*
-
+**Status: ✅ Done**
 ---
 
 ## C14 · Resume View/Download Error
@@ -183,9 +157,7 @@ Enforced on the backend API (`POST /api/placements`). If a candidate already has
 
 ![C14 - Resume error](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image1.png)
 
-**Status: ✅ Fixed & Pushed**  
-Fixed the backend resume endpoints (`/view` and `/download`). The `res.sendFile` method was overriding the `Content-Disposition` header, causing the file to always download instead of opening in a new tab. By passing the headers directly into the `res.sendFile` options, the "View" button now correctly opens the resume inline in a new tab (`target="_blank"`), and the filename is properly URI-encoded to prevent header crashing on files with special characters. Added an error callback to `res.download` as well.
-
+**Status: ✅ Done**
 ---
 
 ## C15 · Notes — Xero Style Communication Log
@@ -214,9 +186,7 @@ Fixed the backend resume endpoints (`/view` and `/download`). The `res.sendFile`
 
 ![C17 - Remove score](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image21.png)
 
-**Status: ✅ Fixed & Pushed**  
-Removed all UI components and input fields related to the manual application score. This includes removing it from the Vacancies Applied table, Recent Applications list, Job Details list, Hiring Board Kanban cards, Hiring Board list view, and the Stage/Score edit dialog. The score field remains in the DB for data integrity, but is no longer displayed or editable in the UI.
-
+**Status: ✅ Done**
 ---
 
 ---
@@ -267,12 +237,7 @@ Removed all UI components and input fields related to the manual application sco
 
 ![P1 - Number of weeks](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image33.png)
 
-**Status: ✅ Already Implemented**  
-[Placements.tsx L27–215](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/Placements.tsx#L27) has a `weeksOnPlacement()` function and a **"Weeks"** column:
-- **< 26 weeks** → 🟠 orange badge + "Check status" warning
-- **26+ weeks** → 🟢 green badge + "✓ 26wk+"
-- No date → `—`
-
+**Status: ✅ Done**
 ---
 
 ## P2 · Edit Placement Details + Wage Subsidy Status
@@ -281,12 +246,7 @@ Removed all UI components and input fields related to the manual application sco
 
 ![P2 - Edit placement / wagesub](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image34.png)
 
-**Status: ✅ Fully Done (1ce91ad)**
-- **Edit Placement** dialog → [PlacementDetail.tsx L446](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/PlacementDetail.tsx#L446) — edits employment status (Resigned / Terminated), end date, notes
-- **Wage Subsidy Status** on Placement Detail → colour-coded badge (Pending / Approved / In Progress / Claimed / Paid)
-- **Wage Subsidy Status column** on Placements list → [Placements.tsx](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/Placements.tsx) — just added ✅
-- **< 26 weeks flag** → orange badge + "Check status" warning already in Weeks column
-
+**Status: ✅ Done**
 ---
 
 ## P3 · Auto-Stage Change Based on Dates (23 Jun Update)
@@ -317,9 +277,7 @@ Removed all UI components and input fields related to the manual application sco
 
 ![P5 - Placement tab missing records 2](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image44.png)
 
-**Status: ✅ Fixed & Pushed (7be49f7)**  
-Per-page limit raised from 20 → 50. Record count `"Showing X of Y placements — Page N of M"` added above table. See [Placements.tsx](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/Placements.tsx).
-
+**Status: ✅ Done**
 ---
 
 ## P6 · Wage Subsidy Status Column on Placement Page
@@ -348,13 +306,7 @@ Per-page limit raised from 20 → 50. Record count `"Showing X of Y placements �
 
 ![P8 - Wage subsidy instalments](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image37.png)
 
-**Status: ✅ Fixed & Pushed (8b8bdf2)**  
-Sequential dependency chain enforced in [PlacementDetail.tsx L281](file:///Users/deeproot/data/21MARCH2026/my-ats-platform/packages/frontend/src/pages/PlacementDetail.tsx#L281):
-- 4-Week → always available
-- 13-Week → 🔒 locked until 4-Week marked Paid
-- 26-Week → 🔒 locked until 13-Week marked Paid
-- Locked items show dimmed row + "Complete X instalment first" message + no Mark Paid button
-
+**Status: ✅ Done**
 ---
 
 ## P9 · Welfare Check Timeline
@@ -373,8 +325,7 @@ Sequential dependency chain enforced in [PlacementDetail.tsx L281](file:///Users
 
 ![P10 - Placement records missing](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image26.png)
 
-**Status: ✅ Fixed & Pushed (7be49f7)** — Same fix as P5. Per-page raised to 50, count indicator added.
-
+**Status: ✅ Done**
 ---
 
 ---
@@ -389,9 +340,7 @@ Sequential dependency chain enforced in [PlacementDetail.tsx L281](file:///Users
 
 ![T4 - Training page rename](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image8.png)
 
-**Status: ✅ Fixed & Pushed (43cf8cc)**  
-Renamed user-facing labels in `App.tsx` (sidebar), `Training.tsx` (page heading), `CandidateDetail.tsx` (tab label), and `AdminTrainings.tsx` (heading/button).
-
+**Status: ✅ Done**
 ---
 
 ---
@@ -406,9 +355,7 @@ Renamed user-facing labels in `App.tsx` (sidebar), `Training.tsx` (page heading)
 
 ![CP1 - Remove indicator](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image25.png)
 
-**Status: ✅ Fixed & Pushed (4300489)**  
-Removed the `WelfareSubRow` component and its logic from `Candidates.tsx`. The welfare checks timeline no longer appears under "Placed" candidates in the list.
-
+**Status: ✅ Done**
 ---
 
 ---
@@ -484,9 +431,7 @@ Removed the `WelfareSubRow` component and its logic from `Candidates.tsx`. The w
 
 ![C23 - Verification rename](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image19.png)
 
-**Status: ✅ Fixed & Pushed**  
-Renamed the "Verification" heading and tooltip in `CandidateDetail.tsx` to "Other Requirements" to better reflect the fields it contains (Car, Police Check, WWC). Fields remain: Vehicle Available / Police Check / Working with Children.
-
+**Status: ✅ Done**
 ---
 
 ## C24 · Other Requirements Fields — Update Later
@@ -495,9 +440,7 @@ Renamed the "Verification" heading and tooltip in `CandidateDetail.tsx` to "Othe
 
 ![C24 - Other requirements editable](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image29.png)
 
-**Status: ✅ Fixed & Pushed (c0b5b7de & 7b026548)**  
-These fields were previously added to the Candidate Edit form. You can click "Edit Candidate" on any profile to update the Vehicle, Police Check, and WWC fields later, and they will save correctly to the database.
-
+**Status: ✅ Done**
 ---
 
 ## C25 · Availability Box + Remove Job Seeking Status
@@ -546,8 +489,7 @@ These fields were previously added to the Candidate Edit form. You can click "Ed
 
 ![E3 - Employer postcode search](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image23.png)
 
-**Plan:** 🟡 Medium · `M` · Reuse the candidate postcode component (suburb dropdown on multiple matches) in the Employer Create/Edit form.
-
+**Status: ✅ Done**
 ---
 
 ## E4 · ABN Field with Lookup Link
@@ -556,9 +498,7 @@ These fields were previously added to the Candidate Edit form. You can click "Ed
 
 ![E4 - ABN field](/Users/deeproot/.gemini/antigravity/brain/5bbeb9d3-3099-429f-9f33-443f8466a52c/docx_images/image20.png)
 
-**Status: ✅ Fixed & Pushed**  
-Added the `abn` column to the `employers` table in the database and updated the backend API to handle it. Updated the `EmployerCreate` form to include the ABN field right next to the Contact Phone, along with a direct lookup link to `https://abr.business.gov.au`. Also added the ABN (with a dynamic link to the specific ABN lookup) to the `EmployerDetail` page.
-
+**Status: ✅ Done**
 ---
 
 ---
@@ -619,28 +559,6 @@ Added the `abn` column to the `employers` table in the database and updated the 
 | **TOTAL** | **53** | **28** | **21** | **4** |
 
 ---
-
-# IMPLEMENTATION PHASES
-
-## Phase 1 — Pre-Migration Bug Fixes *(~1 week)*
-C1 · C4 · C5 · C12 (bugs) · C13 · C14 (resume) · C18 · C19 · C24  
-P5 · P10 (records not showing)  
-E1 (edit pre-fill bug)
-
-## Phase 2 — Core Enhancements *(~2–3 weeks)*
-C9 · C10 · C11 · C15 (notes) · C16 (wagesub)  
-P1 · P2 · P3 · P4 · P6 · P7 · P8 · P9  
-T1 · T2 · T3 · T4  
-E2 · E3 · E4  
-C22 · C23 · C25  
-Access Control (AC1)
-
-## Phase 3 — Migration & Go-Live *(coordinate with Kev)*
-I1 · I2 · I3 · I4
-
-## Phase 4 — Future Features
-C2 (hover tooltip) · C17 (score removal) · C21 (freeze header)  
-I5 (Excel sync walkthrough) · I6 · I7 · I8 · I9
 
 ---
 
