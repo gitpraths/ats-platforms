@@ -493,8 +493,8 @@ export default function Candidates() {
   }
 
   return (
-    <div className="p-6 w-full">
-
+    <div className="w-full h-[calc(100vh-3.5rem)] flex flex-col p-6 overflow-hidden">
+      <div className="flex-none">
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -577,8 +577,10 @@ export default function Candidates() {
           );
         })}
       </div>
+      </div>
 
       {/* ── Content ─────────────────────────────────────────────── */}
+      <div className="flex-1 min-h-0 flex flex-col">
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-6 h-6 border-2 border-[#e88e2e] border-t-transparent rounded-full animate-spin" />
@@ -597,8 +599,8 @@ export default function Candidates() {
         </div>
       ) : view === "list" ? (
         /* ── List View — focused table with per-column search ── */
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-auto max-h-[calc(100vh-250px)] relative">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-0">
+          <div className="overflow-auto flex-1 relative">
             <table className="w-full text-sm relative">
               <thead className="bg-slate-50 sticky top-0 z-20 shadow-sm border-b border-slate-200">
               {/* Row 1: Column labels */}
@@ -830,7 +832,8 @@ export default function Candidates() {
         </div>
       ) : (
         /* ── Card View ── */
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+        <div className="overflow-y-auto flex-1 h-full min-h-0 relative">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
           {rows.map((row) => (
             <button key={row.id} onClick={() => navigate(`/candidates/${row.id}`)}
               className="bg-white rounded-2xl shadow-sm p-4 text-left hover:shadow-md hover:border-orange-200 border border-transparent transition">
@@ -864,10 +867,13 @@ export default function Candidates() {
             </button>
           ))}
         </div>
+        </div>
       )}
 
+      </div>
+
       {/* ── Pagination ──────────────────────────────────────────── */}
-      <div className="mt-4">
+      <div className="mt-4 flex-none">
         <Pagination
           page={page}
           totalPages={totalPages}
