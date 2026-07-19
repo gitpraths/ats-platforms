@@ -50,9 +50,10 @@ function Pagination({
 }: {
   page: number; totalPages: number; total: number; perPage: number; onChange: (p: number) => void;
 }) {
-  if (totalPages <= 1) return null;
+  // Always render so the user can see the total count and the paging controls
+  // if (totalPages <= 1) return null;
 
-  const from = (page - 1) * perPage + 1;
+  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
   const to   = Math.min(page * perPage, total);
 
   // Build page number array with ellipsis
