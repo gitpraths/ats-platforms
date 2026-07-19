@@ -597,9 +597,10 @@ export default function Candidates() {
         </div>
       ) : view === "list" ? (
         /* ── List View — focused table with per-column search ── */
-        <div className="bg-white rounded-2xl shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b sticky top-14 z-20 shadow-[0_1px_0_0_#f1f5f9]">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="overflow-auto max-h-[calc(100vh-250px)] relative">
+            <table className="w-full text-sm relative">
+              <thead className="bg-slate-50 sticky top-0 z-20 shadow-sm border-b border-slate-200">
               {/* Row 1: Column labels */}
               <tr className="bg-slate-50">
                 {["SR #","Candidate","Email","Mobile","Provider","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
@@ -825,6 +826,7 @@ export default function Candidates() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         /* ── Card View ── */
