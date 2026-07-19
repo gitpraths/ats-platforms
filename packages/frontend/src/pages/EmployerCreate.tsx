@@ -120,7 +120,7 @@ export default function EmployerCreate() {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Contact Phone</label>
-              <input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)}
+              <input type="tel" value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value.replace(/\D/g, ""))}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>
             <div>
