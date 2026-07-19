@@ -219,6 +219,7 @@ export interface Candidate {
   resume_url?: string;
   linkedin?: string;
   notes?: string;
+  comments?: string;
   application_count?: number;
   provider_id?: string | null;
   provider_name?: string;

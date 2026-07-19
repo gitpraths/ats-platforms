@@ -468,7 +468,7 @@ export default function CandidateDetail() {
                   </div>
 
                   {/* Work Details */}
-                  <div className="border-t border-slate-200/60 px-6 py-3 bg-slate-50/40 rounded-b-2xl">
+                  <div className={`border-t border-slate-200/60 px-6 py-3 bg-slate-50/40 ${!candidate.comments ? 'rounded-b-2xl' : ''}`}>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Work Details</p>
                     <div className="grid grid-cols-3 gap-x-8 gap-y-3">
                       <div>
@@ -500,6 +500,14 @@ export default function CandidateDetail() {
                       </div>
                     </div>
                   </div>
+
+                  {/* General Comments */}
+                  {candidate.comments && (
+                    <div className="border-t border-slate-200/60 px-6 py-4 bg-orange-50/30 rounded-b-2xl">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">General Comments</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{candidate.comments}</p>
+                    </div>
+                  )}
 
                 </div>
 
