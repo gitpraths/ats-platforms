@@ -154,8 +154,18 @@ export function EnrolmentsTab({
         ) : null}
       </div>
 
+      {/* Top Pagination */}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        perPage={25}
+        onChange={setPage}
+        label="enrolments"
+      />
+
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm">
+      <div className="bg-white rounded-xl shadow-sm mt-3">
         {isLoading ? (
           <p className="p-6 text-slate-500">Loading...</p>
         ) : rows.length === 0 ? (

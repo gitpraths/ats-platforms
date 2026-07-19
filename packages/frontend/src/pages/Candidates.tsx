@@ -515,6 +515,16 @@ export default function Candidates() {
       </div>
 
       {/* ── Content ─────────────────────────────────────────────── */}
+      <div className="flex-none mb-3">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={meta?.total ?? 0}
+          perPage={meta?.limit ?? 20}
+          onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          label="candidates"
+        />
+      </div>
       <div className="flex-1 min-h-0 flex flex-col">
       {isLoading ? (
         <div className="flex items-center justify-center py-16">

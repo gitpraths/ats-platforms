@@ -69,8 +69,12 @@ export default function Employers() {
         />
       </div>
 
+      {/* Top Pagination */}
+      <Pagination page={page} totalPages={Math.ceil((total || 1) / 20)}
+        total={total} perPage={20} onChange={setPage} label="employers" />
+
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b">
             <tr>
