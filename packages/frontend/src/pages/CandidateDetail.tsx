@@ -1132,21 +1132,9 @@ export function VacanciesTab({
                     {app.source && <p className="text-[10px] text-slate-400">{app.source}</p>}
                   </td>
                   <td className="px-4 py-3">
-                    {canWrite ? (
-                      <select
-                        value={app.stage}
-                        onChange={(e) => updateStage.mutate({ appId: app.id, stage: e.target.value })}
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}
-                      >
-                        {((["applied","interview","ets","hired","rejected"] as const) as string[]).concat(app.stage === "screening" ? ["screening"] : []).map((s) => (
-                          <option key={s} value={s}>{stageLabel(s)}{s === "screening" ? " (change me)" : ""}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}>
-                        {stageLabel(app.stage)}
-                      </span>
-                    )}
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STAGE_BADGE2[app.stage] ?? "bg-slate-100 text-slate-600"}`}>
+                      {stageLabel(app.stage)}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     {canWrite ? (
