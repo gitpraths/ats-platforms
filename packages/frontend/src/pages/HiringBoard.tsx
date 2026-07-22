@@ -337,8 +337,9 @@ export default function HiringBoard() {
   if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
 
   return (
-    <div className="p-6">
-      {updateError && (
+    <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
+      <div className="max-w-7xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
+        {updateError && (
         <div className="mb-4 px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {updateError}
         </div>
@@ -408,6 +409,7 @@ export default function HiringBoard() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

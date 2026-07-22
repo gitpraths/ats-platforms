@@ -34,8 +34,9 @@ export default function Employers() {
   const total = data?.meta?.total ?? 0;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
+      <div className="max-w-6xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
+        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Employers</h1>
           <p className="text-sm text-slate-500 mt-0.5">Companies that post vacancies</p>
@@ -146,6 +147,7 @@ export default function Employers() {
 
       <Pagination page={page} totalPages={Math.ceil((total || 1) / 20)}
         total={total} perPage={20} onChange={setPage} label="employers" />
+      </div>
     </div>
   );
 }

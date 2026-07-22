@@ -159,8 +159,9 @@ export default function Jobs() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
+    <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
+      <div className="max-w-7xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
+        {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Vacancies</h1>
         <div className="flex items-center gap-2">
@@ -279,6 +280,7 @@ export default function Jobs() {
       )}
 
       <CreateJobDialog isOpen={dialogOpen} onClose={() => setDialogOpen(false)} />
+      </div>
     </div>
   );
 }

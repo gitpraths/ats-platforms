@@ -428,8 +428,9 @@ export default function Candidates() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-3.5rem)] flex flex-col px-6 py-4 overflow-hidden">
-      <div className="flex-none">
+    <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
+      <div className="w-full border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 flex flex-col space-y-4">
+        <div className="flex-none">
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -833,5 +834,6 @@ export default function Candidates() {
         />
       </div>
     </div>
-  );
+  </div>
+);
 }
