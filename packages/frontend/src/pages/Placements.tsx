@@ -267,37 +267,19 @@ export default function Placements() {
                       : <span className="text-xs text-slate-400">Pending</span>}
                   </td>
                   <td className="px-4 py-3">
-                    {canCreate ? (
-                      <select
-                        value={p.wagesub_status ?? "pending"}
-                        onChange={(e) => updateWagesubStatus.mutate({ id: p.id, wagesub_status: e.target.value })}
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${
-                          p.wagesub_status === "approved" || p.wagesub_status === "agreement_signed" ? "bg-blue-100 text-blue-700" :
-                          p.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700" :
-                          p.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700" :
-                          p.wagesub_status === "paid"        ? "bg-green-100 text-green-700" :
-                          p.wagesub_status === "not_applicable" ? "bg-slate-100 text-slate-500" :
-                          "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="agreement_signed">Agreement Signed</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="claimed">Claimed</option>
-                        <option value="paid">Paid</option>
-                        <option value="not_applicable">N/A / Not Eligible</option>
-                      </select>
-                    ) : (
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        p.wagesub_status === "approved" || p.wagesub_status === "agreement_signed" ? "bg-blue-100 text-blue-700" :
-                        p.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700" :
-                        p.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700" :
-                        p.wagesub_status === "paid"        ? "bg-green-100 text-green-700" :
-                        "bg-slate-100 text-slate-600"
-                      }`}>
-                        {p.wagesub_status ? p.wagesub_status.replace("_", " ") : "Pending"}
-                      </span>
-                    )}
+                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                      p.wagesub_status === "agreement_signed" || p.wagesub_status === "approved" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                      p.wagesub_status === "in_progress" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                      p.wagesub_status === "claimed"     ? "bg-purple-50 text-purple-700 border-purple-200" :
+                      p.wagesub_status === "paid"        ? "bg-green-50 text-green-700 border-green-200" :
+                      p.wagesub_status === "not_applicable" ? "bg-slate-100 text-slate-500 border-slate-200" :
+                      "bg-slate-100 text-slate-600 border-slate-200"
+                    }`}>
+                      {p.wagesub_status === "agreement_signed" ? "Agreement Signed" :
+                       p.wagesub_status === "in_progress" ? "In Progress" :
+                       p.wagesub_status === "not_applicable" ? "N/A" :
+                       p.wagesub_status ? p.wagesub_status.charAt(0).toUpperCase() + p.wagesub_status.slice(1) : "Pending"}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
