@@ -428,8 +428,8 @@ export default function Candidates() {
   }
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] bg-[#F1F5F9] px-4 py-3 sm:px-6 sm:py-4 flex flex-col overflow-hidden">
-      <div className="w-full border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-4 sm:p-5 flex-1 min-h-0 flex flex-col overflow-hidden space-y-3">
+    <div className="h-[calc(100vh-3.5rem)] bg-[#F1F5F9] p-3 sm:p-4 flex flex-col overflow-hidden">
+      <div className="w-full h-full border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-4 sm:p-5 flex flex-col min-h-0 overflow-hidden space-y-3">
         <div className="flex-none">
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-3">
@@ -817,23 +817,10 @@ export default function Candidates() {
             </button>
           ))}
         </div>
-        </div>
+      </div>
       )}
-
-      </div>
-
-      {/* ── Pagination ──────────────────────────────────────────── */}
-      <div className="mt-4 flex-none">
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={meta?.total ?? 0}
-          perPage={meta?.limit ?? 20}
-          onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          label="candidates"
-        />
-      </div>
     </div>
   </div>
+</div>
 );
 }
