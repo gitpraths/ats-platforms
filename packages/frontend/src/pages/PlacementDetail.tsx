@@ -64,6 +64,7 @@ export default function PlacementDetail() {
   const [editStatus, setEditStatus] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editWagesubStatus, setEditWagesubStatus] = useState("");
   const [editError, setEditError] = useState("");
 
   const { data: placement, isLoading } = useQuery<Placement>({
@@ -179,9 +180,10 @@ export default function PlacementDetail() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                setEditStatus(placement.employment_status ?? "");
-                setEditEndDate(placement.end_date ?? "");
+                setEditStatus(placement.employment_status || "active");
+                setEditEndDate(placement.end_date ? placement.end_date.slice(0, 10) : "");
                 setEditNotes(placement.notes ?? "");
+                setEditWagesubStatus(placement.wagesub_status || "pending");
                 setEditError("");
                 setShowEdit(true);
               }}
@@ -501,9 +503,8 @@ export default function PlacementDetail() {
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
                 >
-                  <option value="">— Select status —</option>
                   <option value="active">Active</option>
                   <option value="resigned">Resigned</option>
                   <option value="terminated">Terminated</option>
@@ -512,12 +513,27 @@ export default function PlacementDetail() {
                 </select>
               </div>
               <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Wage Sub Process Status</label>
+                <select
+                  value={editWagesubStatus}
+                  onChange={(e) => setEditWagesubStatus(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="agreement_signed">Agreement Signed</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="claimed">Claimed</option>
+                  <option value="paid">Paid</option>
+                  <option value="not_applicable">N/A / Not Eligible</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">End Date</label>
                 <input
                   type="date"
                   value={editEndDate}
                   onChange={(e) => setEditEndDate(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
                 />
                 <p className="text-[11px] text-slate-400 mt-0.5">Set for resignations, terminations or placement end</p>
               </div>
@@ -528,7 +544,7 @@ export default function PlacementDetail() {
                   onChange={(e) => setEditNotes(e.target.value)}
                   rows={3}
                   placeholder="Add reason for status change, context..."
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
                 />
               </div>
             </div>
@@ -542,6 +558,7 @@ export default function PlacementDetail() {
                   employment_status: editStatus || null,
                   end_date: editEndDate || null,
                   notes: editNotes || undefined,
+                  wagesub_status: editWagesubStatus || null,
                 })}
                 disabled={updatePlacement.isPending}
                 className="px-4 py-2 text-sm bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] disabled:opacity-50"
