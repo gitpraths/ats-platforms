@@ -105,6 +105,12 @@ export default function Placements() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["placements"] }),
   });
 
+  const updateWagesubStatus = useMutation({
+    mutationFn: ({ id, wagesub_status }: { id: string; wagesub_status: string }) =>
+      api.patch(`/placements/${id}`, { wagesub_status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["placements"] }),
+  });
+
   const placements      = placementsData?.data ?? [];
   const placementTotal  = placementsData?.meta?.total ?? 0;
   const placementPages  = Math.max(1, Math.ceil(placementTotal / PER_PAGE));
@@ -201,7 +207,7 @@ export default function Placements() {
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Start Date</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Weeks</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Confirmed</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Wage Subsidy</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Wage Sub Process Status</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -217,7 +223,12 @@ export default function Placements() {
                     <div>
                       <p className="font-medium text-slate-900">{p.candidate_name}</p>
                       {p.candidate_work_status && (
-                        <span className="text-xs text-purple-600">{p.candidate_work_status.replace("_", " ")}</span>
+                        <span className="text-xs text-purple-600 block">{p.candidate_work_status.replace("_", " ")}</span>
+                      )}
+                      {(p as any).wage_subsidy && (
+                        <span className="text-[10px] text-emerald-600 font-medium block">
+                          Wage Sub Eligible {(p as any).wage_subsidy_amount ? `($${Number((p as any).wage_subsidy_amount).toLocaleString()})` : ""}
+                        </span>
                       )}
                     </div>
                   </td>
@@ -255,20 +266,36 @@ export default function Placements() {
                       : <span className="text-xs text-slate-400">Pending</span>}
                   </td>
                   <td className="px-4 py-3">
-                    {p.wagesub_status ? (
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                        p.wagesub_status === "pending"     ? "bg-slate-100 text-slate-600 border-slate-300" :
-                        p.wagesub_status === "approved"    ? "bg-blue-100 text-blue-700 border-blue-300" :
-                        p.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700 border-amber-300" :
-                        p.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700 border-purple-300" :
-                        p.wagesub_status === "paid"        ? "bg-green-100 text-green-700 border-green-300" :
-                        "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}>
-                        {p.wagesub_status === "in_progress" ? "In Progress" :
-                         p.wagesub_status.charAt(0).toUpperCase() + p.wagesub_status.slice(1)}
-                      </span>
+                    {canCreate ? (
+                      <select
+                        value={p.wagesub_status ?? "pending"}
+                        onChange={(e) => updateWagesubStatus.mutate({ id: p.id, wagesub_status: e.target.value })}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 ${
+                          p.wagesub_status === "approved" || p.wagesub_status === "agreement_signed" ? "bg-blue-100 text-blue-700" :
+                          p.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700" :
+                          p.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700" :
+                          p.wagesub_status === "paid"        ? "bg-green-100 text-green-700" :
+                          p.wagesub_status === "not_applicable" ? "bg-slate-100 text-slate-500" :
+                          "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="agreement_signed">Agreement Signed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="claimed">Claimed</option>
+                        <option value="paid">Paid</option>
+                        <option value="not_applicable">N/A / Not Eligible</option>
+                      </select>
                     ) : (
-                      <span className="text-xs text-slate-300">—</span>
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        p.wagesub_status === "approved" || p.wagesub_status === "agreement_signed" ? "bg-blue-100 text-blue-700" :
+                        p.wagesub_status === "in_progress" ? "bg-amber-100 text-amber-700" :
+                        p.wagesub_status === "claimed"     ? "bg-purple-100 text-purple-700" :
+                        p.wagesub_status === "paid"        ? "bg-green-100 text-green-700" :
+                        "bg-slate-100 text-slate-600"
+                      }`}>
+                        {p.wagesub_status ? p.wagesub_status.replace("_", " ") : "Pending"}
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3">

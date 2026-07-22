@@ -61,8 +61,9 @@ placementsRouter.get("/", async (req, res, next) => {
               p.start_date, p.end_date, p.employment_status,
               p.confirmed_by_employer, p.confirmation_sent_at,
               p.notes, p.created_at, p.updated_at,
+              p.wagesub_status, p.wagesub_4wk_paid_at, p.wagesub_13wk_paid_at, p.wagesub_26wk_paid_at, p.wagesub_notes,
               c.name AS candidate_name, c.work_status AS candidate_work_status,
-              c.provider_id,
+              c.wage_subsidy, c.wage_subsidy_amount, c.provider_id,
               j.title AS job_title,
               e.name  AS employer_name,
               pr.name AS provider_name
