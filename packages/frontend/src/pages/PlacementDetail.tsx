@@ -256,14 +256,15 @@ export default function PlacementDetail() {
               <select
                 value={placement.wagesub_status ?? ""}
                 onChange={(e) => updatePlacement.mutate({ wagesub_status: e.target.value || null })}
-                className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
               >
                 <option value="">— Not set —</option>
                 <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
+                <option value="agreement_signed">Agreement Signed</option>
                 <option value="in_progress">In Progress</option>
                 <option value="claimed">Claimed</option>
                 <option value="paid">Paid</option>
+                <option value="not_applicable">N/A / Not Eligible</option>
               </select>
               {placement.wagesub_status && (
                 <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${

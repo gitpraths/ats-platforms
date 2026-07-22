@@ -22,6 +22,7 @@ interface CreateForm {
   start_date: string;
   notes: string;
   application_id: string;
+  wagesub_status?: string;
 }
 
 /** Calculate full weeks elapsed since a YYYY-MM-DD date string. Returns -1 if invalid. */
@@ -373,6 +374,21 @@ export default function Placements() {
                 <input type="date" value={createForm.start_date}
                   onChange={(e) => setCreateForm((f) => ({ ...f, start_date: e.target.value }))}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Wage Sub Process Status</label>
+                <select
+                  value={createForm.wagesub_status ?? "pending"}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, wagesub_status: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="agreement_signed">Agreement Signed</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="claimed">Claimed</option>
+                  <option value="paid">Paid</option>
+                  <option value="not_applicable">N/A / Not Eligible</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
