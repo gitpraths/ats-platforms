@@ -13,6 +13,7 @@ export interface UseCandidatePoolOptions {
   email_q?:         string;
   phone_q?:         string;
   provider_q?:      string;
+  industry_q?:      string;
   comments_q?:      string;
   // Per-column date filters
   referral_date?:   string;
@@ -26,7 +27,7 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
   const {
     tab = "all", page = 1, limit = 20,
     q = "", date_from = "",
-    name_q = "", email_q = "", phone_q = "", provider_q = "", comments_q = "",
+    name_q = "", email_q = "", phone_q = "", provider_q = "", industry_q = "", comments_q = "",
     referral_date = "", training_date = "",
     interview_date = "", ets_date = "", placement_date = "",
   } = options;
@@ -34,7 +35,7 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
   return useQuery<{ data: CandidatePoolRow[]; meta: CandidatePoolMeta }>({
     queryKey: ["candidate-pool", {
       tab, page, q, date_from,
-      name_q, email_q, phone_q, provider_q, comments_q,
+      name_q, email_q, phone_q, provider_q, industry_q, comments_q,
       referral_date, training_date, interview_date, ets_date, placement_date,
     }],
     queryFn: async () => {
@@ -45,6 +46,7 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
       if (email_q)        params.set("email_q",        email_q);
       if (phone_q)        params.set("phone_q",        phone_q);
       if (provider_q)     params.set("provider_q",     provider_q);
+      if (industry_q)     params.set("industry_q",     industry_q);
       if (comments_q)     params.set("comments_q",     comments_q);
       if (referral_date)  params.set("referral_date",  referral_date);
       if (training_date)  params.set("training_date",  training_date);

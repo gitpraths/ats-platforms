@@ -46,6 +46,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
       email_q        = "",
       phone_q        = "",
       provider_q     = "",
+      industry_q     = "",
       comments_q     = "",
       referral_date  = "",
       training_date  = "",
@@ -79,6 +80,7 @@ candidatePoolRouter.get("/", async (req, res, next) => {
     if (email_q)    { conditions.push(`c.email ILIKE $${idx++}`);                       params.push(`%${email_q}%`); }
     if (phone_q)    { conditions.push(`c.phone ILIKE $${idx++}`);                       params.push(`%${phone_q}%`); }
     if (provider_q) { conditions.push(`pr.name ILIKE $${idx++}`);                      params.push(`%${provider_q}%`); }
+    if (industry_q) { conditions.push(`EXISTS (SELECT 1 FROM unnest(c.industry_preference) ind WHERE ind ILIKE $${idx++})`); params.push(`%${industry_q}%`); }
     if (comments_q) { conditions.push(`COALESCE(c.comments, c.notes) ILIKE $${idx++}`); params.push(`%${comments_q}%`); }
 
     // Date column filters (exact date match)

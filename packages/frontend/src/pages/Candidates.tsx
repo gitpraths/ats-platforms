@@ -22,12 +22,12 @@ type CandidatePoolRow = BaseCandidatePoolRow & {
 };
 
 type ColFilters = {
-  name: string; email: string; phone: string; provider: string; comments: string;
+  name: string; email: string; phone: string; provider: string; industry: string; comments: string;
   referral_date: string; training_date: string; interview_date: string;
   ets_date: string; placement_date: string;
 };
 const EMPTY_FILTERS: ColFilters = {
-  name: "", email: "", phone: "", provider: "", comments: "",
+  name: "", email: "", phone: "", provider: "", industry: "", comments: "",
   referral_date: "", training_date: "", interview_date: "", ets_date: "", placement_date: "",
 };
 
@@ -353,12 +353,13 @@ export default function Candidates() {
         email:    colFilters.email,
         phone:    colFilters.phone,
         provider: colFilters.provider,
+        industry: colFilters.industry,
         comments: colFilters.comments,
       }));
       setPage(1);
     }, 350);
     return () => clearTimeout(t);
-  }, [colFilters.name, colFilters.email, colFilters.phone, colFilters.provider, colFilters.comments]);
+  }, [colFilters.name, colFilters.email, colFilters.phone, colFilters.provider, colFilters.industry, colFilters.comments]);
 
   // Date filters apply immediately
   useEffect(() => {
@@ -391,6 +392,7 @@ export default function Candidates() {
     email_q:        debounced.email,
     phone_q:        debounced.phone,
     provider_q:     debounced.provider,
+    industry_q:     debounced.industry,
     comments_q:     debounced.comments,
     referral_date:  debounced.referral_date,
     training_date:  debounced.training_date,
@@ -553,7 +555,7 @@ export default function Candidates() {
               <thead className="bg-slate-50 sticky top-0 z-20 shadow-sm border-b border-slate-200">
               {/* Row 1: Column labels */}
               <tr className="bg-slate-50">
-                {["SR #","Candidate","Email","Mobile","Provider","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
+                {["SR #","Candidate","Email","Mobile","Provider","Industry","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
                   <th key={h} className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -576,6 +578,10 @@ export default function Candidates() {
                 {/* Provider */}
                 <th className="px-3 pb-2 pt-1">
                   <ColInput value={colFilters.provider} onChange={(v) => setCol("provider", v)} placeholder="Provider…" />
+                </th>
+                {/* Industry */}
+                <th className="px-3 pb-2 pt-1">
+                  <ColInput value={colFilters.industry} onChange={(v) => setCol("industry", v)} placeholder="Industry…" />
                 </th>
                 {/* Referral Date */}
                 <th className="px-3 pb-2 pt-1">
@@ -668,6 +674,17 @@ export default function Candidates() {
                             ? <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">{row.provider_name}</span>
                             : <span className="text-slate-300">—</span>}
                         </CellTooltip>
+                      </td>
+
+                      {/* Industry */}
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
+                        {(row.industry_preference ?? []).length > 0 ? (
+                          <span className="px-2 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-200 text-xs font-medium">
+                            {(row.industry_preference ?? []).join(", ")}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
                       </td>
 
                       {/* Referral Date */}
