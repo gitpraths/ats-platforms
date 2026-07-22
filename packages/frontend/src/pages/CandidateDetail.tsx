@@ -956,7 +956,7 @@ function InlineDateCellDetail({
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newVal = e.target.value || null;
     setError(null);
-    if (validate) {
+    if (newVal !== null && validate) {
       const err = validate(newVal);
       if (err) { setError(err); return; }
     }
@@ -981,6 +981,7 @@ function InlineDateCellDetail({
           onChange={handleChange}
           className="border border-[#e88e2e] rounded-lg px-2 py-1 text-xs focus:outline-none w-36"
         />
+        {allowClear && <button type="button" onClick={clearValue} className="text-red-500 text-[10px] px-1.5 py-0.5 mt-1 border rounded bg-red-50 hover:bg-red-100 self-start">Clear</button>}
         {error && <span className="text-[10px] text-red-500 leading-tight max-w-[150px]">{error}</span>}
       </div>
     );
@@ -1154,6 +1155,7 @@ export function VacanciesTab({
                         field="applied_at"
                         value={app.applied_at}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        allowClear
                       />
                     ) : (
                       <span className="text-xs text-slate-500 whitespace-nowrap">{fmtDate(app.applied_at)}</span>
@@ -1166,6 +1168,7 @@ export function VacanciesTab({
                         field="interview_date"
                         value={app.interview_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        allowClear
                       />
                     ) : (
                       <span className="text-xs text-slate-600">{fmtDate(app.interview_date)}</span>
@@ -1178,6 +1181,7 @@ export function VacanciesTab({
                         field="ets_date"
                         value={app.ets_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        allowClear
                         validate={(d) => {
                           if (!app.interview_date) return "Set Interview Date first";
                           if (d && app.interview_date && d < app.interview_date) return "ETS must be after Interview Date";

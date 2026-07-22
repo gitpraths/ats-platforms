@@ -210,7 +210,7 @@ function InlineDateCell({
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newVal = e.target.value || null;
     setError(null);
-    if (validate) {
+    if (newVal !== null && validate) {
       const err = validate(newVal);
       if (err) { setError(err); return; }
     }
@@ -428,10 +428,10 @@ export default function Candidates() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-3.5rem)] flex flex-col p-6 overflow-hidden">
+    <div className="w-full h-[calc(100vh-3.5rem)] flex flex-col px-6 py-4 overflow-hidden">
       <div className="flex-none">
       {/* ── Header ────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
             Candidates
@@ -464,7 +464,7 @@ export default function Candidates() {
       </div>
 
       {/* ── Top bar: date pills + clear all ──────────────────── */}
-      <div className="flex flex-wrap gap-3 mb-4 items-center">
+      <div className="flex flex-wrap gap-3 mb-3 items-center">
         {/* Referral date filter pills */}
         <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1">
           <Calendar size={13} className="text-slate-400 ml-1.5" />
@@ -490,8 +490,9 @@ export default function Candidates() {
         )}
       </div>
 
-      {/* ── Status Tabs ─────────────────────────────────────────── */}
-      <div className="flex gap-0 mb-4 border-b border-slate-200">
+      {/* ── Status Tabs & Pagination ─────────────────────────────────────────── */}
+      <div className="flex items-end justify-between border-b border-slate-200 mb-3">
+        <div className="flex gap-0">
         {TABS.map(({ id, label }) => {
           const count    = tabCounts[id] ?? 0;
           const isActive = tab === id;
@@ -511,20 +512,21 @@ export default function Candidates() {
             </button>
           );
         })}
+        </div>
+        <div className="pb-1 scale-95 origin-bottom-right">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={meta?.total ?? 0}
+            perPage={meta?.limit ?? 20}
+            onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            label="candidates"
+          />
+        </div>
       </div>
       </div>
 
       {/* ── Content ─────────────────────────────────────────────── */}
-      <div className="flex-none mb-3">
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={meta?.total ?? 0}
-          perPage={meta?.limit ?? 20}
-          onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          label="candidates"
-        />
-      </div>
       <div className="flex-1 min-h-0 flex flex-col">
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
@@ -704,6 +706,7 @@ export default function Candidates() {
                             field="interview_date"
                             value={row.latest_interview_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                            allowClear
                           />
                         </CellTooltip>
                       </td>
@@ -715,6 +718,7 @@ export default function Candidates() {
                             field="ets_date"
                             value={row.latest_ets_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
+                            allowClear
                             validate={(d) => {
                               if (!row.latest_interview_date) return "Set Interview Date first";
                               if (d && row.latest_interview_date && d < row.latest_interview_date) return "ETS must be after Interview Date";
