@@ -225,23 +225,49 @@ export default function PlacementDetail() {
             <p className="text-xs text-slate-500 mt-1">{placement.employer_name}</p>
           )}
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Placement</p>
+        <div className="bg-white rounded-xl shadow-sm p-4 space-y-2">
+          <p className="text-xs font-semibold text-slate-400 uppercase">Placement</p>
           <p className="text-sm font-medium text-slate-900">Start: {fmtDate(placement.start_date)}</p>
-          {placement.end_date && (
-            <p className="text-sm text-slate-600 mt-0.5">End: {fmtDate(placement.end_date)}</p>
-          )}
-          {placement.employment_status && (
-            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-semibold ${
-              placement.employment_status === "active" ? "bg-green-100 text-green-700" :
-              placement.employment_status === "resigned" ? "bg-orange-100 text-orange-700" :
-              placement.employment_status === "terminated" ? "bg-red-100 text-red-700" :
-              placement.employment_status === "completed" ? "bg-blue-100 text-blue-700" :
-              "bg-slate-100 text-slate-600"
-            }`}>
-              {placement.employment_status.charAt(0).toUpperCase() + placement.employment_status.slice(1)}
-            </span>
-          )}
+          
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-500 font-medium">Status:</label>
+            {canAct ? (
+              <select
+                value={placement.employment_status ?? "active"}
+                onChange={(e) => updatePlacement.mutate({ employment_status: e.target.value })}
+                className="border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+              >
+                <option value="active">Active</option>
+                <option value="resigned">Resigned</option>
+                <option value="terminated">Terminated</option>
+                <option value="completed">Completed</option>
+              </select>
+            ) : (
+              <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
+                placement.employment_status === "active" ? "bg-green-100 text-green-700" :
+                placement.employment_status === "resigned" ? "bg-orange-100 text-orange-700" :
+                placement.employment_status === "terminated" ? "bg-red-100 text-red-700" :
+                placement.employment_status === "completed" ? "bg-blue-100 text-blue-700" :
+                "bg-slate-100 text-slate-600"
+              }`}>
+                {placement.employment_status ? placement.employment_status.charAt(0).toUpperCase() + placement.employment_status.slice(1) : "Active"}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-500 font-medium">End Date:</label>
+            {canAct ? (
+              <input
+                type="date"
+                value={placement.end_date ? placement.end_date.slice(0, 10) : ""}
+                onChange={(e) => updatePlacement.mutate({ end_date: e.target.value || null })}
+                className="border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+              />
+            ) : (
+              <span className="text-xs text-slate-600">{placement.end_date ? fmtDate(placement.end_date) : "—"}</span>
+            )}
+          </div>
           {placement.notes && <p className="text-xs text-slate-500 mt-1">{placement.notes}</p>}
         </div>
       </div>
