@@ -294,7 +294,7 @@ export default function CandidateDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] p-4 sm:p-6">
+    <div className="min-h-screen bg-[#F1F5F9] px-4 py-2 sm:px-6 sm:py-3">
       <div className="w-full border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] overflow-hidden flex flex-col">
 
       {/* ═══════════════════════════════════════════════════════
@@ -307,7 +307,7 @@ export default function CandidateDetail() {
         <div className="w-full px-6">
 
           {/* Back */}
-          <div className="pt-4 pb-1">
+          <div className="pt-2 pb-1">
             <Link to="/candidates"
               className="inline-flex items-center gap-2 text-xs font-medium text-[#e88e2e] border border-[#e88e2e] hover:bg-orange-50 rounded-lg px-3 py-1.5 transition-colors">
               <ArrowLeft size={12} /> All Candidates
