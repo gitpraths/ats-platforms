@@ -678,13 +678,26 @@ export default function Candidates() {
 
                       {/* Industry */}
                       <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
-                        {(row.industry_preference ?? []).length > 0 ? (
-                          <span className="px-2 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-200 text-xs font-medium">
-                            {(row.industry_preference ?? []).join(", ")}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
+                        <CellTooltip
+                          title="Industry Preferences"
+                          items={(row.industry_preference ?? []).map((ind, idx) => ({
+                            key: `Option ${idx + 1}`,
+                            value: ind,
+                          }))}
+                        >
+                          {(row.industry_preference ?? []).length > 0 ? (
+                            <span
+                              className="inline-block max-w-[150px] truncate px-2.5 py-0.5 rounded-full bg-orange-50 text-[#e88e2e] border border-orange-200 text-xs font-medium cursor-help"
+                              title={(row.industry_preference ?? []).join(", ")}
+                            >
+                              {(row.industry_preference ?? []).length === 1
+                                ? row.industry_preference![0]
+                                : `${row.industry_preference![0]} (+${row.industry_preference!.length - 1} more)`}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </CellTooltip>
                       </td>
 
                       {/* Referral Date */}
