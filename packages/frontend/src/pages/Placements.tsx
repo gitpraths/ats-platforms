@@ -294,18 +294,6 @@ export default function Placements() {
                           <FileText size={11} className="text-[#e88e2e]" /> Invoice
                         </button>
                       )}
-                      {canCreate && !p.confirmed_by_employer && (
-                        <button
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to send the confirmation email to this employer?")) {
-                              sendConfirmation.mutate(p.id);
-                            }
-                          }}
-                          title="Send Confirmation Email"
-                          className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50">
-                          <Mail size={11} /> Send
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
