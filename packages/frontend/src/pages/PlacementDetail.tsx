@@ -63,6 +63,7 @@ export default function PlacementDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [editStatus, setEditStatus] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
+  const [editTerminationReason, setEditTerminationReason] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editWagesubStatus, setEditWagesubStatus] = useState("");
   const [editError, setEditError] = useState("");
@@ -182,6 +183,7 @@ export default function PlacementDetail() {
               onClick={() => {
                 setEditStatus(placement.employment_status || "active");
                 setEditEndDate(placement.end_date ? placement.end_date.slice(0, 10) : "");
+                setEditTerminationReason(placement.termination_reason ?? "");
                 setEditNotes(placement.notes ?? "");
                 setEditWagesubStatus(placement.wagesub_status || "pending");
                 setEditError("");
@@ -528,7 +530,7 @@ export default function PlacementDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">End Date</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">End Date / Termination Date</label>
                 <input
                   type="date"
                   value={editEndDate}
@@ -536,6 +538,16 @@ export default function PlacementDetail() {
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
                 />
                 <p className="text-[11px] text-slate-400 mt-0.5">Set for resignations, terminations or placement end</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Reason for Termination / Resignation</label>
+                <input
+                  type="text"
+                  value={editTerminationReason}
+                  onChange={(e) => setEditTerminationReason(e.target.value)}
+                  placeholder="e.g. Resigned to move interstate, performance..."
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
@@ -557,6 +569,7 @@ export default function PlacementDetail() {
                 onClick={() => updatePlacement.mutate({
                   employment_status: editStatus || null,
                   end_date: editEndDate || null,
+                  termination_reason: editTerminationReason || null,
                   notes: editNotes || undefined,
                   wagesub_status: editWagesubStatus || null,
                 })}

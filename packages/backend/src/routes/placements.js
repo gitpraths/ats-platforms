@@ -251,36 +251,41 @@ placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
 });
 
 // ── PATCH /api/placements/:id ─────────────────────────────
-// Lightweight update: employment_status, end_date, notes, wagesub fields
+// Lightweight update: employment_status, end_date, notes, termination_reason, wagesub fields
 placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const {
-      employment_status, end_date, notes,
+      employment_status, end_date, notes, termination_reason,
       wagesub_status,
       wagesub_4wk_paid_at, wagesub_13wk_paid_at, wagesub_26wk_paid_at,
       wagesub_notes,
     } = req.body;
 
-    const { rows: existing } = await client.query("SELECT id FROM placements WHERE id = $1", [req.params.id]);
+    const { rows: existing } = await client.query("SELECT * FROM placements WHERE id = $1", [req.params.id]);
     if (!existing[0]) return res.status(404).json({ success: false, error: "Placement not found" });
+
+    const newStatus = employment_status !== undefined ? employment_status : existing[0].employment_status;
+    const newEndDate = end_date !== undefined ? (end_date || null) : existing[0].end_date;
 
     const { rows } = await client.query(
       `UPDATE placements
        SET employment_status    = COALESCE($1,  employment_status),
            end_date             = $2,
            notes                = COALESCE($3,  notes),
-           wagesub_status       = COALESCE($4,  wagesub_status),
-           wagesub_4wk_paid_at  = $5,
-           wagesub_13wk_paid_at = $6,
-           wagesub_26wk_paid_at = $7,
-           wagesub_notes        = COALESCE($8,  wagesub_notes),
+           termination_reason   = COALESCE($4,  termination_reason),
+           wagesub_status       = COALESCE($5,  wagesub_status),
+           wagesub_4wk_paid_at  = $6,
+           wagesub_13wk_paid_at = $7,
+           wagesub_26wk_paid_at = $8,
+           wagesub_notes        = COALESCE($9,  wagesub_notes),
            updated_at           = NOW()
-       WHERE id = $9 RETURNING *`,
+       WHERE id = $10 RETURNING *`,
       [
         employment_status    ?? null,
-        end_date             ?? null,
+        end_date             !== undefined ? (end_date || null) : existing[0].end_date,
         notes                ?? null,
+        termination_reason   ?? null,
         wagesub_status       ?? null,
         wagesub_4wk_paid_at  !== undefined ? (wagesub_4wk_paid_at  || null) : undefined,
         wagesub_13wk_paid_at !== undefined ? (wagesub_13wk_paid_at || null) : undefined,
@@ -288,6 +293,14 @@ placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruite
         wagesub_notes        ?? null,
         req.params.id,
       ]
+    );
+
+    // Sync candidate work_status: if placement ended/terminated/resigned/completed or end_date set -> job_seeking, else placed
+    const isEnded = (newStatus && ["terminated", "resigned", "completed"].includes(newStatus)) || !!newEndDate;
+    const targetWorkStatus = isEnded ? "job_seeking" : "placed";
+    await client.query(
+      `UPDATE candidates SET work_status = $1, updated_at = NOW() WHERE id = $2`,
+      [targetWorkStatus, existing[0].candidate_id]
     );
 
     pool.query(

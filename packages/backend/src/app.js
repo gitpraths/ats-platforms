@@ -38,6 +38,7 @@ pool.query(`
   ALTER TABLE placements
     ADD COLUMN IF NOT EXISTS employment_status  TEXT,
     ADD COLUMN IF NOT EXISTS end_date           DATE,
+    ADD COLUMN IF NOT EXISTS termination_reason TEXT,
     ADD COLUMN IF NOT EXISTS wagesub_status     TEXT,
     ADD COLUMN IF NOT EXISTS wagesub_4wk_paid_at  DATE,
     ADD COLUMN IF NOT EXISTS wagesub_13wk_paid_at DATE,

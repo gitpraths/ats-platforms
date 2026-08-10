@@ -907,6 +907,11 @@ type AppWithDates = {
   interview_date?: string | null;
   ets_date?: string | null;
   placement_date?: string | null;
+  placement_id?: string | null;
+  placement_status?: string | null;
+  placement_end_date?: string | null;
+  placement_notes?: string | null;
+  placement_termination_reason?: string | null;
   source?: string;
   employer_name?: string;
   score?: number;
@@ -1028,6 +1033,7 @@ export function VacanciesTab({
   const queryClient       = useQueryClient();
   const [adding, setAdding]         = useState(false);
   const [selectedJob, setSelectedJob] = useState("");
+  const [editingPlacement, setEditingPlacement] = useState<any | null>(null);
 
   const { data: openJobs = [] } = useQuery<{ id: string; title: string; job_number?: string }[]>({
     queryKey: ["jobs-open"],
@@ -1178,18 +1184,54 @@ export function VacanciesTab({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {canWrite ? (
-                      <InlineDateCellDetail
-                        appId={app.id}
-                        field="placement_date"
-                        value={app.placement_date}
-                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
-                        allowClear
-                        validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {canWrite ? (
+                        <InlineDateCellDetail
+                          appId={app.id}
+                          field="placement_date"
+                          value={app.placement_date}
+                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                          allowClear
+                          validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
+                        />
+                      ) : (
+                        <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
+                      )}
+
+                      {app.placement_id && (
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                          {(() => {
+                            const st = app.placement_status || "active";
+                            const isEnd = st === "terminated" || st === "resigned" || st === "completed" || !!app.placement_end_date;
+                            return (
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${
+                                st === "active" ? "bg-green-100 text-green-700" :
+                                st === "resigned" ? "bg-orange-100 text-orange-700" :
+                                st === "terminated" ? "bg-red-100 text-red-700" :
+                                st === "completed" ? "bg-blue-100 text-blue-700" :
+                                "bg-slate-100 text-slate-600"
+                              }`}>
+                                {st}
+                              </span>
+                            );
+                          })()}
+                          {canWrite && (
+                            <button
+                              onClick={() => setEditingPlacement(app)}
+                              className="text-[10px] font-medium text-slate-400 hover:text-[#e88e2e] underline transition-colors"
+                              title="Edit status, end date, or termination reason"
+                            >
+                              Edit / End
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {app.placement_end_date && (
+                        <span className="text-[10px] text-slate-400 leading-tight">
+                          Ended: {fmtDate(app.placement_end_date)}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   {canWrite && (
                     <td className="px-4 py-3 text-right">
@@ -1207,6 +1249,140 @@ export function VacanciesTab({
           </table>
         </div>
       )}
+
+      {editingPlacement && (
+        <EditCandidatePlacementModal
+          app={editingPlacement}
+          candidateId={candidateId}
+          onClose={() => setEditingPlacement(null)}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditCandidatePlacementModal({
+  app,
+  candidateId,
+  onClose,
+  onSaved,
+}: {
+  app: any;
+  candidateId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [status, setStatus]         = useState<string>(app.placement_status || "active");
+  const [endDate, setEndDate]       = useState<string>(app.placement_end_date ? String(app.placement_end_date).slice(0, 10) : "");
+  const [termReason, setTermReason] = useState<string>(app.placement_termination_reason || "");
+  const [notes, setNotes]           = useState<string>(app.placement_notes || "");
+  const [saving, setSaving]         = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+
+  async function handleSave() {
+    if (!app.placement_id) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.patch(`/placements/${app.placement_id}`, {
+        employment_status: status,
+        end_date: endDate || null,
+        termination_reason: termReason || null,
+        notes: notes || null,
+      });
+      onSaved();
+      onClose();
+    } catch (e: any) {
+      setError(e?.response?.data?.error || e?.message || "Failed to update placement");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="font-semibold text-slate-900 text-base">Edit Placement Details</h3>
+            <p className="text-xs text-slate-400 mt-0.5">{app.job_title ?? "Job Placement"}</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <X size={16} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Placement Status</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+            >
+              <option value="active">Active</option>
+              <option value="terminated">Terminated</option>
+              <option value="resigned">Resigned</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              Date of Termination / End Date
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Set for resignations, terminations, or placement end</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Reason for Termination / Resignation</label>
+            <input
+              type="text"
+              value={termReason}
+              onChange={(e) => setTermReason(e.target.value)}
+              placeholder="e.g. Resigned to move interstate, performance, medical..."
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Additional Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Add context or details..."
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
+          <button onClick={onClose} className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 text-xs font-semibold bg-[#e88e2e] text-white rounded-xl hover:bg-[#d07d20] disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Details"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

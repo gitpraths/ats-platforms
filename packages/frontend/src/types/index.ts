@@ -111,6 +111,7 @@ export interface Placement {
   confirmed_by_employer: boolean;
   confirmation_sent_at?: string | null;
   notes?: string;
+  termination_reason?: string | null;
   welfare_checks?: WelfareCheck[];
   created_at: string;
   updated_at: string;

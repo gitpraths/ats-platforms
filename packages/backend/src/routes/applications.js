@@ -155,15 +155,17 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 
     // ── 1-active-placement-at-a-time validation ────────────────────────────────
     if (placement_date) {
-      const { rows: existingPlacement } = await pool.query(
-        `SELECT id FROM applications
-         WHERE candidate_id = $1 AND id != $2 AND placement_date IS NOT NULL`,
+      const { rows: activePlacements } = await pool.query(
+        `SELECT p.id FROM placements p
+         WHERE p.candidate_id = $1 AND p.application_id != $2
+           AND (p.employment_status IS NULL OR p.employment_status = 'active')
+           AND p.end_date IS NULL`,
         [appRows[0].candidate_id, req.params.id]
       );
-      if (existingPlacement.length > 0)
+      if (activePlacements.length > 0)
         return res.status(400).json({
           success: false,
-          error: "This candidate already has an active placement. Remove it first before adding a new one."
+          error: "This candidate already has an active placement. Please terminate or end their current placement before adding a new one."
         });
     }
 
@@ -172,6 +174,23 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
       `UPDATE applications SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${params.length} RETURNING *`,
       params
     );
+
+    // If placement_date was updated and is not null, ensure a placement record exists in placements table
+    if (placement_date) {
+      const appData = rows[0];
+      const { rows: plc } = await pool.query(`SELECT id FROM placements WHERE application_id = $1`, [appData.id]);
+      if (plc.length === 0) {
+        const { rows: jb } = await pool.query(`SELECT employer_id FROM jobs WHERE id = $1`, [appData.job_id]);
+        const employerId = jb[0]?.employer_id || null;
+        await pool.query(
+          `INSERT INTO placements (application_id, candidate_id, job_id, employer_id, start_date, employment_status, created_by)
+           VALUES ($1, $2, $3, $4, $5, 'active', $6)`,
+          [appData.id, appData.candidate_id, appData.job_id, employerId, placement_date, req.user?.id || null]
+        );
+        await pool.query(`UPDATE candidates SET work_status = 'placed', updated_at = NOW() WHERE id = $1`, [appData.candidate_id]);
+      }
+    }
+
     res.json({ success: true, data: rows[0] });
   } catch (err) { next(err); }
 });
