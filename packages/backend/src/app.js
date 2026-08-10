@@ -43,8 +43,11 @@ pool.query(`
     ADD COLUMN IF NOT EXISTS wagesub_4wk_paid_at  DATE,
     ADD COLUMN IF NOT EXISTS wagesub_13wk_paid_at DATE,
     ADD COLUMN IF NOT EXISTS wagesub_26wk_paid_at DATE,
-    ADD COLUMN IF NOT EXISTS wagesub_notes      TEXT
-`).catch((err) => console.error("[migration] placements columns:", err.message));
+    ADD COLUMN IF NOT EXISTS wagesub_notes      TEXT;
+
+  ALTER TABLE applications
+    ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+`).catch((err) => console.error("[migration] schema updates:", err.message));
 
 const app = express();
 

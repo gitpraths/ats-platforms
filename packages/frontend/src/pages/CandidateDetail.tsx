@@ -610,20 +610,20 @@ export default function CandidateDetail() {
 
                 {/* ── Application History — fills remaining height ── */}
                 {(() => {
-                  const realApps = candidate.applications ?? [];
-                  const isDummy  = realApps.length === 0;
+                  const historyApps = (candidate as any).application_history ?? candidate.applications ?? [];
+                  const isDummy  = historyApps.length === 0;
                   const displayApps = isDummy ? [
                     { id: "_d1", job_title: "Customer Service Officer", stage: "interview" as ApplicationStage, applied_at: "2026-05-20", score: 7, source: "provider" },
                     { id: "_d2", job_title: "Administration Assistant",  stage: "interview" as ApplicationStage, applied_at: "2026-04-15", score: 5, source: "manual"   },
                     { id: "_d3", job_title: "Retail Sales Associate",    stage: "applied"  as ApplicationStage, applied_at: "2026-03-10", score: 0, source: "job_board" },
-                  ] : realApps;
+                  ] : historyApps;
                   return (
                     <div className="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
                       {/* card header */}
                       <div className="flex items-center justify-between px-5 py-2 bg-sky-50 border-b border-sky-100 flex-shrink-0">
                         <h3 className="text-sm font-semibold text-sky-900">
                           Application History
-                          {!isDummy && <span className="ml-1.5 text-xs font-normal text-sky-500">({realApps.length})</span>}
+                          {!isDummy && <span className="ml-1.5 text-xs font-normal text-sky-500">({historyApps.length})</span>}
                         </h3>
                         {isDummy && (
                           <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">Sample preview</span>
@@ -637,18 +637,26 @@ export default function CandidateDetail() {
                       )}
                       {/* scrollable row list */}
                       <div className="flex-1 overflow-auto divide-y divide-slate-100">
-                        {displayApps.map((app) => (
+                        {displayApps.map((app: any) => (
                           <div key={app.id} className={`flex items-center justify-between px-5 py-2.5 hover:bg-blue-50/20 transition-colors ${isDummy ? "opacity-40" : ""}` }>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-slate-900 truncate">{app.job_title}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900 truncate">{app.job_title}</p>
+                                {app.deleted_at && (
+                                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                    Removed
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-slate-400 mt-0.5">
                                 Applied {fmtDate(app.applied_at)}
                                 {app.source && ` · ${app.source}`}
+                                {app.deleted_at && ` · Removed ${fmtDate(app.deleted_at)}`}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage]}`}>
-                                {stageLabel(app.stage)}
+                              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STAGE_BADGE[app.stage as ApplicationStage] ?? "bg-slate-100 text-slate-600"}`}>
+                                {stageLabel(app.stage as ApplicationStage)}
                               </span>
                             </div>
                           </div>

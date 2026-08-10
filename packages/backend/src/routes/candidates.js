@@ -143,7 +143,7 @@ candidatesRouter.get("/:id", async (req, res, next) => {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
 
-    // Latest application dates and placement details
+    // Active application dates and placement details
     const { rows: apps } = await pool.query(
       `SELECT a.id, a.stage, a.source, a.score, a.applied_at,
               a.interview_date, a.ets_date, a.placement_date,
@@ -156,12 +156,28 @@ candidatesRouter.get("/:id", async (req, res, next) => {
        FROM applications a
        JOIN jobs j ON a.job_id = j.id
        LEFT JOIN placements p ON p.application_id = a.id
+       WHERE a.candidate_id = $1 AND a.deleted_at IS NULL
+       ORDER BY a.applied_at DESC`,
+      [req.params.id]
+    );
+
+    // Full application history (including soft-deleted applications)
+    const { rows: appHistory } = await pool.query(
+      `SELECT a.id, a.stage, a.source, a.applied_at, a.deleted_at,
+              a.interview_date, a.ets_date, a.placement_date,
+              j.title AS job_title,
+              p.id AS placement_id,
+              p.employment_status AS placement_status,
+              p.end_date AS placement_end_date
+       FROM applications a
+       JOIN jobs j ON a.job_id = j.id
+       LEFT JOIN placements p ON p.application_id = a.id
        WHERE a.candidate_id = $1
        ORDER BY a.applied_at DESC`,
       [req.params.id]
     );
 
-    res.json({ success: true, data: { ...rows[0], applications: apps } });
+    res.json({ success: true, data: { ...rows[0], applications: apps, application_history: appHistory } });
   } catch (err) { next(err); }
 });
 
