@@ -184,7 +184,6 @@ export function EnrolmentsTab({
                 <th className="text-left px-4 py-2.5">End</th>
                 <th className="text-left px-4 py-2.5">Cert Received</th>
                 <th className="px-4 py-2.5"></th>
-                <th className="px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -211,9 +210,6 @@ export function EnrolmentsTab({
                   <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.start_date)}</td>
                   <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.end_date)}</td>
                   <td className="px-4 py-2.5 text-slate-500">{e.certificate_received === true ? "Yes" : e.certificate_received === false ? "No" : "—"}</td>
-                  <td className="px-4 py-2.5 text-right">
-                    <InvoiceCell enrolment={e} onGenerate={setInvoicingEnrolment} />
-                  </td>
                   <td className="px-4 py-2.5 text-right space-x-2">
                     <button
                       onClick={() => setEditingEnrolment(e)}
