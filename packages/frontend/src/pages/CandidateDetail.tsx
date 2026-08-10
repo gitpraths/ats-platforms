@@ -171,6 +171,7 @@ export default function CandidateDetail() {
       provider_id:         candidate.provider_id ?? "",
       consultant_id:       ext.consultant_id ?? "",
       benchmark_hours:     candidate.benchmark_hours ? String(candidate.benchmark_hours) : "",
+      availability:        candidate.availability ?? "Monday to Friday",
       work_status:         candidate.work_status ?? "job_seeking",
       wage_subsidy:        candidate.wage_subsidy ?? false,
       wage_subsidy_amount: candidate.wage_subsidy_amount ? String(candidate.wage_subsidy_amount) : "",
@@ -672,19 +673,31 @@ export default function CandidateDetail() {
 
                 {/* Availability & Employment Support */}
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 18px rgba(15,23,42,0.07)'}}>
-                  <div className="px-5 py-2.5 bg-blue-50 border-b border-blue-100">
+                  <div className="px-5 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-blue-900">Availability</h3>
+                    {canWrite && (
+                      <button onClick={startEdit} className="text-blue-700 hover:text-blue-900 transition-colors" title="Edit Availability Schedule">
+                        <Edit2 size={14} />
+                      </button>
+                    )}
                   </div>
-                  <div className="px-5 py-3">
-                    <div className="flex items-baseline gap-2 mb-1.5">
-                      <span className="text-[26px] font-bold text-slate-900 tracking-tight leading-none">
-                        {candidate.benchmark_hours ?? "—"}
+                  <div className="px-5 py-3 space-y-2">
+                    <div>
+                      <span className="text-base font-bold text-slate-900 tracking-tight block">
+                        {candidate.availability || "Monday to Friday"}
                       </span>
-                      <span className="text-xs text-slate-500 pb-0.5">hrs / week</span>
                     </div>
-                    <span className={`inline-flex text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
-                      {statusCfg.label}
-                    </span>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                      <span className={`inline-flex text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                        {statusCfg.label}
+                      </span>
+                      {candidate.benchmark_hours && (
+                        <span className="text-xs text-slate-500 font-medium">
+                          Benchmark: <span className="font-semibold text-slate-800">{candidate.benchmark_hours}</span> hrs/wk
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {candidate.wage_subsidy && (

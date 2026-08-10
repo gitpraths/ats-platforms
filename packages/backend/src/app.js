@@ -47,6 +47,9 @@ pool.query(`
 
   ALTER TABLE applications
     ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+  ALTER TABLE candidates
+    ADD COLUMN IF NOT EXISTS availability TEXT;
 `).catch((err) => console.error("[migration] schema updates:", err.message));
 
 const app = express();

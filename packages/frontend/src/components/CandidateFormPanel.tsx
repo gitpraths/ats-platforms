@@ -22,6 +22,7 @@ export interface CandidateFormData {
   consultant_id:       string;
   training_ids:        string[];
   benchmark_hours:     string;
+  availability:        string;
   industry_preference: string[];
   car:                 "yes" | "no" | "";
   police_check:        "yes" | "no" | "";
@@ -36,7 +37,7 @@ export interface CandidateFormData {
 export const EMPTY_FORM: CandidateFormData = {
   date_referred: "", first_name: "", last_name: "", phone: "", email: "",
   postcode: "", suburb: "", state: "", provider_id: "", consultant_id: "",
-  training_ids: [], benchmark_hours: "", industry_preference: [],
+  training_ids: [], benchmark_hours: "", availability: "Monday to Friday", industry_preference: [],
   car: "", police_check: "", wwc: "",
   wage_subsidy: false, wage_subsidy_amount: "",
   comments: "", work_status: "job_seeking", intention_to_work: "suitable",
@@ -461,7 +462,7 @@ export function CandidateFormPanel({
       <div className={sectionCls}>
         <p className={sectionTitle}>Work Preferences</p>
 
-        {/* Benchmark Hours */}
+        {/* Benchmark Hours & Availability */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label required>Benchmark Hours / Week</Label>
@@ -491,6 +492,42 @@ export function CandidateFormPanel({
                       placeholder="Enter custom hours per week"
                       value={isOther ? form.benchmark_hours : ""}
                       onChange={(e) => set("benchmark_hours", e.target.value)}
+                      className={`${CLS} mt-2`}
+                      autoFocus
+                    />
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          <div>
+            <Label>Availability Schedule</Label>
+            {(() => {
+              const AVAIL_PRESETS = ["Monday to Friday", "Weekend (Sat & Sun)", "Monday to Saturday", "Full Time (7 Days)", "Part Time / Flexible"];
+              const isCustom = form.availability !== "" && !AVAIL_PRESETS.includes(form.availability);
+              return (
+                <>
+                  <select
+                    value={isCustom ? "custom" : form.availability}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") set("availability", "custom");
+                      else set("availability", e.target.value);
+                    }}
+                    className={CLS}>
+                    <option value="Monday to Friday">Monday to Friday</option>
+                    <option value="Weekend (Sat & Sun)">Weekend (Sat & Sun)</option>
+                    <option value="Monday to Saturday">Monday to Saturday</option>
+                    <option value="Full Time (7 Days)">Full Time (7 Days)</option>
+                    <option value="Part Time / Flexible">Part Time / Flexible</option>
+                    <option value="custom">Custom / Specific Days</option>
+                  </select>
+                  {(isCustom || form.availability === "custom") && (
+                    <input
+                      type="text"
+                      placeholder="e.g. Mon, Wed, Fri or Night shifts"
+                      value={isCustom ? form.availability : ""}
+                      onChange={(e) => set("availability", e.target.value)}
                       className={`${CLS} mt-2`}
                       autoFocus
                     />

@@ -229,6 +229,7 @@ export interface Candidate {
   postcode?: string;
   country?: string;
   benchmark_hours?: number | null;
+  availability?: string | null;
   work_status?: CandidateWorkStatus;
   interested_job?: string;
   wage_subsidy?: boolean;
