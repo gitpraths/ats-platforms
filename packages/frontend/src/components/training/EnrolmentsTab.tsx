@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { CandidateTraining, TrainingStatus } from "../../types";
 import type { PrefilterToEnrolments } from "../../pages/Training";
 import { GenerateInvoiceDialog } from "./GenerateInvoiceDialog";
+import { EnrolmentDialog } from "./EnrolmentDialog";
 import { useXeroInvoicesForEnrolment } from "../../hooks/useXero";
 import Pagination from "../Pagination";
 import { fmtDate } from "../../lib/utils";
@@ -40,6 +41,7 @@ export function EnrolmentsTab({
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [invoicingEnrolment, setInvoicingEnrolment] = useState<(CandidateTraining & { candidate_name: string }) | null>(null);
+  const [editingEnrolment, setEditingEnrolment] = useState<CandidateTraining | null>(null);
 
   // Apply prefilter from Cohort enrol "View enrolments" handoff
   useEffect(() => {
@@ -212,7 +214,13 @@ export function EnrolmentsTab({
                   <td className="px-4 py-2.5 text-right">
                     <InvoiceCell enrolment={e} onGenerate={setInvoicingEnrolment} />
                   </td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-right space-x-2">
+                    <button
+                      onClick={() => setEditingEnrolment(e)}
+                      className="text-xs text-slate-500 hover:underline"
+                    >
+                      Edit
+                    </button>
                     <Link
                       to={`/candidates/${e.candidate_id}`}
                       className="inline-flex items-center gap-1 text-xs text-slate-500 hover:underline"
@@ -238,6 +246,14 @@ export function EnrolmentsTab({
           label="enrolments"
         />
       </div>
+
+      {editingEnrolment && (
+        <EnrolmentDialog
+          candidateId={editingEnrolment.candidate_id}
+          enrolment={editingEnrolment}
+          onClose={() => setEditingEnrolment(null)}
+        />
+      )}
 
       {invoicingEnrolment && (
         <GenerateInvoiceDialog
