@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { displayEmail, stageLabel, fmtDate, fmtDateTime } from "../lib/utils";
+import { displayEmail, stageLabel, fmtDate, fmtDateTime, validateNotBeforeApplied } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
@@ -1158,6 +1158,7 @@ export function VacanciesTab({
                         value={app.interview_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                         allowClear
+                        validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
                       />
                     ) : (
                       <span className="text-xs text-slate-600">{fmtDate(app.interview_date)}</span>
@@ -1171,11 +1172,7 @@ export function VacanciesTab({
                         value={app.ets_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                         allowClear
-                        validate={(d) => {
-                          const appliedDate = app.applied_at ? app.applied_at.slice(0, 10) : null;
-                          if (d && appliedDate && d < appliedDate) return "Date cannot be before Applied Date";
-                          return null;
-                        }}
+                        validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
                       />
                     ) : (
                       <span className="text-xs text-slate-600">{fmtDate(app.ets_date)}</span>
@@ -1197,11 +1194,7 @@ export function VacanciesTab({
                             value={app.placement_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                             allowClear
-                            validate={(d) => {
-                              const appliedDate = app.applied_at ? app.applied_at.slice(0, 10) : null;
-                              if (d && appliedDate && d < appliedDate) return "Date cannot be before Applied Date";
-                              return null;
-                            }}
+                            validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
                           />
                         ) : (
                           <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>

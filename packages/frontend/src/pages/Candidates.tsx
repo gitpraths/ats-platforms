@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
-import { displayEmail, fmtDate } from "../lib/utils";
+import { displayEmail, fmtDate, validateNotBeforeApplied } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Calendar, X, Pencil, Info, FilterX } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -738,6 +738,7 @@ export default function Candidates() {
                             value={row.latest_interview_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
+                            validate={(d) => validateNotBeforeApplied(d, row.date_referred)}
                           />
                         </CellTooltip>
                       </td>
@@ -750,11 +751,7 @@ export default function Candidates() {
                             value={row.latest_ets_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
-                            validate={(d) => {
-                              const refDate = (row as any).referral_date ? String((row as any).referral_date).slice(0, 10) : null;
-                              if (d && refDate && d < refDate) return "Date cannot be before Applied Date";
-                              return null;
-                            }}
+                            validate={(d) => validateNotBeforeApplied(d, row.date_referred)}
                           />
                       </td>
 
@@ -773,11 +770,7 @@ export default function Candidates() {
                             value={row.latest_placement_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
-                            validate={(d) => {
-                              const refDate = (row as any).referral_date ? String((row as any).referral_date).slice(0, 10) : null;
-                              if (d && refDate && d < refDate) return "Date cannot be before Applied Date";
-                              return null;
-                            }}
+                            validate={(d) => validateNotBeforeApplied(d, row.date_referred)}
                           />
                         </CellTooltip>
                       </td>
