@@ -5,6 +5,12 @@ import { validateJobStatusTransition } from "../utils/index.js";
 
 export const jobsRouter = Router();
 jobsRouter.use(requireAuth);
+jobsRouter.use((req, res, next) => {
+  if (req.user.role === "training_admin") {
+    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
+  }
+  next();
+});
 
 const VALID_JOB_TYPES   = ["full_time", "part_time", "contract", "internship"];
 const VALID_WORK_MODELS = ["onsite", "remote", "hybrid"];
@@ -304,12 +310,12 @@ jobsRouter.get("/:id/activity", async (req, res, next) => {
 });
 
 // ── DELETE /api/jobs/:id ──────────────────────────────────────────────────────
-jobsRouter.delete("/:id", async (req, res, next) => {
+jobsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
   try {
     const { rows: jobRows } = await pool.query("SELECT created_by FROM jobs WHERE id = $1", [req.params.id]);
     if (!jobRows[0]) return res.status(404).json({ success: false, error: "Job not found" });
-    if (jobRows[0].created_by !== req.user.id && req.user.role !== "admin")
-      return res.status(403).json({ success: false, error: "Only the job owner or an admin can delete this job" });
+    if (req.user.role !== "admin" && req.user.role !== "recruiter_admin")
+      return res.status(403).json({ success: false, error: "Only an admin can delete jobs" });
 
     const { rows } = await pool.query("DELETE FROM jobs WHERE id = $1 RETURNING id", [req.params.id]);
     res.json({ success: true, data: { id: rows[0].id, status: "DELETED" } });

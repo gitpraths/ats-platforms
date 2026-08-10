@@ -498,12 +498,13 @@ candidatesRouter.get("/:id/notes", async (req, res, next) => {
 });
 
 // POST /api/candidates/:id/notes  — add a new note
-candidatesRouter.post("/:id/notes", async (req, res, next) => {
+candidatesRouter.post("/:id/notes", requireRole("admin", "recruiter_admin", "recruiter", "staff"), async (req, res, next) => {
   try {
     const { body } = req.body;
     if (!body || !body.trim()) {
       return res.status(400).json({ success: false, error: "Note body is required" });
     }
+
     const { rows } = await pool.query(
       `INSERT INTO candidate_notes (candidate_id, body, created_by)
        VALUES ($1, $2, $3)
@@ -538,3 +539,12 @@ candidatesRouter.delete(
     } catch (err) { next(err); }
   }
 );
+
+// DELETE /api/candidates/:id — admin/recruiter_admin only
+candidatesRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query("DELETE FROM candidates WHERE id = $1 RETURNING id", [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ success: false, error: "Candidate not found" });
+    res.json({ success: true, data: { id: req.params.id } });
+  } catch (err) { next(err); }
+});

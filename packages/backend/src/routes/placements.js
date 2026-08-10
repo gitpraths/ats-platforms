@@ -5,6 +5,12 @@ import { sendPlacementConfirmation, sendWelfareCheckEmail } from "../services/em
 
 export const placementsRouter = Router();
 placementsRouter.use(requireAuth);
+placementsRouter.use((req, res, next) => {
+  if (req.user.role === "training_admin") {
+    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
+  }
+  next();
+});
 
 const WELFARE_OFFSETS = [
   { check_type: "day_1",   days: 1 },

@@ -21,7 +21,34 @@ export function requireAuth(req, res, next) {
 
 export function requireRole(...roles) {
   return (req, res, next) => {
-    if (!roles.includes(req.user?.role)) {
+    const userRole = req.user?.role;
+    if (!userRole) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+
+    if (userRole === "admin") return next();
+
+    let allowed = false;
+    for (const r of roles) {
+      if (r === userRole) {
+        allowed = true;
+        break;
+      }
+      if (r === "staff" && ["recruiter", "recruiter_admin", "staff"].includes(userRole)) {
+        allowed = true;
+        break;
+      }
+      if (r === "recruiter" && ["recruiter_admin", "staff"].includes(userRole)) {
+        allowed = true;
+        break;
+      }
+      if (r === "admin" && userRole === "recruiter_admin") {
+        allowed = true;
+        break;
+      }
+    }
+
+    if (!allowed) {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
     next();

@@ -6,6 +6,8 @@ import type { User, UserRole } from "../types";
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: "admin",           label: "Admin" },
+  { value: "staff",           label: "Staff" },
+  { value: "training_admin",  label: "Training Admin" },
   { value: "recruiter_admin", label: "Recruiter Admin" },
   { value: "recruiter",       label: "Recruiter" },
   { value: "hiring_manager",  label: "Hiring Manager" },

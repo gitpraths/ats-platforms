@@ -6,6 +6,12 @@ import { getValidAccessToken } from '../services/ms-auth.js';
 
 export const providersRouter = Router();
 providersRouter.use(requireAuth);
+providersRouter.use((req, res, next) => {
+  if (req.user.role === "training_admin") {
+    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
+  }
+  next();
+});
 
 // ── GET /api/providers ───────────────────────────────────
 providersRouter.get("/", async (req, res, next) => {

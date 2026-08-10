@@ -381,7 +381,7 @@ export default function Candidates() {
 
   const hasFilters = Object.values(colFilters).some(Boolean);
 
-  const canCreate = ["admin", "recruiter_admin", "recruiter"].includes(user?.role ?? "");
+  const canCreate = ["admin", "recruiter_admin", "recruiter", "staff"].includes(user?.role ?? "");
 
 
 

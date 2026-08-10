@@ -232,7 +232,7 @@ export default function JobDetail() {
               >
                 <Edit2 size={15} /> Edit
               </button>
-              {isOwner && (
+              {(user?.role === "admin" || user?.role === "recruiter_admin") && (
                 <button
                   onClick={() => { if (confirm("Permanently delete this vacancy?")) deleteJob.mutate(); }}
                   className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"

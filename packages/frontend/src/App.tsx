@@ -147,10 +147,8 @@ function ProfileMenu() {
 // ── Layout ────────────────────────────────────────────────────────────────────
 function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const isTrainingAdmin = user?.role === "training_admin";
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
-  const isAdminOrRecruiter = user?.role === "admin"
-                          || user?.role === "recruiter_admin"
-                          || user?.role === "recruiter";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 text-sm font-medium transition border-b-2 ${
@@ -163,7 +161,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#F1F5F9]">
       <nav className="bg-white border-b border-slate-200 px-4 h-14 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-sm">
         <div className="flex items-stretch h-full gap-0">
-          <a href="/dashboard" className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none">
+          <a href={isTrainingAdmin ? "/candidates" : "/dashboard"} className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none">
             <div className="flex flex-col leading-none">
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.02em" }}>
                 <span style={{ color: "#0F172A" }}>Work</span><span style={{ color: "#e88e2e" }}>Vision</span>
@@ -171,16 +169,22 @@ function Layout({ children }: { children: React.ReactNode }) {
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.6rem", color: "#94a3b8", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "1px" }}>Australia</span>
             </div>
           </a>
-          <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
-          <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Vacancies</NavLink>
-          <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
-          <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
-          {isAdminOrRecruiter && (
-            <NavLink to="/training" className={navClass}>Training Program</NavLink>
+          {!isTrainingAdmin && (
+            <>
+              <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
+              <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Vacancies</NavLink>
+              <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
+            </>
           )}
-          <NavLink to="/placements"   className={navClass}><UserCheck size={15} />Placements</NavLink>
-          <NavLink to="/providers"    className={navClass}><MapPinIcon size={15} />Providers</NavLink>
-          <NavLink to="/employers"    className={navClass}><Building2 size={15} />Employers</NavLink>
+          <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
+          <NavLink to="/training"     className={navClass}><Table2 size={15} />Training Program</NavLink>
+          {!isTrainingAdmin && (
+            <>
+              <NavLink to="/placements"   className={navClass}><UserCheck size={15} />Placements</NavLink>
+              <NavLink to="/providers"    className={navClass}><MapPinIcon size={15} />Providers</NavLink>
+              <NavLink to="/employers"    className={navClass}><Building2 size={15} />Employers</NavLink>
+            </>
+          )}
           {isAdmin && (
             <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
           )}
@@ -212,6 +216,24 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ── Staff Route ───────────────────────────────────────────────────────────────
+function StaffRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "training_admin") return <Navigate to="/candidates" replace />;
+  return (
+    <>
+      <SessionExpiringDialog />
+      <Layout>{children}</Layout>
+    </>
+  );
+}
+
 // ── Admin Route ───────────────────────────────────────────────────────────────
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -222,7 +244,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   );
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "admin" && user.role !== "recruiter_admin")
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={user.role === "training_admin" ? "/candidates" : "/dashboard"} replace />;
   return (
     <>
       <SessionExpiringDialog />
@@ -234,40 +256,41 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 // ── Routes ────────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const { user } = useAuth();
+  const defaultHome = user?.role === "training_admin" ? "/candidates" : "/dashboard";
+
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/login" element={user ? <Navigate to={defaultHome} replace /> : <Login />} />
 
-      <Route path="/dashboard"        element={<ProtectedRoute><Dashboard       /></ProtectedRoute>} />
-      <Route path="/jobs"             element={<ProtectedRoute><Jobs             /></ProtectedRoute>} />
-      <Route path="/jobs/:id"         element={<ProtectedRoute><JobDetail        /></ProtectedRoute>} />
-      <Route path="/jobs/:id/edit"    element={<ProtectedRoute><JobEdit          /></ProtectedRoute>} />
-      <Route path="/hiring-board"     element={<ProtectedRoute><HiringBoard      /></ProtectedRoute>} />
+      <Route path="/dashboard"        element={<StaffRoute><Dashboard       /></StaffRoute>} />
+      <Route path="/jobs"             element={<StaffRoute><Jobs             /></StaffRoute>} />
+      <Route path="/jobs/:id"         element={<StaffRoute><JobDetail        /></StaffRoute>} />
+      <Route path="/jobs/:id/edit"    element={<StaffRoute><JobEdit          /></StaffRoute>} />
+      <Route path="/hiring-board"     element={<StaffRoute><HiringBoard      /></StaffRoute>} />
       <Route path="/candidates"        element={<ProtectedRoute><Candidates       /></ProtectedRoute>} />
-      <Route path="/candidates/new"   element={<ProtectedRoute><CandidateNew     /></ProtectedRoute>} />
+      <Route path="/candidates/new"   element={<StaffRoute><CandidateNew     /></StaffRoute>} />
       <Route path="/candidates/:id"   element={<ProtectedRoute><CandidateDetail  /></ProtectedRoute>} />
       <Route path="/training"         element={<ProtectedRoute><Training         /></ProtectedRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
 
-      <Route path="/providers"          element={<ProtectedRoute><Providers       /></ProtectedRoute>} />
+      <Route path="/providers"          element={<StaffRoute><Providers       /></StaffRoute>} />
       <Route path="/providers/new"      element={<AdminRoute><ProviderCreate     /></AdminRoute>} />
-      <Route path="/providers/:id"      element={<ProtectedRoute><ProviderDetail  /></ProtectedRoute>} />
+      <Route path="/providers/:id"      element={<StaffRoute><ProviderDetail  /></StaffRoute>} />
       <Route path="/providers/:id/edit" element={<AdminRoute><ProviderCreate      /></AdminRoute>} />
 
-      <Route path="/employers"          element={<ProtectedRoute><Employers       /></ProtectedRoute>} />
+      <Route path="/employers"          element={<StaffRoute><Employers       /></StaffRoute>} />
       <Route path="/employers/new"      element={<AdminRoute><EmployerCreate      /></AdminRoute>} />
-      <Route path="/employers/:id"      element={<ProtectedRoute><EmployerDetail  /></ProtectedRoute>} />
+      <Route path="/employers/:id"      element={<StaffRoute><EmployerDetail  /></StaffRoute>} />
       <Route path="/employers/:id/edit" element={<AdminRoute><EmployerCreate      /></AdminRoute>} />
 
-      <Route path="/placements"         element={<ProtectedRoute><Placements      /></ProtectedRoute>} />
-      <Route path="/placements/:id"     element={<ProtectedRoute><PlacementDetail /></ProtectedRoute>} />
+      <Route path="/placements"         element={<StaffRoute><Placements      /></StaffRoute>} />
+      <Route path="/placements/:id"     element={<StaffRoute><PlacementDetail /></StaffRoute>} />
 
       <Route path="/reports"            element={<AdminRoute><Reports             /></AdminRoute>} />
 
       <Route path="/admin/master/industries"  element={<AdminRoute><MasterIndustries /></AdminRoute>} />
       <Route path="/admin/master/work-types"  element={<AdminRoute><MasterWorkTypes  /></AdminRoute>} />
       <Route path="/admin/master/work-status" element={<AdminRoute><MasterWorkStatus /></AdminRoute>} />
-
 
       <Route path="/admin/users"       element={<AdminRoute><AdminUsers       /></AdminRoute>} />
       <Route path="/admin/departments" element={<AdminRoute><AdminDepartments /></AdminRoute>} />

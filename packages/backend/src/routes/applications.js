@@ -1,9 +1,15 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
 
 export const applicationsRouter = Router();
 applicationsRouter.use(requireAuth);
+applicationsRouter.use((req, res, next) => {
+  if (req.user.role === "training_admin") {
+    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
+  }
+  next();
+});
 
 const VALID_STAGES = ["applied", "screening", "interview", "ets", "hired", "rejected"];
 
@@ -196,7 +202,7 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 });
 
 // ── DELETE /api/applications/:id ─────────────────────────────────────────────
-applicationsRouter.delete("/:id", async (req, res, next) => {
+applicationsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       "UPDATE applications SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id",

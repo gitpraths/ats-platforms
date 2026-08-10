@@ -10,8 +10,10 @@ import CreateUserDialog from "../components/CreateUserDialog";
 
 const ROLES: { value: UserRole; label: string; badge: string }[] = [
   { value: "admin",           label: "Admin",           badge: "border border-red-400 text-red-500 bg-transparent" },
+  { value: "staff",           label: "Staff",           badge: "border border-blue-400 text-blue-600 bg-transparent" },
+  { value: "training_admin",  label: "Training Admin",  badge: "border border-orange-400 text-orange-600 bg-transparent" },
   { value: "recruiter_admin", label: "Recruiter Admin", badge: "border border-purple-400 text-purple-600 bg-transparent" },
-  { value: "recruiter",       label: "Recruiter",       badge: "border border-blue-400 text-blue-600 bg-transparent" },
+  { value: "recruiter",       label: "Recruiter",       badge: "border border-slate-400 text-slate-600 bg-transparent" },
   { value: "hiring_manager",  label: "Hiring Manager",  badge: "border border-green-500 text-green-700 bg-transparent" },
 ];
 

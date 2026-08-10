@@ -24,7 +24,7 @@ ALTER TABLE users
 
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE users ADD CONSTRAINT users_role_check
-  CHECK (role IN ('admin', 'recruiter_admin', 'recruiter', 'hiring_manager', 'provider'));
+  CHECK (role IN ('admin', 'recruiter_admin', 'recruiter', 'staff', 'hiring_manager', 'provider', 'training_admin'));
 
 -- ── Candidate Documents ───────────────────────────────────
 CREATE TABLE IF NOT EXISTS candidate_documents (

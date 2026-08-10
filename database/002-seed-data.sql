@@ -10,7 +10,9 @@ INSERT INTO users (id, name, email, password_hash, role) VALUES
   ('00000000-0000-0000-0000-000000000002', 'Jane Recruiter',    'jane@myats.dev',           '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'recruiter'),
   ('00000000-0000-0000-0000-000000000003', 'Mark Spencer',      'mark@myats.dev',           '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'recruiter'),
   ('00000000-0000-0000-0000-000000000004', 'Sarah Talent',      'sarah@myats.dev',          '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'recruiter_admin'),
-  ('00000000-0000-0000-0000-000000000005', 'Tom HiringManager', 'tom@myats.dev',            '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'hiring_manager')
+  ('00000000-0000-0000-0000-000000000005', 'Tom HiringManager', 'tom@myats.dev',            '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'hiring_manager'),
+  ('00000000-0000-0000-0000-000000000007', 'Steve Staff',       'staff@myats.dev',          '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'staff'),
+  ('00000000-0000-0000-0000-000000000008', 'Tina Training',     'trainingadmin@myats.dev',  '$2b$10$JEQYphnwiuA4oN8ZNVQNcOiyzVvpfh/FY9i6L2PwCO.TpZaofHYJ6', 'training_admin')
 ON CONFLICT (id) DO NOTHING;
 
 -- ── Departments ───────────────────────────────────────────────────────────────

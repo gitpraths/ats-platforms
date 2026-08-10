@@ -13,6 +13,8 @@ import {
 } from "../services/xero.js";
 
 export const xeroRouter = Router();
+xeroRouter.use(requireAuth);
+xeroRouter.use(requireRole("admin", "recruiter_admin"));
 
 // ── Connection management ────────────────────────────────────────────────────
 xeroRouter.get("/auth-url", requireAuth, requireRole("admin"), (req, res) => {

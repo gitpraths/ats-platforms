@@ -77,7 +77,8 @@ export default function CandidateDetail() {
   const queryClient = useQueryClient();
   const { user }    = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
-  const canWrite = user?.role !== "provider";
+  const canWrite = user?.role !== "provider" && user?.role !== "training_admin";
+  const canWriteTraining = user?.role !== "provider";
 
   const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications"|"notes">("overview");
   const [editing, setEditing] = useState(false);
@@ -851,7 +852,7 @@ export default function CandidateDetail() {
           {/* ══ TRAINING ═════════════════════════════════════ */}
           {activeTab === "training" && id && (
             <div className="bg-white border border-slate-200 rounded-2xl p-6" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
-              <TrainingTab candidateId={id} canWrite={canWrite} candidateName={candidate?.name ?? ""} />
+              <TrainingTab candidateId={id} canWrite={canWriteTraining} candidateName={candidate?.name ?? ""} />
             </div>
           )}
 
