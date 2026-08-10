@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, AlertCircle, Plus, X, Check, Upload, FileText } from "lucide-react";
+import { AlertTriangle, AlertCircle, Plus, X, Check, Upload, FileText, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
 import type { Provider } from "../types";
 
@@ -132,6 +132,7 @@ interface Props {
   setForm:     React.Dispatch<React.SetStateAction<CandidateFormData>>;
   mode:        "create" | "edit";
   error?:      string;
+  existingCandidateId?: string;
   isSubmitting?: boolean;
   onSubmit:    () => void;
   onCancel:    () => void;
@@ -141,11 +142,11 @@ interface Props {
 }
 
 export function CandidateFormPanel({
-  form, setForm, mode, error, isSubmitting,
+  form, setForm, mode, error, existingCandidateId, isSubmitting,
   onSubmit, onCancel, submitLabel, showResumeUpload = true,
 }: Props) {
-  const [dupPhone, setDupPhone]   = useState<{ name: string; email: string } | null>(null);
-  const [dupName,  setDupName]    = useState<{ name: string; email: string } | null>(null);
+  const [dupPhone, setDupPhone]   = useState<{ id?: string; name: string; email: string } | null>(null);
+  const [dupName,  setDupName]    = useState<{ id?: string; name: string; email: string } | null>(null);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
   const [suburbOptions,   setSuburbOptions]   = useState<{ suburb: string; state: string }[]>([]);
   const [showAddConsultant, setShowAddConsultant] = useState(false);
@@ -205,7 +206,7 @@ export function CandidateFormPanel({
   async function checkDuplicatePhone(phone: string) {
     if (!phone || phone.length < 8) return;
     try {
-      const res = await api.get<{ phone?: { name: string; email: string } }>(
+      const res = await api.get<{ phone?: { id?: string; name: string; email: string } }>(
         `/candidates/check-duplicate?phone=${encodeURIComponent(phone)}`
       );
       setDupPhone(res.phone || null);
@@ -216,7 +217,7 @@ export function CandidateFormPanel({
     const fullName = [firstName, lastName].filter(Boolean).join(" ");
     if (!fullName.trim()) return;
     try {
-      const res = await api.get<{ name?: { name: string; email: string } }>(
+      const res = await api.get<{ name?: { id?: string; name: string; email: string } }>(
         `/candidates/check-duplicate?name=${encodeURIComponent(fullName)}`
       );
       setDupName(res.name || null);
@@ -257,22 +258,59 @@ export function CandidateFormPanel({
     <div className="space-y-5">
       {/* Error banner */}
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          <AlertCircle size={16} className="flex-shrink-0" /> {error}
+        <div className="flex items-center justify-between px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {existingCandidateId && (
+            <a
+              href={`/candidates/${existingCandidateId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-semibold text-red-900 bg-red-100 hover:bg-red-200 border border-red-300 px-3 py-1 rounded-lg transition-colors text-xs whitespace-nowrap ml-3"
+            >
+              Open Candidate Profile <ExternalLink size={12} />
+            </a>
+          )}
         </div>
       )}
 
       {/* Duplicate warnings */}
       {dupPhone && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-          <AlertTriangle size={16} className="flex-shrink-0" />
-          ⚠️ Phone already linked to <strong className="mx-1">{dupPhone.name}</strong> ({dupPhone.email})
+        <div className="flex items-center justify-between px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-900">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={16} className="flex-shrink-0 text-amber-600" />
+            <span>⚠️ Phone already linked to <strong className="mx-1">{dupPhone.name}</strong> ({dupPhone.email || "No email"})</span>
+          </div>
+          {dupPhone.id && (
+            <a
+              href={`/candidates/${dupPhone.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-semibold text-amber-950 bg-amber-200/80 hover:bg-amber-300 border border-amber-300 px-3 py-1 rounded-lg transition-colors text-xs whitespace-nowrap ml-3"
+            >
+              View Profile <ExternalLink size={12} />
+            </a>
+          )}
         </div>
       )}
       {dupName && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
-          <AlertTriangle size={16} className="flex-shrink-0" />
-          ⚠️ Name already exists: <strong className="mx-1">{dupName.name}</strong> — please verify.
+        <div className="flex items-center justify-between px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-900">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={16} className="flex-shrink-0 text-yellow-600" />
+            <span>⚠️ Name already exists: <strong className="mx-1">{dupName.name}</strong></span>
+          </div>
+          {dupName.id && (
+            <a
+              href={`/candidates/${dupName.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-semibold text-yellow-950 bg-yellow-200/80 hover:bg-yellow-300 border border-yellow-300 px-3 py-1 rounded-lg transition-colors text-xs whitespace-nowrap ml-3"
+            >
+              View Profile <ExternalLink size={12} />
+            </a>
+          )}
         </div>
       )}
 

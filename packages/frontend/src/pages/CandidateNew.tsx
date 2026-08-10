@@ -12,6 +12,7 @@ export default function CandidateNew() {
 
   const [form, setForm]   = useState<CandidateFormData>(EMPTY_FORM);
   const [error, setError] = useState("");
+  const [existingCandidateId, setExistingCandidateId] = useState<string | undefined>();
   const [resumeUploading, setResumeUploading] = useState(false);
 
   // Listen for resume file selection from CandidateFormPanel
@@ -85,11 +86,19 @@ export default function CandidateNew() {
       navigate(`/candidates/${candidate.id}`);
     },
 
-    onError: (err: Error) => setError(err.message),
+    onError: (err: any) => {
+      setError(err?.message || "An error occurred");
+      if (err?.body?.existing_candidate_id) {
+        setExistingCandidateId(err.body.existing_candidate_id);
+      } else {
+        setExistingCandidateId(undefined);
+      }
+    },
   });
 
   function handleSubmit() {
     setError("");
+    setExistingCandidateId(undefined);
     const fullName = [form.first_name, form.last_name].filter(Boolean).join(" ");
     if (!fullName.trim())      { setError("First name is required."); return; }
     if (!form.phone)           { setError("Phone is required."); return; }
@@ -116,6 +125,7 @@ export default function CandidateNew() {
           setForm={setForm}
           mode="create"
           error={error}
+          existingCandidateId={existingCandidateId}
           isSubmitting={create.isPending || resumeUploading}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/candidates")}

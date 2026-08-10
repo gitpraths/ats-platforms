@@ -178,6 +178,39 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
     if (!provider_id)    return res.status(400).json({ success: false, error: "Provider is required" });
     if (!benchmark_hours) return res.status(400).json({ success: false, error: "Benchmark hours is required" });
 
+    // Check for existing candidate by email or first_name + last_name
+    if (email && email.trim()) {
+      const { rows: exEmail } = await pool.query(
+        `SELECT id, name, first_name, last_name, email FROM candidates WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) LIMIT 1`,
+        [email.trim()]
+      );
+      if (exEmail.length > 0) {
+        const c = exEmail[0];
+        return res.status(409).json({
+          success: false,
+          error: "A candidate with this email already exists",
+          existing_candidate_id: c.id,
+          existing_candidate_name: c.name || `${c.first_name || ""} ${c.last_name || ""}`.trim(),
+        });
+      }
+    }
+
+    if (first_name && last_name) {
+      const { rows: exName } = await pool.query(
+        `SELECT id, name, first_name, last_name, email FROM candidates WHERE LOWER(TRIM(first_name)) = LOWER(TRIM($1)) AND LOWER(TRIM(last_name)) = LOWER(TRIM($2)) LIMIT 1`,
+        [first_name.trim(), last_name.trim()]
+      );
+      if (exName.length > 0) {
+        const c = exName[0];
+        return res.status(409).json({
+          success: false,
+          error: "A candidate with this first and last name already exists",
+          existing_candidate_id: c.id,
+          existing_candidate_name: c.name || `${c.first_name || ""} ${c.last_name || ""}`.trim(),
+        });
+      }
+    }
+
     // Auto-generate sr_no
     const srResult = await pool.query("SELECT 'JS-' || LPAD(nextval('candidate_sr_seq')::TEXT, 3, '0') AS sr_no");
     const sr_no = srResult.rows[0].sr_no;
@@ -209,7 +242,18 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
     res.status(201).json({ success: true, data: rows[0] });
   } catch (err) {
     if (err.code === "23505") {
-      return res.status(409).json({ success: false, error: "A candidate with this email already exists" });
+      let existingId = null;
+      let existingName = null;
+      if (req.body.email) {
+        const { rows: ex } = await pool.query(`SELECT id, name FROM candidates WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) LIMIT 1`, [req.body.email]);
+        if (ex[0]) { existingId = ex[0].id; existingName = ex[0].name; }
+      }
+      return res.status(409).json({
+        success: false,
+        error: "A candidate with this email already exists",
+        existing_candidate_id: existingId,
+        existing_candidate_name: existingName,
+      });
     }
     next(err);
   }
