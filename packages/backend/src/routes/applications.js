@@ -187,7 +187,7 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
            VALUES ($1, $2, $3, $4, $5, 'active', $6)`,
           [appData.id, appData.candidate_id, appData.job_id, employerId, placement_date, req.user?.id || null]
         );
-        await pool.query(`UPDATE candidates SET work_status = 'placed', updated_at = NOW() WHERE id = $1`, [appData.candidate_id]);
+        await pool.query(`UPDATE candidates SET work_status = 'placed', updated_at = NOW(), updated_by = $2 WHERE id = $1`, [appData.candidate_id, req.user?.id || null]);
       }
     }
 

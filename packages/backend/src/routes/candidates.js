@@ -245,8 +245,9 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
           benchmark_hours, availability, industry_preference,
           car, police_check, wwc,
           comments, notes, interested_job,
-          wage_subsidy, wage_subsidy_amount, work_status, intention_to_work)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+          wage_subsidy, wage_subsidy_amount, work_status, intention_to_work,
+          created_by, updated_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$28)
        RETURNING *`,
       [
         sr_no, fullName, first_name || null, last_name || null,
@@ -259,6 +260,7 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
         comments || notes || null, notes || comments || null, interested_job || null,
         wage_subsidy ?? false, wage_subsidy_amount || null, "job_seeking",
         intention_to_work || "suitable",
+        req.user.id
       ]
     );
     res.status(201).json({ success: true, data: rows[0] });
@@ -322,7 +324,8 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
          wage_subsidy_amount = COALESCE($21, wage_subsidy_amount),
          work_status         = COALESCE($22, work_status),
          intention_to_work   = COALESCE($23, intention_to_work),
-         updated_at          = NOW()
+         updated_at          = NOW(),
+         updated_by          = $25
        WHERE id = $24 RETURNING *`,
       [
         fullName || null,
@@ -349,6 +352,7 @@ candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
         work_status || null,
         intention_to_work || null,
         req.params.id,
+        req.user.id,
       ]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Candidate not found" });

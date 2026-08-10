@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS candidates (
   resume_url  TEXT,
   linkedin    TEXT,
   notes       TEXT,
+  created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_by  UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

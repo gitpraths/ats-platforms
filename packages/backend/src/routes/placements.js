@@ -179,8 +179,8 @@ placementsRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
 
     // Update candidate work_status to placed
     await client.query(
-      `UPDATE candidates SET work_status = 'placed', updated_at = NOW() WHERE id = $1`,
-      [candidate_id]
+      `UPDATE candidates SET work_status = 'placed', updated_at = NOW(), updated_by = $2 WHERE id = $1`,
+      [candidate_id, req.user.id]
     );
 
     await client.query(
@@ -299,8 +299,8 @@ placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruite
     const isEnded = (newStatus && ["terminated", "resigned", "completed"].includes(newStatus)) || !!newEndDate;
     const targetWorkStatus = isEnded ? "job_seeking" : "placed";
     await client.query(
-      `UPDATE candidates SET work_status = $1, updated_at = NOW() WHERE id = $2`,
-      [targetWorkStatus, existing[0].candidate_id]
+      `UPDATE candidates SET work_status = $1, updated_at = NOW(), updated_by = $3 WHERE id = $2`,
+      [targetWorkStatus, existing[0].candidate_id, req.user.id]
     );
 
     pool.query(
@@ -327,8 +327,8 @@ placementsRouter.delete("/:id", requireRole("admin"), async (req, res, next) => 
     await client.query("BEGIN");
     await client.query("DELETE FROM placements WHERE id = $1", [req.params.id]);
     await client.query(
-      `UPDATE candidates SET work_status = 'job_seeking', updated_at = NOW() WHERE id = $1`,
-      [rows[0].candidate_id]
+      `UPDATE candidates SET work_status = 'job_seeking', updated_at = NOW(), updated_by = $2 WHERE id = $1`,
+      [rows[0].candidate_id, req.user.id]
     );
     await client.query("COMMIT");
 

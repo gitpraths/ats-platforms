@@ -49,17 +49,72 @@ describe("POST /api/candidates", () => {
     const res = await request(app)
       .post("/api/candidates")
       .set(auth())
-      .send({ name: "Test Candidate", email });
+      .send({
+        name: "Test Candidate",
+        email,
+        phone: "12345678",
+        provider_id: "00000000-0000-0000-0005-000000000001",
+        benchmark_hours: 38
+      });
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty("id");
     expect(res.body.data.name).toBe("Test Candidate");
+    expect(res.body.data.created_by).toBe("00000000-0000-0000-0000-000000000001");
+    expect(res.body.data.updated_by).toBe("00000000-0000-0000-0000-000000000001");
   });
 
   it("returns 409 for duplicate email", async () => {
     const email = `dup_${Date.now()}@example.com`;
-    await request(app).post("/api/candidates").set(auth()).send({ name: "Dup A", email });
-    const res = await request(app).post("/api/candidates").set(auth()).send({ name: "Dup B", email });
+    await request(app)
+      .post("/api/candidates")
+      .set(auth())
+      .send({
+        name: "Dup A",
+        email,
+        phone: "12345678",
+        provider_id: "00000000-0000-0000-0005-000000000001",
+        benchmark_hours: 38
+      });
+    const res = await request(app)
+      .post("/api/candidates")
+      .set(auth())
+      .send({
+        name: "Dup B",
+        email,
+        phone: "12345678",
+        provider_id: "00000000-0000-0000-0005-000000000001",
+        benchmark_hours: 38
+      });
     expect(res.status).toBe(409);
+  });
+});
+
+describe("PUT /api/candidates/:id", () => {
+  it("updates candidate details and records updated_by", async () => {
+    const email = `update_test_${Date.now()}@example.com`;
+    const createRes = await request(app)
+      .post("/api/candidates")
+      .set(auth())
+      .send({
+        name: "Update Candidate",
+        email,
+        phone: "987654321",
+        provider_id: "00000000-0000-0000-0005-000000000001",
+        benchmark_hours: 38
+      });
+    const candidateId = createRes.body.data.id;
+
+    const updateRes = await request(app)
+      .put(`/api/candidates/${candidateId}`)
+      .set(auth())
+      .send({
+        name: "Updated Name",
+        phone: "111222333"
+      });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.success).toBe(true);
+    expect(updateRes.body.data.name).toBe("Updated Name");
+    expect(updateRes.body.data.updated_by).toBe("00000000-0000-0000-0000-000000000001");
   });
 });

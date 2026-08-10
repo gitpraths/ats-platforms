@@ -223,7 +223,7 @@ jobsRouter.patch("/:id/status", async (req, res, next) => {
 
     validateJobStatusTransition(jobCheck.rows[0].status, job_status);
 
-    await pool.query("UPDATE jobs SET status = $1, updated_at = NOW() WHERE id = $2", [job_status, req.params.id]);
+    await pool.query("UPDATE jobs SET status = $1, updated_at = NOW(), updated_by = $3 WHERE id = $2", [job_status, req.params.id, req.user.id]);
 
     const { rows } = await pool.query(
       `INSERT INTO job_activity (job_id, user_id, job_status, comment)

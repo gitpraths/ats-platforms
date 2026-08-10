@@ -233,11 +233,11 @@ export async function runSync(provider, triggeredById) {
       if (existing.rows.length === 0) {
         const ins = await pool.query(
           `INSERT INTO candidates (name, email, phone, interested_job, notes, transport_type,
-            wage_subsidy, wage_subsidy_amount, benchmark_hours, provider_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+            wage_subsidy, wage_subsidy_amount, benchmark_hours, provider_id, created_by, updated_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11) RETURNING id`,
           [candidate.name, candidate.email, candidate.phone, candidate.interested_job,
            candidate.notes, candidate.transport_type, candidate.wage_subsidy,
-           candidate.wage_subsidy_amount, candidate.benchmark_hours, candidate.provider_id]
+           candidate.wage_subsidy_amount, candidate.benchmark_hours, candidate.provider_id, triggeredById]
         );
         candidateId = ins.rows[0].id;
         created++;
@@ -246,11 +246,11 @@ export async function runSync(provider, triggeredById) {
         await pool.query(
           `UPDATE candidates SET name=$1, phone=$2, interested_job=$3, notes=$4,
             transport_type=$5, wage_subsidy=$6, wage_subsidy_amount=$7,
-            benchmark_hours=$8, updated_at=NOW()
+            benchmark_hours=$8, updated_at=NOW(), updated_by=$10
            WHERE id=$9`,
           [candidate.name, candidate.phone, candidate.interested_job, candidate.notes,
            candidate.transport_type, candidate.wage_subsidy, candidate.wage_subsidy_amount,
-           candidate.benchmark_hours, candidateId]
+           candidate.benchmark_hours, candidateId, triggeredById]
         );
         updated++;
       }
