@@ -161,16 +161,18 @@ const WORK_TYPES = ["Full-time", "Part-time", "Casual", "Contract", "Temporary"]
 
 interface FormState {
   // Step 1
-  title:              string;
-  employer_id:        string;
-  sourced_by_user_id: string;
-  industry:           string;
-  pay_rate:           string;
-  pay_rate_type:      "per_hour" | "annual";
-  positions_count:    number;
-  work_type:          string;
-  work_location:      string;
-  job_board_url:      string;
+  title:                  string;
+  employer_id:            string;
+  sourced_by_type:        "staff" | "existing_employer" | "lead_generator";
+  sourced_by_user_id:     string;
+  sourced_by_custom_name: string;
+  industry:               string;
+  pay_rate:               string;
+  pay_rate_type:          "per_hour" | "annual";
+  positions_count:        number;
+  work_type:              string;
+  work_location:          string;
+  job_board_url:          string;
   // Step 2
   description:         string;
   police_check:        string;
@@ -192,7 +194,7 @@ interface FormState {
 const todayString = new Date().toISOString().split("T")[0];
 
 const EMPTY: FormState = {
-  title: "", employer_id: "", sourced_by_user_id: "", industry: "", pay_rate: "", pay_rate_type: "per_hour",
+  title: "", employer_id: "", sourced_by_type: "staff", sourced_by_user_id: "", sourced_by_custom_name: "", industry: "", pay_rate: "", pay_rate_type: "per_hour",
   positions_count: 1, work_type: "Full-time", work_location: "", job_board_url: WORKVISION_BOARD_URL,
   description: "", police_check: "not_required", drug_alcohol_test: "no", wwc: "no",
   car_required: "no", public_transport: "no", wage_subsidy_required: "no", comments: "",
@@ -292,22 +294,66 @@ function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }:
         </p>
       </div>
 
-      {/* Vacancy Sourced By (Internal CRM Record) */}
-      <div>
+      {/* Vacancy Sourced By (Internal Record) */}
+      <div className="space-y-2 border border-slate-200 rounded-xl p-3.5 bg-slate-50/50">
         <Label>Vacancy Sourced By <span className="text-slate-400 font-normal">(Internal Record)</span></Label>
-        <select
-          value={form.sourced_by_user_id || currentUser?.id || ""}
-          onChange={(e) => set("sourced_by_user_id", e.target.value)}
-          className={cls}
-        >
-          <option value="">— Select Staff Member —</option>
-          {staffMembers.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name} ({u.role ? u.role.replace(/_/g, " ") : "staff"})
-            </option>
-          ))}
-        </select>
-        <p className="text-[11px] text-slate-400 mt-1">For internal records only — hidden from public website and job board listings</p>
+        
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => { set("sourced_by_type", "staff"); if (!form.sourced_by_user_id && currentUser) set("sourced_by_user_id", currentUser.id); }}
+            className={`px-3 py-2 rounded-lg font-medium border transition ${form.sourced_by_type === "staff" ? "bg-orange-50 border-[#e88e2e] text-[#e88e2e]" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+          >
+            Staff Member
+          </button>
+          <button
+            type="button"
+            onClick={() => set("sourced_by_type", "existing_employer")}
+            className={`px-3 py-2 rounded-lg font-medium border transition ${form.sourced_by_type === "existing_employer" ? "bg-orange-50 border-[#e88e2e] text-[#e88e2e]" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+          >
+            Existing Employer
+          </button>
+          <button
+            type="button"
+            onClick={() => set("sourced_by_type", "lead_generator")}
+            className={`px-3 py-2 rounded-lg font-medium border transition ${form.sourced_by_type === "lead_generator" ? "bg-orange-50 border-[#e88e2e] text-[#e88e2e]" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+          >
+            Lead Generator
+          </button>
+        </div>
+
+        {form.sourced_by_type === "staff" && (
+          <select
+            value={form.sourced_by_user_id || currentUser?.id || ""}
+            onChange={(e) => set("sourced_by_user_id", e.target.value)}
+            className={cls}
+          >
+            <option value="">— Select Staff Member —</option>
+            {staffMembers.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.role ? u.role.replace(/_/g, " ") : "staff"})
+              </option>
+            ))}
+          </select>
+        )}
+
+        {form.sourced_by_type === "existing_employer" && (
+          <p className="text-xs text-slate-500 bg-white border border-slate-200 rounded-lg p-2.5 italic">
+            Vacancy sourced directly by existing employer {form.employer_id && employers.find((e) => e.id === form.employer_id) ? `(${employers.find((e) => e.id === form.employer_id)?.name})` : ""}.
+          </p>
+        )}
+
+        {form.sourced_by_type === "lead_generator" && (
+          <input
+            type="text"
+            value={form.sourced_by_custom_name}
+            onChange={(e) => set("sourced_by_custom_name", e.target.value)}
+            placeholder="e.g. Lead Generator Name / Campaign / Agency"
+            className={cls}
+          />
+        )}
+
+        <p className="text-[11px] text-slate-400">For internal records only — hidden from public website and job board listings</p>
       </div>
 
       {/* Industry + Work Type */}
@@ -594,7 +640,9 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
     createJob.mutate({
       title:                 form.title.trim(),
       employer_id:           form.employer_id        || undefined,
-      sourced_by_user_id:    form.sourced_by_user_id || user?.id || undefined,
+      sourced_by_type:       form.sourced_by_type,
+      sourced_by_user_id:    form.sourced_by_type === "staff" ? (form.sourced_by_user_id || user?.id || undefined) : undefined,
+      sourced_by_custom_name: form.sourced_by_type === "lead_generator" ? (form.sourced_by_custom_name || undefined) : undefined,
       industry:              form.industry            || undefined,
       pay_rate:              form.pay_rate            ? Number(form.pay_rate) : undefined,
       pay_rate_type:         form.pay_rate_type,

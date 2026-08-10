@@ -52,7 +52,9 @@ pool.query(`
     ADD COLUMN IF NOT EXISTS availability TEXT;
 
   ALTER TABLE jobs
-    ADD COLUMN IF NOT EXISTS sourced_by_user_id UUID REFERENCES users(id);
+    ADD COLUMN IF NOT EXISTS sourced_by_user_id UUID REFERENCES users(id),
+    ADD COLUMN IF NOT EXISTS sourced_by_type TEXT,
+    ADD COLUMN IF NOT EXISTS sourced_by_custom_name TEXT;
 `).catch((err) => console.error("[migration] schema updates:", err.message));
 
 const app = express();

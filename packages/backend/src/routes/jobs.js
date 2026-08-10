@@ -112,6 +112,7 @@ jobsRouter.post("/", async (req, res, next) => {
       positions_count, vacancy_type, work_location, job_board_url,
       police_check, drug_alcohol_test, wwc, car_required, public_transport,
       wage_subsidy_required, comments, status, sourced_by_user_id,
+      sourced_by_type, sourced_by_custom_name,
       // legacy fields kept for backward compatibility
       department_id, location_id, skills_required, skills_desired,
       job_type, work_model, cover_letter_required, min_annual_salary,
@@ -128,15 +129,16 @@ jobsRouter.post("/", async (req, res, next) => {
          positions_count, vacancy_type, work_location, job_board_url,
          police_check, drug_alcohol_test, wwc, car_required, public_transport,
          wage_subsidy_required, comments, sourced_by_user_id,
+         sourced_by_type, sourced_by_custom_name,
          department_id, location_id, skills_required, skills_desired,
          job_type, work_model, cover_letter_required, min_annual_salary,
          max_annual_salary, currency_code, experience_years_min, deadline,
          team, staff_working_status, end_date,
          status, created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
-         $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,
-         $34,$35,$35
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+         $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,
+         $36,$37,$37
        ) RETURNING id, job_number, created_at`,
       [
         title, description || null, employer_id || null,
@@ -145,6 +147,7 @@ jobsRouter.post("/", async (req, res, next) => {
         police_check || 'not_required', drug_alcohol_test || 'no', wwc || 'no',
         car_required || 'no', public_transport || 'no',
         wage_subsidy_required || 'no', comments || null, sourced_by_user_id || req.user.id,
+        sourced_by_type || 'staff', sourced_by_custom_name || null,
         department_id || null, location_id || null,
         skills_required || [], skills_desired || [],
         job_type || 'full_time', work_model || 'onsite',
@@ -172,6 +175,7 @@ jobsRouter.patch("/:id", async (req, res, next) => {
       "industry", "pay_rate", "pay_rate_type", "work_location",
       "police_check", "drug_alcohol_test", "wwc", "car_required",
       "public_transport", "wage_subsidy_required", "comments", "sourced_by_user_id",
+      "sourced_by_type", "sourced_by_custom_name",
     ];
 
     const updates = [];

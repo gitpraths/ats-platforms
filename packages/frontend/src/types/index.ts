@@ -208,6 +208,8 @@ export interface Job {
   comments?: string;
   sourced_by_user_id?: string | null;
   sourced_by_name?: string | null;
+  sourced_by_type?: string | null;
+  sourced_by_custom_name?: string | null;
   created_at: string;
   updated_at: string;
 }

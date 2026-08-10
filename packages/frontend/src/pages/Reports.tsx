@@ -36,6 +36,7 @@ interface VacancyReport {
   positions_count: number; pay_rate: number; pay_rate_type: string;
   work_location: string; city: string; state: string;
   created_at: string; employer_name: string; application_count: number;
+  sourced_by_name?: string; sourced_by_type?: string; sourced_by_custom_name?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -250,7 +251,23 @@ export default function Reports() {
         placementReport.map((r) => ({ ...r, welfare_checks: JSON.stringify(r.welfare_checks) })) as any
       ), `placement-monthly-${d}.csv`);
     } else {
-      downloadCsv(jsonToCsv(vacancyReport as any), `vacancy-report-${d}.csv`);
+      const vacancyCsvData = sortedVacancies.map((r) => ({
+        title: r.title,
+        employer_name: r.employer_name || "—",
+        sourced_by: r.sourced_by_type === "existing_employer"
+          ? "Existing Employer"
+          : r.sourced_by_type === "lead_generator"
+          ? (r.sourced_by_custom_name || "Lead Generator")
+          : (r.sourced_by_name || "—"),
+        status: r.status,
+        vacancy_type: r.vacancy_type || "—",
+        work_location: r.work_location || [r.city, r.state].filter(Boolean).join(", ") || "—",
+        positions_count: r.positions_count || 1,
+        application_count: r.application_count || 0,
+        pay_rate: r.pay_rate ? `$${r.pay_rate}${r.pay_rate_type === "annual" ? "/yr" : "/hr"}` : "—",
+        created_at: r.created_at ? format(parseISO(r.created_at), "yyyy-MM-dd") : "—",
+      }));
+      downloadCsv(jsonToCsv(vacancyCsvData as any), `vacancy-report-${d}.csv`);
     }
   }
 
@@ -611,6 +628,7 @@ export default function Reports() {
               <tr>
                 <SortTh label="Job Title"   col="title"             sort={vacSort} onSort={(c) => toggleSort(vacSort, setVacSort, c)} />
                 <SortTh label="Employer"    col="employer_name"     sort={vacSort} onSort={(c) => toggleSort(vacSort, setVacSort, c)} />
+                <th className={thCls}>Sourced By</th>
                 <th className={thCls}>Status</th>
                 <th className={thCls}>Work Type</th>
                 <th className={thCls}>Location</th>
@@ -622,9 +640,9 @@ export default function Reports() {
             </thead>
             <tbody className="divide-y">
               {loadingVacancies ? (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={10} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : sortedVacancies.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No vacancies found."}</td></tr>
+                <tr><td colSpan={10} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No vacancies found."}</td></tr>
               ) : sortedVacancies.map((r) => {
                 const loc = r.work_location || [r.city, r.state].filter(Boolean).join(", ") || "—";
                 const pay = r.pay_rate
@@ -637,6 +655,15 @@ export default function Reports() {
                     <td className={`${tdCls} text-slate-600`}>
                       {r.employer_name
                         ? <span className="flex items-center gap-1"><Building2 size={12} className="text-slate-400" />{r.employer_name}</span>
+                        : "—"}
+                    </td>
+                    <td className={`${tdCls} text-slate-600 font-medium`}>
+                      {r.sourced_by_type === "existing_employer"
+                        ? <span className="inline-flex items-center gap-1 text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs">Existing Employer</span>
+                        : r.sourced_by_type === "lead_generator"
+                        ? <span className="inline-flex items-center gap-1 text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-xs">{r.sourced_by_custom_name || "Lead Generator"}</span>
+                        : r.sourced_by_name
+                        ? <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded text-xs">{r.sourced_by_name}</span>
                         : "—"}
                     </td>
                     <td className={tdCls}>
