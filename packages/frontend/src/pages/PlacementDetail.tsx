@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle, Clock, AlertTriangle, Mail, Check, Pencil } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, AlertTriangle, Mail, Check, Pencil, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, WelfareCheck, WelfareCheckType } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { GeneratePlacementInvoiceModal } from "./Placements";
 
 const CHECK_LABELS: Record<WelfareCheckType, string> = {
   day_1:   "Day 1 Check",
@@ -61,6 +62,7 @@ export default function PlacementDetail() {
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [employerResponse, setEmployerResponse] = useState("");
   const [showEdit, setShowEdit] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [editStatus, setEditStatus] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editTerminationReason, setEditTerminationReason] = useState("");
@@ -180,6 +182,12 @@ export default function PlacementDetail() {
         {canAct && (
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowInvoiceModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-sm hover:bg-amber-100 font-medium transition-colors"
+            >
+              <FileText size={14} className="text-[#e88e2e]" /> Generate Invoice
+            </button>
+            <button
               onClick={() => {
                 setEditStatus(placement.employment_status || "active");
                 setEditEndDate(placement.end_date ? placement.end_date.slice(0, 10) : "");
@@ -207,6 +215,17 @@ export default function PlacementDetail() {
           </div>
         )}
       </div>
+
+      {showInvoiceModal && placement && (
+        <GeneratePlacementInvoiceModal
+          placement={placement}
+          onClose={() => setShowInvoiceModal(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["placement", id] });
+            setShowInvoiceModal(false);
+          }}
+        />
+      )}
 
       {/* Info cards */}
       <div className="grid sm:grid-cols-3 gap-4 mb-6">

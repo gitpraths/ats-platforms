@@ -89,11 +89,79 @@ xeroRouter.get("/invoices", requireAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-xeroRouter.post("/invoices", requireAuth, requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+xeroRouter.post("/invoices", requireAuth, requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
   try {
-    const { candidate_training_id, unit_price, quantity = 1, xero_contact_id } = req.body;
-    if (!candidate_training_id || unit_price === undefined || unit_price === null) {
-      return res.status(400).json({ success: false, error: "candidate_training_id and unit_price are required" });
+    const { candidate_training_id, placement_id, unit_price, quantity = 1, xero_contact_id } = req.body;
+    if ((!candidate_training_id && !placement_id) || unit_price === undefined || unit_price === null) {
+      return res.status(400).json({ success: false, error: "placement_id or candidate_training_id and unit_price are required" });
+    }
+
+    if (placement_id) {
+      const { rows } = await pool.query(
+        `SELECT plc.id, plc.start_date, plc.candidate_id, plc.employer_id,
+                c.name AS candidate_name, j.title AS job_title,
+                e.name AS employer_name, e.contact_email AS employer_email,
+                p.name AS provider_name
+         FROM placements plc
+         JOIN candidates c ON c.id = plc.candidate_id
+         JOIN jobs j ON j.id = plc.job_id
+         LEFT JOIN employers e ON e.id = plc.employer_id
+         LEFT JOIN providers p ON p.id = c.provider_id
+         WHERE plc.id = $1`,
+        [placement_id]
+      );
+      if (!rows[0]) return res.status(404).json({ success: false, error: "placement_not_found" });
+      const ctx = rows[0];
+      const targetName = ctx.employer_name || ctx.provider_name || "Client";
+
+      let resolvedContactId = xero_contact_id || null;
+      if (!resolvedContactId && targetName) {
+        try {
+          const matches = await searchContactsByName(targetName);
+          if (matches.length === 1) resolvedContactId = matches[0].contact_id;
+        } catch (e) {}
+      }
+
+      const description = `Placement Fee: ${ctx.job_title} — Candidate: ${ctx.candidate_name}${ctx.start_date ? ` — Start: ${new Date(ctx.start_date).toISOString().slice(0, 10)}` : ""}`;
+      
+      let invoice = null;
+      if (resolvedContactId) {
+        try {
+          invoice = await createDraftInvoice({
+            contactId: resolvedContactId,
+            description,
+            quantity: Number(quantity),
+            unitPrice: Number(unit_price),
+          });
+        } catch (e) {
+          console.error("[xero] placement invoice creation error:", e.message);
+        }
+      }
+
+      await pool.query(
+        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+         VALUES ('placement', $1, 'invoice_generated', $2, $3)`,
+        [placement_id, req.user.id, JSON.stringify({
+          unit_price,
+          quantity,
+          total_amount: Number(unit_price) * Number(quantity),
+          xero_invoice_id: invoice?.xero_invoice_id || null,
+          xero_invoice_number: invoice?.xero_invoice_number || null,
+        })]
+      );
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          placement_id,
+          unit_price,
+          quantity,
+          total_amount: Number(unit_price) * Number(quantity),
+          description,
+          xero_invoice_id: invoice?.xero_invoice_id || null,
+          xero_invoice_number: invoice?.xero_invoice_number || null,
+        }
+      });
     }
 
     // 1. Load context.

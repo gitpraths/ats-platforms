@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, CheckCircle, Mail } from "lucide-react";
+import { Plus, CheckCircle, Mail, FileText, X } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
@@ -47,6 +47,7 @@ export default function Placements() {
   const [page, setPage]       = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [showCreate, setShowCreate] = useState(false);
+  const [invoicingPlacement, setInvoicingPlacement] = useState<Placement | null>(null);
   const [createForm, setCreateForm] = useState<CreateForm>({
     candidate_id: "", job_id: "", employer_id: "", start_date: "", notes: "", application_id: "",
   });
@@ -285,6 +286,14 @@ export default function Placements() {
                     <div className="flex items-center gap-2 justify-end">
                       <Link to={`/placements/${p.id}`}
                         className="text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">View</Link>
+                      {canCreate && (
+                        <button
+                          onClick={() => setInvoicingPlacement(p)}
+                          title="Generate Invoice for Placement"
+                          className="flex items-center gap-1 text-xs text-slate-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 hover:bg-amber-100 font-medium transition-colors">
+                          <FileText size={11} className="text-[#e88e2e]" /> Invoice
+                        </button>
+                      )}
                       {canCreate && !p.confirmed_by_employer && (
                         <button
                           onClick={() => {
@@ -308,6 +317,17 @@ export default function Placements() {
 
       <Pagination page={page} totalPages={placementPages} total={placementTotal}
         perPage={PER_PAGE} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} label="placements" />
+
+      {invoicingPlacement && (
+        <GeneratePlacementInvoiceModal
+          placement={invoicingPlacement}
+          onClose={() => setInvoicingPlacement(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["placements"] });
+            setInvoicingPlacement(null);
+          }}
+        />
+      )}
 
       {/* Create Placement Dialog */}
       {showCreate && (
@@ -390,6 +410,107 @@ export default function Placements() {
           </div>
         </div>
       )}
+      </div>
+    </div>
+  );
+}
+
+export function GeneratePlacementInvoiceModal({
+  placement,
+  onClose,
+  onSuccess,
+}: {
+  placement: Placement;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [unitPrice, setUnitPrice] = useState<string>("500");
+  const [quantity, setQuantity]   = useState<string>("1");
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+
+  async function handleGenerate() {
+    if (!unitPrice) { setError("Unit price is required."); return; }
+    setSaving(true);
+    setError(null);
+    try {
+      await api.post("/xero/invoices", {
+        placement_id: placement.id,
+        unit_price: Number(unitPrice),
+        quantity: Number(quantity || 1),
+      });
+      onSuccess();
+      onClose();
+    } catch (e: any) {
+      setError(e?.response?.data?.error || e?.message || "Failed to generate invoice");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="font-semibold text-slate-900 text-base">Generate Placement Invoice</h3>
+            <p className="text-xs text-slate-400 mt-0.5">{placement.candidate_name} → {placement.job_title}</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <X size={16} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-3 text-sm text-slate-600">
+          <div className="bg-slate-50 rounded-xl p-3 space-y-1 text-xs">
+            <div className="flex justify-between"><span className="text-slate-400">Employer:</span> <span className="font-medium text-slate-800">{placement.employer_name || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-slate-400">Provider:</span> <span className="font-medium text-slate-800">{placement.provider_name || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-slate-400">Start Date:</span> <span className="font-medium text-slate-800">{fmtDate(placement.start_date)}</span></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Unit Price (AUD) *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={unitPrice}
+                onChange={(e) => setUnitPrice(e.target.value)}
+                placeholder="500.00"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Quantity</label>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
+          <button onClick={onClose} className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl">
+            Cancel
+          </button>
+          <button
+            onClick={handleGenerate}
+            disabled={saving}
+            className="px-4 py-2 text-xs font-semibold bg-[#e88e2e] text-white rounded-xl hover:bg-[#d07d20] disabled:opacity-50"
+          >
+            {saving ? "Generating..." : "Generate Invoice"}
+          </button>
+        </div>
       </div>
     </div>
   );
