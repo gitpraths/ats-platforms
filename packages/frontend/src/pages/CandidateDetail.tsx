@@ -1171,8 +1171,8 @@ export function VacanciesTab({
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                         allowClear
                         validate={(d) => {
-                          if (!app.interview_date) return "Set Interview Date first";
-                          if (d && app.interview_date && d < app.interview_date) return "ETS must be after Interview Date";
+                          const appliedDate = app.applied_at ? app.applied_at.slice(0, 10) : null;
+                          if (d && appliedDate && d < appliedDate) return "Date cannot be before Applied Date";
                           return null;
                         }}
                       />
@@ -1197,9 +1197,8 @@ export function VacanciesTab({
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                             allowClear
                             validate={(d) => {
-                              if (!app.interview_date) return "Set Interview Date first";
-                              if (!app.ets_date) return "Set ETS Date first";
-                              if (d && app.ets_date && d < app.ets_date) return "Placement must be after ETS Date";
+                              const appliedDate = app.applied_at ? app.applied_at.slice(0, 10) : null;
+                              if (d && appliedDate && d < appliedDate) return "Date cannot be before Applied Date";
                               return null;
                             }}
                           />

@@ -751,8 +751,8 @@ export default function Candidates() {
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
                             validate={(d) => {
-                              if (!row.latest_interview_date) return "Set Interview Date first";
-                              if (d && row.latest_interview_date && d < row.latest_interview_date) return "ETS must be after Interview Date";
+                              const refDate = (row as any).referral_date ? String((row as any).referral_date).slice(0, 10) : null;
+                              if (d && refDate && d < refDate) return "Date cannot be before Applied Date";
                               return null;
                             }}
                           />
@@ -774,9 +774,8 @@ export default function Candidates() {
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
                             validate={(d) => {
-                              if (!row.latest_interview_date) return "Set Interview Date first";
-                              if (!row.latest_ets_date) return "Set ETS Date first";
-                              if (d && row.latest_ets_date && d < row.latest_ets_date) return "Placement must be after ETS Date";
+                              const refDate = (row as any).referral_date ? String((row as any).referral_date).slice(0, 10) : null;
+                              if (d && refDate && d < refDate) return "Date cannot be before Applied Date";
                               return null;
                             }}
                           />
