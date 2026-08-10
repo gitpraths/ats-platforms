@@ -1270,7 +1270,7 @@ export function TrainingTab({ candidateId, canWrite, candidateName }: { candidat
                 <th className="text-left px-4 py-2.5">Status</th>
                 <th className="text-left px-4 py-2.5">Start</th>
                 <th className="text-left px-4 py-2.5">End</th>
-                <th className="text-left px-4 py-2.5">Cert #</th>
+                <th className="text-left px-4 py-2.5">Cert Received</th>
                 <th className="px-4 py-2.5"></th>
                 <th className="px-4 py-2.5"></th>
               </tr>
@@ -1290,7 +1290,7 @@ export function TrainingTab({ candidateId, canWrite, candidateName }: { candidat
                   </td>
                   <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.start_date)}</td>
                   <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.end_date)}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.certificate_no ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{e.certificate_received === true ? "Yes" : e.certificate_received === false ? "No" : "—"}</td>
                   <td className="px-4 py-2.5 text-right">
                     {canWrite && (
                       <button
@@ -1362,7 +1362,6 @@ function EnrolmentDialog({
   const [status, setStatus] = useState<TrainingStatus>(enrolment?.status ?? "enrolled");
   const [startDate, setStartDate] = useState(enrolment?.start_date ?? "");
   const [endDate, setEndDate] = useState(enrolment?.end_date ?? "");
-  const [certificateNo, setCertificateNo] = useState(enrolment?.certificate_no ?? "");
   const [certificateReceived, setCertificateReceived] = useState<"yes"|"no"|"">(
     enrolment?.certificate_received === true ? "yes" : enrolment?.certificate_received === false ? "no" : ""
   );
@@ -1387,8 +1386,8 @@ function EnrolmentDialog({
       status,
       start_date: startDate || null,
       end_date: endDate || null,
-      certificate_no: certificateNo || null,
-      certificate_received: status === "completed" ? (certificateReceived === "yes" ? true : certificateReceived === "no" ? false : null) : null,
+      certificate_no: null,
+      certificate_received: certificateReceived === "yes" ? true : certificateReceived === "no" ? false : null,
       notes: notes || null,
     };
 
@@ -1412,11 +1411,11 @@ function EnrolmentDialog({
         </h2>
         <form onSubmit={handleSave} className="space-y-3">
           <div>
-            <label className="text-xs text-slate-500">Course *</label>
+            <label className="text-xs text-slate-500 font-medium">Course *</label>
             <select
               value={trainingId}
               onChange={(e) => setTrainingId(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mt-0.5"
               disabled={!!enrolment}
             >
               <option value="">— Pick a course —</option>
@@ -1426,47 +1425,22 @@ function EnrolmentDialog({
             </select>
           </div>
 
-
-          {/* Start / End date — only shown on new enrolment, not on edit */}
-          {!enrolment && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-slate-500">Start date</label>
-                <input type="date" value={startDate ?? ""} onChange={(e) => setStartDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">End date</label>
-                <input type="date" value={endDate ?? ""} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
-              </div>
-            </div>
-          )}
-
-          {/* Certificate fields — only when status = completed */}
-          {status === "completed" && (
-            <>
-              <div>
-                <label className="text-xs text-slate-500 font-medium">Certificate Received?</label>
-                <select
-                  value={certificateReceived}
-                  onChange={(e) => setCertificateReceived(e.target.value as "yes"|"no"|"")}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mt-0.5"
-                >
-                  <option value="">— Select —</option>
-                  <option value="yes">Yes — certificate received</option>
-                  <option value="no">No — not yet received</option>
-                </select>
-              </div>
-              {certificateReceived === "yes" && (
-                <div>
-                  <label className="text-xs text-slate-500">Certificate #</label>
-                  <input value={certificateNo ?? ""} onChange={(e) => setCertificateNo(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="e.g. CERT-2024-001" />
-                </div>
-              )}
-            </>
-          )}
           <div>
-            <label className="text-xs text-slate-500">Notes</label>
-            <textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+            <label className="text-xs text-slate-500 font-medium">Certificate Received?</label>
+            <select
+              value={certificateReceived}
+              onChange={(e) => setCertificateReceived(e.target.value as "yes"|"no"|"")}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mt-0.5"
+            >
+              <option value="">— Select —</option>
+              <option value="yes">Yes — certificate received</option>
+              <option value="no">No — not yet received</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-500 font-medium">Notes</label>
+            <textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mt-0.5" placeholder="Optional notes..." />
           </div>
 
           {error && <p className="text-xs text-red-600">{error}</p>}
