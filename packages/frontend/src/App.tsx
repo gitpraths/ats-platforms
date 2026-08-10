@@ -173,8 +173,10 @@ function Layout({ children }: { children: React.ReactNode }) {
             <>
               <NavLink to="/dashboard"    className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
               <NavLink to="/jobs"         className={navClass}><Briefcase size={15} />Vacancies</NavLink>
-              <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
             </>
+          )}
+          {isAdmin && (
+            <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
           )}
           <NavLink to="/candidates"   className={navClass}><Users size={15} />Candidates</NavLink>
           <NavLink to="/training"     className={navClass}><Table2 size={15} />Training Program</NavLink>
@@ -266,7 +268,7 @@ function AppRoutes() {
       <Route path="/jobs"             element={<StaffRoute><Jobs             /></StaffRoute>} />
       <Route path="/jobs/:id"         element={<StaffRoute><JobDetail        /></StaffRoute>} />
       <Route path="/jobs/:id/edit"    element={<StaffRoute><JobEdit          /></StaffRoute>} />
-      <Route path="/hiring-board"     element={<StaffRoute><HiringBoard      /></StaffRoute>} />
+      <Route path="/hiring-board"     element={<AdminRoute><HiringBoard      /></AdminRoute>} />
       <Route path="/candidates"        element={<ProtectedRoute><Candidates       /></ProtectedRoute>} />
       <Route path="/candidates/new"   element={<StaffRoute><CandidateNew     /></StaffRoute>} />
       <Route path="/candidates/:id"   element={<ProtectedRoute><CandidateDetail  /></ProtectedRoute>} />
