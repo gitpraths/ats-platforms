@@ -18,7 +18,6 @@ import { useTrainings } from "../hooks/useTrainings";
 import { GenerateInvoiceDialog } from "../components/training/GenerateInvoiceDialog";
 import { EnrolmentDialog } from "../components/training/EnrolmentDialog";
 import { useXeroInvoicesForEnrolment } from "../hooks/useXero";
-import { CellTooltip } from "../components/CellTooltip";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:3001";
 
@@ -1179,28 +1178,18 @@ export function VacanciesTab({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <CellTooltip
-                      title="Placed At"
-                      items={[
-                        { key: "Company",   value: app.employer_name || "—" },
-                        { key: "Job Title", value: app.job_title || "—" },
-                      ]}
-                    >
-                      <div className="w-full">
-                        {canWrite ? (
-                          <InlineDateCellDetail
-                            appId={app.id}
-                            field="placement_date"
-                            value={app.placement_date}
-                            onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
-                            allowClear
-                            validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
-                          />
-                        ) : (
-                          <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
-                        )}
-                      </div>
-                    </CellTooltip>
+                    {canWrite ? (
+                      <InlineDateCellDetail
+                        appId={app.id}
+                        field="placement_date"
+                        value={app.placement_date}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                        allowClear
+                        validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-600">{fmtDate(app.placement_date)}</span>
+                    )}
                   </td>
                   {canWrite && (
                     <td className="px-4 py-3 text-right">
