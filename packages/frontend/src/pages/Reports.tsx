@@ -221,10 +221,30 @@ export default function Reports() {
       if (providerView === "monthly") {
         downloadCsv(jsonToCsv(placementsByMonth as any), `provider-monthly-${d}.csv`);
       } else {
-        downloadCsv(jsonToCsv(providerReport as any), `provider-sitewise-${d}.csv`);
+        const providerCsvData = sortedProviders.map((r) => ({
+          provider_name: r.provider_name,
+          total_candidates: r.total_candidates,
+          placed_candidates: r.placed_candidates,
+          job_seeking_candidates: r.job_seeking_candidates,
+          placement_rate: r.placement_rate,
+        }));
+        downloadCsv(jsonToCsv(providerCsvData as any), `provider-sitewise-${d}.csv`);
       }
     } else if (tab === "staff") {
-      downloadCsv(jsonToCsv(staffReport as any), `staff-kpi-${d}.csv`);
+      const staffCsvData = sortedStaff.map((r) => {
+        const rate = r.total_applications > 0
+          ? Math.round((r.total_placements / r.total_applications) * 100)
+          : 0;
+        return {
+          staff_member: r.user_name,
+          role: r.role,
+          no_of_referrals: r.jobs_assigned,
+          interview: r.active_jobs,
+          placements: r.total_placements,
+          conversion_rate: `${rate}%`,
+        };
+      });
+      downloadCsv(jsonToCsv(staffCsvData as any), `staff-kpi-${d}.csv`);
     } else if (tab === "placement_monthly") {
       downloadCsv(jsonToCsv(
         placementReport.map((r) => ({ ...r, welfare_checks: JSON.stringify(r.welfare_checks) })) as any
@@ -384,28 +404,24 @@ export default function Reports() {
                   <tr>
                     <SortTh label="Provider"       col="provider_name"          sort={provSort} onSort={(c) => toggleSort(provSort, setProvSort, c)} />
                     <SortTh label="Total"          col="total_candidates"       sort={provSort} onSort={(c) => toggleSort(provSort, setProvSort, c)} />
-                    <SortTh label="Active"         col="active_candidates"      sort={provSort} onSort={(c) => toggleSort(provSort, setProvSort, c)} />
                     <SortTh label="Placed"         col="placed_candidates"      sort={provSort} onSort={(c) => toggleSort(provSort, setProvSort, c)} />
                     <SortTh label="Job Seeking"    col="job_seeking_candidates" sort={provSort} onSort={(c) => toggleSort(provSort, setProvSort, c)} />
-                    <SortTh label="Inactive"       col="inactive_candidates"    sort={provSort} onSort={(c) => toggleSort(provSort, setProvSort, c)} />
                     <th className={thCls}>Placement Rate</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {loadingProviders ? (
-                    <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
+                    <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
                   ) : sortedProviders.length === 0 ? (
-                    <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
+                    <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
                   ) : sortedProviders.map((r) => (
                     <tr key={r.provider_id} className="hover:bg-slate-50">
                       <td className={tdCls}>
                         <Link to={`/providers/${r.provider_id}`} className="text-[#e88e2e] hover:underline font-medium">{r.provider_name}</Link>
                       </td>
                       <td className={`${tdCls} font-semibold text-slate-800`}>{r.total_candidates}</td>
-                      <td className={`${tdCls} text-green-700`}>{r.active_candidates}</td>
                       <td className={`${tdCls} text-purple-700 font-semibold`}>{r.placed_candidates}</td>
                       <td className={`${tdCls} text-blue-700`}>{r.job_seeking_candidates}</td>
-                      <td className={`${tdCls} text-slate-400`}>{r.inactive_candidates}</td>
                       <td className={tdCls}>
                         <div className="flex items-center gap-2">
                           <div className="flex-1 bg-slate-200 rounded-full h-2 w-24">
@@ -471,18 +487,17 @@ export default function Reports() {
               <tr>
                 <SortTh label="Staff Member"    col="user_name"          sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
                 <th className={thCls}>Role</th>
-                <SortTh label="Jobs Assigned"   col="jobs_assigned"      sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
-                <SortTh label="Active Jobs"     col="active_jobs"        sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
-                <SortTh label="Applications"    col="total_applications" sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
+                <SortTh label="No Of Referrals" col="jobs_assigned"      sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
+                <SortTh label="Interview"       col="active_jobs"        sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
                 <SortTh label="Placements"      col="total_placements"   sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
                 <th className={thCls}>Conversion Rate</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingStaff ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : sortedStaff.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
               ) : sortedStaff.map((r) => {
                 const rate = r.total_applications > 0
                   ? Math.round((r.total_placements / r.total_applications) * 100)
@@ -497,7 +512,6 @@ export default function Reports() {
                     </td>
                     <td className={`${tdCls} text-slate-700`}>{r.jobs_assigned}</td>
                     <td className={`${tdCls} text-slate-700`}>{r.active_jobs}</td>
-                    <td className={`${tdCls} text-slate-700`}>{r.total_applications}</td>
                     <td className={tdCls}>
                       <span className={`font-bold text-base ${r.total_placements > 0 ? "text-[#e88e2e]" : "text-slate-400"}`}>
                         {r.total_placements}
