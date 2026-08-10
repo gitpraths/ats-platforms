@@ -436,6 +436,12 @@ export default function JobDetail() {
                     <span className="text-slate-900 font-medium">{job.created_by_name}</span>
                   </div>
                 )}
+                {job.sourced_by_name && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Sourced By</span>
+                    <span className="text-slate-900 font-medium">{job.sourced_by_name}</span>
+                  </div>
+                )}
                 {job.created_at && (
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500">Created</span>

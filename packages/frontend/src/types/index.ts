@@ -206,6 +206,8 @@ export interface Job {
   public_transport?: string;
   wage_subsidy_required?: string;
   comments?: string;
+  sourced_by_user_id?: string | null;
+  sourced_by_name?: string | null;
   created_at: string;
   updated_at: string;
 }

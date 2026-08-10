@@ -48,14 +48,16 @@ jobsRouter.get("/", async (req, res, next) => {
               d.name AS department_name,
               l.city, l.state, l.country, l.is_remote,
               u.name AS created_by_name,
+              u_src.name AS sourced_by_name,
               COUNT(DISTINCT a.id)::int AS application_count
        FROM jobs j
        LEFT JOIN departments d  ON j.department_id = d.id
        LEFT JOIN locations   l  ON j.location_id   = l.id
        LEFT JOIN users       u  ON j.created_by    = u.id
+       LEFT JOIN users   u_src  ON j.sourced_by_user_id = u_src.id
        LEFT JOIN applications a ON a.job_id        = j.id
        ${where}
-       GROUP BY j.id, d.name, l.city, l.state, l.country, l.is_remote, u.name
+       GROUP BY j.id, d.name, l.city, l.state, l.country, l.is_remote, u.name, u_src.name
        ORDER BY j.created_at DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
@@ -84,11 +86,13 @@ jobsRouter.get("/:id", async (req, res, next) => {
       `SELECT j.*,
               d.name AS department_name,
               l.city, l.state, l.country, l.is_remote,
-              u.name AS created_by_name
+              u.name AS created_by_name,
+              u_src.name AS sourced_by_name
        FROM jobs j
        LEFT JOIN departments d ON j.department_id = d.id
        LEFT JOIN locations   l ON j.location_id   = l.id
        LEFT JOIN users       u ON j.created_by    = u.id
+       LEFT JOIN users   u_src ON j.sourced_by_user_id = u_src.id
        WHERE j.id = $1`,
       [req.params.id]
     );
@@ -107,7 +111,7 @@ jobsRouter.post("/", async (req, res, next) => {
       employer_id, industry, pay_rate, pay_rate_type,
       positions_count, vacancy_type, work_location, job_board_url,
       police_check, drug_alcohol_test, wwc, car_required, public_transport,
-      wage_subsidy_required, comments, status,
+      wage_subsidy_required, comments, status, sourced_by_user_id,
       // legacy fields kept for backward compatibility
       department_id, location_id, skills_required, skills_desired,
       job_type, work_model, cover_letter_required, min_annual_salary,
@@ -123,16 +127,16 @@ jobsRouter.post("/", async (req, res, next) => {
          industry, pay_rate, pay_rate_type,
          positions_count, vacancy_type, work_location, job_board_url,
          police_check, drug_alcohol_test, wwc, car_required, public_transport,
-         wage_subsidy_required, comments,
+         wage_subsidy_required, comments, sourced_by_user_id,
          department_id, location_id, skills_required, skills_desired,
          job_type, work_model, cover_letter_required, min_annual_salary,
          max_annual_salary, currency_code, experience_years_min, deadline,
          team, staff_working_status, end_date,
          status, created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
-         $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,
-         $33,$34,$34
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
+         $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,
+         $34,$35,$35
        ) RETURNING id, job_number, created_at`,
       [
         title, description || null, employer_id || null,
@@ -140,7 +144,7 @@ jobsRouter.post("/", async (req, res, next) => {
         positions_count || 1, vacancy_type || null, work_location || null, job_board_url || null,
         police_check || 'not_required', drug_alcohol_test || 'no', wwc || 'no',
         car_required || 'no', public_transport || 'no',
-        wage_subsidy_required || 'no', comments || null,
+        wage_subsidy_required || 'no', comments || null, sourced_by_user_id || req.user.id,
         department_id || null, location_id || null,
         skills_required || [], skills_desired || [],
         job_type || 'full_time', work_model || 'onsite',
@@ -167,7 +171,7 @@ jobsRouter.patch("/:id", async (req, res, next) => {
       // new vacancy form fields
       "industry", "pay_rate", "pay_rate_type", "work_location",
       "police_check", "drug_alcohol_test", "wwc", "car_required",
-      "public_transport", "wage_subsidy_required", "comments",
+      "public_transport", "wage_subsidy_required", "comments", "sourced_by_user_id",
     ];
 
     const updates = [];

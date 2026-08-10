@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, ChevronRight, ChevronLeft, Check, Hash, MapPin, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
-import type { Employer, Candidate } from "../types";
+import type { Employer, Candidate, User } from "../types";
+import { useAuth } from "../contexts/AuthContext";
 
 // ── Australian Address Autocomplete (Nominatim / OpenStreetMap — free) ─────────
 const AU_STATE: Record<string, string> = {
@@ -160,15 +161,16 @@ const WORK_TYPES = ["Full-time", "Part-time", "Casual", "Contract", "Temporary"]
 
 interface FormState {
   // Step 1
-  title:          string;
-  employer_id:    string;
-  industry:       string;
-  pay_rate:       string;
-  pay_rate_type:  "per_hour" | "annual";
-  positions_count: number;
-  work_type:      string;
-  work_location:  string;
-  job_board_url:  string;
+  title:              string;
+  employer_id:        string;
+  sourced_by_user_id: string;
+  industry:           string;
+  pay_rate:           string;
+  pay_rate_type:      "per_hour" | "annual";
+  positions_count:    number;
+  work_type:          string;
+  work_location:      string;
+  job_board_url:      string;
   // Step 2
   description:         string;
   police_check:        string;
@@ -190,7 +192,7 @@ interface FormState {
 const todayString = new Date().toISOString().split("T")[0];
 
 const EMPTY: FormState = {
-  title: "", employer_id: "", industry: "", pay_rate: "", pay_rate_type: "per_hour",
+  title: "", employer_id: "", sourced_by_user_id: "", industry: "", pay_rate: "", pay_rate_type: "per_hour",
   positions_count: 1, work_type: "Full-time", work_location: "", job_board_url: WORKVISION_BOARD_URL,
   description: "", police_check: "not_required", drug_alcohol_test: "no", wwc: "no",
   car_required: "no", public_transport: "no", wage_subsidy_required: "no", comments: "",
@@ -255,10 +257,12 @@ function StepIndicator({ current }: { current: Step }) {
 }
 
 // ── Step 1: Vacancy Details ───────────────────────────────────────────────────
-function StepVacancyDetails({ form, set, employers }: {
+function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }: {
   form: FormState;
   set: (k: keyof FormState, v: unknown) => void;
   employers: Employer[];
+  staffMembers: User[];
+  currentUser: User | null;
 }) {
   return (
     <div className="space-y-4">
@@ -286,6 +290,24 @@ function StepVacancyDetails({ form, set, employers }: {
         <p className="text-xs text-slate-400 mt-1">
           Not listed? <a href="/employers/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Employer</a>
         </p>
+      </div>
+
+      {/* Vacancy Sourced By (Internal CRM Record) */}
+      <div>
+        <Label>Vacancy Sourced By <span className="text-slate-400 font-normal">(Internal Record)</span></Label>
+        <select
+          value={form.sourced_by_user_id || currentUser?.id || ""}
+          onChange={(e) => set("sourced_by_user_id", e.target.value)}
+          className={cls}
+        >
+          <option value="">— Select Staff Member —</option>
+          {staffMembers.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name} ({u.role ? u.role.replace(/_/g, " ") : "staff"})
+            </option>
+          ))}
+        </select>
+        <p className="text-[11px] text-slate-400 mt-1">For internal records only — hidden from public website and job board listings</p>
       </div>
 
       {/* Industry + Work Type */}
@@ -511,6 +533,7 @@ function StepCandidateAssignment({ form, set }: {
 // ── Main Dialog ───────────────────────────────────────────────────────────────
 export default function CreateJobDialog({ isOpen, onClose }: Props) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [step,  setStep]  = useState<Step>(0);
   const [form,  setForm]  = useState<FormState>(EMPTY);
   const [error, setError] = useState("");
@@ -521,6 +544,13 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
     enabled: isOpen,
   });
   const employers = employersResult?.data ?? [];
+
+  const { data: usersResult } = useQuery({
+    queryKey: ["users-select"],
+    queryFn:  () => api.get<User[]>("/users"),
+    enabled: isOpen,
+  });
+  const staffMembers = usersResult ?? [];
 
   const createJob = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.post<{ id: string }>("/jobs", body),
@@ -564,6 +594,7 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
     createJob.mutate({
       title:                 form.title.trim(),
       employer_id:           form.employer_id        || undefined,
+      sourced_by_user_id:    form.sourced_by_user_id || user?.id || undefined,
       industry:              form.industry            || undefined,
       pay_rate:              form.pay_rate            ? Number(form.pay_rate) : undefined,
       pay_rate_type:         form.pay_rate_type,
@@ -604,7 +635,7 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
             <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
           )}
 
-          {step === 0 && <StepVacancyDetails form={form} set={set} employers={employers} />}
+          {step === 0 && <StepVacancyDetails form={form} set={set} employers={employers} staffMembers={staffMembers} currentUser={user} />}
           {step === 1 && <StepDescriptionCompliance form={form} set={set} />}
           {step === 2 && <StepCandidateAssignment form={form} set={set} />}
 
