@@ -14,14 +14,24 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser]       = useState<User | null>(null);
-  const [token, setToken]     = useState<string | null>(null);
+  const [user, setUser]           = useState<User | null>(null);
+  const [token, setTokenState]    = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // ✅ Always keep localStorage in sync with React token state
+  function setToken(newToken: string | null) {
+    if (newToken) {
+      localStorage.setItem("token", newToken);
+    } else {
+      localStorage.removeItem("token");
+    }
+    setTokenState(newToken);
+  }
 
   useEffect(() => {
     const stored = localStorage.getItem("token");
     if (stored) {
-      setToken(stored);
+      setTokenState(stored);
       api.get<User>("/users/me")
         .then(setUser)
         .catch(() => { localStorage.removeItem("token"); })
@@ -33,13 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const data = await api.post<{ token: string; user: User }>("/auth/login", { email, password });
-    localStorage.setItem("token", data.token);
     setToken(data.token);
     setUser(data.user);
   }
 
   function logout() {
-    localStorage.removeItem("token");
     setToken(null);
     setUser(null);
   }
