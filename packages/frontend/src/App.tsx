@@ -262,6 +262,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to={user ? defaultHome : "/login"} replace />} />
       <Route path="/login" element={user ? <Navigate to={defaultHome} replace /> : <Login />} />
 
       <Route path="/dashboard"        element={<StaffRoute><Dashboard       /></StaffRoute>} />

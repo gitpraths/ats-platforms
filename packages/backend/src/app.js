@@ -90,7 +90,8 @@ app.use(cors({
     if (
       allowedOrigins.includes(origin) ||
       origin === "http://localhost:5173" ||
-      origin.endsWith(".up.railway.app")
+      origin.endsWith(".up.railway.app") ||
+      origin.endsWith("workvision.com.au")
     ) {
       callback(null, true);
     } else {
