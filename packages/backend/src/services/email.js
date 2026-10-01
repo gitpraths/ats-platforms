@@ -107,7 +107,7 @@ function complianceBadge(label, value) {
 }
 
 // ── Broadcast vacancy to training providers ───────────────────────────────────
-export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl }) {
+export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl, customSubject, customMessage }) {
   const baseUrl = appUrl || process.env.APP_URL || "https://comfortable-mindfulness-production.up.railway.app";
 
   const payStr    = job.pay_rate
@@ -127,7 +127,8 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl 
   ].filter(Boolean).join("");
 
   const referralUrl = `${baseUrl}/jobs/${job.id}`;
-  const subject     = `New Vacancy Alert: ${job.title}${location ? ` — ${location}` : ""}`;
+  const defaultSubject = `New Vacancy Alert: ${job.title}${location ? ` — ${location}` : ""}`;
+  const subject     = (customSubject && customSubject.trim()) ? customSubject.trim() : defaultSubject;
 
   // Build a send task for each provider and fire them ALL in parallel
   const sendTasks = providers
@@ -166,6 +167,15 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl 
             <div>${compliance}</div>
           </td>
         </tr>` : ""}
+        ${customMessage && customMessage.trim() ? `
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:6px;padding:12px 16px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#b45309;">💬 Note from Recruiter</p>
+              <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;white-space:pre-wrap;">${customMessage.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>
+            </div>
+          </td>
+        </tr>` : ""}
         ${job.description ? `
         <tr>
           <td style="padding:20px 32px 0;">
@@ -197,7 +207,7 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl 
 </body>
 </html>`;
 
-      const text = `New Vacancy Alert: ${job.title}\n\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${job.industry ? `Industry: ${job.industry}\n` : ""}\nRefer a candidate here:\n${referralUrl}\n\nSent by ${sentByName} via WorkVision ATS`;
+      const text = `${subject}\n\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${job.industry ? `Industry: ${job.industry}\n` : ""}${customMessage && customMessage.trim() ? `\nNote from Recruiter:\n${customMessage.trim()}\n` : ""}\nRefer a candidate here:\n${referralUrl}\n\nSent by ${sentByName} via WorkVision ATS`;
 
       try {
         await sendEmail({ to: provider.email, subject, html, text });

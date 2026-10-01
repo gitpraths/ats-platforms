@@ -327,10 +327,10 @@ jobsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, r
 // ── POST /api/jobs/:id/broadcast ──────────────────────────────────────────────
 // Broadcasts the vacancy to selected training providers via email.
 // Responds immediately — emails are sent in the background.
-// Body: { provider_ids: string[] }
+// Body: { provider_ids: string[], custom_subject?: string, custom_message?: string }
 jobsRouter.post("/:id/broadcast", async (req, res, next) => {
   try {
-    const { provider_ids } = req.body;
+    const { provider_ids, custom_subject, custom_message } = req.body;
     if (!Array.isArray(provider_ids) || provider_ids.length === 0) {
       return res.status(400).json({ success: false, error: "provider_ids must be a non-empty array" });
     }
@@ -379,10 +379,12 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
 
     // Fire-and-forget: send all emails in parallel, then log
     sendVacancyBroadcast({
-      job:      jobRows[0],
+      job:           jobRows[0],
       providers,
       sentByName,
-      appUrl:   process.env.APP_URL,
+      appUrl:        process.env.APP_URL,
+      customSubject: custom_subject,
+      customMessage: custom_message,
     }).then((results) => {
       const sentCount = results.filter((r) => r.status === "sent").length;
       pool.query(
