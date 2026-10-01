@@ -386,7 +386,7 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
       customSubject: custom_subject,
       customMessage: custom_message,
     }).then((results) => {
-      const sentCount = results.filter((r) => r.status === "sent").length;
+      // Insert into activity_log
       pool.query(
         `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
          VALUES ('job', $1, 'broadcast_to_providers', $2, $3)`,
@@ -394,10 +394,22 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
           jobId,
           userId,
           JSON.stringify({
-            sent_to:    results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
-            sent_count: sentCount,
+            sent_to:        results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
+            sent_count:     sentCount,
+            custom_subject: custom_subject || null,
           }),
         ]
+      ).catch(() => {});
+
+      // Also insert into job_activity so it displays in the vacancy's History log
+      const providerNames = results.map((r) => r.name).filter(Boolean).slice(0, 3).join(", ");
+      const moreSuffix = results.length > 3 ? ` +${results.length - 3} more` : "";
+      const comment = `Broadcast sent to ${results.length} provider${results.length !== 1 ? "s" : ""} (${providerNames}${moreSuffix})`;
+
+      pool.query(
+        `INSERT INTO job_activity (job_id, user_id, job_status, comment)
+         VALUES ($1, $2, 'broadcast', $3)`,
+        [jobId, userId, comment]
       ).catch(() => {});
     }).catch(() => {});
 

@@ -382,24 +382,44 @@ export default function JobDetail() {
                   onClick={() => setShowHistory((v) => !v)}
                   className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-800 w-full transition-colors"
                 >
-                  <History size={13} /> Status History
+                  <History size={13} /> Activity & Status History
                   <span className="ml-auto">{showHistory ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</span>
                 </button>
                 {showHistory && (
                   <div className="mt-3 space-y-3">
                     {activity.length === 0 ? (
-                      <p className="text-xs text-slate-400">No status changes recorded.</p>
+                      <p className="text-xs text-slate-400">No activity recorded yet.</p>
                     ) : (
-                      activity.map((a) => (
-                        <div key={a.id} className="border-l-2 border-[#e88e2e]/30 pl-3">
-                          <p className="text-xs font-semibold text-slate-700 capitalize">{a.job_status}</p>
-                          {a.comment && <p className="text-xs text-slate-500 italic mt-0.5">{a.comment}</p>}
-                          <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                            <Clock size={10} />
-                            {a.user_name} · {fmtDateTime(a.created_at)}
-                          </p>
-                        </div>
-                      ))
+                      activity.map((a) => {
+                        const isBroadcast = a.job_status === "broadcast";
+                        return (
+                          <div
+                            key={a.id}
+                            className={`border-l-2 pl-3 ${
+                              isBroadcast ? "border-blue-500 bg-blue-50/40 py-1.5 pr-2 rounded-r" : "border-[#e88e2e]/30"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              {isBroadcast ? (
+                                <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wide flex items-center gap-1">
+                                  <Send size={11} /> Broadcast to Providers
+                                </span>
+                              ) : (
+                                <p className="text-xs font-semibold text-slate-700 capitalize">{a.job_status}</p>
+                              )}
+                            </div>
+                            {a.comment && (
+                              <p className={`text-xs mt-0.5 ${isBroadcast ? "text-slate-700 font-medium" : "text-slate-500 italic"}`}>
+                                {a.comment}
+                              </p>
+                            )}
+                            <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                              <Clock size={10} />
+                              {a.user_name} · {fmtDateTime(a.created_at)}
+                            </p>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 )}
@@ -537,7 +557,10 @@ export default function JobDetail() {
         <BroadcastToProvidersModal
           jobId={id!}
           jobTitle={job.title}
-          onClose={() => setBroadcastOpen(false)}
+          onClose={() => {
+            setBroadcastOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["job-activity", id] });
+          }}
         />
       )}
     </div>
