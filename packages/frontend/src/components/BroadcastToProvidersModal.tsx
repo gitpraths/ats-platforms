@@ -36,13 +36,55 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
   const [sent, setSent]               = useState<{ count: number } | null>(null);
   const [errorMsg, setErrorMsg]       = useState<string | null>(null);
   const [loading, setLoading]         = useState(false);
+  const [activeTab, setActiveTab]     = useState<"customize" | "select">("customize");
 
-  // Tabs: "select" (providers list) vs "customize" (draft email content)
-  const [activeTab, setActiveTab]     = useState<"select" | "customize">("customize");
+  // Generate a professional, meaningful vacancy draft body
+  const generateDraftBody = useCallback(() => {
+    const parts: string[] = [];
+
+    // Header greeting & context
+    parts.push(`We are currently seeking job-ready candidates for the role of ${jobTitle}.`);
+
+    // Overview details
+    const overviewLines: string[] = [];
+    if (job?.employer_name) overviewLines.push(`• Client / Employer: ${job.employer_name}`);
+    if (job?.work_location || job?.city) overviewLines.push(`• Location: ${job.work_location || [job.city, job.state].filter(Boolean).join(", ")}`);
+    if (job?.industry) overviewLines.push(`• Industry: ${job.industry}`);
+    if (job?.vacancy_type) overviewLines.push(`• Work Type: ${job.vacancy_type.replace(/_/g, " ").toUpperCase()}`);
+    if (job?.pay_rate) overviewLines.push(`• Pay Rate: $${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`);
+    if (job?.positions_count) overviewLines.push(`• Vacancies Available: ${job.positions_count}`);
+
+    if (overviewLines.length > 0) {
+      parts.push(`\nKey Role Details:\n${overviewLines.join("\n")}`);
+    }
+
+    // Compliance / Pre-requisites
+    const reqs: string[] = [];
+    if (job?.police_check && job.police_check !== "not_required") reqs.push("Police Check required");
+    if (job?.wwc && job.wwc !== "not_required") reqs.push("Working with Children Check (WWC)");
+    if (job?.drug_alcohol_test && job.drug_alcohol_test !== "not_required") reqs.push("Drug & Alcohol Screening");
+    if (job?.car_required && job.car_required !== "not_required") reqs.push("Own reliable vehicle / Driving licence required");
+    if (job?.wage_subsidy_required && job.wage_subsidy_required !== "not_required") reqs.push("Wage Subsidy eligible candidate preferred");
+
+    if (reqs.length > 0) {
+      parts.push(`\nCandidate Requirements:\n${reqs.map((r) => `• ${r}`).join("\n")}`);
+    }
+
+    // Role description if provided and meaningful (more than just a 3-letter stub)
+    if (job?.description && job.description.trim().length > 5) {
+      parts.push(`\nRole Responsibilities & Description:\n${job.description.trim()}`);
+    } else if (job?.description) {
+      parts.push(`\nAdditional Notes:\n${job.description.trim()}`);
+    }
+
+    parts.push(`\nIf you have suitable, job-ready candidates registered with your service, please click the referral link in this email or submit their profiles directly via the WorkVision ATS portal.`);
+
+    return parts.join("\n");
+  }, [job, jobTitle]);
 
   // Initial draft values computed from the vacancy details
   const initialSubject = `New Vacancy Alert: ${jobTitle}${job?.work_location || job?.city ? ` — ${job.work_location || job.city}` : ""}`;
-  const initialDescription = job?.description || "";
+  const initialDescription = generateDraftBody();
 
   // Editable email content fields
   const [customSubject, setCustomSubject]   = useState(initialSubject);
@@ -51,7 +93,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
 
   const resetToDraft = () => {
     setCustomSubject(initialSubject);
-    setCustomBody(initialDescription);
+    setCustomBody(generateDraftBody());
     setCustomNote("");
   };
 
