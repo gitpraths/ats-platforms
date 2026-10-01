@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Send, X, Users, CheckSquare, Square,
-  Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, FileText
+  Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, RotateCcw
 } from "lucide-react";
 import { api, ApiError } from "../lib/api";
+import type { Job } from "../types";
 
 interface Provider {
   id: string;
@@ -26,21 +27,33 @@ interface BroadcastResult {
 interface Props {
   jobId: string;
   jobTitle: string;
+  job?: Job;
   onClose: () => void;
 }
 
-export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: Props) {
+export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClose }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sent, setSent]               = useState<{ count: number } | null>(null);
   const [errorMsg, setErrorMsg]       = useState<string | null>(null);
   const [loading, setLoading]         = useState(false);
 
-  // Tabs: "select" (providers list) vs "customize" (custom subject & note/body)
-  const [activeTab, setActiveTab]     = useState<"select" | "customize">("select");
+  // Tabs: "select" (providers list) vs "customize" (draft email content)
+  const [activeTab, setActiveTab]     = useState<"select" | "customize">("customize");
+
+  // Initial draft values computed from the vacancy details
+  const initialSubject = `New Vacancy Alert: ${jobTitle}${job?.work_location || job?.city ? ` — ${job.work_location || job.city}` : ""}`;
+  const initialDescription = job?.description || "";
 
   // Editable email content fields
-  const [customSubject, setCustomSubject] = useState(`New Vacancy Alert: ${jobTitle}`);
-  const [customNote, setCustomNote]       = useState("");
+  const [customSubject, setCustomSubject]   = useState(initialSubject);
+  const [customBody, setCustomBody]         = useState(initialDescription);
+  const [customNote, setCustomNote]         = useState("");
+
+  const resetToDraft = () => {
+    setCustomSubject(initialSubject);
+    setCustomBody(initialDescription);
+    setCustomNote("");
+  };
 
   // Fetch all active providers
   const { data, isLoading, error: loadError } = useQuery({
@@ -82,6 +95,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
           provider_ids: ids,
           custom_subject: customSubject.trim(),
           custom_message: customNote.trim(),
+          custom_body: customBody.trim(),
         }
       );
       setSent({ count: ids.length });
@@ -101,12 +115,16 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
     setLoading(false);
   };
 
+  const payRateStr = job?.pay_rate
+    ? `$${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`
+    : null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onClick={(e) => e.target === e.currentTarget && !sent && !loading && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -116,7 +134,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
             </div>
             <div>
               <p className="text-base font-bold text-slate-800">Broadcast Vacancy to Providers</p>
-              <p className="text-xs text-slate-400 truncate max-w-[320px]">{jobTitle}</p>
+              <p className="text-xs text-slate-400 truncate max-w-[360px]">{jobTitle}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition-colors p-1">
@@ -138,7 +156,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
                 provider{sent.count !== 1 ? "s" : ""}.
               </p>
               <p className="text-sm text-slate-400 mt-1">
-                Providers will receive your customized alert in their inbox shortly.
+                Providers will receive your customized draft alert in their inbox shortly.
               </p>
             </div>
             <button
@@ -175,17 +193,6 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
             <div className="flex border-b border-slate-200 px-6 pt-3 gap-6 bg-slate-50/50">
               <button
                 type="button"
-                onClick={() => setActiveTab("select")}
-                className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
-                  activeTab === "select"
-                    ? "border-[#0f172a] text-[#0f172a]"
-                    : "border-transparent text-slate-400 hover:text-slate-700"
-                }`}
-              >
-                <Users size={14} /> 1. Select Providers ({selectedIds.size})
-              </button>
-              <button
-                type="button"
                 onClick={() => setActiveTab("customize")}
                 className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
                   activeTab === "customize"
@@ -193,13 +200,117 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
                     : "border-transparent text-slate-400 hover:text-slate-700"
                 }`}
               >
-                <Edit3 size={14} /> 2. Customize Content {customNote.trim() && "•"}
+                <Edit3 size={14} /> 1. Draft Email & Content
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("select")}
+                className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+                  activeTab === "select"
+                    ? "border-[#0f172a] text-[#0f172a]"
+                    : "border-transparent text-slate-400 hover:text-slate-700"
+                }`}
+              >
+                <Users size={14} /> 2. Select Providers ({selectedIds.size})
               </button>
             </div>
 
-            {/* Tab Content 1: Providers list */}
+            {/* Tab Content 1: Draft Email Content (Editable) */}
+            {activeTab === "customize" && (
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-[340px]">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700">Draft Email for this Vacancy</p>
+                    <p className="text-[11px] text-slate-400">Review or modify any content before sending to providers</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetToDraft}
+                    className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium px-2 py-1 rounded hover:bg-slate-100 transition"
+                    title="Reset to default vacancy draft"
+                  >
+                    <RotateCcw size={12} /> Reset to Default
+                  </button>
+                </div>
+
+                {/* Subject Line */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Email Subject Line
+                  </label>
+                  <input
+                    type="text"
+                    value={customSubject}
+                    onChange={(e) => setCustomSubject(e.target.value)}
+                    placeholder="Enter email subject line..."
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition"
+                  />
+                </div>
+
+                {/* Recruiter Custom Note */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Recruiter Note / Urgent Message <span className="font-normal text-slate-400 lowercase">(optional)</span>
+                    </label>
+                    <span className="text-[10px] text-amber-700 font-semibold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                      Highlighted Banner
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={customNote}
+                    onChange={(e) => setCustomNote(e.target.value)}
+                    placeholder="e.g. Urgent immediate start! Send top 2 candidates by Thursday 5pm."
+                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition resize-y"
+                  />
+                </div>
+
+                {/* Role Description (Editable Body) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Role Description & Details (Email Body)
+                    </label>
+                    <span className="text-[11px] text-slate-400">Pre-populated from vacancy</span>
+                  </div>
+                  <textarea
+                    rows={5}
+                    value={customBody}
+                    onChange={(e) => setCustomBody(e.target.value)}
+                    placeholder="Provide role description, responsibilities, shifts, etc..."
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition resize-y font-mono text-xs"
+                  />
+                </div>
+
+                {/* Live Preview Card */}
+                <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/70 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 pb-1.5 border-b border-slate-200">
+                    <Eye size={13} className="text-slate-500" /> Email Preview Summary
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2 text-slate-700">
+                    <p className="font-semibold text-slate-900">
+                      Subject: <span className="font-normal text-slate-600">{customSubject}</span>
+                    </p>
+                    {customNote.trim() && (
+                      <div className="bg-amber-50 border-l-4 border-amber-400 p-2.5 rounded text-amber-900 text-xs">
+                        <strong className="block text-[11px] uppercase tracking-wider text-amber-800">💬 Note from Recruiter:</strong>
+                        <span className="whitespace-pre-wrap">{customNote.trim()}</span>
+                      </div>
+                    )}
+                    <div className="text-[11px] text-slate-500 flex flex-wrap gap-2 pt-1 border-t border-slate-100">
+                      {job?.employer_name && <span>🏢 {job.employer_name}</span>}
+                      {job?.work_location && <span>📍 {job.work_location}</span>}
+                      {payRateStr && <span className="text-orange-600 font-bold">💰 {payRateStr}</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content 2: Providers list */}
             {activeTab === "select" && (
-              <div className="flex-1 overflow-y-auto px-6 py-3 min-h-[300px]">
+              <div className="flex-1 overflow-y-auto px-6 py-3 min-h-[340px]">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
                     <Loader2 size={24} className="animate-spin text-slate-400" />
@@ -261,77 +372,26 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
               </div>
             )}
 
-            {/* Tab Content 2: Customize Email */}
-            {activeTab === "customize" && (
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-[300px]">
-                {/* Subject Line */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Email Subject
-                  </label>
-                  <input
-                    type="text"
-                    value={customSubject}
-                    onChange={(e) => setCustomSubject(e.target.value)}
-                    placeholder="Enter email subject line..."
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition"
-                  />
-                </div>
-
-                {/* Custom Note/Message */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Message / Special Note for Providers <span className="font-normal text-slate-400 lowercase">(optional)</span>
-                    </label>
-                    <span className="text-[11px] text-slate-400">Highlighted in email</span>
-                  </div>
-                  <textarea
-                    rows={4}
-                    value={customNote}
-                    onChange={(e) => setCustomNote(e.target.value)}
-                    placeholder="e.g. Urgent requirement for immediate start! Please send resumes by Friday 5 PM. Forklift tickets essential..."
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition resize-y"
-                  />
-                </div>
-
-                {/* Email Body Preview Card */}
-                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-xs space-y-2.5">
-                  <div className="flex items-center gap-1.5 font-bold text-slate-700 pb-2 border-b border-slate-200">
-                    <Eye size={13} className="text-slate-500" /> Live Preview of Email Structure
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2 text-slate-600">
-                    <p className="font-semibold text-slate-800">
-                      Subject: <span className="font-normal text-slate-600">{customSubject || `New Vacancy Alert: ${jobTitle}`}</span>
-                    </p>
-                    {customNote.trim() && (
-                      <div className="bg-amber-50 border-l-4 border-amber-400 p-2.5 rounded text-amber-900 text-xs">
-                        <strong className="block text-[11px] uppercase tracking-wider text-amber-800">💬 Note from Recruiter:</strong>
-                        <span className="whitespace-pre-wrap">{customNote.trim()}</span>
-                      </div>
-                    )}
-                    <div className="text-[11px] text-slate-500 space-y-0.5 pt-1">
-                      <p>✓ Job Details (Title, Employer, Pay, Location, Industry)</p>
-                      <p>✓ Compliance badges (Police Check, WWC, etc.)</p>
-                      <p>✓ Complete Job Description</p>
-                      <p className="text-orange-600 font-medium">✓ [ Refer a Candidate for this Role → ] button</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-white">
               <div className="text-xs text-slate-500">
                 <span className="font-bold text-slate-800">{selectedIds.size}</span> of {providers.length} providers selected
-                {activeTab === "select" && selectedIds.size > 0 && (
+                {activeTab === "customize" && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("select")}
+                    className="ml-2 text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
+                  >
+                    Select recipients ({selectedIds.size}) &rarr;
+                  </button>
+                )}
+                {activeTab === "select" && (
                   <button
                     type="button"
                     onClick={() => setActiveTab("customize")}
                     className="ml-2 text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
                   >
-                    Edit email content &rarr;
+                    &larr; Back to draft
                   </button>
                 )}
               </div>

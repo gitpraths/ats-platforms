@@ -107,7 +107,7 @@ function complianceBadge(label, value) {
 }
 
 // ── Broadcast vacancy to training providers ───────────────────────────────────
-export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl, customSubject, customMessage }) {
+export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl, customSubject, customMessage, customBody }) {
   const baseUrl = appUrl || process.env.APP_URL || "https://comfortable-mindfulness-production.up.railway.app";
 
   const payStr    = job.pay_rate
@@ -176,11 +176,11 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
             </div>
           </td>
         </tr>` : ""}
-        ${job.description ? `
+        ${(customBody !== undefined ? customBody : job.description) ? `
         <tr>
           <td style="padding:20px 32px 0;">
             <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">📝 About the Role</p>
-            <p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">${job.description.replace(/\n/g, "<br>")}</p>
+            <p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">${(customBody !== undefined ? customBody : (job.description || "")).replace(/\n/g, "<br>")}</p>
           </td>
         </tr>` : ""}
         <tr>
@@ -207,7 +207,8 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
 </body>
 </html>`;
 
-      const text = `${subject}\n\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${job.industry ? `Industry: ${job.industry}\n` : ""}${customMessage && customMessage.trim() ? `\nNote from Recruiter:\n${customMessage.trim()}\n` : ""}\nRefer a candidate here:\n${referralUrl}\n\nSent by ${sentByName} via WorkVision ATS`;
+      const effectiveDesc = (customBody !== undefined ? customBody : (job.description || "")).trim();
+      const text = `${subject}\n\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${job.industry ? `Industry: ${job.industry}\n` : ""}${customMessage && customMessage.trim() ? `\nNote from Recruiter:\n${customMessage.trim()}\n` : ""}${effectiveDesc ? `\nAbout the Role:\n${effectiveDesc}\n` : ""}\nRefer a candidate here:\n${referralUrl}\n\nSent by ${sentByName} via WorkVision ATS`;
 
       try {
         await sendEmail({ to: provider.email, subject, html, text });

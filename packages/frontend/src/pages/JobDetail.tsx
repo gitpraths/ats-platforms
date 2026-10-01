@@ -618,6 +618,7 @@ export default function JobDetail() {
       <AssignTalentDialog jobId={id!} isOpen={assignOpen} onClose={() => setAssignOpen(false)} />
       {broadcastOpen && (
         <BroadcastToProvidersModal
+          job={job}
           jobId={id!}
           jobTitle={job.title}
           onClose={() => {
