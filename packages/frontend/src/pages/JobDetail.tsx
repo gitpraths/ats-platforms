@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Users, MapPin, Briefcase, Building2, Edit2, Trash2,
   History, X, ExternalLink, CheckCircle2, XCircle, ChevronDown,
-  ChevronUp, ChevronRight, Clock, UserCheck, FileText, Minus,
+  ChevronUp, ChevronRight, Clock, UserCheck, FileText, Minus, Send,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate, fmtDateTime } from "../lib/utils";
@@ -12,6 +12,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Job, Application, ApplicationStage } from "../types";
 import AssignTalentDialog from "../components/AssignTalentDialog";
+import BroadcastToProvidersModal from "../components/BroadcastToProvidersModal";
 
 // ── Stage colours ─────────────────────────────────────────────────────────────
 const STAGE_BADGE: Record<ApplicationStage, string> = {
@@ -82,6 +83,7 @@ export default function JobDetail() {
   const { user }    = useAuth();
 
   const [assignOpen,     setAssignOpen]     = useState(false);
+  const [broadcastOpen,  setBroadcastOpen]  = useState(false);
   const [statusComment,  setStatusComment]  = useState("");
   const [showHistory,    setShowHistory]    = useState(false);
 
@@ -219,7 +221,13 @@ export default function JobDetail() {
 
           {/* Right: Action buttons */}
           {canEdit && (
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+              <button
+                onClick={() => setBroadcastOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#0f172a] hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <Send size={15} /> Broadcast to Providers
+              </button>
               <button
                 onClick={() => setAssignOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white rounded-lg text-sm font-medium transition-colors"
@@ -525,6 +533,13 @@ export default function JobDetail() {
       </div>
 
       <AssignTalentDialog jobId={id!} isOpen={assignOpen} onClose={() => setAssignOpen(false)} />
+      {broadcastOpen && (
+        <BroadcastToProvidersModal
+          jobId={id!}
+          jobTitle={job.title}
+          onClose={() => setBroadcastOpen(false)}
+        />
+      )}
     </div>
   );
 }

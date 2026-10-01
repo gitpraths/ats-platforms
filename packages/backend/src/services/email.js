@@ -96,3 +96,153 @@ export async function sendWelfareCheckEmail({ welfareCheck, placement, employer,
 
   await sendEmail({ to: employer.contact_email, subject, html, text });
 }
+
+// ── Compliance badge helper ───────────────────────────────────────────────────
+function complianceBadge(label, value) {
+  if (!value || value === "not_required") return "";
+  const yes = value === "yes" || value === true;
+  const colour = yes ? "#16a34a" : "#dc2626";
+  const icon   = yes ? "✅" : "❌";
+  return `<span style="display:inline-block;background:${yes ? "#f0fdf4" : "#fef2f2"};color:${colour};border:1px solid ${yes ? "#bbf7d0" : "#fecaca"};border-radius:999px;padding:3px 10px;font-size:12px;margin:2px 4px 2px 0;">${icon} ${label}</span>`;
+}
+
+// ── Broadcast vacancy to training providers ───────────────────────────────────
+export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl }) {
+  const baseUrl = appUrl || process.env.APP_URL || "https://comfortable-mindfulness-production.up.railway.app";
+
+  const payStr    = job.pay_rate
+    ? `$${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`
+    : null;
+
+  const location  = job.work_location || job.city
+    ? [job.work_location || job.city, job.state].filter(Boolean).join(", ")
+    : null;
+
+  const compliance = [
+    complianceBadge("Police Check",        job.police_check),
+    complianceBadge("WWC",                 job.wwc),
+    complianceBadge("Drug & Alcohol Test", job.drug_alcohol_test),
+    complianceBadge("Car Required",        job.car_required),
+    complianceBadge("Wage Subsidy",        job.wage_subsidy_required),
+  ].filter(Boolean).join("");
+
+  const results = [];
+
+  for (const provider of providers) {
+    if (!provider.email) continue;
+
+    const referralUrl = `${baseUrl}/jobs/${job.id}`;
+    const subject     = `New Vacancy Alert: ${job.title}${location ? ` — ${location}` : ""}`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#e88e2e 100%);padding:28px 32px;">
+            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">
+              Work<span style="color:#e88e2e;">Vision</span>
+            </p>
+            <p style="margin:6px 0 0;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;">
+              New Vacancy Alert
+            </p>
+          </td>
+        </tr>
+
+        <!-- Job Title Block -->
+        <tr>
+          <td style="padding:28px 32px 0;">
+            <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">
+              📋 Vacancy
+            </p>
+            <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0f172a;line-height:1.25;">
+              ${job.title}
+            </h1>
+            <table cellpadding="0" cellspacing="0">
+              ${job.employer_name ? `<tr><td style="padding:3px 0;font-size:13px;color:#475569;">🏢 &nbsp;<strong>${job.employer_name}</strong></td></tr>` : ""}
+              ${location          ? `<tr><td style="padding:3px 0;font-size:13px;color:#475569;">📍 &nbsp;${location}</td></tr>` : ""}
+              ${job.industry      ? `<tr><td style="padding:3px 0;font-size:13px;color:#475569;">🏷️ &nbsp;${job.industry}</td></tr>` : ""}
+              ${payStr            ? `<tr><td style="padding:3px 0;font-size:18px;font-weight:800;color:#e88e2e;">${payStr}</td></tr>` : ""}
+            </table>
+          </td>
+        </tr>
+
+        ${compliance ? `
+        <!-- Compliance Tags -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">
+              ✅ Requirements
+            </p>
+            <div>${compliance}</div>
+          </td>
+        </tr>` : ""}
+
+        ${job.description ? `
+        <!-- Description -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">
+              📝 About the Role
+            </p>
+            <p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">
+              ${job.description.replace(/\n/g, "<br>")}
+            </p>
+          </td>
+        </tr>` : ""}
+
+        <!-- Refer CTA -->
+        <tr>
+          <td style="padding:28px 32px 32px;">
+            <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;">
+                  <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0f172a;">
+                    Do you have a suitable candidate?
+                  </p>
+                  <p style="margin:0 0 16px;font-size:13px;color:#64748b;">
+                    Dear ${provider.contact_name || provider.name}, please refer any job-ready candidates directly from the WorkVision portal.
+                  </p>
+                  <a href="${referralUrl}" style="display:inline-block;background:#e88e2e;color:#ffffff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;">
+                    Refer a Candidate for this Role →
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;">
+            <p style="margin:0;font-size:11px;color:#94a3b8;">
+              Sent by <strong>${sentByName}</strong> via WorkVision ATS &bull;
+              This is an automated vacancy broadcast. Contact your recruiter to reply.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `New Vacancy Alert: ${job.title}\n\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${job.industry ? `Industry: ${job.industry}\n` : ""}\nDo you have a suitable candidate? Refer them here:\n${referralUrl}\n\nSent by ${sentByName} via WorkVision ATS`;
+
+    try {
+      await sendEmail({ to: provider.email, subject, html, text });
+      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
+    } catch (err) {
+      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
+    }
+  }
+
+  return results;
+}

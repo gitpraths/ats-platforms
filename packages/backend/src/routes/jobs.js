@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { validateJobStatusTransition } from "../utils/index.js";
+import { sendVacancyBroadcast } from "../services/email.js";
 
 export const jobsRouter = Router();
 jobsRouter.use(requireAuth);
@@ -319,5 +320,74 @@ jobsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, r
 
     const { rows } = await pool.query("DELETE FROM jobs WHERE id = $1 RETURNING id", [req.params.id]);
     res.json({ success: true, data: { id: rows[0].id, status: "DELETED" } });
+  } catch (err) { next(err); }
+});
+
+// ── POST /api/jobs/:id/broadcast ──────────────────────────────────────────────
+// Broadcasts the vacancy to a list of selected training providers via email.
+// Body: { provider_ids: string[] }
+jobsRouter.post("/:id/broadcast", async (req, res, next) => {
+  try {
+    const { provider_ids } = req.body;
+    if (!Array.isArray(provider_ids) || provider_ids.length === 0) {
+      return res.status(400).json({ success: false, error: "provider_ids must be a non-empty array" });
+    }
+
+    // Fetch full job details with employer + location
+    const { rows: jobRows } = await pool.query(
+      `SELECT j.*,
+              e.name  AS employer_name,
+              l.city, l.state, l.country, l.is_remote
+       FROM jobs j
+       LEFT JOIN employers  e ON e.id = j.employer_id
+       LEFT JOIN locations  l ON l.id = j.location_id
+       WHERE j.id = $1`,
+      [req.params.id]
+    );
+    if (!jobRows[0]) return res.status(404).json({ success: false, error: "Job not found" });
+
+    // Fetch selected active providers (only those with an email address)
+    const { rows: providers } = await pool.query(
+      `SELECT id, name, contact_name, email
+       FROM providers
+       WHERE id = ANY($1::uuid[])
+         AND is_active = true
+         AND email IS NOT NULL`,
+      [provider_ids]
+    );
+
+    if (providers.length === 0) {
+      return res.status(400).json({ success: false, error: "No active providers with email addresses found in the selection" });
+    }
+
+    const results = await sendVacancyBroadcast({
+      job:         jobRows[0],
+      providers,
+      sentByName:  req.user.name || req.user.email,
+      appUrl:      process.env.APP_URL,
+    });
+
+    // Log the broadcast in activity_log
+    await pool.query(
+      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+       VALUES ('job', $1, 'broadcast_to_providers', $2, $3)`,
+      [
+        req.params.id,
+        req.user.id,
+        JSON.stringify({
+          sent_to: results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
+          sent_count: results.filter((r) => r.status === "sent").length,
+        }),
+      ]
+    ).catch(() => {}); // non-blocking
+
+    res.json({
+      success: true,
+      data: {
+        sent:   results.filter((r) => r.status === "sent").length,
+        failed: results.filter((r) => r.status === "failed").length,
+        results,
+      },
+    });
   } catch (err) { next(err); }
 });
