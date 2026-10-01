@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Send, X, Users, CheckSquare, Square,
-  Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, RotateCcw
+  Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, RotateCcw, Search
 } from "lucide-react";
 import { api, ApiError } from "../lib/api";
 import type { Job } from "../types";
@@ -97,6 +97,9 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
     setCustomNote("");
   };
 
+  // Search filter for providers list
+  const [providerSearch, setProviderSearch] = useState("");
+
   // Fetch all active providers
   const { data, isLoading, error: loadError } = useQuery({
     queryKey: ["providers-for-broadcast"],
@@ -106,16 +109,35 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
   const providers = (data?.data ?? []).filter((p) => p.is_active && p.email);
   const noEmail   = (data?.data ?? []).filter((p) => p.is_active && !p.email);
 
-  const allSelected  = providers.length > 0 && providers.every((p) => selectedIds.has(p.id));
-  const someSelected = providers.some((p) => selectedIds.has(p.id));
+  // Filtered providers based on search query
+  const filteredProviders = providers.filter((p) => {
+    if (!providerSearch.trim()) return true;
+    const query = providerSearch.toLowerCase();
+    return (
+      p.name?.toLowerCase().includes(query) ||
+      p.email?.toLowerCase().includes(query) ||
+      p.contact_name?.toLowerCase().includes(query)
+    );
+  });
+
+  const allFilteredSelected = filteredProviders.length > 0 && filteredProviders.every((p) => selectedIds.has(p.id));
+  const someFilteredSelected = filteredProviders.some((p) => selectedIds.has(p.id));
 
   const toggleAll = useCallback(() => {
-    if (allSelected) {
-      setSelectedIds(new Set());
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filteredProviders.forEach((p) => next.delete(p.id));
+        return next;
+      });
     } else {
-      setSelectedIds(new Set(providers.map((p) => p.id)));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filteredProviders.forEach((p) => next.add(p.id));
+        return next;
+      });
     }
-  }, [allSelected, providers]);
+  }, [allFilteredSelected, filteredProviders]);
 
   const toggleOne = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -360,32 +382,69 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                   </div>
                 ) : (
                   <>
-                    {/* Select All row */}
-                    <button
-                      onClick={toggleAll}
-                      className="w-full flex items-center gap-3 py-2.5 border-b border-slate-100 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors mb-1"
-                    >
-                      {allSelected
-                        ? <CheckSquare size={16} className="text-[#e88e2e]" />
-                        : someSelected
-                          ? <CheckSquare size={16} className="text-slate-300" />
-                          : <Square size={16} className="text-slate-300" />
-                      }
-                      {allSelected ? "Deselect All" : "Select All"} ({providers.length} active providers)
-                    </button>
+                    {/* Search Input for Providers */}
+                    <div className="relative mb-3">
+                      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={providerSearch}
+                        onChange={(e) => setProviderSearch(e.target.value)}
+                        placeholder="Search providers by name, contact, or email..."
+                        className="w-full pl-9 pr-8 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition"
+                      />
+                      {providerSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setProviderSearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                          title="Clear search"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
 
-                    {providers.length === 0 && !isLoading && (
-                      <p className="text-center text-sm text-slate-400 py-12">
-                        No active providers with email addresses configured.
-                      </p>
+                    {/* Select All row */}
+                    <div className="flex items-center justify-between py-2 border-b border-slate-100 text-xs text-slate-600 mb-1">
+                      <button
+                        type="button"
+                        onClick={toggleAll}
+                        className="flex items-center gap-2 font-semibold text-slate-700 hover:text-slate-900 transition-colors"
+                      >
+                        {allFilteredSelected
+                          ? <CheckSquare size={16} className="text-[#e88e2e]" />
+                          : someFilteredSelected
+                            ? <CheckSquare size={16} className="text-slate-300" />
+                            : <Square size={16} className="text-slate-300" />
+                        }
+                        {allFilteredSelected ? "Deselect All" : "Select All"}
+                      </button>
+                      <span className="text-[11px] text-slate-400">
+                        Showing {filteredProviders.length} of {providers.length}
+                      </span>
+                    </div>
+
+                    {filteredProviders.length === 0 && (
+                      <div className="text-center py-10 text-slate-400">
+                        <Search size={22} className="mx-auto mb-1.5 opacity-30" />
+                        <p className="text-xs">No providers matching "{providerSearch}"</p>
+                        <button
+                          type="button"
+                          onClick={() => setProviderSearch("")}
+                          className="text-xs text-blue-600 hover:underline mt-1 font-medium"
+                        >
+                          Clear search
+                        </button>
+                      </div>
                     )}
 
                     <div className="divide-y divide-slate-50">
-                      {providers.map((p) => (
+                      {filteredProviders.map((p) => (
                         <button
                           key={p.id}
+                          type="button"
                           onClick={() => toggleOne(p.id)}
-                          className="w-full flex items-center gap-3 py-3 hover:bg-slate-50 rounded-lg transition-colors text-left px-2"
+                          className="w-full flex items-center gap-3 py-2.5 hover:bg-slate-50 rounded-lg transition-colors text-left px-2"
                         >
                           {selectedIds.has(p.id)
                             ? <CheckSquare size={16} className="text-[#e88e2e] flex-shrink-0" />
@@ -393,7 +452,9 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                           }
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-slate-800 truncate">{p.name}</p>
-                            <p className="text-xs text-slate-400 truncate">{p.email}</p>
+                            <p className="text-xs text-slate-400 truncate">
+                              {p.contact_name ? `${p.contact_name} · ` : ""}{p.email}
+                            </p>
                           </div>
                           {(p.candidate_count ?? 0) > 0 && (
                             <span className="flex-shrink-0 flex items-center gap-1 text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
@@ -404,7 +465,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                       ))}
                     </div>
 
-                    {noEmail.length > 0 && (
+                    {noEmail.length > 0 && !providerSearch && (
                       <p className="text-xs text-slate-400 mt-4 px-1 italic">
                         {noEmail.length} provider{noEmail.length !== 1 ? "s" : ""} hidden — missing email addresses.
                       </p>
