@@ -1,0 +1,4 @@
+name,industry,contact_name,contact_email,contact_phone,address,website,description
+Acme Manufacturing,Manufacturing,Tom Richards,tom@acmemfg.com.au,02 8000 1001,100 Industrial Ave Parramatta NSW 2150,https://acmemfg.com.au,Leading manufacturer of industrial equipment
+Metro Retail Group,Retail,Sarah Bloom,sarah@metroretail.com.au,03 8000 1002,220 Bourke St Melbourne VIC 3000,https://metroretail.com.au,Major retail group operating across Victoria
+Greenfield Logistics,Logistics,David Chen,david@greenfieldlog.com.au,07 8000 1003,5 Port Rd Brisbane QLD 4000,,Freight and warehousing services

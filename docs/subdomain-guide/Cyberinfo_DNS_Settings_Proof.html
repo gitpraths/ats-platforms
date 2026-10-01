@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyberinfo DNS Settings Reference - workvision.com.au</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    padding: 36px 40px;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
+
+  .header-card {
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .title-group h1 {
+    font-size: 18pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+  }
+
+  .title-group p {
+    color: #64748b;
+    font-size: 9.5pt;
+    margin-top: 4px;
+  }
+
+  .meta-tag {
+    background: #fff7ed;
+    color: #c05621;
+    border: 1px solid #fed7aa;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 8.5pt;
+    font-weight: 700;
+  }
+
+  .info-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+
+  .info-item span {
+    display: block;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .info-item strong {
+    font-size: 10pt;
+    color: #0f172a;
+  }
+
+  .table-box {
+    margin-bottom: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  thead tr {
+    background: #0f172a;
+    color: #ffffff;
+  }
+
+  th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 8pt;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  tr:nth-child(even) { background: #f8fafc; }
+
+  .code {
+    font-family: monospace;
+    font-weight: 600;
+    color: #c05621;
+    background: #fff7ed;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .image-container {
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f1f5f9;
+    margin-top: 10px;
+  }
+
+  .image-bar {
+    background: #e2e8f0;
+    padding: 6px 12px;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .screenshot-img {
+    width: 100%;
+    display: block;
+  }
+
+  .footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header-card">
+    <div class="title-group">
+      <h1>Cyberinfo DNS Settings Reference</h1>
+      <p>Official Verification Document for Cyberinfo Support Team</p>
+    </div>
+    <span class="meta-tag">Customer ID: M11566191</span>
+  </div>
+
+  <div class="info-summary">
+    <div class="info-item">
+      <span>Domain</span>
+      <strong>workvision.com.au</strong>
+    </div>
+    <div class="info-item">
+      <span>Active Nameservers</span>
+      <strong>ns3.secureparkme.com / ns4</strong>
+    </div>
+    <div class="info-item">
+      <span>Subdomain Requested</span>
+      <strong>crm.workvision.com.au</strong>
+    </div>
+  </div>
+
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Record Type</th>
+          <th>Host / Name</th>
+          <th>Target / Destination</th>
+          <th>Current Status in Panel</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #fff7ed; font-weight: bold;">
+          <td><span class="code">CNAME</span></td>
+          <td><span class="code">crm.workvision.com.au</span></td>
+          <td><span class="code">gna5aacw.up.railway.app</span></td>
+          <td style="color: #c05621;">Added &amp; Saved (Pending Zone Reload)</td>
+        </tr>
+        <tr>
+          <td><span class="code">A</span></td>
+          <td><span class="code">workvision.com.au</span></td>
+          <td><span class="code">27.124.125.173</span></td>
+          <td style="color: #15803d;">Active (Main Website)</td>
+        </tr>
+        <tr>
+          <td><span class="code">A</span></td>
+          <td><span class="code">www.workvision.com.au</span></td>
+          <td><span class="code">27.124.125.173</span></td>
+          <td style="color: #15803d;">Active (Main Website)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="image-container">
+    <div class="image-bar">
+      <span>Cyberinfo Dashboard Verification Screenshot</span>
+      <span>Captured from Domain Details</span>
+    </div>
+    <img src="cyberinfo_current_dns.png" class="screenshot-img" alt="Cyberinfo DNS Settings Screenshot" />
+  </div>
+
+  <div class="footer">
+    <span>WorkVision Australia Pty Ltd &bull; Confidential Support Document</span>
+    <span>Generated: October 2026</span>
+  </div>
+
+</body>
+</html>

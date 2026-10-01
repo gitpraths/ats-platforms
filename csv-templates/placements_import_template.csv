@@ -1,0 +1,4 @@
+candidate_sr_or_name,job_title,employer_name,start_date,end_date,employment_status,termination_reason,notes,wagesub_status,wagesub_4wk_paid_at,wagesub_13wk_paid_at,wagesub_26wk_paid_at,wagesub_notes,confirmed_by_employer
+JS-001,Warehouse Operator,Acme Manufacturing,2026-01-15,,active,,Candidate settled in well,approved,2026-02-12,,,Follow up in 13 weeks,yes
+JS-002,Retail Assistant,Metro Retail Group,2026-02-01,2026-08-01,completed,Contract ended,Contract ended successfully,paid_13wk,2026-03-01,2026-05-01,,Claim submitted,yes
+Mary Jones,Forklift Driver,Greenfield Logistics,2026-03-10,,active,,,pending,,,,Still in first month,no

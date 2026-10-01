@@ -1,0 +1,442 @@
+import subprocess
+import os
+
+HTML_CONTENT = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WorkVision ATS — Implementation Report (10 August 2026)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+  
+  @page {
+    size: A4;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1e293b;
+    line-height: 1.5;
+    font-size: 13px;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .header-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white;
+    padding: 24px 28px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border-bottom: 4px solid #e88e2e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  
+  .brand .work { color: #ffffff; }
+  .brand .vision { color: #e88e2e; }
+  .brand .country {
+    font-size: 10px;
+    color: #94a3b8;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .doc-title {
+    text-align: right;
+  }
+  
+  .doc-title h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  
+  .doc-title p {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #e88e2e;
+    font-weight: 500;
+  }
+
+  .summary-box {
+    background-color: #fff7ed;
+    border-left: 4px solid #e88e2e;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+  }
+
+  .summary-box h3 {
+    margin: 0 0 6px 0;
+    color: #9a3412;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .summary-box p {
+    margin: 0;
+    color: #431407;
+    font-size: 12px;
+  }
+
+  .section-heading {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 22px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-icon {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background-color: #e88e2e;
+    border-radius: 3px;
+  }
+
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-orange { background: #ffedd5; color: #c2410c; }
+  .badge-purple { background: #f3e8ff; color: #6b21a8; }
+
+  ul {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin-bottom: 4px;
+    color: #334155;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 16px;
+    font-size: 11px;
+  }
+
+  th {
+    background-color: #0f172a;
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+  }
+
+  td {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    color: #334155;
+  }
+
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  .credentials-box {
+    background: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 14px;
+  }
+
+  .footer {
+    margin-top: 30px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 12px;
+    text-align: center;
+    font-size: 10px;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header-banner">
+    <div class="brand">
+      <span class="work">Work</span><span class="vision">Vision</span>
+      <span class="country">Australia</span>
+    </div>
+    <div class="doc-title">
+      <h1>Daily Implementation Report</h1>
+      <p>Date: 10 August 2026 | System Updates & Access Levels</p>
+    </div>
+  </div>
+
+  <div class="summary-box">
+    <h3>📌 Executive Summary</h3>
+    <p>
+      Today we successfully delivered two major system enhancements to the WorkVision Australia CRM system:
+      (1) <strong>Backend Audit "Who" Tracking Columns</strong> for data integrity, and 
+      (2) <strong>Staff Access Levels & Role-Based Access Control (RBAC)</strong> introducing Staff and Training Admin roles, restricting invoice management and record deletion, and guarding non-admin navigation.
+    </p>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section-heading">
+    <span class="section-icon"></span>
+    1. Backend Audit "Who" Columns Implementation
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>Candidate & Job Audit Tracking (created_by & updated_by)</span>
+      <span class="badge badge-green">Completed</span>
+    </div>
+    <ul>
+      <li><strong>Database Migration:</strong> Created and applied database migration <code>016-add-candidate-who-columns.sql</code> adding nullable <code>created_by</code> and <code>updated_by</code> UUID foreign keys pointing to <code>users(id)</code>.</li>
+      <li><strong>Automatic Handling:</strong> Updated backend API route handlers (<code>candidates.js</code>, <code>jobs.js</code>, <code>placements.js</code>, <code>applications.js</code>, <code>spreadsheet.js</code>) to set <code>created_by</code> on candidate creation and <code>updated_by</code> on candidate updates, status changes, and placement updates based on the authenticated user.</li>
+      <li><strong>Frontend Policy Enforcement:</strong> Audit columns are handled strictly on the backend without displaying on the user interface, maintaining clean UI aesthetics.</li>
+      <li><strong>Verification:</strong> Updated test suite in <code>candidates.test.js</code> and verified all tests pass.</li>
+    </ul>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section-heading">
+    <span class="section-icon"></span>
+    2. Staff Access Levels & Role-Based Access Control (RBAC)
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>Access Levels & Permissions Matrix</span>
+      <span class="badge badge-orange">Deployed to Main</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Area</th>
+          <th>Admin Role</th>
+          <th>Staff Role</th>
+          <th>Training Admin Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Dashboard</strong></td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>Vacancies (Jobs)</strong></td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>Important Updates</strong></td>
+          <td>✅ Full Access</td>
+          <td>❌ Restricted (Admin Only)</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>Candidates</strong></td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+          <td>👁 View-Only (Full Search, Phone & Email Visible)</td>
+        </tr>
+        <tr>
+          <td><strong>Training Program</strong></td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+        </tr>
+        <tr>
+          <td><strong>Placements</strong></td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>Employers & Providers</strong></td>
+          <td>✅ Full Access</td>
+          <td>✅ Full Access</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>Invoices / Xero</strong></td>
+          <td>✅ Full Access</td>
+          <td>❌ Restricted</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>Record Deletion</strong></td>
+          <td>✅ Allowed</td>
+          <td>❌ Restricted (Admin Only)</td>
+          <td>❌ Restricted</td>
+        </tr>
+        <tr>
+          <td><strong>User Management</strong></td>
+          <td>✅ Full (Change roles anytime)</td>
+          <td>❌ Restricted</td>
+          <td>❌ Restricted</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section-heading">
+    <span class="section-icon"></span>
+    3. Detailed Feature Breakdown
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>🔑 Admin Role</span>
+      <span class="badge badge-purple">Super User</span>
+    </div>
+    <ul>
+      <li>Full access to all 11 system modules and reports.</li>
+      <li>Exclusive authority to delete records (Candidates, Vacancies, Placements, Applications).</li>
+      <li>Ability to dynamically create users and change staff access levels inside <strong>User Management</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>👤 Staff Role</span>
+      <span class="badge badge-blue">Recruiters & Consultants</span>
+    </div>
+    <ul>
+      <li>Full access to Dashboard, Vacancies, Candidates, Placements, Employers, Providers, and Training.</li>
+      <li>Restricted from accessing Invoice/Xero generate & view features (returns 403 Forbidden).</li>
+      <li>Restricted from deleting records (Delete buttons hidden in UI; API routes guarded).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>📋 Training Admin Role</span>
+      <span class="badge badge-orange">Training Specialist</span>
+    </div>
+    <ul>
+      <li>Access limited strictly to <strong>Candidates</strong> (view-only) and <strong>Training Program</strong> (full access).</li>
+      <li>Full candidate search capability enabled (can search by name, phone, email, status).</li>
+      <li>Candidate phone number and email address are visible. Create/Edit/Delete buttons are hidden.</li>
+      <li>All other modules (Dashboard, Vacancies, Important Updates, Placements, Employers, Providers, Invoices) are hidden from navigation bar.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>🌐 Vacancy Website Synchronization Inquiry</span>
+      <span class="badge badge-blue">Feature Clarification</span>
+    </div>
+    <ul>
+      <li><strong>Database-Driven Website (Supported):</strong> Automated 2-way vacancy publishing is fully supported if your website is database-driven (e.g. WordPress, Webflow, dynamic CMS, or custom API). An API Webhook can be connected so clicking "Publish Vacancy" in WVA CRM automatically posts the job live onto your website.</li>
+      <li><strong>Static Website (Not Possible Directly):</strong> If your website is a static HTML website (without a database backend), automated live vacancy syncing is not possible directly. Staff can copy/paste the exported vacancy specifications or link to the job board URL.</li>
+      <li><strong>Current CRM Capability:</strong> Vacancies created in WVA CRM store job board links, manage applicant pipeline flow, and export complete vacancy specifications.</li>
+    </ul>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section-heading">
+    <span class="section-icon"></span>
+    4. Testing Credentials & Verification
+  </div>
+
+  <div class="credentials-box">
+    <p style="margin:0 0 6px 0; font-weight:700; color:#0f172a; font-size:12px;">🔑 Test Login Accounts (Password for all: <code>password123</code>):</p>
+    <table style="margin:0; font-size:11px;">
+      <tr>
+        <td><strong>Admin:</strong> <code>admin@myats.dev</code></td>
+        <td><strong>Staff:</strong> <code>staff@myats.dev</code></td>
+        <td><strong>Training Admin:</strong> <code>trainingadmin@myats.dev</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="card-title">
+      <span>Automated Verification & Git Deployment</span>
+      <span class="badge badge-green">100% Passed</span>
+    </div>
+    <ul>
+      <li><strong>Backend Jest Tests:</strong> Executed <code>accessLevels.test.js</code> — <strong>10/10 tests passed</strong>.</li>
+      <li><strong>Frontend TypeScript Build:</strong> Built with Vite & TSC — <strong>0 compilation errors</strong>.</li>
+      <li><strong>GitHub Repository:</strong> Pushed commits to <code>main</code> branch on <code>github.com/gitpraths/ats-platforms.git</code> (Commit <code>811c443</code>).</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    WorkVision Australia ATS Platform &copy; 2026 | Prepared by AI Coding Assistant Team | Confidential
+  </div>
+
+</body>
+</html>
+"""
+
+HTML_PATH = "/Users/deeproot/data/21MARCH2026/my-ats-platform/docs/WorkVision_ATS_Today_Changes_Report.html"
+PDF_PATH  = "/Users/deeproot/data/21MARCH2026/my-ats-platform/docs/WorkVision_ATS_Today_Changes_Report.pdf"
+
+with open(HTML_PATH, "w") as f:
+    f.write(HTML_CONTENT)
+
+print(f"HTML written to {HTML_PATH}")
+
+# Convert to PDF via headless Google Chrome
+chrome_bin = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+cmd = [
+    chrome_bin,
+    "--headless",
+    "--disable-gpu",
+    f"--print-to-pdf={PDF_PATH}",
+    HTML_PATH
+]
+
+res = subprocess.run(cmd, capture_output=True, text=True)
+if res.returncode == 0:
+    print(f"Successfully generated PDF: {PDF_PATH}")
+else:
+    print(f"Error generating PDF: {res.stderr}")

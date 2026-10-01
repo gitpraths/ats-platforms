@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkVision ATS — Data Import Instructions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 11pt;
+    color: #1e293b;
+    background: #fff;
+    line-height: 1.6;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #e88e2e 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover-logo {
+    font-size: 42pt;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .cover-logo span { color: #e88e2e; }
+  .cover-sub {
+    font-size: 9pt;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 60px;
+  }
+  .cover-title {
+    font-size: 26pt;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+  .cover-desc {
+    font-size: 12pt;
+    color: #cbd5e1;
+    max-width: 480px;
+    margin-bottom: 60px;
+  }
+  .cover-badge {
+    background: rgba(232,142,46,0.2);
+    border: 1px solid #e88e2e;
+    border-radius: 50px;
+    padding: 8px 24px;
+    font-size: 10pt;
+    color: #fbbf24;
+    letter-spacing: 1px;
+  }
+  .cover-footer {
+    margin-top: auto;
+    padding-top: 40px;
+    font-size: 9pt;
+    color: #64748b;
+  }
+
+  /* ── Content pages ── */
+  .page {
+    padding: 40px 50px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  @media print {
+    .page { page-break-inside: avoid; }
+    .section { page-break-inside: avoid; }
+  }
+
+  /* ── Section header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 3px solid #e88e2e;
+    padding-bottom: 12px;
+    margin-bottom: 28px;
+    margin-top: 36px;
+  }
+  .page-header:first-child { margin-top: 0; }
+  .page-header h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .header-icon {
+    width: 36px;
+    height: 36px;
+    background: #e88e2e;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    color: white;
+  }
+
+  /* ── Step boxes ── */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 32px;
+    height: 32px;
+    background: #0f172a;
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 11pt;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content h4 { font-weight: 600; font-size: 11pt; margin-bottom: 4px; }
+  .step-content p  { color: #475569; font-size: 10pt; }
+
+  /* ── File cards ── */
+  .file-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .file-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .file-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .file-card h4 { font-weight: 600; font-size: 10pt; color: #0f172a; }
+  .file-card p  { font-size: 9pt; color: #64748b; margin-top: 2px; }
+
+  /* ── Alert boxes ── */
+  .alert {
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-orange { background: #fff7ed; border-left: 4px solid #e88e2e; }
+  .alert-blue   { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .alert-green  { background: #f0fdf4; border-left: 4px solid #22c55e; }
+  .alert-red    { background: #fef2f2; border-left: 4px solid #ef4444; }
+  .alert h4 { font-weight: 600; font-size: 10pt; margin-bottom: 3px; }
+  .alert p  { font-size: 10pt; color: #475569; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 9.5pt;
+  }
+  thead tr { background: #0f172a; color: white; }
+  thead th { padding: 9px 12px; text-align: left; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:hover { background: #fff7ed; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #374151; }
+  td:first-child { font-weight: 600; color: #0f172a; font-family: monospace; font-size: 9pt; }
+  .req  { color: #e88e2e; font-weight: 700; }
+  .opt  { color: #94a3b8; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+  .badge-req { background: #fff7ed; color: #c05621; border: 1px solid #fed7aa; }
+  .badge-opt { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+
+  /* ── Rules list ── */
+  .rules { list-style: none; }
+  .rules li {
+    padding: 7px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    display: flex;
+    gap: 10px;
+    font-size: 10pt;
+    color: #374151;
+  }
+  .rules li::before { content: "✓"; color: #22c55e; font-weight: 700; flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .doc-footer {
+    margin-top: 50px;
+    padding: 20px 0;
+    border-top: 2px solid #e2e8f0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 9pt;
+  }
+
+  .highlight { background: #fff7ed; padding: 1px 5px; border-radius: 3px; font-family: monospace; color: #c05621; font-size: 9pt; }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 8.5pt;
+    font-family: monospace;
+    color: #475569;
+  }
+
+  .entity-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 20px 0 12px;
+  }
+  .entity-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .entity-header h3 { font-size: 12pt; font-weight: 700; }
+  .entity-header p  { font-size: 9pt; color: #64748b; margin-top: 1px; }
+
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- COVER PAGE                                                         -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">Work<span>Vision</span></div>
+  <div class="cover-sub">Australia</div>
+
+  <div class="cover-title">Data Import<br>Instructions Guide</div>
+  <div class="cover-desc">
+    Step-by-step guide for filling in the Excel templates to import
+    your existing records into the WorkVision ATS system.
+  </div>
+  
+  <div style="background: rgba(239, 68, 68, 0.2); border: 2px solid #ef4444; border-radius: 12px; padding: 14px 24px; max-width: 520px; margin-bottom: 24px; text-align: center;">
+    <div style="color: #fca5a5; font-weight: 700; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">⚠️ Crucial Rule — Test Run First</div>
+    <div style="color: #fff; font-size: 10pt; line-height: 1.5;">
+      Please enter <strong>5 records only</strong> in the first round and send the file back to us. Once confirmed, you can fill in the rest!
+    </div>
+  </div>
+
+  <div class="cover-badge">📎 5 Excel Templates Attached</div>
+
+  <div class="cover-footer">
+    Confidential — For internal use only &nbsp;|&nbsp; WorkVision ATS &nbsp;|&nbsp; Australia
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 1 — OVERVIEW                                                  -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <div class="page-header">
+    <div class="header-icon">👋</div>
+    <h2>Overview</h2>
+  </div>
+
+  <p style="color:#475569; margin-bottom:20px;">
+    We are migrating your existing records into the <strong>WorkVision ATS</strong> system.
+    To do this quickly and accurately, we need you to fill in the Excel templates
+    attached to this message — one template per data type.
+  </p>
+
+  <!-- ★ TEST RUN BANNER ★ -->
+  <div style="background:#0f172a; border-left: 6px solid #e88e2e; border-radius:12px; padding:22px 24px; margin:0 0 24px; display:flex; gap:16px; align-items:flex-start; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+    <div style="font-size:32px; flex-shrink:0;">⚠️</div>
+    <div>
+      <div style="color:#fbbf24; font-weight:800; font-size:13pt; margin-bottom:8px; text-transform: uppercase; letter-spacing: 0.5px;">
+        IMPORTANT: PLEASE CAREFULLY READ — ENTER 5 RECORDS FIRST
+      </div>
+      <div style="color:#f1f5f9; font-size:11pt; line-height:1.7;">
+        <strong>Please enter 5 records only in the first round and send the file back to us.</strong>
+        We will import those 5 records and confirm everything looks correct in the system.
+        <br><br>
+        <span style="color: #38bdf8; font-weight: 600;">Once you receive our confirmation ✅, you can then fill in the rest of your data and send it back for the full import.</span>
+      </div>
+      <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <div style="background:rgba(251,191,36,0.2); border:1.5px solid #fbbf24; border-radius:6px; padding:7px 14px; color:#fbbf24; font-size:9.5pt; font-weight:700;">① Enter 5 rows only → Send file back</div>
+        <div style="color:#94a3b8; font-size:13pt;">➔</div>
+        <div style="background:rgba(34,197,94,0.2); border:1.5px solid #22c55e; border-radius:6px; padding:7px 14px; color:#86efac; font-size:9.5pt; font-weight:700;">② We import &amp; verify system ✅</div>
+        <div style="color:#94a3b8; font-size:13pt;">➔</div>
+        <div style="background:rgba(99,102,241,0.2); border:1.5px solid #818cf8; border-radius:6px; padding:7px 14px; color:#c7d2fe; font-size:9.5pt; font-weight:700;">③ Enter all remaining rows</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-orange">
+    <div class="alert-icon">📎</div>
+    <div>
+      <h4>5 Excel files are attached to this message</h4>
+      <p>Please fill in each file that is relevant to your organisation and send them back to us.</p>
+    </div>
+  </div>
+
+  <!-- File list -->
+  <div class="file-grid">
+    <div class="file-card">
+      <div class="file-icon" style="background:#dbeafe;">👤</div>
+      <div>
+        <h4>candidates_import_template.xlsx</h4>
+        <p>Job seekers / candidates</p>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon" style="background:#dcfce7;">🏢</div>
+      <div>
+        <h4>employers_import_template.xlsx</h4>
+        <p>Employer companies</p>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon" style="background:#fae8ff;">✅</div>
+      <div>
+        <h4>placements_import_template.xlsx</h4>
+        <p>Candidate placements / jobs started</p>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon" style="background:#ffedd5;">🎓</div>
+      <div>
+        <h4>training_providers_import_template.xlsx</h4>
+        <p>Training provider organisations</p>
+      </div>
+    </div>
+    <div class="file-card" style="grid-column: span 2;">
+      <div class="file-icon" style="background:#fee2e2;">💼</div>
+      <div>
+        <h4>vacancies_import_template.xlsx</h4>
+        <p>Job vacancies / positions available</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-blue">
+    <div class="alert-icon">💡</div>
+    <div>
+      <h4>Only fill in what you have</h4>
+      <p>You do not need to complete every file. Only fill in the templates for the data you currently manage. Leave the rest blank or do not send them back.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="page-header" style="margin-top:0;">
+    <div class="header-icon">🚀</div>
+    <h2>How to Get Started</h2>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Open the Excel file</h4>
+        <p>Double-click any of the attached <strong>.xlsx</strong> files to open it in Microsoft Excel or Google Sheets.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Read the Instructions sheet first</h4>
+        <p>Each file has two sheets — <strong>📋 Instructions</strong> and <strong>DATA</strong>. Start by reading the Instructions sheet to understand what each column means.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Fill in the DATA sheet</h4>
+        <p>Click on the <strong>DATA</strong> tab. Add one row per record (one candidate per row, one employer per row, etc.). You can delete the sample rows that are already there.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Do not change the column headers</h4>
+        <p>The orange and grey header row at the top must stay exactly as it is. Do <strong>not</strong> rename, delete, or move any columns.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h4>Send the completed files back</h4>
+        <p>Once done, save the file and send it back to us via WhatsApp or email. We will handle the rest.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2 — GOLDEN RULES                                             -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="page-header">
+    <div class="header-icon">📏</div>
+    <h2>Important Rules to Follow</h2>
+  </div>
+
+  <div class="alert alert-red">
+    <div class="alert-icon">🚫</div>
+    <div>
+      <h4>Please read these carefully before filling in any data</h4>
+      <p>Mistakes here can cause records to be rejected or imported incorrectly.</p>
+    </div>
+  </div>
+
+  <ul class="rules">
+    <li>
+      <strong>🟠 Orange column headers are REQUIRED</strong> — you must fill these in for every row. Grey headers are optional.
+    </li>
+    <li>
+      <strong>Do NOT rename, delete, or move columns</strong> — even if you don't use a column, leave it blank, do not remove it.
+    </li>
+    <li>
+      <strong>One record per row</strong> — each row = one candidate, one employer, one vacancy, etc.
+    </li>
+    <li>
+      <strong>Dates must be in YYYY-MM-DD format</strong> — for example <span class="highlight">2026-01-15</span> not 15/01/2026 or Jan 15 2026.
+    </li>
+    <li>
+      <strong>Use the dropdowns provided</strong> — for fields like Work Status, Employment Type, Wage Subsidy etc., click the cell and pick from the dropdown list. Do not type free text in these cells.
+    </li>
+    <li>
+      <strong>Yes / No fields</strong> — only enter <span class="highlight">yes</span> or <span class="highlight">no</span> (lowercase). Do not use Y/N or True/False.
+    </li>
+    <li>
+      <strong>Numbers only in number fields</strong> — for Benchmark Hours enter <span class="highlight">38</span> not "38 hours". For Pay Rate enter <span class="highlight">28.50</span> not "$28.50".
+    </li>
+    <li>
+      <strong>Email addresses must be unique</strong> — each candidate must have a different email. If a candidate has no email, leave the cell blank.
+    </li>
+    <li>
+      <strong>Provider name must match exactly</strong> — in the Candidates template, the <span class="highlight">provider_name</span> must be spelled exactly as the training provider organisation is listed in your system.
+    </li>
+    <li>
+      <strong>Do not add extra columns</strong> — only fill in the columns that are already in the template.
+    </li>
+    <li>
+      <strong>Delete the sample rows</strong> — the first 3 rows in the DATA sheet are examples. Please delete them before submitting.
+    </li>
+  </ul>
+
+  <hr class="divider">
+
+  <div class="page-header" style="margin-top:0;">
+    <div class="header-icon">📅</div>
+    <h2>Date Format Reference</h2>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>✅ Correct Format</th><th>❌ Do NOT Use</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>2026-01-15</td><td>15/01/2026 or 01/15/2026</td></tr>
+      <tr><td>2026-09-01</td><td>1 Sep 2026 or September 1, 2026</td></tr>
+      <tr><td>2025-12-31</td><td>31-12-2025 or 31.12.2025</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-green">
+    <div class="alert-icon">💡</div>
+    <div>
+      <h4>Tip — Format the date column in Excel</h4>
+      <p>Select the date column → Right click → Format Cells → Choose <strong>Text</strong> — then type dates in YYYY-MM-DD format. This stops Excel from converting them automatically.</p>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 3 — CANDIDATES                                               -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="page-header">
+    <div class="header-icon">👤</div>
+    <h2>Template 1 — Candidates</h2>
+  </div>
+  <p style="color:#475569; margin-bottom:16px;">Use this template to import job seekers / candidates into the system.</p>
+
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Description</th><th>Required?</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>first_name</td><td>Candidate's first name</td><td><span class="badge badge-req">Required</span></td><td>John</td></tr>
+      <tr><td>last_name</td><td>Candidate's last name</td><td><span class="badge badge-req">Required</span></td><td>Smith</td></tr>
+      <tr><td>phone</td><td>Mobile phone number</td><td><span class="badge badge-req">Required</span></td><td>0412345678</td></tr>
+      <tr><td>provider_name</td><td>Training provider name (must match exactly)</td><td><span class="badge badge-req">Required</span></td><td>Workforce Connect</td></tr>
+      <tr><td>benchmark_hours</td><td>Target weekly hours (number only)</td><td><span class="badge badge-req">Required</span></td><td>38</td></tr>
+      <tr><td>email</td><td>Email address — must be unique per candidate</td><td><span class="badge badge-opt">Optional</span></td><td>john@email.com</td></tr>
+      <tr><td>suburb</td><td>Suburb of residence</td><td><span class="badge badge-opt">Optional</span></td><td>Parramatta</td></tr>
+      <tr><td>address_line1</td><td>Street address</td><td><span class="badge badge-opt">Optional</span></td><td>14 Park Road</td></tr>
+      <tr><td>state</td><td>State abbreviation</td><td><span class="badge badge-opt">Optional</span></td><td>NSW / VIC / QLD</td></tr>
+      <tr><td>postcode</td><td>4-digit postcode</td><td><span class="badge badge-opt">Optional</span></td><td>2150</td></tr>
+      <tr><td>work_status</td><td>Select from dropdown</td><td><span class="badge badge-opt">Optional</span></td><td>job_seeking</td></tr>
+      <tr><td>wage_subsidy</td><td>Is wage subsidy applicable?</td><td><span class="badge badge-opt">Optional</span></td><td>yes / no</td></tr>
+      <tr><td>wage_subsidy_amount</td><td>Subsidy dollar amount (number only)</td><td><span class="badge badge-opt">Optional</span></td><td>500</td></tr>
+      <tr><td>car / police_check / wwc</td><td>Yes or No for each</td><td><span class="badge badge-opt">Optional</span></td><td>yes / no</td></tr>
+      <tr><td>transport_type</td><td>Select from dropdown</td><td><span class="badge badge-opt">Optional</span></td><td>car / public_transport / both / none</td></tr>
+      <tr><td>industry_preference</td><td>Comma-separated list of industries</td><td><span class="badge badge-opt">Optional</span></td><td>Warehouse,Retail</td></tr>
+      <tr><td>training_start_date</td><td>Training start date (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-01-10</td></tr>
+      <tr><td>training_end_date</td><td>Training end date (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-03-10</td></tr>
+      <tr><td>date_referred</td><td>Date candidate was referred (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-01-05</td></tr>
+      <tr><td>notes / comments</td><td>Any additional notes</td><td><span class="badge badge-opt">Optional</span></td><td>Prefers morning shifts</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:9pt; color:#64748b; margin-top:8px;">Work Status dropdown values:</p>
+  <div class="tag-row">
+    <span class="tag">job_seeking</span>
+    <span class="tag">employed</span>
+    <span class="tag">placed</span>
+    <span class="tag">inactive</span>
+  </div>
+
+</div><!-- /page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 4 — EMPLOYERS + PROVIDERS                                    -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="page-header">
+    <div class="header-icon">🏢</div>
+    <h2>Template 2 — Employers</h2>
+  </div>
+  <p style="color:#475569; margin-bottom:16px;">Use this template to import employer companies into the system.</p>
+
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Description</th><th>Required?</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>name</td><td>Company / employer name (must be unique)</td><td><span class="badge badge-req">Required</span></td><td>Acme Manufacturing</td></tr>
+      <tr><td>industry</td><td>Industry sector</td><td><span class="badge badge-opt">Optional</span></td><td>Manufacturing / Retail / Logistics</td></tr>
+      <tr><td>contact_name</td><td>Primary contact person's full name</td><td><span class="badge badge-opt">Optional</span></td><td>Tom Richards</td></tr>
+      <tr><td>contact_email</td><td>Contact email address</td><td><span class="badge badge-opt">Optional</span></td><td>tom@company.com.au</td></tr>
+      <tr><td>contact_phone</td><td>Contact phone number</td><td><span class="badge badge-opt">Optional</span></td><td>02 8000 1001</td></tr>
+      <tr><td>address</td><td>Full address including suburb, state &amp; postcode</td><td><span class="badge badge-opt">Optional</span></td><td>100 Industrial Ave, Parramatta NSW 2150</td></tr>
+      <tr><td>website</td><td>Company website URL</td><td><span class="badge badge-opt">Optional</span></td><td>https://company.com.au</td></tr>
+      <tr><td>description</td><td>Brief description of the company</td><td><span class="badge badge-opt">Optional</span></td><td>Leading manufacturer of...</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <div class="page-header" style="margin-top:0;">
+    <div class="header-icon">🎓</div>
+    <h2>Template 3 — Training Providers</h2>
+  </div>
+  <p style="color:#475569; margin-bottom:16px;">Use this template to import training provider organisations.</p>
+
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Description</th><th>Required?</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>name</td><td>Provider / organisation name (must be unique)</td><td><span class="badge badge-req">Required</span></td><td>Workforce Connect</td></tr>
+      <tr><td>contact_name</td><td>Primary contact person's full name</td><td><span class="badge badge-opt">Optional</span></td><td>Jane Harper</td></tr>
+      <tr><td>email</td><td>Provider contact email</td><td><span class="badge badge-opt">Optional</span></td><td>jane@provider.com.au</td></tr>
+      <tr><td>phone</td><td>Provider contact phone</td><td><span class="badge badge-opt">Optional</span></td><td>02 9000 0001</td></tr>
+      <tr><td>address</td><td>Full address including suburb, state &amp; postcode</td><td><span class="badge badge-opt">Optional</span></td><td>12 Bridge St, Sydney NSW 2000</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-blue">
+    <div class="alert-icon">ℹ️</div>
+    <div>
+      <h4>Note about Training Providers</h4>
+      <p>If your training providers are already set up in the system, you do not need to send this file. The provider name in the <strong>Candidates</strong> template must exactly match a provider already in the system.</p>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 5 — VACANCIES + PLACEMENTS                                   -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="page-header">
+    <div class="header-icon">💼</div>
+    <h2>Template 4 — Vacancies</h2>
+  </div>
+  <p style="color:#475569; margin-bottom:16px;">Use this template to import job vacancies / positions into the system.</p>
+
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Description</th><th>Required?</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>title</td><td>Job title / vacancy name</td><td><span class="badge badge-req">Required</span></td><td>Warehouse Operator</td></tr>
+      <tr><td>employer_name</td><td>Employer name (must match exactly)</td><td><span class="badge badge-req">Required</span></td><td>Acme Manufacturing</td></tr>
+      <tr><td>employment_type</td><td>Select from dropdown</td><td><span class="badge badge-req">Required</span></td><td>full_time</td></tr>
+      <tr><td>vacancy_type</td><td>Select from dropdown</td><td><span class="badge badge-opt">Optional</span></td><td>casual / temporary</td></tr>
+      <tr><td>department</td><td>Department name</td><td><span class="badge badge-opt">Optional</span></td><td>Warehouse &amp; Logistics</td></tr>
+      <tr><td>positions_count</td><td>Number of positions (number only)</td><td><span class="badge badge-opt">Optional</span></td><td>2</td></tr>
+      <tr><td>industry</td><td>Industry sector</td><td><span class="badge badge-opt">Optional</span></td><td>Warehouse / Retail</td></tr>
+      <tr><td>pay_rate</td><td>Pay rate amount (number only, no $ sign)</td><td><span class="badge badge-opt">Optional</span></td><td>28.50</td></tr>
+      <tr><td>pay_rate_type</td><td>Select from dropdown</td><td><span class="badge badge-opt">Optional</span></td><td>per_hour / annual</td></tr>
+      <tr><td>work_location</td><td>Physical work location</td><td><span class="badge badge-opt">Optional</span></td><td>Parramatta NSW 2150</td></tr>
+      <tr><td>police_check / wwc / car_required</td><td>Select from dropdown for each</td><td><span class="badge badge-opt">Optional</span></td><td>yes / no / not_required</td></tr>
+      <tr><td>skills_required</td><td>Comma-separated skills (required)</td><td><span class="badge badge-opt">Optional</span></td><td>RF Scanning,Manual Handling</td></tr>
+      <tr><td>skills_desired</td><td>Comma-separated skills (nice to have)</td><td><span class="badge badge-opt">Optional</span></td><td>Forklift Licence</td></tr>
+      <tr><td>description</td><td>Full job description text</td><td><span class="badge badge-opt">Optional</span></td><td>Responsible for picking and packing...</td></tr>
+      <tr><td>job_board_url</td><td>Link to Seek / Indeed advertisement</td><td><span class="badge badge-opt">Optional</span></td><td>https://seek.com.au/job/...</td></tr>
+      <tr><td>end_date / deadline</td><td>End date or closing date (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-12-31</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:9pt; color:#64748b; margin-top:8px;">Employment Type dropdown values:</p>
+  <div class="tag-row">
+    <span class="tag">full_time</span>
+    <span class="tag">part_time</span>
+    <span class="tag">contract</span>
+    <span class="tag">internship</span>
+  </div>
+
+  <p style="font-size:9pt; color:#64748b; margin-top:8px;">Vacancy Type dropdown values:</p>
+  <div class="tag-row">
+    <span class="tag">full_time</span>
+    <span class="tag">part_time</span>
+    <span class="tag">casual</span>
+    <span class="tag">contract</span>
+    <span class="tag">temporary</span>
+  </div>
+
+  <hr class="divider">
+
+  <div class="page-header" style="margin-top:0;">
+    <div class="header-icon">✅</div>
+    <h2>Template 5 — Placements</h2>
+  </div>
+  <p style="color:#475569; margin-bottom:16px;">Use this to import records of candidates who have already been placed in jobs.</p>
+
+  <div class="alert alert-orange">
+    <div class="alert-icon">⚠️</div>
+    <div>
+      <h4>Important — Fill Candidates and Vacancies first</h4>
+      <p>The Placements template references candidates and job titles that must already exist in the system. Please complete and submit Candidates and Vacancies templates before this one.</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Description</th><th>Required?</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>candidate_sr_or_name</td><td>Candidate SR number (e.g. JS-001) or full name</td><td><span class="badge badge-req">Required</span></td><td>JS-001 or Mary Jones</td></tr>
+      <tr><td>job_title</td><td>Exact vacancy title as in the system</td><td><span class="badge badge-req">Required</span></td><td>Warehouse Operator</td></tr>
+      <tr><td>employer_name</td><td>Exact employer name as in the system</td><td><span class="badge badge-req">Required</span></td><td>Acme Manufacturing</td></tr>
+      <tr><td>start_date</td><td>Date placement started (YYYY-MM-DD)</td><td><span class="badge badge-req">Required</span></td><td>2026-01-15</td></tr>
+      <tr><td>end_date</td><td>Date placement ended, if applicable (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-08-01</td></tr>
+      <tr><td>employment_status</td><td>Select from dropdown</td><td><span class="badge badge-opt">Optional</span></td><td>active / completed / terminated</td></tr>
+      <tr><td>termination_reason</td><td>Reason for termination, if applicable</td><td><span class="badge badge-opt">Optional</span></td><td>Voluntary resignation</td></tr>
+      <tr><td>wagesub_status</td><td>Wage subsidy claim status — select from dropdown</td><td><span class="badge badge-opt">Optional</span></td><td>approved / paid_13wk</td></tr>
+      <tr><td>wagesub_4wk_paid_at</td><td>Date 4-week subsidy was paid (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-02-12</td></tr>
+      <tr><td>wagesub_13wk_paid_at</td><td>Date 13-week subsidy was paid (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-05-01</td></tr>
+      <tr><td>wagesub_26wk_paid_at</td><td>Date 26-week subsidy was paid (YYYY-MM-DD)</td><td><span class="badge badge-opt">Optional</span></td><td>2026-08-01</td></tr>
+      <tr><td>confirmed_by_employer</td><td>Has employer confirmed this placement?</td><td><span class="badge badge-opt">Optional</span></td><td>yes / no</td></tr>
+      <tr><td>notes</td><td>Any notes about this placement</td><td><span class="badge badge-opt">Optional</span></td><td>Candidate settled in well</td></tr>
+    </tbody>
+  </table>
+
+</div><!-- /page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 6 — SUBMISSION & CONTACT                                     -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="page-header">
+    <div class="header-icon">📤</div>
+    <h2>How to Submit Your Completed Files</h2>
+  </div>
+
+  <!-- Test-run reminder banner -->
+  <div style="background:#fff7ed; border:2px solid #e88e2e; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; gap:12px; align-items:center;">
+    <div style="font-size:22px;">🧪</div>
+    <div>
+      <strong style="color:#c05621; font-size:10.5pt;">Remember — First send only 5 records!</strong>
+      <p style="color:#78350f; font-size:9.5pt; margin-top:3px;">Fill in just 5 rows first. Wait for our confirmation before entering the rest of your data.</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Enter only 5 records first (test run)</h4>
+        <p>Open the DATA sheet and fill in <strong>5 rows only</strong> as a test. Delete the existing sample rows. Do not enter all your records yet.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Save the file in Excel format (.xlsx)</h4>
+        <p>File → Save As → make sure the format is <strong>Excel Workbook (.xlsx)</strong>. Do not save as CSV or PDF.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Send the 5-record file back via WhatsApp</h4>
+        <p>Reply to this WhatsApp message with the completed file attached. We will import the 5 records and check everything is correct in the system.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Wait for our confirmation ✅</h4>
+        <p>We will message you back confirming the 5 records are imported correctly. <strong>Please wait for this message before proceeding.</strong></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#22c55e;">5</div>
+      <div class="step-content">
+        <h4>Fill in all your remaining records</h4>
+        <p>Once confirmed, go back to the Excel file and add all your remaining records below the first 5. Save and send the complete file back to us for full import.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="page-header" style="margin-top:0;">
+    <div class="header-icon">⚡</div>
+    <h2>Quick Reference — Allowed Values</h2>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Field</th><th>Allowed Values Only</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>work_status (candidates)</td><td>job_seeking &nbsp;|&nbsp; employed &nbsp;|&nbsp; placed &nbsp;|&nbsp; inactive</td></tr>
+      <tr><td>employment_type (vacancies)</td><td>full_time &nbsp;|&nbsp; part_time &nbsp;|&nbsp; contract &nbsp;|&nbsp; internship</td></tr>
+      <tr><td>vacancy_type</td><td>full_time &nbsp;|&nbsp; part_time &nbsp;|&nbsp; casual &nbsp;|&nbsp; contract &nbsp;|&nbsp; temporary</td></tr>
+      <tr><td>work_model (vacancies)</td><td>onsite &nbsp;|&nbsp; remote &nbsp;|&nbsp; hybrid</td></tr>
+      <tr><td>transport_type (candidates)</td><td>car &nbsp;|&nbsp; public_transport &nbsp;|&nbsp; both &nbsp;|&nbsp; none</td></tr>
+      <tr><td>pay_rate_type (vacancies)</td><td>per_hour &nbsp;|&nbsp; annual</td></tr>
+      <tr><td>employment_status (placements)</td><td>active &nbsp;|&nbsp; completed &nbsp;|&nbsp; terminated &nbsp;|&nbsp; on_leave</td></tr>
+      <tr><td>wagesub_status (placements)</td><td>pending &nbsp;|&nbsp; approved &nbsp;|&nbsp; paid_4wk &nbsp;|&nbsp; paid_13wk &nbsp;|&nbsp; paid_26wk &nbsp;|&nbsp; not_applicable</td></tr>
+      <tr><td>police_check (vacancies)</td><td>yes &nbsp;|&nbsp; no &nbsp;|&nbsp; not_required</td></tr>
+      <tr><td>All other yes/no fields</td><td>yes &nbsp;|&nbsp; no</td></tr>
+      <tr><td>All date fields</td><td>YYYY-MM-DD format only (e.g. 2026-01-15)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-green">
+    <div class="alert-icon">✅</div>
+    <div>
+      <h4>Thank you for your cooperation!</h4>
+      <p>If you have any questions about filling in the templates, please don't hesitate to reach out to your WorkVision contact via WhatsApp.</p>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    WorkVision ATS — Australia &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; Data Import Instructions Guide
+  </div>
+
+</div><!-- /page -->
+
+</body>
+</html>

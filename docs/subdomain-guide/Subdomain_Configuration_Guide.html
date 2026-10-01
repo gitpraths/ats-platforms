@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subdomain Configuration Guide - crm.workvision.com.au</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 10.5pt;
+  }
+
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #e88e2e 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+
+  .cover-brand {
+    display: flex;
+    align-items: baseline;
+    font-size: 38pt;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    margin-bottom: 4px;
+  }
+  .cover-brand span { color: #e88e2e; }
+  .cover-subbrand {
+    font-size: 10pt;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 50px;
+  }
+
+  .cover-badge {
+    background: rgba(232, 142, 46, 0.18);
+    border: 1.5px solid #e88e2e;
+    color: #fbd38d;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-size: 9.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+  }
+
+  .cover-title {
+    font-size: 26pt;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    max-width: 620px;
+  }
+
+  .cover-desc {
+    font-size: 12pt;
+    color: #cbd5e1;
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 45px;
+  }
+
+  .cover-info-card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px 28px;
+    display: flex;
+    gap: 30px;
+    text-align: left;
+  }
+  .cover-info-card div span {
+    display: block;
+    font-size: 8pt;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 1px;
+  }
+  .cover-info-card div strong {
+    font-size: 10.5pt;
+    color: #ffffff;
+  }
+
+  .cover-footer {
+    margin-top: auto;
+    font-size: 8.5pt;
+    color: #64748b;
+  }
+
+  /* ── Content Pages ── */
+  .page {
+    padding: 40px 48px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin-bottom: 28px;
+  }
+  .page-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .page-header h2 {
+    font-size: 16pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+  }
+  .header-tag {
+    font-size: 8pt;
+    text-transform: uppercase;
+    background: #fff7ed;
+    color: #c05621;
+    border: 1px solid #fed7aa;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .section-intro {
+    font-size: 11pt;
+    color: #475569;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+
+  /* ── Steps ── */
+  .step-block {
+    margin-bottom: 26px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  .step-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .step-badge {
+    background: #0f172a;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 11pt;
+    flex-shrink: 0;
+  }
+  .step-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .instruction-list {
+    list-style: none;
+    margin-left: 46px;
+  }
+  .instruction-list li {
+    position: relative;
+    padding: 6px 0;
+    color: #334155;
+    font-size: 10pt;
+  }
+  .instruction-list li::before {
+    content: "•";
+    color: #e88e2e;
+    font-weight: bold;
+    font-size: 14pt;
+    position: absolute;
+    left: -16px;
+    top: 0px;
+  }
+
+  .highlight-box {
+    background: #f8fafc;
+    border-left: 4px solid #e88e2e;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0 10px 46px;
+  }
+  .highlight-box strong { color: #0f172a; font-size: 9.5pt; }
+  .highlight-box p { color: #475569; font-size: 9.5pt; margin-top: 2px; }
+
+  /* ── Table Styling ── */
+  .dns-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 20px;
+    font-size: 9.5pt;
+  }
+  .dns-table thead tr {
+    background: #0f172a;
+    color: #ffffff;
+  }
+  .dns-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .dns-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
+  }
+  .dns-table tr:nth-child(even) {
+    background: #f8fafc;
+  }
+  .code-cell {
+    font-family: 'SFMono-Regular', Consolas, Menlo, Monaco, monospace;
+    font-weight: 600;
+    color: #c05621;
+    background: #fff7ed;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #ffedd5;
+  }
+
+  /* ── Screenshot Layout ── */
+  .screenshot-container {
+    margin: 18px 0;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f1f5f9;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+  .screenshot-bar {
+    background: #e2e8f0;
+    padding: 8px 14px;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .screenshot-img {
+    width: 100%;
+    display: block;
+  }
+  .screenshot-caption {
+    padding: 10px 14px;
+    background: #ffffff;
+    font-size: 8.5pt;
+    color: #475569;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .callout-green {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 5px solid #22c55e;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-green div strong { color: #15803d; font-size: 10pt; }
+  .callout-green div p { color: #166534; font-size: 9.5pt; margin-top: 2px; }
+
+  .callout-blue {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #3b82f6;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-blue div strong { color: #1d4ed8; font-size: 10pt; }
+  .callout-blue div p { color: #1e40af; font-size: 9.5pt; margin-top: 2px; }
+
+  .page-break { page-break-before: always; }
+
+  .footer-meta {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- COVER PAGE                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-brand">Work<span>Vision</span></div>
+  <div class="cover-subbrand">Australia</div>
+
+  <div class="cover-badge">DNS &amp; Domain Setup</div>
+  <div class="cover-title">Subdomain Configuration Guide<br>for CRM Portal</div>
+  <div class="cover-desc">
+    Step-by-step instructions to connect <strong>crm.workvision.com.au</strong>
+    to your Railway ATS application via Cyberinfo DNS.
+  </div>
+
+  <div class="cover-info-card">
+    <div>
+      <span>Domain</span>
+      <strong>workvision.com.au</strong>
+    </div>
+    <div>
+      <span>Subdomain</span>
+      <strong>crm.workvision.com.au</strong>
+    </div>
+    <div>
+      <span>Target Platform</span>
+      <strong>Railway Cloud (ATS)</strong>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    WorkVision Australia Pty Ltd &bull; Confidential Implementation Guide &bull; September 2026
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 1: OVERVIEW & RAILWAY CONFIGURATION                       -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-title">
+      <h2>1. Overview &amp; Architecture</h2>
+    </div>
+    <span class="header-tag">Step 1 of 3</span>
+  </div>
+
+  <p class="section-intro">
+    This guide explains how to connect your dedicated CRM portal to 
+    <strong>https://crm.workvision.com.au</strong> without affecting your main public website 
+    (<strong>https://workvision.com.au</strong>).
+  </p>
+
+  <div class="callout-blue">
+    <div style="font-size:18px;">💡</div>
+    <div>
+      <strong>Your Main Website Remains 100% Intact</strong>
+      <p>
+        Your root website at <code>workvision.com.au</code> continues pointing to IP <code>27.124.125.173</code> as currently configured. 
+        We are only adding an independent <strong>subdomain record (CNAME)</strong> specifically for the CRM.
+      </p>
+    </div>
+  </div>
+
+  <div class="step-block" style="margin-top: 24px;">
+    <div class="step-head">
+      <div class="step-badge">1</div>
+      <div class="step-title">Add Custom Domain in Railway Dashboard</div>
+    </div>
+    <ul class="instruction-list">
+      <li>Log in to your <strong>Railway.com</strong> console.</li>
+      <li>Open your ATS Project and click on the primary frontend service: <code>comfortable-mindfulness-production</code>.</li>
+      <li>Go to the <strong>Settings</strong> tab along the top navigation bar.</li>
+      <li>Scroll down to the <strong>Public Networking</strong> (or Networking) section.</li>
+      <li>Click the <strong>+ Custom Domain</strong> button.</li>
+      <li>Type exactly: <code class="code-cell">crm.workvision.com.au</code> and click <strong>Add</strong>.</li>
+    </ul>
+
+    <div class="highlight-box">
+      <strong>Important:</strong>
+      <p>Railway will immediately provide you with a CNAME target (either <code>comfortable-mindfulness-production.up.railway.app</code> or a custom routing URL). You will enter this target in Cyberinfo in the next step.</p>
+    </div>
+  </div>
+
+  <div class="footer-meta">
+    <span>WorkVision ATS Subdomain Setup Guide</span>
+    <span>Page 1 of 3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2: CYBERINFO DNS CONFIGURATION (WITH SCREENSHOT)          -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <div class="page-header-title">
+      <h2>2. Adding DNS Record in Cyberinfo</h2>
+    </div>
+    <span class="header-tag">Step 2 of 3</span>
+  </div>
+
+  <p class="section-intro">
+    Log in to your domain registrar account at <strong>https://www.cyberinfo.com.au/members/</strong> 
+    and navigate to <strong>Domains &gt; Details (workvision.com.au)</strong>.
+  </p>
+
+  <!-- Screenshot Component -->
+  <div class="screenshot-container">
+    <div class="screenshot-bar">
+      <span>Cyberinfo Control Panel — Domain Details</span>
+      <span>workvision.com.au</span>
+    </div>
+    <img src="cyberinfo_dns_screenshot.png" alt="Cyberinfo DNS Management Screenshot" class="screenshot-img" />
+    <div class="screenshot-caption">
+      <strong>Action Required:</strong> In the <strong>DNS Settings</strong> card (highlighted above with the blue bar), click the menu button (≡) on the right side to add the new CNAME record.
+    </div>
+  </div>
+
+  <div class="step-block">
+    <div class="step-head">
+      <div class="step-badge">2</div>
+      <div class="step-title">Enter the CNAME Record Values</div>
+    </div>
+    <ul class="instruction-list">
+      <li>Click <strong>Add Record</strong> (or select <strong>New Record</strong> from the DNS Settings menu).</li>
+      <li>Fill in the fields exactly as defined in the table below:</li>
+    </ul>
+
+    <table class="dns-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>What to Select / Enter</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Record Type</strong></td>
+          <td><span class="code-cell">CNAME</span></td>
+          <td>Canonical Name alias record</td>
+        </tr>
+        <tr>
+          <td><strong>Host / Subdomain</strong></td>
+          <td><span class="code-cell">crm</span></td>
+          <td>Creates <em>crm.workvision.com.au</em></td>
+        </tr>
+        <tr>
+          <td><strong>Points to / Value</strong></td>
+          <td><span class="code-cell">comfortable-mindfulness-production.up.railway.app</span></td>
+          <td>Your Railway public project URL</td>
+        </tr>
+        <tr>
+          <td><strong>TTL</strong></td>
+          <td><span class="code-cell">3600</span> (or 1 Hour / Automatic)</td>
+          <td>Default time-to-live</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ul class="instruction-list">
+      <li>Click <strong>Save Changes</strong> / <strong>Add Record</strong> to submit.</li>
+    </ul>
+  </div>
+
+  <div class="footer-meta">
+    <span>WorkVision ATS Subdomain Setup Guide</span>
+    <span>Page 2 of 3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PAGE 3: VERIFICATION & DIRECT LOGIN REDIRECT                  -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <div class="page-header-title">
+      <h2>3. Verification &amp; Direct Login Access</h2>
+    </div>
+    <span class="header-tag">Step 3 of 3</span>
+  </div>
+
+  <div class="step-block">
+    <div class="step-head">
+      <div class="step-badge">3</div>
+      <div class="step-title">SSL Certificate &amp; Activation</div>
+    </div>
+    <ul class="instruction-list">
+      <li>DNS propagation generally takes between <strong>5 and 20 minutes</strong> worldwide.</li>
+      <li>Return to your <strong>Railway Project &gt; Settings &gt; Networking</strong>.</li>
+      <li>Railway automatically provisions a free SSL Certificate (HTTPS) via Let's Encrypt once it detects the CNAME.</li>
+      <li>The domain status will turn green with a <strong>Active</strong> badge.</li>
+    </ul>
+  </div>
+
+  <div class="callout-green">
+    <div style="font-size:20px;">🔒</div>
+    <div>
+      <strong>Automatic Direct Redirection to Login</strong>
+      <p>
+        The latest code update has already been applied: when anyone opens 
+        <strong>https://crm.workvision.com.au</strong> (or clicks the link directly), 
+        it will automatically redirect straight to the <strong>Login Page</strong>!
+      </p>
+    </div>
+  </div>
+
+  <div style="background: #0f172a; color: white; border-radius: 12px; padding: 22px 26px; margin: 24px 0;">
+    <div style="font-size: 11pt; font-weight: 700; color: #fbbf24; margin-bottom: 8px;">
+      PORTAL URL SUMMARY
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 10pt;">
+      <div>
+        <span style="color: #94a3b8; display: block; font-size: 8.5pt;">MAIN COMPANY WEBSITE:</span>
+        <a href="https://workvision.com.au" style="color: #ffffff; text-decoration: none; font-weight: 600;">https://workvision.com.au</a> (Unchanged)
+      </div>
+      <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+        <span style="color: #94a3b8; display: block; font-size: 8.5pt;">CRM / RECRUITMENT ATS PORTAL:</span>
+        <a href="https://crm.workvision.com.au" style="color: #e88e2e; text-decoration: none; font-weight: 700; font-size: 11pt;">https://crm.workvision.com.au</a> (Directly opens Login)
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-meta">
+    <span>WorkVision ATS Subdomain Setup Guide</span>
+    <span>Page 3 of 3</span>
+  </div>
+</div>
+
+</body>
+</html>

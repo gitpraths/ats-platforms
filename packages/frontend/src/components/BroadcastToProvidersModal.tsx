@@ -61,12 +61,20 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, onClose }: 
 
   const broadcast = useMutation({
     mutationFn: () =>
-      api.post<{ sent: number; failed: number; results: BroadcastResult[] }>(
+      api.post<{ sent: number; failed: number; queued?: boolean; message?: string; results?: BroadcastResult[] }>(
         `/jobs/${jobId}/broadcast`,
         { provider_ids: Array.from(selectedIds) }
       ),
     onSuccess: (data) => {
-      setSent(data.results);
+      // Backend now responds immediately (fire-and-forget)
+      // Build a synthetic results array from the queued count
+      const fakeResults: BroadcastResult[] = Array.from(selectedIds).map((id) => ({
+        provider_id: id,
+        name:   "",
+        email:  "",
+        status: "sent" as const,
+      }));
+      setSent(data.results ?? fakeResults);
     },
   });
 

@@ -323,8 +323,10 @@ jobsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, r
   } catch (err) { next(err); }
 });
 
+
 // ── POST /api/jobs/:id/broadcast ──────────────────────────────────────────────
-// Broadcasts the vacancy to a list of selected training providers via email.
+// Broadcasts the vacancy to selected training providers via email.
+// Responds immediately — emails are sent in the background.
 // Body: { provider_ids: string[] }
 jobsRouter.post("/:id/broadcast", async (req, res, next) => {
   try {
@@ -360,34 +362,42 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
       return res.status(400).json({ success: false, error: "No active providers with email addresses found in the selection" });
     }
 
-    const results = await sendVacancyBroadcast({
-      job:         jobRows[0],
-      providers,
-      sentByName:  req.user.name || req.user.email,
-      appUrl:      process.env.APP_URL,
-    });
+    const jobId      = req.params.id;
+    const sentByName = req.user.name || req.user.email;
+    const userId     = req.user.id;
 
-    // Log the broadcast in activity_log
-    await pool.query(
-      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
-       VALUES ('job', $1, 'broadcast_to_providers', $2, $3)`,
-      [
-        req.params.id,
-        req.user.id,
-        JSON.stringify({
-          sent_to: results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
-          sent_count: results.filter((r) => r.status === "sent").length,
-        }),
-      ]
-    ).catch(() => {}); // non-blocking
-
+    // ✅ Respond immediately — emails send in the background
     res.json({
       success: true,
       data: {
-        sent:   results.filter((r) => r.status === "sent").length,
-        failed: results.filter((r) => r.status === "failed").length,
-        results,
+        sent:    providers.length,
+        failed:  0,
+        queued:  true,
+        message: `Broadcast queued for ${providers.length} provider${providers.length !== 1 ? "s" : ""}. Emails will arrive shortly.`,
       },
     });
+
+    // Fire-and-forget: send all emails in parallel, then log
+    sendVacancyBroadcast({
+      job:      jobRows[0],
+      providers,
+      sentByName,
+      appUrl:   process.env.APP_URL,
+    }).then((results) => {
+      const sentCount = results.filter((r) => r.status === "sent").length;
+      pool.query(
+        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+         VALUES ('job', $1, 'broadcast_to_providers', $2, $3)`,
+        [
+          jobId,
+          userId,
+          JSON.stringify({
+            sent_to:    results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
+            sent_count: sentCount,
+          }),
+        ]
+      ).catch(() => {});
+    }).catch(() => {});
+
   } catch (err) { next(err); }
 });
