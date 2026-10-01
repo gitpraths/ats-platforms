@@ -103,7 +103,7 @@ export default function JobDetail() {
   >({
     queryKey: ["job-activity", id],
     queryFn:  () => api.get(`/jobs/${id}/activity`),
-    enabled:  !!id && showHistory,
+    enabled:  !!id,
   });
 
   const changeStatus = useMutation({
@@ -337,6 +337,69 @@ export default function JobDetail() {
                     </div>
                   </Link>
                 ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Broadcast & Activity Logs Card (Always Visible) ── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2 text-base">
+                <Send size={16} className="text-blue-600" /> Broadcasts & Activity Logs
+              </h3>
+              <span className="text-xs bg-slate-100 text-slate-600 font-semibold px-2.5 py-0.5 rounded-full">
+                {activity.length} event{activity.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            {activity.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                <Send size={24} className="mx-auto mb-1 opacity-30 text-slate-400" />
+                <p className="text-xs">No broadcasts sent for this vacancy yet.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Click "Broadcast to Providers" above to alert training providers.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activity.map((a) => {
+                  const isBroadcast = a.job_status === "broadcast";
+                  return (
+                    <div
+                      key={a.id}
+                      className={`p-3.5 rounded-xl border transition-all ${
+                        isBroadcast
+                          ? "bg-blue-50/50 border-blue-200"
+                          : "bg-slate-50/70 border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {isBroadcast ? (
+                            <span className="text-xs font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <Send size={11} /> Broadcast Sent
+                            </span>
+                          ) : (
+                            <span className="text-xs font-semibold text-slate-700 capitalize">
+                              Status changed to: {a.job_status}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1 flex-shrink-0">
+                          <Clock size={11} /> {fmtDateTime(a.created_at)}
+                        </span>
+                      </div>
+
+                      {a.comment && (
+                        <p className="text-xs text-slate-700 mt-2 font-medium">
+                          {a.comment}
+                        </p>
+                      )}
+
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Triggered by <strong className="text-slate-600">{a.user_name}</strong>
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
