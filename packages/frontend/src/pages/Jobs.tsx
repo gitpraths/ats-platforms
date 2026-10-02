@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   Plus, Building2, MapPin, Briefcase, ChevronRight, Users,
-  ChevronLeft, ChevronsLeft, ChevronsRight,
+  ChevronLeft, ChevronsLeft, ChevronsRight, Send, CheckSquare, Square
 } from "lucide-react";
 import { api } from "../lib/api";
 import type { Job } from "../types";
 import CreateJobDialog from "../components/CreateJobDialog";
+import BroadcastMultiModal from "../components/BroadcastMultiModal";
 
 const PER_PAGE = 10;
 
@@ -134,8 +135,10 @@ function Pagination({
 export default function Jobs() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [multiBroadcastOpen, setMultiBroadcastOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["jobs", page],
     queryFn:  () => api.list<Job>(`/jobs?page=${page}&limit=${PER_PAGE}`),
   });
@@ -153,6 +156,35 @@ export default function Jobs() {
   const safePage    = Math.min(page, totalPages);
   const paged       = jobs; // Backend already paginated
 
+  const allPageSelected  = paged.length > 0 && paged.every((j) => selectedJobIds.has(j.id));
+  const somePageSelected = paged.some((j) => selectedJobIds.has(j.id));
+
+  const toggleAllPage = () => {
+    if (allPageSelected) {
+      setSelectedJobIds((prev) => {
+        const next = new Set(prev);
+        paged.forEach((j) => next.delete(j.id));
+        return next;
+      });
+    } else {
+      setSelectedJobIds((prev) => {
+        const next = new Set(prev);
+        paged.forEach((j) => next.add(j.id));
+        return next;
+      });
+    }
+  };
+
+  const toggleJob = (id: string) => {
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectedJobs = jobs.filter((j) => selectedJobIds.has(j.id));
+
   function goTo(p: number) {
     setPage(Math.max(1, Math.min(p, totalPages)));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -162,9 +194,26 @@ export default function Jobs() {
     <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
       <div className="max-w-7xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
         {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Vacancies</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Vacancies</h1>
+          {selectedJobIds.size > 0 && (
+            <p className="text-xs text-slate-500 mt-1">
+              <strong className="text-slate-800">{selectedJobIds.size}</strong> vacanc{selectedJobIds.size !== 1 ? "ies" : "y"} selected
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Broadcast to Providers Button (Blue/Dark) */}
+          <button
+            onClick={() => setMultiBroadcastOpen(true)}
+            disabled={selectedJobIds.size === 0}
+            className="flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm"
+            title={selectedJobIds.size === 0 ? "Select at least 1 vacancy using checkboxes below" : "Broadcast selected vacancies to providers"}
+          >
+            <Send size={15} className="text-[#e88e2e]" />
+            Broadcast to Providers {selectedJobIds.size > 0 ? `(${selectedJobIds.size})` : ""}
+          </button>
           <button onClick={() => setDialogOpen(true)}
             className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
             <Plus size={16} /> Add Vacancy
@@ -187,11 +236,29 @@ export default function Jobs() {
         </div>
       ) : (
         <>
-          {/* Top pagination */}
-          <Pagination page={safePage} totalPages={totalPages} total={total}
-            perPage={PER_PAGE} onChange={goTo} />
+          {/* Top toolbar: Select All on this page + Pagination */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              onClick={toggleAllPage}
+              className="flex items-center gap-2.5 text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors"
+            >
+              {allPageSelected ? (
+                <CheckSquare size={17} className="text-[#e88e2e]" />
+              ) : somePageSelected ? (
+                <CheckSquare size={17} className="text-slate-400" />
+              ) : (
+                <Square size={17} className="text-slate-300" />
+              )}
+              {allPageSelected ? "Deselect All on Page" : "Select All on Page"}
+              <span className="font-normal text-slate-400">({selectedJobIds.size} selected total)</span>
+            </button>
 
-          {/* Vacancy cards */}
+            <Pagination page={safePage} totalPages={totalPages} total={total}
+              perPage={PER_PAGE} onChange={goTo} />
+          </div>
+
+          {/* Vacancy cards with checkboxes */}
           <div className="grid gap-3 my-3">
             {paged.map((job) => {
               const payRate       = formatPayRate(job);
@@ -202,73 +269,98 @@ export default function Jobs() {
                 : null;
               const hasCompliance = job.police_check || job.drug_alcohol_test
                 || job.wwc || job.car_required || job.wage_subsidy_required;
+              const isSelected    = selectedJobIds.has(job.id);
 
               return (
-                <Link key={job.id} to={`/jobs/${job.id}`}
-                  className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-[#e88e2e] block group">
-
-                  {/* Row 1: Title + Status */}
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <h2 className="font-semibold text-slate-900 text-lg tracking-tight group-hover:text-[#e88e2e] transition-colors">
-                      {job.title}
-                    </h2>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0 ${STATUS_STYLE[job.status] ?? "bg-slate-100 text-slate-600"}`}>
-                      {STATUS_LABEL[job.status] ?? job.status}
-                    </span>
-                  </div>
-
-                  {/* Row 2: Employer | Location | Work Type */}
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-3">
-                    {job.employer_name && (
-                      <span className="flex items-center gap-1.5">
-                        <Building2 size={13} className="text-slate-400" />{job.employer_name}
-                      </span>
-                    )}
-                    {displayLoc && (
-                      <span className="flex items-center gap-1.5">
-                        <MapPin size={13} className="text-slate-400" />{displayLoc}
-                      </span>
-                    )}
-                    {displayType && (
-                      <span className="flex items-center gap-1.5">
-                        <Briefcase size={13} className="text-slate-400" />{displayType}
-                      </span>
+                <div
+                  key={job.id}
+                  className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 flex overflow-hidden group ${
+                    isSelected
+                      ? "border-l-[#e88e2e] ring-2 ring-[#e88e2e]/20 bg-orange-50/10"
+                      : "border-l-transparent hover:border-l-[#e88e2e]"
+                  }`}
+                >
+                  {/* Selection Checkbox */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleJob(job.id);
+                    }}
+                    className="flex items-center justify-center px-4 cursor-pointer hover:bg-slate-50 border-r border-slate-100"
+                    title={isSelected ? "Deselect vacancy" : "Select vacancy for broadcast"}
+                  >
+                    {isSelected ? (
+                      <CheckSquare size={19} className="text-[#e88e2e]" />
+                    ) : (
+                      <Square size={19} className="text-slate-300 hover:text-slate-400 transition-colors" />
                     )}
                   </div>
 
-                  {/* Row 3: Industry | Pay Rate | Positions | Applicants */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    {job.industry && (
-                      <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full font-medium">
-                        {job.industry}
+                  {/* Vacancy Card Body (Clickable to detail page) */}
+                  <Link to={`/jobs/${job.id}`} className="flex-1 p-5 block">
+                    {/* Row 1: Title + Status */}
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <h2 className="font-semibold text-slate-900 text-lg tracking-tight group-hover:text-[#e88e2e] transition-colors">
+                        {job.title}
+                      </h2>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0 ${STATUS_STYLE[job.status] ?? "bg-slate-100 text-slate-600"}`}>
+                        {STATUS_LABEL[job.status] ?? job.status}
                       </span>
-                    )}
-                    {payRate && (
-                      <span className="text-sm font-semibold text-[#e88e2e]">{payRate}</span>
-                    )}
-                    {(job.positions_count ?? 0) > 0 && (
-                      <span className="text-xs text-slate-500">
-                        {job.positions_count} {job.positions_count === 1 ? "Position" : "Positions"}
-                      </span>
-                    )}
-                    <span className="ml-auto flex items-center gap-1.5 text-sm text-slate-400">
-                      <Users size={13} />
-                      {job.application_count ?? 0} Applicants
-                      <ChevronRight size={14} className="text-[#e88e2e] opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </span>
-                  </div>
-
-                  {/* Row 4: Compliance tags */}
-                  {hasCompliance && (
-                    <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100">
-                      <ComplianceTag label="Police Check"  value={job.police_check} />
-                      <ComplianceTag label="WWC"           value={job.wwc} />
-                      <ComplianceTag label="Car"           value={job.car_required} />
-                      <ComplianceTag label="Drug Test"     value={job.drug_alcohol_test} />
-                      <ComplianceTag label="Wage Subsidy"  value={job.wage_subsidy_required} />
                     </div>
-                  )}
-                </Link>
+
+                    {/* Row 2: Employer | Location | Work Type */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-3">
+                      {job.employer_name && (
+                        <span className="flex items-center gap-1.5">
+                          <Building2 size={13} className="text-slate-400" />{job.employer_name}
+                        </span>
+                      )}
+                      {displayLoc && (
+                        <span className="flex items-center gap-1.5">
+                          <MapPin size={13} className="text-slate-400" />{displayLoc}
+                        </span>
+                      )}
+                      {displayType && (
+                        <span className="flex items-center gap-1.5">
+                          <Briefcase size={13} className="text-slate-400" />{displayType}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Row 3: Industry | Pay Rate | Positions | Applicants */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {job.industry && (
+                        <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full font-medium">
+                          {job.industry}
+                        </span>
+                      )}
+                      {payRate && (
+                        <span className="text-sm font-semibold text-[#e88e2e]">{payRate}</span>
+                      )}
+                      {(job.positions_count ?? 0) > 0 && (
+                        <span className="text-xs text-slate-500">
+                          {job.positions_count} {job.positions_count === 1 ? "Position" : "Positions"}
+                        </span>
+                      )}
+                      <span className="ml-auto flex items-center gap-1.5 text-sm text-slate-400">
+                        <Users size={13} />
+                        {job.application_count ?? 0} Applicants
+                        <ChevronRight size={14} className="text-[#e88e2e] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </span>
+                    </div>
+
+                    {/* Row 4: Compliance tags */}
+                    {hasCompliance && (
+                      <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100">
+                        <ComplianceTag label="Police Check"  value={job.police_check} />
+                        <ComplianceTag label="WWC"           value={job.wwc} />
+                        <ComplianceTag label="Car"           value={job.car_required} />
+                        <ComplianceTag label="Drug Test"     value={job.drug_alcohol_test} />
+                        <ComplianceTag label="Wage Subsidy"  value={job.wage_subsidy_required} />
+                      </div>
+                    )}
+                  </Link>
+                </div>
               );
             })}
           </div>
@@ -280,6 +372,17 @@ export default function Jobs() {
       )}
 
       <CreateJobDialog isOpen={dialogOpen} onClose={() => setDialogOpen(false)} />
+
+      {multiBroadcastOpen && selectedJobs.length > 0 && (
+        <BroadcastMultiModal
+          jobs={selectedJobs}
+          onClose={() => setMultiBroadcastOpen(false)}
+          onSuccess={() => {
+            setSelectedJobIds(new Set());
+            refetch();
+          }}
+        />
+      )}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { validateJobStatusTransition } from "../utils/index.js";
-import { sendVacancyBroadcast } from "../services/email.js";
+import { sendVacancyBroadcast, sendMultiVacancyBroadcast } from "../services/email.js";
 
 export const jobsRouter = Router();
 jobsRouter.use(requireAuth);
@@ -412,6 +412,110 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
          VALUES ($1, $2, 'broadcast', $3)`,
         [jobId, userId, comment]
       ).catch(() => {});
+    }).catch(() => {});
+
+  } catch (err) { next(err); }
+});
+
+// ── POST /api/jobs/broadcast-multi ────────────────────────────────────────────
+// Broadcasts multiple selected vacancies to training providers via one consolidated email digest.
+// Body: { job_ids: string[], provider_ids: string[], custom_subject?: string, custom_message?: string, custom_intro?: string }
+jobsRouter.post("/broadcast-multi", async (req, res, next) => {
+  try {
+    const { job_ids, provider_ids, custom_subject, custom_message, custom_intro } = req.body;
+    if (!Array.isArray(job_ids) || job_ids.length === 0) {
+      return res.status(400).json({ success: false, error: "job_ids must be a non-empty array" });
+    }
+    if (!Array.isArray(provider_ids) || provider_ids.length === 0) {
+      return res.status(400).json({ success: false, error: "provider_ids must be a non-empty array" });
+    }
+
+    // Fetch full details for all selected jobs
+    const { rows: jobs } = await pool.query(
+      `SELECT j.*,
+              e.name  AS employer_name,
+              l.city, l.state, l.country, l.is_remote
+       FROM jobs j
+       LEFT JOIN employers  e ON e.id = j.employer_id
+       LEFT JOIN locations  l ON l.id = j.location_id
+       WHERE j.id = ANY($1::uuid[])
+       ORDER BY j.created_at DESC`,
+      [job_ids]
+    );
+
+    if (jobs.length === 0) {
+      return res.status(404).json({ success: false, error: "None of the selected vacancies were found" });
+    }
+
+    // Fetch selected active providers (only those with an email address)
+    const { rows: providers } = await pool.query(
+      `SELECT id, name, contact_name, email
+       FROM providers
+       WHERE id = ANY($1::uuid[])
+         AND is_active = true
+         AND email IS NOT NULL`,
+      [provider_ids]
+    );
+
+    if (providers.length === 0) {
+      return res.status(400).json({ success: false, error: "No active providers with email addresses found in the selection" });
+    }
+
+    const sentByName = req.user.name || req.user.email;
+    const userId     = req.user.id;
+
+    // Respond immediately (fire-and-forget sending)
+    res.json({
+      success: true,
+      data: {
+        sent:          providers.length,
+        jobs_count:    jobs.length,
+        queued:        true,
+        message:       `Consolidated broadcast with ${jobs.length} vacancies queued for ${providers.length} provider${providers.length !== 1 ? "s" : ""}.`,
+      },
+    });
+
+    // Fire and forget emails
+    sendMultiVacancyBroadcast({
+      jobs,
+      providers,
+      sentByName,
+      appUrl:        process.env.APP_URL,
+      customSubject: custom_subject,
+      customMessage: custom_message,
+      customIntro:   custom_intro,
+    }).then((results) => {
+      const sentCount = results.filter((r) => r.status === "sent").length;
+
+      // Log in activity_log
+      pool.query(
+        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+         VALUES ('job', $1, 'broadcast_multi_to_providers', $2, $3)`,
+        [
+          jobs[0].id,
+          userId,
+          JSON.stringify({
+            job_ids:        jobs.map((j) => j.id),
+            job_titles:     jobs.map((j) => j.title),
+            sent_to:        results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
+            sent_count:     sentCount,
+            custom_subject: custom_subject || null,
+          }),
+        ]
+      ).catch(() => {});
+
+      // Add timeline entry for each individual job
+      const providerNames = results.map((r) => r.name).filter(Boolean).slice(0, 3).join(", ");
+      const moreSuffix = results.length > 3 ? ` +${results.length - 3} more` : "";
+      const comment = `Multi-vacancy broadcast (${jobs.length} roles) sent to ${results.length} provider${results.length !== 1 ? "s" : ""} (${providerNames}${moreSuffix})`;
+
+      for (const j of jobs) {
+        pool.query(
+          `INSERT INTO job_activity (job_id, user_id, job_status, comment)
+           VALUES ($1, $2, 'broadcast', $3)`,
+          [j.id, userId, comment]
+        ).catch(() => {});
+      }
     }).catch(() => {});
 
   } catch (err) { next(err); }
