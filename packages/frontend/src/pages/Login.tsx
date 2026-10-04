@@ -72,10 +72,6 @@ export default function Login() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
-        <p className="mt-6 text-xs text-slate-400 text-center">
-          WorkVision CRM: admin@workvision.com.au / password123
-        </p>
       </div>
     </div>
   );
