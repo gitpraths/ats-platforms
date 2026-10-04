@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=packages/backend\" \"npm run dev --workspace=packages/frontend\"",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces",
     "db:migrate": "psql postgresql://ats_user:ats_pass@localhost:5432/ats_db -f database/001-create-tables.sql -f database/003-alter-tables.sql",
     "db:seed": "psql postgresql://ats_user:ats_pass@localhost:5432/ats_db -f database/002-seed-data.sql",
