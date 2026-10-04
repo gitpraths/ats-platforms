@@ -1,4 +1,4 @@
-# Setup Guide — My ATS Platform
+# Setup Guide — WorkVision CRM (crm.workvision.com.au)
 
 Step-by-step instructions to get the project running locally from scratch.
 
@@ -22,7 +22,7 @@ Make sure the following are installed before starting:
 ## Step 1 — Navigate to the project
 
 ```bash
-cd /Users/deeproot/data/21MARCH2026/my-ats-platform
+cd crm.workvision.com.au
 ```
 
 ---
@@ -184,7 +184,7 @@ After seeding, the app comes pre-loaded with:
 
 ## Available Scripts
 
-Run from the project root (`my-ats-platform/`):
+Run from the project root (`crm.workvision.com.au/`):
 
 ```bash
 npm run dev          # Start backend + frontend together
@@ -283,7 +283,7 @@ npm install
 ## Folder Structure (quick reference)
 
 ```
-my-ats-platform/
+crm.workvision.com.au/
 ├── packages/
 │   ├── backend/            Node.js + Express API
 │   │   └── src/

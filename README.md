@@ -1,6 +1,6 @@
-# My ATS Platform
+# WorkVision CRM (crm.workvision.com.au)
 
-A full-stack **Applicant Tracking System (ATS)** built with Node.js, React, and PostgreSQL. Manage job postings, candidates, applications, and hiring pipelines — with AI-powered features powered by the Claude API.
+A full-stack Recruitment & Training CRM and Applicant Tracking System built for WorkVision Australia. Accessible at **[crm.workvision.com.au](https://crm.workvision.com.au)**. Manage vacancies, candidates, training cohorts, placements, employers, and hiring pipelines — with AI-assisted screening and workflows.
 
 ---
 
@@ -65,7 +65,7 @@ A full-stack **Applicant Tracking System (ATS)** built with Node.js, React, and 
 ## Project Structure
 
 ```
-my-ats-platform/
+crm.workvision.com.au/
 ├── packages/
 │   ├── backend/                  Express.js REST API
 │   │   └── src/
@@ -143,8 +143,8 @@ my-ats-platform/
 ### 1. Clone and install
 
 ```bash
-git clone <repo-url>
-cd my-ats-platform
+git clone https://github.com/workvisionau/crm.workvision.com.au.git
+cd crm.workvision.com.au
 npm install
 ```
 

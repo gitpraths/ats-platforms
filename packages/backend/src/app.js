@@ -64,9 +64,9 @@ const swaggerSpec = swaggerJsdoc({
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "My ATS Platform API",
+      title: "WorkVision CRM API (crm.workvision.com.au)",
       version: "0.1.0",
-      description: "Applicant Tracking System REST API",
+      description: "WorkVision Australia Recruitment & Training CRM REST API",
     },
     servers: [{ url: `http://localhost:${process.env.PORT || 3001}/api` }],
     components: {

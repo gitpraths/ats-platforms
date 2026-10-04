@@ -40,7 +40,7 @@ export async function sendEmail({ to, subject, html, text }) {
   try {
     const t = await getTransporter();
     const info = await t.sendMail({
-      from: process.env.EMAIL_FROM || "ATS Platform <noreply@myats.dev>",
+      from: process.env.EMAIL_FROM || "WorkVision CRM <noreply@workvision.com.au>",
       to,
       subject,
       html,
