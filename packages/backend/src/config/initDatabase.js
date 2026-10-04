@@ -28,18 +28,15 @@ export async function initDatabase() {
       logger.info("[DB Init] Core database tables exist.");
     }
 
-    // 2. Ensure initial admin user exists
-    const { rows: userCount } = await pool.query("SELECT COUNT(*) AS count FROM users;");
-    if (parseInt(userCount[0].count, 10) === 0) {
-      const passwordHash = await bcrypt.hash("Password123!", 10);
-      await pool.query(
-        `INSERT INTO users (name, email, password_hash, role)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (email) DO NOTHING;`,
-        ["WorkVision Admin", "admin@workvision.com.au", passwordHash, "admin"]
-      );
-      logger.info("[DB Init] Default admin user created (admin@workvision.com.au / Password123!)");
-    }
+    // 2. Ensure initial admin user exists with password123
+    const passwordHash = await bcrypt.hash("password123", 10);
+    await pool.query(
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, is_active = true;`,
+      ["WorkVision Admin", "admin@workvision.com.au", passwordHash, "admin"]
+    );
+    logger.info("[DB Init] Admin user active: admin@workvision.com.au / password123");
 
     // 3. Ensure master lookups exist
     await pool.query(`

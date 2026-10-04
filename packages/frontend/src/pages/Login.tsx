@@ -74,7 +74,7 @@ export default function Login() {
         </form>
 
         <p className="mt-6 text-xs text-slate-400 text-center">
-          Demo: admin@myats.com / password123
+          WorkVision CRM: admin@workvision.com.au / password123
         </p>
       </div>
     </div>

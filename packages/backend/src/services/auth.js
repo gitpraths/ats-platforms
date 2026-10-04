@@ -4,7 +4,7 @@ import { pool } from "../config/db.js";
 
 export async function loginUser(email, password) {
   const { rows } = await pool.query(
-    "SELECT * FROM users WHERE email = $1 AND is_active = true",
+    "SELECT * FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) AND is_active = true",
     [email]
   );
   const user = rows[0];
