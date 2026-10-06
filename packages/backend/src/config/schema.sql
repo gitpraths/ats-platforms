@@ -698,3 +698,16 @@ CREATE TABLE IF NOT EXISTS screening_results (
   completion_tokens INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- >>> 018-candidate-and-employer-fields.sql
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS intention_to_work TEXT DEFAULT 'suitable';
+
+ALTER TABLE candidates
+  ALTER COLUMN email DROP NOT NULL;
+
+ALTER TABLE employers
+  ADD COLUMN IF NOT EXISTS postcode VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS suburb   VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS state    VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS abn      VARCHAR(50);

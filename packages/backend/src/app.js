@@ -49,7 +49,17 @@ pool.query(`
     ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 
   ALTER TABLE candidates
-    ADD COLUMN IF NOT EXISTS availability TEXT;
+    ADD COLUMN IF NOT EXISTS availability TEXT,
+    ADD COLUMN IF NOT EXISTS intention_to_work TEXT DEFAULT 'suitable';
+
+  ALTER TABLE candidates
+    ALTER COLUMN email DROP NOT NULL;
+
+  ALTER TABLE employers
+    ADD COLUMN IF NOT EXISTS postcode VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS suburb   VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS state    VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS abn      VARCHAR(50);
 
   ALTER TABLE jobs
     ADD COLUMN IF NOT EXISTS sourced_by_user_id UUID REFERENCES users(id),
