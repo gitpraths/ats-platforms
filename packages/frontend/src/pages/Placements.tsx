@@ -356,7 +356,7 @@ export default function Placements() {
                   onChange={(e) => setCreateForm((f) => ({ ...f, employer_id: e.target.value }))}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                   <option value="">No employer</option>
-                  {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+                  {employers.filter((e) => e.is_active !== false).map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </div>
               <div>

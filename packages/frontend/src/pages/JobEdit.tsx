@@ -276,7 +276,7 @@ export default function JobEdit() {
               <Label>Employer</Label>
               <select value={form.employer_id} onChange={(e) => set("employer_id", e.target.value)} className={cls}>
                 <option value="">No Employer</option>
-                {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+                {employers.filter((e) => e.is_active !== false).map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
               </select>
             </div>
             <div>

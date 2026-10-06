@@ -287,7 +287,7 @@ function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }:
         <Label>Employer</Label>
         <select value={form.employer_id} onChange={(e) => set("employer_id", e.target.value)} className={cls}>
           <option value="">— Select Employer —</option>
-          {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+          {employers.filter((e) => e.is_active !== false).map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
         <p className="text-xs text-slate-400 mt-1">
           Not listed? <a href="/employers/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Employer</a>
