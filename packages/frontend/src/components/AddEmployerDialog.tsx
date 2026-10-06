@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Save } from "lucide-react";
+import { X, Save, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { Employer } from "../types";
@@ -12,7 +12,8 @@ interface Props {
 
 const EMPTY_FORM = {
   name: "", industry: "", website: "", description: "",
-  contact_name: "", contact_email: "", contact_phone: "", address: "", is_active: true,
+  contact_name: "", contact_email: "", contact_phone: "", address: "",
+  postcode: "", suburb: "", state: "", abn: "", is_active: true,
 };
 
 export default function AddEmployerDialog({ isOpen, onClose }: Props) {
@@ -21,12 +22,34 @@ export default function AddEmployerDialog({ isOpen, onClose }: Props) {
 
   const [form, setForm]   = useState(EMPTY_FORM);
   const [error, setError] = useState("");
+  const [postcodeLoading, setPostcodeLoading] = useState(false);
+  const [suburbOptions, setSuburbOptions] = useState<{ suburb: string; state: string }[]>([]);
+
+  const lookupPostcode = useCallback(async (postcode: string) => {
+    if (postcode.length !== 4) return;
+    setPostcodeLoading(true);
+    try {
+      const res = await api.get<{ suburb: string; state: string }[]>(`/postcodes/${postcode}`);
+      if (res && res.length === 1) {
+        setForm((f) => ({ ...f, suburb: res[0].suburb, state: res[0].state }));
+        setSuburbOptions([]);
+      } else if (res && res.length > 1) {
+        setSuburbOptions(res);
+        setForm((f) => ({ ...f, suburb: "", state: res[0].state }));
+      }
+    } catch {
+      // Ignore errors
+    } finally {
+      setPostcodeLoading(false);
+    }
+  }, []);
 
   // Reset form whenever dialog opens
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM);
       setError("");
+      setSuburbOptions([]);
     }
   }, [isOpen]);
 
@@ -170,17 +193,98 @@ export default function AddEmployerDialog({ isOpen, onClose }: Props) {
                     className={inputCls}
                   />
                 </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls}>ABN</label>
+                    <a
+                      href="https://abr.business.gov.au/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-[#e88e2e] hover:underline flex items-center gap-0.5"
+                    >
+                      Lookup <ExternalLink size={10} />
+                    </a>
+                  </div>
+                  <input
+                    value={form.abn}
+                    onChange={(e) => set("abn", e.target.value)}
+                    placeholder="e.g. 51 824 753 556"
+                    className={inputCls}
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className={labelCls}>Address</label>
-              <textarea
-                value={form.address}
-                onChange={(e) => set("address", e.target.value)}
-                rows={2}
-                className={inputCls}
-              />
+            {/* Location */}
+            <div className="border-t border-slate-100 pt-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                Location
+              </p>
+              <div className="grid sm:grid-cols-3 gap-4 mb-3">
+                <div>
+                  <label className={labelCls}>Postcode</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      maxLength={4}
+                      value={form.postcode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        set("postcode", val);
+                        if (val.length === 4) lookupPostcode(val);
+                      }}
+                      className={`${inputCls} pr-8`}
+                      placeholder="e.g. 3000"
+                    />
+                    {postcodeLoading && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#e88e2e] border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Suburb</label>
+                  {suburbOptions.length > 0 ? (
+                    <select
+                      value={form.suburb}
+                      onChange={(e) => set("suburb", e.target.value)}
+                      className={inputCls}
+                    >
+                      <option value="" disabled>Select suburb...</option>
+                      {suburbOptions.map((opt) => (
+                        <option key={opt.suburb} value={opt.suburb}>{opt.suburb}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={form.suburb}
+                      onChange={(e) => set("suburb", e.target.value)}
+                      className={`${inputCls} bg-slate-50`}
+                      placeholder="Auto-filled"
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className={labelCls}>State</label>
+                  <input
+                    type="text"
+                    value={form.state}
+                    onChange={(e) => set("state", e.target.value.toUpperCase())}
+                    className={`${inputCls} bg-slate-50`}
+                    placeholder="e.g. VIC"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Street Address</label>
+                <textarea
+                  value={form.address}
+                  onChange={(e) => set("address", e.target.value)}
+                  rows={2}
+                  className={inputCls}
+                  placeholder="e.g. Level 1/456 Spencer Street"
+                />
+              </div>
             </div>
 
             {/* Footer actions */}
