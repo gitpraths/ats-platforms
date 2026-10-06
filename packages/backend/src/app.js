@@ -65,6 +65,8 @@ pool.query(`
     ADD COLUMN IF NOT EXISTS sourced_by_user_id UUID REFERENCES users(id),
     ADD COLUMN IF NOT EXISTS sourced_by_type TEXT,
     ADD COLUMN IF NOT EXISTS sourced_by_custom_name TEXT;
+
+  DELETE FROM employers WHERE id = '8712b284-ca4b-429b-a1bf-9843622f892d';
 `).catch((err) => console.error("[migration] schema updates:", err.message));
 
 const app = express();
