@@ -18,7 +18,7 @@ const ROLE_BADGE: Record<string, string> = {
 };
 
 export default function Profile() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, setUser } = useAuth();
   const queryClient        = useQueryClient();
   const fileRef            = useRef<HTMLInputElement>(null);
 
@@ -43,17 +43,29 @@ export default function Profile() {
   });
 
   const uploadAvatar = useMutation({
-    mutationFn: (file: File) => {
+    mutationFn: async (file: File) => {
       const form = new FormData();
       form.append("avatar", file);
-      return fetch(`${BASE_URL}/api/users/${authUser!.id}/avatar`, {
+      const res = await fetch(`${BASE_URL}/api/users/${authUser!.id}/avatar`, {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: form,
-      }).then((r) => r.json());
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to upload avatar");
+      }
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
+      if (data?.data?.avatar_url && authUser) {
+        setUser({ ...authUser, avatar_url: data.data.avatar_url });
+      }
+      setPreview(null);
+    },
+    onError: (err: Error) => {
+      setError(err.message);
       setPreview(null);
     },
   });
@@ -66,7 +78,8 @@ export default function Profile() {
   }
 
   const displayName  = user?.name ?? authUser?.name ?? "";
-  const avatarSrc    = preview ?? (user?.avatar_url ? `${BASE_URL}${user.avatar_url}` : null);
+  const avatarTimestamp = user?.updated_at ? new Date(user.updated_at).getTime() : "";
+  const avatarSrc    = preview ?? (user?.avatar_url ? `${BASE_URL}${user.avatar_url}${avatarTimestamp ? `?t=${avatarTimestamp}` : ""}` : null);
   const initials     = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (

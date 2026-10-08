@@ -8,12 +8,9 @@ import { pool } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { hashPassword } from "../services/auth.js";
 
-export const usersRouter = Router();
-usersRouter.use(requireAuth);
-
 // ── Avatar setup ──────────────────────────────────────────────────────────────
 const UPLOAD_DIR  = process.env.UPLOAD_DIR || "uploads";
-const AVATAR_DIR  = join(UPLOAD_DIR, "avatars");
+const AVATAR_DIR  = join(process.cwd(), UPLOAD_DIR, "avatars");
 if (!existsSync(AVATAR_DIR)) mkdirSync(AVATAR_DIR, { recursive: true });
 
 const ALLOWED_MIME   = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -29,6 +26,27 @@ const upload = multer({
     else cb(new Error("Only JPEG, PNG, WebP, and GIF images are allowed"));
   },
 });
+
+export const usersRouter = Router();
+
+// ── GET /api/users/:id/avatar (Publicly accessible for <img> tags) ─────────────
+usersRouter.get("/:id/avatar", async (req, res, next) => {
+  try {
+    const { rows } = await pool.query("SELECT id FROM users WHERE id = $1", [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    const filePath = join(AVATAR_DIR, `${req.params.id}.webp`);
+    if (!existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: "Avatar not found" });
+    }
+
+    res.set("Content-Type",  "image/webp");
+    res.set("Cache-Control", "public, max-age=60, must-revalidate");
+    res.sendFile(filePath);
+  } catch (err) { next(err); }
+});
+
+usersRouter.use(requireAuth);
 
 // ── GET /api/users/me ─────────────────────────────────────────────────────────
 usersRouter.get("/me", async (req, res, next) => {
@@ -114,24 +132,6 @@ usersRouter.post("/:id/avatar", (req, res, next) => {
       res.json({ success: true, data: { avatar_url: avatarUrl } });
     } catch (e) { next(e); }
   });
-});
-
-// ── GET /api/users/:id/avatar ─────────────────────────────────────────────────
-// Doc 0012: serve image with correct Content-Type and Cache-Control
-usersRouter.get("/:id/avatar", async (req, res, next) => {
-  try {
-    const { rows } = await pool.query("SELECT id FROM users WHERE id = $1", [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
-
-    const filePath = join(process.cwd(), AVATAR_DIR, `${req.params.id}.webp`);
-    if (!existsSync(filePath)) {
-      return res.status(404).json({ success: false, error: "Avatar not found" });
-    }
-
-    res.set("Content-Type",  "image/webp");
-    res.set("Cache-Control", "public, max-age=86400");
-    res.sendFile(filePath);
-  } catch (err) { next(err); }
 });
 
 // ── GET /api/users ────────────────────────────────────────────────────────────
