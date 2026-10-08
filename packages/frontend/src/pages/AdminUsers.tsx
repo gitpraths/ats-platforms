@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Pencil, Trash2, Check, X, Search } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Check, X, Search, KeyRound } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { User, UserRole } from "../types";
 import CreateUserDialog from "../components/CreateUserDialog";
+import ResetPasswordModal from "../components/ResetPasswordModal";
 
 const ROLES: { value: UserRole; label: string; badge: string }[] = [
   { value: "admin",           label: "Admin",           badge: "border border-red-400 text-red-500 bg-transparent" },
@@ -33,6 +34,7 @@ export default function AdminUsers() {
   const queryClient    = useQueryClient();
   const { user: me }   = useAuth();
   const [showCreate, setShowCreate] = useState(false);
+  const [resettingUser, setResettingUser] = useState<User | null>(null);
   const [editing, setEditing]       = useState<EditState | null>(null);
   const [editError, setEditError]   = useState("");
   const [q, setQ]                   = useState("");
@@ -226,6 +228,13 @@ export default function AdminUsers() {
                           >
                             <Pencil size={14} />
                           </button>
+                          <button
+                            onClick={() => setResettingUser(u)}
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded"
+                            title="Reset Password"
+                          >
+                            <KeyRound size={14} />
+                          </button>
                           {u.id !== me?.id && (
                             <button
                               onClick={() => { if (confirm(`Delete user "${u.name}"?`)) deleteUser.mutate(u.id); }}
@@ -248,6 +257,13 @@ export default function AdminUsers() {
       </div>
 
       {showCreate && <CreateUserDialog onClose={() => setShowCreate(false)} />}
+      {resettingUser && (
+        <ResetPasswordModal
+          user={resettingUser}
+          onClose={() => setResettingUser(null)}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ["admin-users"] })}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import multer from "multer";
 import sharp from "sharp";
+import bcrypt from "bcrypt";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { hashPassword } from "../services/auth.js";
@@ -52,6 +53,32 @@ usersRouter.put("/me", async (req, res, next) => {
       [name, req.user.id]
     );
     res.json({ success: true, data: rows[0] });
+  } catch (err) { next(err); }
+});
+
+// ── PUT /api/users/me/password ───────────────────────────────────────────────
+usersRouter.put("/me/password", async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: "Current password and new password are required" });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, error: "New password must be at least 8 characters" });
+    }
+
+    const { rows } = await pool.query("SELECT password_hash FROM users WHERE id = $1", [req.user.id]);
+    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+    if (!valid) {
+      return res.status(400).json({ success: false, error: "Current password is incorrect" });
+    }
+
+    const newHash = await hashPassword(newPassword);
+    await pool.query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [newHash, req.user.id]);
+
+    res.json({ success: true, message: "Password changed successfully" });
   } catch (err) { next(err); }
 });
 
@@ -160,6 +187,24 @@ usersRouter.put("/:id", requireRole("admin"), async (req, res, next) => {
     if (err.code === "23505") return res.status(409).json({ success: false, error: "Email already in use" });
     next(err);
   }
+});
+
+// ── PUT /api/users/:id/password ───────────────────────────────────────────────
+usersRouter.put("/:id/password", requireRole("admin"), async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 8) {
+      return res.status(400).json({ success: false, error: "Password must be at least 8 characters" });
+    }
+
+    const { rows } = await pool.query("SELECT id FROM users WHERE id = $1", [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    const password_hash = await hashPassword(password);
+    await pool.query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [password_hash, req.params.id]);
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (err) { next(err); }
 });
 
 // ── DELETE /api/users/:id ─────────────────────────────────────────────────────

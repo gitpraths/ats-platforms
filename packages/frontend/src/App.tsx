@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus, Table2 } from "lucide-react";
+import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus, Table2, KeyRound } from "lucide-react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import SessionExpiringDialog from "./components/SessionExpiringDialog";
 import { Toaster } from "./components/ui/toaster";
 import CreateJobDialog from "./components/CreateJobDialog";
+import ChangePasswordModal from "./components/ChangePasswordModal";
 import Login            from "./pages/Login";
 import Dashboard        from "./pages/Dashboard";
 import Jobs             from "./pages/Jobs";
@@ -91,6 +92,7 @@ function AdminMenu() {
 function ProfileMenu() {
   const { user, logout } = useAuth();
   const [open, setOpen]  = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const ref              = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,11 +136,21 @@ function ProfileMenu() {
             className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
             <User size={14} /> Profile
           </NavLink>
+          <button
+            onClick={() => { setOpen(false); setShowChangePassword(true); }}
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"
+          >
+            <KeyRound size={14} /> Change Password
+          </button>
           <button onClick={logout}
             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
             Sign out
           </button>
         </div>
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
       )}
     </div>
   );

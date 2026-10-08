@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff, Check } from "lucide-react";
 import { api } from "../lib/api";
 import type { User, UserRole } from "../types";
 
@@ -20,7 +20,13 @@ interface Props {
 export default function CreateUserDialog({ onClose }: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "recruiter" as UserRole });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
+
+  const isLengthValid = form.password.length >= 8;
+  const isMatch = form.password.length > 0 && form.password === confirmPassword;
 
   const create = useMutation({
     mutationFn: () => api.post<User>("/users", form),
@@ -36,6 +42,14 @@ export default function CreateUserDialog({ onClose }: Props) {
     setError("");
     if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
       setError("Name, email and password are required.");
+      return;
+    }
+    if (!isLengthValid) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (!isMatch) {
+      setError("Passwords do not match.");
       return;
     }
     create.mutate();
@@ -77,13 +91,55 @@ export default function CreateUserDialog({ onClose }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-              placeholder="Min. 8 characters"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="Min. 8 characters"
+                className="w-full border rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {form.password.length > 0 && (
+              <p className={`text-xs mt-1 ${isLengthValid ? "text-green-600" : "text-gray-500"}`}>
+                At least 8 characters
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Re-enter Password</label>
+            <div className="relative">
+              <input
+                type={showConfirm ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                className="w-full border rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+              >
+                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {confirmPassword.length > 0 && (
+              <p className={`text-xs mt-1 flex items-center gap-1 ${isMatch ? "text-green-600" : "text-red-500"}`}>
+                {isMatch ? <Check size={12} /> : <X size={12} />}
+                {isMatch ? "Passwords match" : "Passwords do not match"}
+              </p>
+            )}
           </div>
 
           <div>
@@ -109,8 +165,8 @@ export default function CreateUserDialog({ onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={create.isPending}
-              className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              disabled={create.isPending || !isLengthValid || !isMatch}
+              className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {create.isPending ? "Creating..." : "Create User"}
             </button>
