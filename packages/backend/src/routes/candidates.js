@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -69,7 +69,7 @@ candidatesRouter.get("/check-duplicate", async (req, res, next) => {
 });
 
 // ── GET /api/candidates ──────────────────────────────────
-candidatesRouter.get("/", async (req, res, next) => {
+candidatesRouter.get("/", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, q, search, work_status, provider_id } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -124,7 +124,7 @@ candidatesRouter.get("/", async (req, res, next) => {
 });
 
 // ── GET /api/candidates/:id ────────────────────────────
-candidatesRouter.get("/:id", async (req, res, next) => {
+candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT c.*,
@@ -182,7 +182,7 @@ candidatesRouter.get("/:id", async (req, res, next) => {
 });
 
 // ── POST /api/candidates ─────────────────────────────────
-candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+candidatesRouter.post("/", requirePermission("candidates:create"), async (req, res, next) => {
   try {
     const {
       first_name, last_name, name,
@@ -284,7 +284,7 @@ candidatesRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"),
 });
 
 // ── PUT /api/candidates/:id ──────────────────────────────
-candidatesRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, res, next) => {
   try {
     const {
       first_name, last_name, name,
@@ -540,8 +540,8 @@ candidatesRouter.delete(
   }
 );
 
-// DELETE /api/candidates/:id — admin/recruiter_admin only
-candidatesRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+// DELETE /api/candidates/:id
+candidatesRouter.delete("/:id", requirePermission("candidates:delete"), async (req, res, next) => {
   try {
     const { rows } = await pool.query("DELETE FROM candidates WHERE id = $1 RETURNING id", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, error: "Candidate not found" });

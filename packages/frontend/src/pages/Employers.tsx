@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Eye, Edit2, Briefcase } from "lucide-react";
+import { Plus, Search, Eye, Edit2, Briefcase, Lock } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,6 +11,7 @@ import Pagination from "../components/Pagination";
 export default function Employers() {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
+  const canView = hasPermission("employers:view");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -24,6 +25,7 @@ export default function Employers() {
       api.list<Employer>(
         `/employers?page=${page}&limit=20&search=${encodeURIComponent(search)}&industry=${encodeURIComponent(industry)}`
       ),
+    enabled: canView,
   });
 
   const deactivate = useMutation({
@@ -33,6 +35,22 @@ export default function Employers() {
 
   const employers = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
+
+  if (!canView) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto mt-12">
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">
+            You do not have permission to view the employer directory. Please contact your system administrator if you require access.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">

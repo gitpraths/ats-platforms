@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import { validateJobStatusTransition } from "../utils/index.js";
 import { sendVacancyBroadcast, sendMultiVacancyBroadcast } from "../services/email.js";
 
@@ -32,7 +32,7 @@ async function getRecruiters(jobId) {
 }
 
 // ── GET /api/jobs ─────────────────────────────────────────────────────────────
-jobsRouter.get("/", async (req, res, next) => {
+jobsRouter.get("/", requirePermission("jobs:view"), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, status, department_id, location_id, job_type, work_model, team, title } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -87,7 +87,7 @@ jobsRouter.get("/", async (req, res, next) => {
 });
 
 // ── GET /api/jobs/:id ─────────────────────────────────────────────────────────
-jobsRouter.get("/:id", async (req, res, next) => {
+jobsRouter.get("/:id", requirePermission("jobs:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT j.*,
@@ -111,7 +111,7 @@ jobsRouter.get("/:id", async (req, res, next) => {
 });
 
 // ── POST /api/jobs ────────────────────────────────────────────────────────────
-jobsRouter.post("/", async (req, res, next) => {
+jobsRouter.post("/", requirePermission("jobs:create"), async (req, res, next) => {
   try {
     const {
       title, description,
@@ -170,7 +170,7 @@ jobsRouter.post("/", async (req, res, next) => {
 });
 
 // ── PATCH /api/jobs/:id ───────────────────────────────────────────────────────
-jobsRouter.patch("/:id", async (req, res, next) => {
+jobsRouter.patch("/:id", requirePermission("jobs:edit"), async (req, res, next) => {
   try {
     const allowed = [
       "title", "description", "department_id", "location_id",
@@ -315,7 +315,7 @@ jobsRouter.get("/:id/activity", async (req, res, next) => {
 });
 
 // ── DELETE /api/jobs/:id ──────────────────────────────────────────────────────
-jobsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+jobsRouter.delete("/:id", requirePermission("jobs:delete"), async (req, res, next) => {
   try {
     const { rows: jobRows } = await pool.query("SELECT created_by FROM jobs WHERE id = $1", [req.params.id]);
     if (!jobRows[0]) return res.status(404).json({ success: false, error: "Job not found" });

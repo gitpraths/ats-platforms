@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   Plus, Building2, MapPin, Briefcase, ChevronRight, Users,
-  ChevronLeft, ChevronsLeft, ChevronsRight, Send, CheckSquare, Square
+  ChevronLeft, ChevronsLeft, ChevronsRight, Send, CheckSquare, Square, Lock
 } from "lucide-react";
 import { api } from "../lib/api";
 import type { Job } from "../types";
@@ -135,6 +135,7 @@ function Pagination({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Jobs() {
   const { hasPermission } = usePermissions();
+  const canView = hasPermission("jobs:view");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
@@ -143,6 +144,7 @@ export default function Jobs() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["jobs", page],
     queryFn:  () => api.list<Job>(`/jobs?page=${page}&limit=${PER_PAGE}`),
+    enabled:  canView,
   });
   
   const jobs = data?.data ?? [];
@@ -199,6 +201,22 @@ export default function Jobs() {
   function goTo(p: number) {
     setPage(Math.max(1, Math.min(p, totalPages)));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (!canView) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto mt-12">
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">
+            You do not have permission to view vacancies. Please contact your system administrator if you require access.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

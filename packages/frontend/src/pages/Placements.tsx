@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, CheckCircle, Mail, FileText, X } from "lucide-react";
+import { Plus, CheckCircle, Mail, FileText, X, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, Candidate, Employer, Provider, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 
 import Pagination from "../components/Pagination";
 import SearchableSelect from "../components/SearchableSelect";
@@ -36,9 +37,11 @@ function weeksOnPlacement(startDate: string): number {
 
 export default function Placements() {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canView = hasPermission("placements:view");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const canCreate = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin" || user?.role === "recruiter";
+  const canCreate = hasPermission("placements:create");
 
   const [filterEmployer, setFilterEmployer] = useState("");
   const [filterProvider, setFilterProvider] = useState("");
@@ -65,6 +68,7 @@ export default function Placements() {
   const { data: placementsData, isLoading } = useQuery({
     queryKey: ["placements", filterEmployer, filterProvider, from, to, page],
     queryFn: () => api.list<Placement>(`/placements?${params}`),
+    enabled: canView,
   });
 
   const { data: candidatesResult } = useQuery({
@@ -125,6 +129,22 @@ export default function Placements() {
     }
     setCreateError("");
     createPlacement.mutate(createForm);
+  }
+
+  if (!canView) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto mt-12">
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">
+            You do not have permission to view placements. Please contact your system administrator if you require access.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

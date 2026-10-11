@@ -21,6 +21,7 @@ export interface UseCandidatePoolOptions {
   interview_date?:  string;
   ets_date?:        string;
   placement_date?:  string;
+  enabled?:         boolean;
 }
 
 export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
@@ -30,9 +31,11 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
     name_q = "", email_q = "", phone_q = "", provider_q = "", industry_q = "", comments_q = "",
     referral_date = "", training_date = "",
     interview_date = "", ets_date = "", placement_date = "",
+    enabled = true,
   } = options;
 
   return useQuery<{ data: CandidatePoolRow[]; meta: CandidatePoolMeta }>({
+    enabled,
     queryKey: ["candidate-pool", {
       tab, page, q, date_from,
       name_q, email_q, phone_q, provider_q, industry_q, comments_q,

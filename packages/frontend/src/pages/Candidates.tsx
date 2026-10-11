@@ -1,7 +1,7 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
 import { displayEmail, fmtDate, validateNotBeforeApplied } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
-import { List, Grid, Calendar, X, Pencil, Info, FilterX } from "lucide-react";
+import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
@@ -384,8 +384,7 @@ export default function Candidates() {
 
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission("candidates:create");
-
-
+  const canView   = hasPermission("candidates:view");
 
   const { data, isLoading } = useCandidatePool({
     tab, page,
@@ -401,6 +400,7 @@ export default function Candidates() {
     interview_date: debounced.interview_date,
     ets_date:       debounced.ets_date,
     placement_date: debounced.placement_date,
+    enabled:        canView,
   });
 
   const rows       = data?.data ?? [];
@@ -429,6 +429,22 @@ export default function Candidates() {
   function handleViewChange(v: View) {
     setView(v);
     localStorage.setItem("candidatesView", v);
+  }
+
+  if (!canView) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto mt-12">
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">
+            You do not have permission to view the candidate directory. Please contact your system administrator if you require access.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

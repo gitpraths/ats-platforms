@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 
 export const employersRouter = Router();
 employersRouter.use(requireAuth);
@@ -12,7 +12,7 @@ employersRouter.use((req, res, next) => {
 });
 
 // ── GET /api/employers ───────────────────────────────────
-employersRouter.get("/", async (req, res, next) => {
+employersRouter.get("/", requirePermission("employers:view"), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = "", industry = "" } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -53,7 +53,7 @@ employersRouter.get("/", async (req, res, next) => {
 });
 
 // ── GET /api/employers/:id ───────────────────────────────
-employersRouter.get("/:id", async (req, res, next) => {
+employersRouter.get("/:id", requirePermission("employers:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT e.*,
@@ -90,7 +90,7 @@ employersRouter.get("/:id", async (req, res, next) => {
 });
 
 // ── POST /api/employers ──────────────────────────────────
-employersRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter", "staff"), async (req, res, next) => {
+employersRouter.post("/", requirePermission("employers:create"), async (req, res, next) => {
   try {
     const { name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, abn } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
@@ -113,7 +113,7 @@ employersRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter", "
 });
 
 // ── PUT /api/employers/:id ───────────────────────────────
-employersRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter", "staff"), async (req, res, next) => {
+employersRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     const { name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, is_active, abn } = req.body;
 
@@ -149,7 +149,7 @@ employersRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter",
 });
 
 // ── DELETE /api/employers/:id (soft delete) ──────────────
-employersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
+employersRouter.delete("/:id", requirePermission("employers:delete"), async (req, res, next) => {
   try {
     const { rows: openJobs } = await pool.query(
       `SELECT COUNT(*)::int AS cnt FROM jobs WHERE employer_id = $1 AND status = 'open'`,

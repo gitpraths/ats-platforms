@@ -63,22 +63,23 @@ export function requirePermission(...requiredPermissions) {
     // Super Admin and Admin bypass all granular permission checks
     if (userRole === "super_admin" || userRole === "admin") return next();
 
-    let userPerms = req.user?.permissions;
-    if (!Array.isArray(userPerms)) {
-      // Lazy load permissions from DB if not already on the JWT token
+    try {
+      // Always verify live permissions from database so changes apply in real time
       const { pool } = await import("../config/db.js");
       const { rows } = await pool.query("SELECT permissions, role FROM users WHERE id = $1", [req.user.id]);
-      userPerms = rows[0]?.permissions || [];
+      const userPerms = rows[0]?.permissions || [];
       if (req.user) req.user.permissions = userPerms;
-    }
 
-    const hasAll = requiredPermissions.every((p) => userPerms.includes(p));
-    if (!hasAll) {
-      return res.status(403).json({
-        success: false,
-        error: `Permission denied. Required: ${requiredPermissions.join(", ")}`,
-      });
+      const hasAll = requiredPermissions.every((p) => userPerms.includes(p));
+      if (!hasAll) {
+        return res.status(403).json({
+          success: false,
+          error: `Permission denied. Required: ${requiredPermissions.join(", ")}`,
+        });
+      }
+      next();
+    } catch (err) {
+      next(err);
     }
-    next();
   };
 }

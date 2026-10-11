@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import { sendPlacementConfirmation, sendWelfareCheckEmail } from "../services/email.js";
 
 export const placementsRouter = Router();
@@ -38,7 +38,7 @@ async function generateWelfareChecks(client, placementId, startDate) {
 }
 
 // ── GET /api/placements ──────────────────────────────────
-placementsRouter.get("/", async (req, res, next) => {
+placementsRouter.get("/", requirePermission("placements:view"), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, employer_id, provider_id, job_id, candidate_id } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -114,7 +114,7 @@ placementsRouter.get("/", async (req, res, next) => {
 });
 
 // ── GET /api/placements/:id ──────────────────────────────
-placementsRouter.get("/:id", async (req, res, next) => {
+placementsRouter.get("/:id", requirePermission("placements:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT p.*,
@@ -147,7 +147,7 @@ placementsRouter.get("/:id", async (req, res, next) => {
 });
 
 // ── POST /api/placements ─────────────────────────────────
-placementsRouter.post("/", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+placementsRouter.post("/", requirePermission("placements:create"), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const { application_id, candidate_id, job_id, employer_id, start_date, notes } = req.body;

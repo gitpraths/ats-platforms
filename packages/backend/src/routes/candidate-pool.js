@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requirePermission } from "../middleware/auth.js";
 
 export const candidatePoolRouter = Router();
 candidatePoolRouter.use(requireAuth);
@@ -34,7 +34,7 @@ function tabCondition(tab) {
 }
 
 // GET /api/candidate-pool
-candidatePoolRouter.get("/", async (req, res, next) => {
+candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const {
       tab = "all",
