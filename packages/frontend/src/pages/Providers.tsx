@@ -11,7 +11,7 @@ export default function Providers() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -114,7 +114,7 @@ export default function Providers() {
                           <Edit2 size={12} /> Edit
                         </Link>
                       )}
-                      {user?.role === "admin" && p.is_active && (
+                      {(user?.role === "super_admin" || user?.role === "admin") && p.is_active && (
                         <button
                           onClick={() => {
                             if (confirm(`Deactivate "${p.name}"?`)) deactivate.mutate(p.id);

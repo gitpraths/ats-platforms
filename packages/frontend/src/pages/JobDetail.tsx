@@ -134,7 +134,7 @@ export default function JobDetail() {
 
   const isOwner    = job.created_by === user?.id;
   const isRecruiter = (job as any).recruiters?.some((r: any) => r.id === user?.id);
-  const canEdit    = isOwner || isRecruiter || user?.role === "admin" || user?.role === "recruiter_admin";
+  const canEdit    = isOwner || isRecruiter || user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const formatPayRateDetail = (rate: any, type?: string) => {
     if (!rate) return null;
@@ -253,7 +253,7 @@ export default function JobDetail() {
               >
                 <Edit2 size={15} /> Edit
               </button>
-              {(user?.role === "admin" || user?.role === "recruiter_admin") && (
+              {(user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin") && (
                 <button
                   onClick={() => { if (confirm("Permanently delete this vacancy?")) deleteJob.mutate(); }}
                   className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"

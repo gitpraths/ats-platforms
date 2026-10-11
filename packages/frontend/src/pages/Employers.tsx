@@ -5,13 +5,14 @@ import { Plus, Search, Eye, Edit2, Briefcase } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import Pagination from "../components/Pagination";
 
 export default function Employers() {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
 
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("");
@@ -41,7 +42,7 @@ export default function Employers() {
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Employers</h1>
           <p className="text-sm text-slate-500 mt-0.5">Companies that post vacancies</p>
         </div>
-        {isAdmin && (
+        {hasPermission("employers:create") && (
           <button
             onClick={() => navigate("/employers/new")}
             className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] text-sm font-medium"
@@ -120,13 +121,13 @@ export default function Employers() {
                         className="flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
                         <Eye size={12} /> View
                       </Link>
-                      {isAdmin && (
+                      {hasPermission("employers:edit") && (
                         <Link to={`/employers/${e.id}/edit`}
                           className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50">
                           <Edit2 size={12} /> Edit
                         </Link>
                       )}
-                      {user?.role === "admin" && e.is_active && (
+                      {hasPermission("employers:delete") && e.is_active && (
                         <button
                           onClick={() => {
                             if (confirm(`Deactivate "${e.name}"?`)) deactivate.mutate(e.id);

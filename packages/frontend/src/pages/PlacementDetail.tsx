@@ -56,7 +56,7 @@ export default function PlacementDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const canAct = user?.role === "admin" || user?.role === "recruiter_admin" || user?.role === "recruiter";
+  const canAct = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin" || user?.role === "recruiter";
 
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [employerResponse, setEmployerResponse] = useState("");

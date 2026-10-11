@@ -30,7 +30,7 @@ export default function ProviderDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const { data: provider, isLoading } = useQuery<ProviderDetailData>({
     queryKey: ["provider", id],

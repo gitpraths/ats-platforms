@@ -9,6 +9,7 @@ import { api } from "../lib/api";
 import type { Job } from "../types";
 import CreateJobDialog from "../components/CreateJobDialog";
 import BroadcastMultiModal from "../components/BroadcastMultiModal";
+import { usePermissions } from "../hooks/usePermissions";
 
 const PER_PAGE = 10;
 
@@ -133,6 +134,7 @@ function Pagination({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Jobs() {
+  const { hasPermission } = usePermissions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
@@ -223,14 +225,18 @@ export default function Jobs() {
             <Send size={15} className="text-[#e88e2e]" />
             Broadcast to Providers {selectedJobIds.size > 0 ? `(${selectedJobIds.size})` : ""}
           </button>
-          <button onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            <Plus size={16} /> Add Vacancy
-          </button>
-          <Link to="/employers/new"
-            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            <Building2 size={16} /> Add Employer
-          </Link>
+          {hasPermission("jobs:create") && (
+            <button onClick={() => setDialogOpen(true)}
+              className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+              <Plus size={16} /> Add Vacancy
+            </button>
+          )}
+          {hasPermission("employers:create") && (
+            <Link to="/employers/new"
+              className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+              <Building2 size={16} /> Add Employer
+            </Link>
+          )}
         </div>
       </div>
 
@@ -239,9 +245,11 @@ export default function Jobs() {
       ) : jobs.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-slate-400 mb-4">No vacancies yet.</p>
-          <button onClick={() => setDialogOpen(true)} className="text-slate-600 hover:underline text-sm">
-            Create your first vacancy
-          </button>
+          {hasPermission("jobs:create") && (
+            <button onClick={() => setDialogOpen(true)} className="text-slate-600 hover:underline text-sm">
+              Create your first vacancy
+            </button>
+          )}
         </div>
       ) : (
         <>

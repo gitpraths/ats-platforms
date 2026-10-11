@@ -15,7 +15,7 @@ const STATUS_BADGE = (active: boolean) =>
 
 export default function AdminTrainings() {
   const { user } = useAuth();
-  const canEdit = user?.role === "admin" || user?.role === "recruiter_admin";
+  const canEdit = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const [search, setSearch] = useState("");
   const [showActiveOnly, setShowActiveOnly] = useState(true);

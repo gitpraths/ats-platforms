@@ -160,7 +160,7 @@ function ProfileMenu() {
 function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const isTrainingAdmin = user?.role === "training_admin";
-  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 text-sm font-medium transition border-b-2 ${
@@ -257,7 +257,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== "admin" && user.role !== "recruiter_admin")
+  if (user.role !== "super_admin" && user.role !== "admin" && user.role !== "recruiter_admin")
     return <Navigate to={user.role === "training_admin" ? "/candidates" : "/dashboard"} replace />;
   return (
     <>

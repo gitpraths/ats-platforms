@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import { api } from "../lib/api";
 import { useToast } from "../components/ui/use-toast";
 import type { CandidatePoolRow as BaseCandidatePoolRow, CandidateWorkStatus } from "../types";
@@ -381,7 +382,8 @@ export default function Candidates() {
 
   const hasFilters = Object.values(colFilters).some(Boolean);
 
-  const canCreate = ["admin", "recruiter_admin", "recruiter", "staff"].includes(user?.role ?? "");
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("candidates:create");
 
 
 
@@ -776,7 +778,7 @@ export default function Candidates() {
 
                       {/* Actions */}
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        {row.placement_id && !row.confirmed_by_employer && canCreate && (
+                        {row.placement_id && !row.confirmed_by_employer && hasPermission("placements:confirm") && (
                           <button
                             onClick={() => { setConfirmingId(row.placement_id!); sendConfirmation.mutate(row.placement_id!); }}
                             disabled={confirmingId === row.placement_id}

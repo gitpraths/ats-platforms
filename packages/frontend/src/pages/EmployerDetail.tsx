@@ -25,7 +25,7 @@ export default function EmployerDetail() {
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const { data: employer, isLoading } = useQuery<EmployerDetailData>({
     queryKey: ["employer", id],

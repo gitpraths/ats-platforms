@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Pencil, Trash2, Check, X, Search, KeyRound } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Check, X, Search, KeyRound, ShieldCheck, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
@@ -8,10 +8,23 @@ import { useAuth } from "../contexts/AuthContext";
 import type { User, UserRole } from "../types";
 import CreateUserDialog from "../components/CreateUserDialog";
 import ResetPasswordModal from "../components/ResetPasswordModal";
+import ManagePermissionsModal from "../components/ManagePermissionsModal";
+
+const SUPER_ADMIN_EMAILS = [
+  "kavil@workvision.com.au",
+  "dhaval@workvision.com.au"
+];
+
+function isSuperAdminUser(u: User) {
+  return u.role === "super_admin" || SUPER_ADMIN_EMAILS.includes((u.email || "").toLowerCase().trim());
+}
 
 const ROLES: { value: UserRole; label: string; badge: string }[] = [
+  { value: "super_admin",     label: "Super Admin",     badge: "border border-purple-500 text-purple-700 bg-purple-50" },
   { value: "admin",           label: "Admin",           badge: "border border-red-400 text-red-500 bg-transparent" },
   { value: "staff",           label: "Staff",           badge: "border border-blue-400 text-blue-600 bg-transparent" },
+  { value: "hr",              label: "HR",              badge: "border border-emerald-500 text-emerald-700 bg-emerald-50" },
+  { value: "marketing",       label: "Marketing",       badge: "border border-amber-500 text-amber-700 bg-amber-50" },
   { value: "training_admin",  label: "Training Admin",  badge: "border border-orange-400 text-orange-600 bg-transparent" },
   { value: "recruiter_admin", label: "Recruiter Admin", badge: "border border-purple-400 text-purple-600 bg-transparent" },
   { value: "recruiter",       label: "Recruiter",       badge: "border border-slate-400 text-slate-600 bg-transparent" },
@@ -35,6 +48,7 @@ export default function AdminUsers() {
   const { user: me }   = useAuth();
   const [showCreate, setShowCreate] = useState(false);
   const [resettingUser, setResettingUser] = useState<User | null>(null);
+  const [managingPermissionsUser, setManagingPermissionsUser] = useState<User | null>(null);
   const [editing, setEditing]       = useState<EditState | null>(null);
   const [editError, setEditError]   = useState("");
   const [q, setQ]                   = useState("");
@@ -134,6 +148,7 @@ export default function AdminUsers() {
               <tr className="text-xs text-slate-500 uppercase tracking-wide">
                 <th className="text-left px-4 py-3">User</th>
                 <th className="text-left px-4 py-3">Role</th>
+                <th className="text-left px-4 py-3">Permissions</th>
                 <th className="text-left px-4 py-3">Joined</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -143,7 +158,7 @@ export default function AdminUsers() {
                 <tr key={u.id} className="hover:bg-slate-50">
                   {editing?.id === u.id ? (
                     <>
-                      <td className="px-4 py-2" colSpan={2}>
+                      <td className="px-4 py-2" colSpan={3}>
                         <div className="flex flex-wrap gap-2 items-start">
                           {editError && (
                             <p className="w-full text-xs text-red-600 mb-1">{editError}</p>
@@ -216,11 +231,34 @@ export default function AdminUsers() {
                           {roleBadge(u.role).label}
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                        {u.role === "super_admin" || u.role === "admin" ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-purple-700 font-medium bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                            <ShieldCheck size={12} /> Full Access (26/26)
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setManagingPermissionsUser(u)}
+                            className="inline-flex items-center gap-1 text-xs text-slate-700 hover:text-blue-600 font-medium bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                            title="Click to view and configure permissions"
+                          >
+                            <ShieldCheck size={12} className="text-slate-400" />
+                            {Array.isArray(u.permissions) ? u.permissions.length : 0} / 26 granted
+                          </button>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-slate-400 text-xs">
                         {u.created_at ? fmtDate(u.created_at) : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1 justify-end">
+                          <button
+                            onClick={() => setManagingPermissionsUser(u)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                            title="Manage Permissions"
+                          >
+                            <ShieldCheck size={14} />
+                          </button>
                           <button
                             onClick={() => startEdit(u)}
                             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded"
@@ -235,15 +273,24 @@ export default function AdminUsers() {
                           >
                             <KeyRound size={14} />
                           </button>
-                          {u.id !== me?.id && (
-                            <button
-                              onClick={() => { if (confirm(`Delete user "${u.name}"?`)) deleteUser.mutate(u.id); }}
-                              disabled={deleteUser.isPending}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
-                              title="Delete"
+                          {isSuperAdminUser(u) ? (
+                            <span
+                              className="p-1.5 text-slate-300 cursor-not-allowed"
+                              title="Protected Super Admin (cannot be deleted)"
                             >
-                              <Trash2 size={14} />
-                            </button>
+                              <Lock size={14} />
+                            </span>
+                          ) : (
+                            u.id !== me?.id && (
+                              <button
+                                onClick={() => { if (confirm(`Delete user "${u.name}"?`)) deleteUser.mutate(u.id); }}
+                                disabled={deleteUser.isPending}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )
                           )}
                         </div>
                       </td>
@@ -262,6 +309,12 @@ export default function AdminUsers() {
           user={resettingUser}
           onClose={() => setResettingUser(null)}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ["admin-users"] })}
+        />
+      )}
+      {managingPermissionsUser && (
+        <ManagePermissionsModal
+          user={managingPermissionsUser}
+          onClose={() => setManagingPermissionsUser(null)}
         />
       )}
     </div>

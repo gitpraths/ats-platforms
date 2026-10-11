@@ -5,8 +5,11 @@ import { api } from "../lib/api";
 import type { User, UserRole } from "../types";
 
 const ROLES: { value: UserRole; label: string }[] = [
+  { value: "super_admin",     label: "Super Admin" },
   { value: "admin",           label: "Admin" },
   { value: "staff",           label: "Staff" },
+  { value: "hr",              label: "HR" },
+  { value: "marketing",       label: "Marketing" },
   { value: "training_admin",  label: "Training Admin" },
   { value: "recruiter_admin", label: "Recruiter Admin" },
   { value: "recruiter",       label: "Recruiter" },

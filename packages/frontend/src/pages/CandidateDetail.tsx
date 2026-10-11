@@ -76,7 +76,7 @@ export default function CandidateDetail() {
   const { id }      = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { user }    = useAuth();
-  const isAdmin = user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
   const canWrite = user?.role !== "provider" && user?.role !== "training_admin";
   const canWriteTraining = user?.role !== "provider";
 
