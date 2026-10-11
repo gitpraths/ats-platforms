@@ -202,7 +202,10 @@ function Layout({ children }: { children: React.ReactNode }) {
             </>
           )}
           {isAdmin && (
-            <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
+            <>
+              <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
+              <NavLink to="/admin/release-notes" className={navClass}><FileText size={15} />Release Notes</NavLink>
+            </>
           )}
         </div>
         <div className="flex items-center gap-2">
