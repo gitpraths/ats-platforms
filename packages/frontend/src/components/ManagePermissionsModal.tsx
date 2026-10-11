@@ -29,25 +29,136 @@ interface PermissionsData {
   all_permissions: string[];
 }
 
+const DEFAULT_CATALOG: PermissionModule[] = [
+  {
+    module: "employers",
+    name: "Employers",
+    description: "Employer directory, company profiles, and account management",
+    permissions: [
+      { id: "employers:view",   label: "View Employers",   description: "Browse employer list and view company profiles" },
+      { id: "employers:create", label: "Create Employers", description: "Add new employer companies and contacts" },
+      { id: "employers:edit",   label: "Edit Employers",   description: "Update company details, contacts, and preferences" },
+      { id: "employers:delete", label: "Delete Employers", description: "Deactivate or permanently remove employers" },
+    ],
+  },
+  {
+    module: "jobs",
+    name: "Vacancies",
+    description: "Job postings, requirements, compliance, and public listings",
+    permissions: [
+      { id: "jobs:view",    label: "View Vacancies",    description: "Browse vacancy listings and view job specifications" },
+      { id: "jobs:create",  label: "Create Vacancies",  description: "Post new job vacancies and configure requirements" },
+      { id: "jobs:edit",    label: "Edit Vacancies",    description: "Edit vacancy descriptions, pay rates, and locations" },
+      { id: "jobs:publish", label: "Publish / Status",  description: "Change status between draft, open, closed, and archived" },
+      { id: "jobs:delete",  label: "Delete Vacancies",  description: "Permanently delete or archive job vacancies" },
+    ],
+  },
+  {
+    module: "candidates",
+    name: "Candidates & Talent",
+    description: "Candidate database, resumes, skills, and talent matching",
+    permissions: [
+      { id: "candidates:view",   label: "View Candidates",   description: "Search and browse candidate profiles and resumes" },
+      { id: "candidates:create", label: "Create Candidates", description: "Add new candidates manually or via import" },
+      { id: "candidates:edit",   label: "Edit Candidates",   description: "Update candidate profiles, notes, and attachments" },
+      { id: "candidates:delete", label: "Delete Candidates", description: "Remove candidate records from the database" },
+    ],
+  },
+  {
+    module: "placements",
+    name: "Placements & Welfare",
+    description: "Candidate placements, job matching, and ongoing welfare checks",
+    permissions: [
+      { id: "placements:view",    label: "View Placements",    description: "Browse candidate placements and placement status" },
+      { id: "placements:create",  label: "Create Placements",  description: "Assign talent and confirm job placements" },
+      { id: "placements:welfare", label: "Log Welfare Checks", description: "Record post-placement contact and welfare notes" },
+      { id: "placements:confirm", label: "Confirm Agreements", description: "Confirm employer placement agreements" },
+    ],
+  },
+  {
+    module: "training",
+    name: "Training Programs",
+    description: "Accredited training, courses, cohorts, and candidate enrolments",
+    permissions: [
+      { id: "training:view",   label: "View Training",   description: "Browse courses, enrolments, and completion status" },
+      { id: "training:enroll", label: "Enroll Talent",   description: "Enroll candidates into training courses" },
+      { id: "training:manage", label: "Manage Courses",  description: "Create and configure courses, modules, and providers" },
+    ],
+  },
+  {
+    module: "reports",
+    name: "Reports & Financials",
+    description: "Analytics dashboards, placement metrics, and financial reporting",
+    permissions: [
+      { id: "reports:view",       label: "View Reports",       description: "Access general operational reports and dashboards" },
+      { id: "reports:financials", label: "View Financials",    description: "View wage subsidies, invoices, and financial KPIs" },
+      { id: "reports:export",     label: "Export Data (Excel)", description: "Export candidates, vacancies, and report data to CSV/Excel" },
+    ],
+  },
+  {
+    module: "admin",
+    name: "System Administration",
+    description: "User management, access control, and platform master lookups",
+    permissions: [
+      { id: "admin:users",       label: "Manage Users",        description: "Create, edit, and deactivate user accounts" },
+      { id: "admin:permissions", label: "Manage Permissions",  description: "Assign and customize user permission tick boxes" },
+      { id: "admin:master_data", label: "Manage Master Data",  description: "Configure industries, work types, and lookups" },
+    ],
+  },
+];
+
+const DEFAULT_ALL_IDS = DEFAULT_CATALOG.flatMap((m) => m.permissions.map((p) => p.id));
+
+const DEFAULT_ROLE_PRESETS: Record<string, string[]> = {
+  super_admin: [...DEFAULT_ALL_IDS],
+  admin: [...DEFAULT_ALL_IDS],
+  staff: [
+    "employers:view", "employers:create",
+    "jobs:view", "jobs:create", "jobs:publish",
+    "candidates:view", "candidates:create", "candidates:edit",
+    "placements:view", "placements:create", "placements:welfare",
+    "training:view", "training:enroll",
+    "reports:view",
+  ],
+  hr: [
+    "candidates:view", "candidates:create", "candidates:edit",
+    "placements:view", "placements:welfare",
+    "training:view", "training:enroll", "training:manage",
+    "reports:view",
+  ],
+  marketing: [
+    "jobs:view",
+    "reports:view", "reports:export",
+  ],
+};
+
 export default function ManagePermissionsModal({ user, onClose }: Props) {
   const queryClient = useQueryClient();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(() => {
+    if (Array.isArray(user.permissions) && user.permissions.length > 0) {
+      return new Set(user.permissions);
+    }
+    if (user.role === "super_admin" || user.role === "admin") {
+      return new Set(DEFAULT_ALL_IDS);
+    }
+    return new Set(DEFAULT_ROLE_PRESETS[user.role] ?? []);
+  });
   const [saveError, setSaveError] = useState("");
 
-  const { data, isLoading } = useQuery<{ success: boolean; data: PermissionsData }>({
+  const { data: rawData, isLoading } = useQuery<any>({
     queryKey: ["user-permissions", user.id],
-    queryFn: () => api.get<{ success: boolean; data: PermissionsData }>(`/users/${user.id}/permissions`),
+    queryFn: () => api.get<any>(`/users/${user.id}/permissions`),
   });
 
-  const payload = data?.data;
-  const catalog = payload?.catalog ?? [];
-  const roleDefaults = payload?.role_defaults ?? {};
-  const allIds = payload?.all_permissions ?? [];
+  const payload: PermissionsData | undefined = rawData?.data ?? rawData;
+  const catalog = (payload?.catalog && payload.catalog.length > 0) ? payload.catalog : DEFAULT_CATALOG;
+  const roleDefaults = (payload?.role_defaults && Object.keys(payload.role_defaults).length > 0) ? payload.role_defaults : DEFAULT_ROLE_PRESETS;
+  const allIds = (payload?.all_permissions && payload.all_permissions.length > 0) ? payload.all_permissions : DEFAULT_ALL_IDS;
 
   useEffect(() => {
-    if (payload?.user?.permissions) {
+    if (payload?.user?.permissions && Array.isArray(payload.user.permissions)) {
       setSelected(new Set(payload.user.permissions));
-    } else if (Array.isArray(user.permissions)) {
+    } else if (Array.isArray(user.permissions) && user.permissions.length > 0) {
       setSelected(new Set(user.permissions));
     }
   }, [payload, user.permissions]);
@@ -188,14 +299,9 @@ export default function ManagePermissionsModal({ user, onClose }: Props) {
 
         {/* Modal Body / Categorized Checkboxes */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
-          {isLoading ? (
-            <div className="py-16 text-center text-sm text-slate-500">
-              Loading permissions catalog...
-            </div>
-          ) : (
-            catalog.map((mod) => {
-              const modPermIds = mod.permissions.map((p) => p.id);
-              const allChecked = modPermIds.every((id) => selected.has(id));
+          {catalog.map((mod) => {
+            const modPermIds = mod.permissions.map((p) => p.id);
+            const allChecked = modPermIds.every((id) => selected.has(id));
 
               return (
                 <div key={mod.module} className="border border-slate-200 rounded-xl p-4 bg-white shadow-2xs hover:border-slate-300 transition">
@@ -243,8 +349,7 @@ export default function ManagePermissionsModal({ user, onClose }: Props) {
                   </div>
                 </div>
               );
-            })
-          )}
+            })}
         </div>
 
         {/* Modal Error Alert */}
