@@ -78,6 +78,8 @@ function AdminMenu() {
 
           <button onClick={() => go("/admin/trainings")}   className={item}><Table2    size={14} className="text-slate-400" /> Trainings</button>
           <button onClick={() => go("/admin/xero")}        className={item}><Settings  size={14} className="text-slate-400" /> Xero</button>
+          <div className="border-t border-slate-100 my-1" />
+          <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">System</p>
           <button onClick={() => go("/admin/release-notes")} className={item}><FileText  size={14} className="text-orange-500" /> Release Notes</button>
           <div className="border-t border-slate-100 my-1" />
           <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Master Tables</p>
@@ -202,10 +204,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             </>
           )}
           {isAdmin && (
-            <>
-              <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
-              <NavLink to="/admin/release-notes" className={navClass}><FileText size={15} />Release Notes</NavLink>
-            </>
+            <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
           )}
         </div>
         <div className="flex items-center gap-2">
