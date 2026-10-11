@@ -9,6 +9,62 @@ import type { User, UserRole } from "../types";
 import CreateUserDialog from "../components/CreateUserDialog";
 import ResetPasswordModal from "../components/ResetPasswordModal";
 import ManagePermissionsModal from "../components/ManagePermissionsModal";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "../components/ui/tooltip";
+
+function ActionIconBtn({
+  tooltip,
+  onClick,
+  disabled,
+  className,
+  children,
+}: {
+  tooltip: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip delayDuration={120}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={className}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs py-1 px-2.5 font-medium shadow-md">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function ActionIconSpan({
+  tooltip,
+  className,
+  children,
+}: {
+  tooltip: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip delayDuration={120}>
+      <TooltipTrigger asChild>
+        <span className={className}>
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs py-1 px-2.5 font-medium shadow-md">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const SUPER_ADMIN_EMAILS = [
   "kavil@workvision.com.au",
@@ -95,19 +151,20 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">User Management</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Create and manage platform users</p>
+    <TooltipProvider delayDuration={120}>
+      <div className="p-6 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">User Management</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Create and manage platform users</p>
+          </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] text-white text-sm font-medium rounded-lg hover:bg-[#d07d20]"
+          >
+            <UserPlus size={15} /> Add User
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] text-white text-sm font-medium rounded-lg hover:bg-[#d07d20]"
-        >
-          <UserPlus size={15} /> Add User
-        </button>
-      </div>
 
       {/* Filters */}
       <div className="flex gap-3 mb-5">
@@ -190,21 +247,21 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex gap-1 justify-end">
-                          <button
+                          <ActionIconBtn
+                            tooltip="Save Changes"
                             onClick={saveEdit}
                             disabled={updateUser.isPending}
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded disabled:opacity-50"
-                            title="Save"
+                            className="p-1.5 text-green-600 hover:bg-green-50 rounded disabled:opacity-50 transition-colors"
                           >
                             <Check size={14} />
-                          </button>
-                          <button
+                          </ActionIconBtn>
+                          <ActionIconBtn
+                            tooltip="Cancel Edit"
                             onClick={() => setEditing(null)}
-                            className="p-1.5 text-slate-400 hover:bg-slate-100 rounded"
-                            title="Cancel"
+                            className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"
                           >
                             <X size={14} />
-                          </button>
+                          </ActionIconBtn>
                         </div>
                       </td>
                     </>
@@ -233,18 +290,31 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-4 py-3">
                         {u.role === "super_admin" || u.role === "admin" ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-purple-700 font-medium bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                            <ShieldCheck size={12} /> Full Access (26/26)
-                          </span>
+                          <Tooltip delayDuration={120}>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1 text-xs text-purple-700 font-medium bg-purple-50 px-2 py-0.5 rounded border border-purple-200 cursor-default">
+                                <ShieldCheck size={12} /> Full Access (26/26)
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs py-1 px-2.5 font-medium shadow-md">
+                              Administrator has unrestricted access (26/26)
+                            </TooltipContent>
+                          </Tooltip>
                         ) : (
-                          <button
-                            onClick={() => setManagingPermissionsUser(u)}
-                            className="inline-flex items-center gap-1 text-xs text-slate-700 hover:text-blue-600 font-medium bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 transition-colors"
-                            title="Click to view and configure permissions"
-                          >
-                            <ShieldCheck size={12} className="text-slate-400" />
-                            {Array.isArray(u.permissions) ? u.permissions.length : 0} / 26 granted
-                          </button>
+                          <Tooltip delayDuration={120}>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => setManagingPermissionsUser(u)}
+                                className="inline-flex items-center gap-1 text-xs text-slate-700 hover:text-blue-600 font-medium bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                              >
+                                <ShieldCheck size={12} className="text-slate-400" />
+                                {Array.isArray(u.permissions) ? u.permissions.length : 0} / 26 granted
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs py-1 px-2.5 font-medium shadow-md">
+                              Click to configure permissions for {u.name}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-400 text-xs">
@@ -252,44 +322,44 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1 justify-end">
-                          <button
+                          <ActionIconBtn
+                            tooltip="Manage Permissions"
                             onClick={() => setManagingPermissionsUser(u)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                            title="Manage Permissions"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                           >
                             <ShieldCheck size={14} />
-                          </button>
-                          <button
+                          </ActionIconBtn>
+                          <ActionIconBtn
+                            tooltip="Edit User Details"
                             onClick={() => startEdit(u)}
-                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded"
-                            title="Edit"
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
                           >
                             <Pencil size={14} />
-                          </button>
-                          <button
+                          </ActionIconBtn>
+                          <ActionIconBtn
+                            tooltip="Change Password"
                             onClick={() => setResettingUser(u)}
-                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded"
-                            title="Reset Password"
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
                           >
                             <KeyRound size={14} />
-                          </button>
+                          </ActionIconBtn>
                           {isSuperAdminUser(u) ? (
-                            <span
-                              className="p-1.5 text-slate-300 cursor-not-allowed"
-                              title="Protected Super Admin (cannot be deleted)"
+                            <ActionIconSpan
+                              tooltip="Protected Super Admin (cannot be deleted)"
+                              className="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center"
                             >
                               <Lock size={14} />
-                            </span>
+                            </ActionIconSpan>
                           ) : (
                             u.id !== me?.id && (
-                              <button
+                              <ActionIconBtn
+                                tooltip="Delete User"
                                 onClick={() => { if (confirm(`Delete user "${u.name}"?`)) deleteUser.mutate(u.id); }}
                                 disabled={deleteUser.isPending}
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
-                                title="Delete"
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50 transition-colors"
                               >
                                 <Trash2 size={14} />
-                              </button>
+                              </ActionIconBtn>
                             )
                           )}
                         </div>
@@ -317,6 +387,7 @@ export default function AdminUsers() {
           onClose={() => setManagingPermissionsUser(null)}
         />
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
