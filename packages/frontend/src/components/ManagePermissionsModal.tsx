@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Check, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
 import { api } from "../lib/api";
@@ -155,7 +155,10 @@ export default function ManagePermissionsModal({ user, onClose }: Props) {
   const roleDefaults = (payload?.role_defaults && Object.keys(payload.role_defaults).length > 0) ? payload.role_defaults : DEFAULT_ROLE_PRESETS;
   const allIds = (payload?.all_permissions && payload.all_permissions.length > 0) ? payload.all_permissions : DEFAULT_ALL_IDS;
 
+  const hasUserEdited = useRef(false);
+
   useEffect(() => {
+    if (hasUserEdited.current) return;
     if (payload?.user?.permissions && Array.isArray(payload.user.permissions)) {
       setSelected(new Set(payload.user.permissions));
     } else if (Array.isArray(user.permissions) && user.permissions.length > 0) {
@@ -175,6 +178,7 @@ export default function ManagePermissionsModal({ user, onClose }: Props) {
   });
 
   function togglePermission(id: string) {
+    hasUserEdited.current = true;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -184,16 +188,19 @@ export default function ManagePermissionsModal({ user, onClose }: Props) {
   }
 
   function applyPreset(presetName: string) {
+    hasUserEdited.current = true;
     const preset = roleDefaults[presetName] ?? [];
     setSelected(new Set(preset));
   }
 
   function selectAll(check: boolean) {
+    hasUserEdited.current = true;
     if (check) setSelected(new Set(allIds));
     else setSelected(new Set());
   }
 
   function toggleCategory(permIds: string[]) {
+    hasUserEdited.current = true;
     const allChecked = permIds.every((id) => selected.has(id));
     setSelected((prev) => {
       const next = new Set(prev);

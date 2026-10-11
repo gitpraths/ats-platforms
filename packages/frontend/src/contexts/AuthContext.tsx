@@ -40,6 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setIsLoading(false);
     }
+
+    // Live sync: re-sync permissions whenever user focuses tab or every 20 seconds
+    function syncLiveUser() {
+      if (localStorage.getItem("token")) {
+        api.get<User>("/users/me")
+          .then(setUser)
+          .catch(() => {});
+      }
+    }
+
+    window.addEventListener("focus", syncLiveUser);
+    const interval = setInterval(syncLiveUser, 20000);
+    return () => {
+      window.removeEventListener("focus", syncLiveUser);
+      clearInterval(interval);
+    };
   }, []);
 
   async function login(email: string, password: string) {
