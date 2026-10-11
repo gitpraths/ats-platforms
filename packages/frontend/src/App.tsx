@@ -289,7 +289,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 // ── Permission Route ──────────────────────────────────────────────────────────
 function PermissionRoute({ permission, children }: { permission: string; children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isAdmin } = usePermissions();
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -298,7 +298,13 @@ function PermissionRoute({ permission, children }: { permission: string; childre
   );
   if (!user) return <Navigate to="/login" replace />;
 
-  if (!hasPermission(permission)) {
+  const isTrainingAdmin = user.role === "training_admin";
+  const allowed =
+    isAdmin ||
+    (permission === "training:view" && isTrainingAdmin) ||
+    hasPermission(permission);
+
+  if (!allowed) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -328,7 +334,7 @@ function AppRoutes() {
       <Route path="/candidates"        element={<PermissionRoute permission="candidates:view"><Candidates /></PermissionRoute>} />
       <Route path="/candidates/new"   element={<PermissionRoute permission="candidates:create"><CandidateNew /></PermissionRoute>} />
       <Route path="/candidates/:id"   element={<PermissionRoute permission="candidates:view"><CandidateDetail /></PermissionRoute>} />
-      <Route path="/training"         element={<ProtectedRoute><Training         /></ProtectedRoute>} />
+      <Route path="/training"         element={<PermissionRoute permission="training:view"><Training /></PermissionRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
 
       <Route path="/providers"          element={<StaffRoute><Providers       /></StaffRoute>} />
@@ -344,7 +350,7 @@ function AppRoutes() {
       <Route path="/placements"         element={<PermissionRoute permission="placements:view"><Placements /></PermissionRoute>} />
       <Route path="/placements/:id"     element={<PermissionRoute permission="placements:view"><PlacementDetail /></PermissionRoute>} />
 
-      <Route path="/reports"            element={<AdminRoute><Reports             /></AdminRoute>} />
+      <Route path="/reports"            element={<PermissionRoute permission="reports:view"><Reports /></PermissionRoute>} />
 
       <Route path="/admin/master/industries"  element={<AdminRoute><MasterIndustries /></AdminRoute>} />
       <Route path="/admin/master/work-types"  element={<AdminRoute><MasterWorkTypes  /></AdminRoute>} />

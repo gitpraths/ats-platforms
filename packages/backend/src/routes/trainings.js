@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import {
   listTrainings,
   getTraining,
@@ -11,7 +11,7 @@ import {
 export const trainingsRouter = Router();
 trainingsRouter.use(requireAuth);
 
-trainingsRouter.get("/", async (req, res, next) => {
+trainingsRouter.get("/", requirePermission("training:view"), async (req, res, next) => {
   try {
     const { page, limit, search, provider_id, is_active } = req.query;
     const isActive = is_active === undefined ? undefined : is_active === "true";
@@ -30,7 +30,7 @@ trainingsRouter.get("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-trainingsRouter.get("/:id", async (req, res, next) => {
+trainingsRouter.get("/:id", requirePermission("training:view"), async (req, res, next) => {
   try {
     const row = await getTraining(req.params.id);
     if (!row) return res.status(404).json({ success: false, error: "Training not found" });

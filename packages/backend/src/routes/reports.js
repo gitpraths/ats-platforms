@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 
 export const reportsRouter = Router();
 reportsRouter.use(requireAuth);
-reportsRouter.use(requireRole("admin", "recruiter_admin"));
+reportsRouter.use(requirePermission("reports:view"));
 
 // ── GET /api/reports/providers ───────────────────────────
 reportsRouter.get("/providers", async (req, res, next) => {
