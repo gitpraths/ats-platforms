@@ -361,7 +361,7 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
 });
 
 // ── GET /api/candidates/:id/documents ───────────────────
-candidatesRouter.get("/:id/documents", async (req, res, next) => {
+candidatesRouter.get("/:id/documents", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const { rows: candidate } = await pool.query("SELECT id, provider_id FROM candidates WHERE id = $1", [req.params.id]);
     if (!candidate[0]) return res.status(404).json({ success: false, error: "Candidate not found" });
@@ -383,7 +383,7 @@ candidatesRouter.get("/:id/documents", async (req, res, next) => {
 });
 
 // ── POST /api/candidates/:id/documents ──────────────────
-candidatesRouter.post("/:id/documents", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+candidatesRouter.post("/:id/documents", requirePermission("candidates:edit"), async (req, res, next) => {
   const upload = getDocUpload(req.params.id);
   upload.single("file")(req, res, async (err) => {
     if (err) return res.status(400).json({ success: false, error: err.message });
@@ -422,7 +422,7 @@ candidatesRouter.post("/:id/documents", requireRole("admin", "recruiter_admin", 
 });
 
 // ── GET /api/candidates/:id/documents/:doc_id/download ──
-candidatesRouter.get("/:id/documents/:doc_id/download", async (req, res, next) => {
+candidatesRouter.get("/:id/documents/:doc_id/download", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT * FROM candidate_documents WHERE id = $1 AND candidate_id = $2`,
@@ -438,7 +438,7 @@ candidatesRouter.get("/:id/documents/:doc_id/download", async (req, res, next) =
 
 // ── GET /api/candidates/:id/documents/:doc_id/view ───────
 // Serves the file inline so PDFs and images open in the browser tab
-candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
+candidatesRouter.get("/:id/documents/:doc_id/view", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT * FROM candidate_documents WHERE id = $1 AND candidate_id = $2`,
@@ -460,10 +460,8 @@ candidatesRouter.get("/:id/documents/:doc_id/view", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-
-
 // ── DELETE /api/candidates/:id/documents/:doc_id ─────────
-candidatesRouter.delete("/:id/documents/:doc_id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+candidatesRouter.delete("/:id/documents/:doc_id", requirePermission("candidates:edit"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `DELETE FROM candidate_documents WHERE id = $1 AND candidate_id = $2 RETURNING *`,
@@ -482,7 +480,7 @@ candidatesRouter.delete("/:id/documents/:doc_id", requireRole("admin", "recruite
 // ── Notes (Xero-style communication log) ─────────────────────────────────────
 
 // GET /api/candidates/:id/notes  — list all notes newest first
-candidatesRouter.get("/:id/notes", async (req, res, next) => {
+candidatesRouter.get("/:id/notes", requirePermission("candidates:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT n.id, n.candidate_id, n.body, n.created_at, n.updated_at,
@@ -498,7 +496,7 @@ candidatesRouter.get("/:id/notes", async (req, res, next) => {
 });
 
 // POST /api/candidates/:id/notes  — add a new note
-candidatesRouter.post("/:id/notes", requireRole("admin", "recruiter_admin", "recruiter", "staff"), async (req, res, next) => {
+candidatesRouter.post("/:id/notes", requirePermission("candidates:edit"), async (req, res, next) => {
   try {
     const { body } = req.body;
     if (!body || !body.trim()) {
@@ -524,10 +522,10 @@ candidatesRouter.post("/:id/notes", requireRole("admin", "recruiter_admin", "rec
   } catch (err) { next(err); }
 });
 
-// DELETE /api/candidates/:id/notes/:note_id  — admin/recruiter_admin only
+// DELETE /api/candidates/:id/notes/:note_id  — edit permission required
 candidatesRouter.delete(
   "/:id/notes/:note_id",
-  requireRole("admin", "recruiter_admin"),
+  requirePermission("candidates:edit"),
   async (req, res, next) => {
     try {
       const { rows } = await pool.query(
