@@ -221,7 +221,7 @@ export default function JobEdit() {
       employer_id:           form.employer_id || undefined,
       industry:              form.industry || undefined,
       vacancy_type:          form.vacancy_type || undefined,
-      pay_rate:              form.pay_rate ? Number(form.pay_rate) : undefined,
+      pay_rate:              form.pay_rate !== undefined && form.pay_rate !== "" ? String(form.pay_rate).trim() : undefined,
       pay_rate_type:         form.pay_rate_type || undefined,
       positions_count:       form.positions_count,
       work_location:         form.work_location || undefined,
@@ -306,9 +306,13 @@ export default function JobEdit() {
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
-                <input type="number" min={0} step={0.01} value={form.pay_rate}
+                <input
+                  type="text"
+                  value={form.pay_rate}
                   onChange={(e) => set("pay_rate", e.target.value)}
-                  className={`${cls} pl-7`} placeholder="0.00" />
+                  className={`${cls} pl-7`}
+                  placeholder="e.g. 33.50, 33-35, or Award Wage"
+                />
               </div>
               <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm">
                 {(["per_hour", "annual"] as const).map((t) => (
@@ -322,6 +326,16 @@ export default function JobEdit() {
                   </button>
                 ))}
               </div>
+            </div>
+            <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
+              <span>Accepts amounts, ranges (e.g. 33-35), or text</span>
+              <button
+                type="button"
+                onClick={() => set("pay_rate", "Award Wage")}
+                className="text-[#e88e2e] hover:underline font-medium"
+              >
+                Use "Award Wage"
+              </button>
             </div>
           </div>
 

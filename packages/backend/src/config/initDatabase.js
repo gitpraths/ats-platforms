@@ -55,6 +55,13 @@ export async function initDatabase() {
       ON CONFLICT (name) DO NOTHING;
     `).catch(() => {});
 
+    // 4. Ensure jobs.pay_rate supports alphanumeric text (Award Wage, salary ranges)
+    await pool.query(`
+      ALTER TABLE jobs ALTER COLUMN pay_rate TYPE TEXT USING pay_rate::TEXT;
+    `).catch((err) => {
+      logger.warn("[DB Init] Notice on pay_rate column alteration: " + err.message);
+    });
+
   } catch (err) {
     logger.error("[DB Init] Error during database initialization: " + err.message);
   }

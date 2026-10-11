@@ -136,9 +136,22 @@ export default function JobDetail() {
   const isRecruiter = (job as any).recruiters?.some((r: any) => r.id === user?.id);
   const canEdit    = isOwner || isRecruiter || user?.role === "admin" || user?.role === "recruiter_admin";
 
-  const payRateStr = job.pay_rate
-    ? `$${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`
-    : null;
+  const formatPayRateDetail = (rate: any, type?: string) => {
+    if (!rate) return null;
+    const str = String(rate).trim();
+    if (!str) return null;
+    const suffix = type === "annual" ? "/yr" : "/hr";
+    const num = Number(str);
+    if (!isNaN(num)) {
+      return `$${num.toLocaleString()}${suffix}`;
+    }
+    if (str.toLowerCase().includes("award")) {
+      return str;
+    }
+    return str.startsWith("$") ? `${str}${suffix}` : `$${str}${suffix}`;
+  };
+
+  const payRateStr = formatPayRateDetail(job.pay_rate, job.pay_rate_type);
 
   const displayLoc = job.work_location || (job.is_remote ? "Remote" : [job.city, job.state].filter(Boolean).join(", "));
 

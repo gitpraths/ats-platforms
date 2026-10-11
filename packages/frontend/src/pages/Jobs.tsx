@@ -148,8 +148,17 @@ export default function Jobs() {
 
   function formatPayRate(job: Job) {
     if (!job.pay_rate) return null;
+    const str = String(job.pay_rate).trim();
+    if (!str) return null;
     const suffix = job.pay_rate_type === "annual" ? "/yr" : "/hr";
-    return `$${Number(job.pay_rate).toLocaleString()}${suffix}`;
+    const num = Number(str);
+    if (!isNaN(num)) {
+      return `$${num.toLocaleString()}${suffix}`;
+    }
+    if (str.toLowerCase().includes("award")) {
+      return str;
+    }
+    return str.startsWith("$") ? `${str}${suffix}` : `$${str}${suffix}`;
   }
 
   const totalPages  = Math.max(1, Math.ceil(total / PER_PAGE));

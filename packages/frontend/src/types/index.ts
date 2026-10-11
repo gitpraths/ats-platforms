@@ -196,7 +196,7 @@ export interface Job {
   end_date?: string;
   // ATS-specific fields
   industry?: string;
-  pay_rate?: number;
+  pay_rate?: string | number | null;
   pay_rate_type?: string;
   work_location?: string;
   police_check?: string;

@@ -149,7 +149,7 @@ jobsRouter.post("/", async (req, res, next) => {
        ) RETURNING id, job_number, created_at`,
       [
         title, description || null, employer_id || null,
-        industry || null, pay_rate || null, pay_rate_type || 'per_hour',
+        industry || null, pay_rate !== undefined && pay_rate !== null && pay_rate !== "" ? String(pay_rate).trim() : null, pay_rate_type || 'per_hour',
         positions_count || 1, vacancy_type || null, work_location || null, job_board_url || null,
         police_check || 'not_required', drug_alcohol_test || 'no', wwc || 'no',
         car_required || 'no', public_transport || 'no',
@@ -190,7 +190,11 @@ jobsRouter.patch("/:id", async (req, res, next) => {
 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
-        params.push(req.body[key]);
+        let val = req.body[key];
+        if (key === "pay_rate") {
+          val = val !== null && val !== "" ? String(val).trim() : null;
+        }
+        params.push(val);
         updates.push(`${key} = $${params.length}`);
       }
     }
