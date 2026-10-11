@@ -13,7 +13,7 @@ export async function loginUser(email, password) {
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) throw new Error("Invalid credentials");
 
-  const payload = { id: user.id, email: user.email, role: user.role };
+  const payload = { id: user.id, email: user.email, role: user.role, permissions: user.permissions || [] };
   if (user.role === "provider" && user.provider_id) {
     payload.provider_id = user.provider_id;
   }
@@ -24,7 +24,7 @@ export async function loginUser(email, password) {
 
   return {
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar_url: user.avatar_url, provider_id: user.provider_id || null },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, permissions: user.permissions || [], avatar_url: user.avatar_url, provider_id: user.provider_id || null },
   };
 }
 

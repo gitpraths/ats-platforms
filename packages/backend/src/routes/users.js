@@ -52,7 +52,7 @@ usersRouter.use(requireAuth);
 usersRouter.get("/me", async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, name, email, role, avatar_url, created_at FROM users WHERE id = $1",
+      "SELECT id, name, email, role, permissions, avatar_url, created_at FROM users WHERE id = $1",
       [req.user.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
@@ -145,7 +145,7 @@ usersRouter.get("/", requireRole("admin", "recruiter_admin"), async (req, res, n
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const { rows } = await pool.query(
-      `SELECT id, name, email, role, avatar_url, created_at FROM users ${where} ORDER BY name`,
+      `SELECT id, name, email, role, permissions, avatar_url, created_at FROM users ${where} ORDER BY name`,
       params
     );
     res.json({ success: true, data: rows });
@@ -155,14 +155,18 @@ usersRouter.get("/", requireRole("admin", "recruiter_admin"), async (req, res, n
 // ── POST /api/users ───────────────────────────────────────────────────────────
 usersRouter.post("/", requireRole("admin"), async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, permissions } = req.body;
     if (!name || !email || !password)
       return res.status(400).json({ success: false, error: "name, email, and password are required" });
 
+    const { ROLE_DEFAULTS } = await import("../config/permissions.js");
+    const userRole = role || "staff";
+    const userPerms = Array.isArray(permissions) ? permissions : (ROLE_DEFAULTS[userRole] || []);
+
     const password_hash = await hashPassword(password);
     const { rows } = await pool.query(
-      "INSERT INTO users (name, email, password_hash, role) VALUES ($1,$2,$3,$4) RETURNING id, name, email, role, created_at",
-      [name, email, password_hash, role || "recruiter"]
+      "INSERT INTO users (name, email, password_hash, role, permissions) VALUES ($1,$2,$3,$4,$5) RETURNING id, name, email, role, permissions, created_at",
+      [name, email, password_hash, userRole, JSON.stringify(userPerms)]
     );
     res.status(201).json({ success: true, data: rows[0] });
   } catch (err) {
@@ -177,11 +181,22 @@ usersRouter.put("/:id", requireRole("admin"), async (req, res, next) => {
     const { name, email, role } = req.body;
     if (!name || !email) return res.status(400).json({ success: false, error: "name and email are required" });
 
+    const existing = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.params.id]);
+    if (!existing.rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    const newRole = role || existing.rows[0].role;
+    let newPerms = req.body.permissions;
+    if (!newPerms && role && role !== existing.rows[0].role) {
+      const { ROLE_DEFAULTS } = await import("../config/permissions.js");
+      newPerms = ROLE_DEFAULTS[newRole] || [];
+    } else if (!newPerms) {
+      newPerms = existing.rows[0].permissions || [];
+    }
+
     const { rows } = await pool.query(
-      "UPDATE users SET name=$1, email=$2, role=$3, updated_at=NOW() WHERE id=$4 RETURNING id, name, email, role, avatar_url, created_at",
-      [name, email, role || "recruiter", req.params.id]
+      "UPDATE users SET name=$1, email=$2, role=$3, permissions=$4, updated_at=NOW() WHERE id=$5 RETURNING id, name, email, role, permissions, avatar_url, created_at",
+      [name, email, newRole, JSON.stringify(newPerms), req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     if (err.code === "23505") return res.status(409).json({ success: false, error: "Email already in use" });
@@ -207,14 +222,80 @@ usersRouter.put("/:id/password", requireRole("admin"), async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-// ── DELETE /api/users/:id ─────────────────────────────────────────────────────
+// ── GET /api/users/:id/permissions ───────────────────────────────────────────
+usersRouter.get("/:id/permissions", requireRole("admin"), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, name, email, role, permissions FROM users WHERE id = $1",
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    const { PERMISSIONS_CATALOG, ROLE_DEFAULTS, ALL_PERMISSION_IDS } = await import("../config/permissions.js");
+    res.json({
+      success: true,
+      data: {
+        user: rows[0],
+        catalog: PERMISSIONS_CATALOG,
+        role_defaults: ROLE_DEFAULTS,
+        all_permissions: ALL_PERMISSION_IDS,
+      },
+    });
+  } catch (err) { next(err); }
+});
+
+// ── PUT /api/users/:id/permissions ───────────────────────────────────────────
+usersRouter.put("/:id/permissions", requireRole("admin"), async (req, res, next) => {
+  try {
+    const { permissions } = req.body;
+    if (!Array.isArray(permissions)) {
+      return res.status(400).json({ success: false, error: "permissions must be an array of strings" });
+    }
+
+    const { ALL_PERMISSION_IDS, SUPER_ADMIN_EMAILS } = await import("../config/permissions.js");
+    // Sanitize: keep only permissions that exist in catalog
+    const sanitized = permissions.filter((p) => ALL_PERMISSION_IDS.includes(p));
+
+    const target = await pool.query("SELECT id, email, role FROM users WHERE id = $1", [req.params.id]);
+    if (!target.rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    // Only a Super Admin can modify a Super Admin user's permissions
+    const isTargetSuperAdmin = target.rows[0].role === "super_admin" ||
+      SUPER_ADMIN_EMAILS.some((e) => e.toLowerCase() === target.rows[0].email.toLowerCase());
+    if (isTargetSuperAdmin && req.user.role !== "super_admin") {
+      return res.status(403).json({ success: false, error: "Only Super Admins can modify Super Admin permissions" });
+    }
+
+    const { rows } = await pool.query(
+      "UPDATE users SET permissions = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, email, role, permissions",
+      [JSON.stringify(sanitized), req.params.id]
+    );
+    res.json({ success: true, data: rows[0] });
+  } catch (err) { next(err); }
+});
+
+// ── DELETE /api/users/:id (Super Admin Protected) ─────────────────────────────
 usersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
   try {
     if (req.params.id === req.user.id)
       return res.status(400).json({ success: false, error: "You cannot delete your own account" });
 
+    const target = await pool.query("SELECT id, email, role FROM users WHERE id = $1", [req.params.id]);
+    if (!target.rows[0]) return res.status(404).json({ success: false, error: "User not found" });
+
+    // Hard-lock: Super Admins (kavil@workvision.com.au & dhaval@workvision.com.au) cannot be deleted
+    const { SUPER_ADMIN_EMAILS } = await import("../config/permissions.js");
+    const isTargetSuperAdmin = target.rows[0].role === "super_admin" ||
+      SUPER_ADMIN_EMAILS.some((e) => e.toLowerCase() === target.rows[0].email.toLowerCase());
+
+    if (isTargetSuperAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: "Super Admin accounts are permanently protected and cannot be deleted.",
+      });
+    }
+
     const { rows } = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ success: false, error: "User not found" });
     res.json({ success: true, data: { id: rows[0].id } });
   } catch (err) { next(err); }
 });

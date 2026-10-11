@@ -1,10 +1,21 @@
-export type UserRole = "admin" | "recruiter_admin" | "recruiter" | "staff" | "hiring_manager" | "provider" | "training_admin";
+export type UserRole =
+  | "super_admin"
+  | "admin"
+  | "staff"
+  | "hr"
+  | "marketing"
+  | "recruiter_admin"
+  | "recruiter"
+  | "hiring_manager"
+  | "provider"
+  | "training_admin";
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  permissions?: string[];
   avatar_url?: string;
   provider_id?: string | null;
   created_at?: string;

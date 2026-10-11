@@ -62,6 +62,32 @@ export async function initDatabase() {
       logger.warn("[DB Init] Notice on pay_rate column alteration: " + err.message);
     });
 
+    // 5. Ensure users.permissions column exists for granular permissions
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '[]'::jsonb;
+    `).catch((err) => {
+      logger.warn("[DB Init] Notice on users.permissions column addition: " + err.message);
+    });
+
+    // 6. Ensure Super Admins (kavil@workvision.com.au & dhaval@workvision.com.au) exist and are protected
+    const { SUPER_ADMIN_EMAILS, ROLE_DEFAULTS } = await import("./permissions.js");
+    await pool.query(
+      `UPDATE users
+       SET role = 'super_admin', permissions = $1
+       WHERE LOWER(TRIM(email)) = ANY($2::text[])`,
+      [JSON.stringify(ROLE_DEFAULTS.super_admin), SUPER_ADMIN_EMAILS.map((e) => e.toLowerCase())]
+    ).catch(() => {});
+
+    // 7. Backfill users with empty permissions with their role defaults
+    for (const [role, perms] of Object.entries(ROLE_DEFAULTS)) {
+      await pool.query(
+        `UPDATE users
+         SET permissions = $1
+         WHERE role = $2 AND (permissions IS NULL OR permissions = '[]'::jsonb)`,
+        [JSON.stringify(perms), role]
+      ).catch(() => {});
+    }
+
   } catch (err) {
     logger.error("[DB Init] Error during database initialization: " + err.message);
   }

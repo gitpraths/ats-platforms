@@ -26,7 +26,7 @@ export function requireRole(...roles) {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
 
-    if (userRole === "admin") return next();
+    if (userRole === "super_admin" || userRole === "admin") return next();
 
     let allowed = false;
     for (const r of roles) {
@@ -34,7 +34,7 @@ export function requireRole(...roles) {
         allowed = true;
         break;
       }
-      if (r === "staff" && ["recruiter", "recruiter_admin", "staff"].includes(userRole)) {
+      if (r === "staff" && ["recruiter", "recruiter_admin", "staff", "hr", "marketing"].includes(userRole)) {
         allowed = true;
         break;
       }
@@ -42,7 +42,7 @@ export function requireRole(...roles) {
         allowed = true;
         break;
       }
-      if (r === "admin" && userRole === "recruiter_admin") {
+      if (r === "admin" && (userRole === "super_admin" || userRole === "recruiter_admin")) {
         allowed = true;
         break;
       }
@@ -50,6 +50,34 @@ export function requireRole(...roles) {
 
     if (!allowed) {
       return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    next();
+  };
+}
+
+export function requirePermission(...requiredPermissions) {
+  return async (req, res, next) => {
+    const userRole = req.user?.role;
+    if (!userRole) return res.status(403).json({ success: false, error: "Forbidden" });
+
+    // Super Admin and Admin bypass all granular permission checks
+    if (userRole === "super_admin" || userRole === "admin") return next();
+
+    let userPerms = req.user?.permissions;
+    if (!Array.isArray(userPerms)) {
+      // Lazy load permissions from DB if not already on the JWT token
+      const { pool } = await import("../config/db.js");
+      const { rows } = await pool.query("SELECT permissions, role FROM users WHERE id = $1", [req.user.id]);
+      userPerms = rows[0]?.permissions || [];
+      if (req.user) req.user.permissions = userPerms;
+    }
+
+    const hasAll = requiredPermissions.every((p) => userPerms.includes(p));
+    if (!hasAll) {
+      return res.status(403).json({
+        success: false,
+        error: `Permission denied. Required: ${requiredPermissions.join(", ")}`,
+      });
     }
     next();
   };
