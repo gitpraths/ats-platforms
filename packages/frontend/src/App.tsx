@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus, Table2, KeyRound } from "lucide-react";
+import { LayoutDashboard, Briefcase, Columns, Users, User, ChevronDown, Settings, Building2, UserCheck, BarChart2, MapPin as MapPinIcon, Plus, Table2, KeyRound, FileText } from "lucide-react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import SessionExpiringDialog from "./components/SessionExpiringDialog";
 import { Toaster } from "./components/ui/toaster";
@@ -22,6 +22,7 @@ import AdminDepartments from "./pages/AdminDepartments";
 import AdminLocations   from "./pages/AdminLocations";
 import AdminTrainings   from "./pages/AdminTrainings";
 import AdminXero        from "./pages/AdminXero";
+import AdminReleaseNotes from "./pages/AdminReleaseNotes";
 import Training         from "./pages/Training";
 import NotFound         from "./pages/NotFound";
 import Providers        from "./pages/Providers";
@@ -77,6 +78,7 @@ function AdminMenu() {
 
           <button onClick={() => go("/admin/trainings")}   className={item}><Table2    size={14} className="text-slate-400" /> Trainings</button>
           <button onClick={() => go("/admin/xero")}        className={item}><Settings  size={14} className="text-slate-400" /> Xero</button>
+          <button onClick={() => go("/admin/release-notes")} className={item}><FileText  size={14} className="text-orange-500" /> Release Notes</button>
           <div className="border-t border-slate-100 my-1" />
           <p className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Master Tables</p>
           <button onClick={() => go("/admin/master/industries")}  className={item}><Table2 size={14} className="text-orange-400" /> Industries</button>
@@ -312,6 +314,7 @@ function AppRoutes() {
       <Route path="/admin/locations"   element={<AdminRoute><AdminLocations   /></AdminRoute>} />
       <Route path="/admin/trainings"   element={<AdminRoute><AdminTrainings   /></AdminRoute>} />
       <Route path="/admin/xero"        element={<AdminRoute><AdminXero        /></AdminRoute>} />
+      <Route path="/admin/release-notes" element={<AdminRoute><AdminReleaseNotes /></AdminRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
