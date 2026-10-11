@@ -43,6 +43,10 @@ function AuAddressAutocomplete({
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  useEffect(() => {
+    setQuery(value ?? "");
+  }, [value]);
+
   function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
     const q = e.target.value;
     setQuery(q);
@@ -654,10 +658,10 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
       sourced_by_user_id:    form.sourced_by_type === "staff" ? (form.sourced_by_user_id || user?.id || undefined) : undefined,
       sourced_by_custom_name: form.sourced_by_type === "lead_generator" ? (form.sourced_by_custom_name || undefined) : undefined,
       industry:              form.industry            || undefined,
-      pay_rate:              form.pay_rate            ? Number(form.pay_rate) : undefined,
+      pay_rate:              form.pay_rate && form.pay_rate.trim() !== "" ? form.pay_rate.trim() : undefined,
       pay_rate_type:         form.pay_rate_type,
       positions_count:       form.positions_count,
-      vacancy_type:          form.work_type,
+      vacancy_type:          form.work_type ? form.work_type.toLowerCase().replace(/[\s-]/g, "_") : "full_time",
       work_location:         form.work_location       || undefined,
       job_board_url:         form.job_board_url       || undefined,
       description:           form.description         || undefined,

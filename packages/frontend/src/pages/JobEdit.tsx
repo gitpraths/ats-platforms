@@ -39,6 +39,10 @@ function AuAddressAutocomplete({ value, onChange, className }: {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  useEffect(() => {
+    setQuery(value ?? "");
+  }, [value]);
+
   function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
     const q = e.target.value;
     setQuery(q); onChange(q);
@@ -141,6 +145,15 @@ const WORK_TYPES = [
   { value: "temporary",  label: "Temporary"  },
 ];
 
+function normalizeVacancyType(v?: string | null): string {
+  if (!v) return "";
+  const s = v.toLowerCase().replace(/[\s-]/g, "_");
+  if (["full_time", "part_time", "casual", "contract", "temporary"].includes(s)) {
+    return s;
+  }
+  return v;
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function JobEdit() {
   const { id }      = useParams<{ id: string }>();
@@ -169,12 +182,12 @@ export default function JobEdit() {
     work_location:        "",
     job_board_url:        "",
     description:          "",
-    police_check:         "",
-    drug_alcohol_test:    "",
-    wwc:                  "",
-    car_required:         "",
-    public_transport:     "",
-    wage_subsidy_required: "",
+    police_check:         "not_required",
+    drug_alcohol_test:    "no",
+    wwc:                  "no",
+    car_required:         "no",
+    public_transport:     "no",
+    wage_subsidy_required: "no",
     comments:             "",
   });
 
@@ -184,19 +197,19 @@ export default function JobEdit() {
       title:                job.title ?? "",
       employer_id:          job.employer_id ?? "",
       industry:             job.industry ?? "",
-      vacancy_type:         job.vacancy_type ?? "",
-      pay_rate:             job.pay_rate?.toString() ?? "",
+      vacancy_type:         normalizeVacancyType(job.vacancy_type),
+      pay_rate:             job.pay_rate != null ? String(job.pay_rate) : "",
       pay_rate_type:        job.pay_rate_type ?? "per_hour",
       positions_count:      job.positions_count ?? 1,
       work_location:        job.work_location ?? "",
       job_board_url:        job.job_board_url ?? "",
       description:          job.description ?? "",
-      police_check:         job.police_check ?? "",
-      drug_alcohol_test:    job.drug_alcohol_test ?? "",
-      wwc:                  job.wwc ?? "",
-      car_required:         job.car_required ?? "",
-      public_transport:     job.public_transport ?? "",
-      wage_subsidy_required: job.wage_subsidy_required ?? "",
+      police_check:         job.police_check ?? "not_required",
+      drug_alcohol_test:    job.drug_alcohol_test ?? "no",
+      wwc:                  job.wwc ?? "no",
+      car_required:         job.car_required ?? "no",
+      public_transport:     job.public_transport ?? "no",
+      wage_subsidy_required: job.wage_subsidy_required ?? "no",
       comments:             job.comments ?? "",
     });
   }, [job]);
@@ -217,23 +230,23 @@ export default function JobEdit() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     updateJob.mutate({
-      title:                 form.title,
-      employer_id:           form.employer_id || undefined,
-      industry:              form.industry || undefined,
-      vacancy_type:          form.vacancy_type || undefined,
-      pay_rate:              form.pay_rate !== undefined && form.pay_rate !== "" ? String(form.pay_rate).trim() : undefined,
-      pay_rate_type:         form.pay_rate_type || undefined,
+      title:                 form.title.trim(),
+      employer_id:           form.employer_id || null,
+      industry:              form.industry.trim() || null,
+      vacancy_type:          form.vacancy_type || null,
+      pay_rate:              form.pay_rate && form.pay_rate.trim() !== "" ? form.pay_rate.trim() : null,
+      pay_rate_type:         form.pay_rate_type || "per_hour",
       positions_count:       form.positions_count,
-      work_location:         form.work_location || undefined,
-      job_board_url:         form.job_board_url || undefined,
-      description:           form.description || undefined,
-      police_check:          form.police_check || undefined,
-      drug_alcohol_test:     form.drug_alcohol_test || undefined,
-      wwc:                   form.wwc || undefined,
-      car_required:          form.car_required || undefined,
-      public_transport:      form.public_transport || undefined,
-      wage_subsidy_required: form.wage_subsidy_required || undefined,
-      comments:              form.comments || undefined,
+      work_location:         form.work_location.trim() || null,
+      job_board_url:         form.job_board_url.trim() || null,
+      description:           form.description.trim() || null,
+      police_check:          form.police_check || "not_required",
+      drug_alcohol_test:     form.drug_alcohol_test || "no",
+      wwc:                   form.wwc || "no",
+      car_required:          form.car_required || "no",
+      public_transport:      form.public_transport || "no",
+      wage_subsidy_required: form.wage_subsidy_required || "no",
+      comments:              form.comments.trim() || null,
     });
   }
 
@@ -397,8 +410,26 @@ export default function JobEdit() {
         </div>
 
         {updateJob.isError && (
-          <p className="text-sm text-red-600">Failed to save. Please try again.</p>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+            Failed to save changes: {(updateJob.error as Error)?.message || "Please check your inputs and try again."}
+          </div>
         )}
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Link
+            to={`/jobs/${id}`}
+            className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={updateJob.isPending}
+            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+          >
+            <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
 
       </form>
     </div>
