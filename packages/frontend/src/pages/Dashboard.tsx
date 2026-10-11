@@ -19,6 +19,7 @@ import {
   type ChartMonth,
 } from "../hooks/useDashboardStats";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import { stageLabel } from "../lib/utils";
 import type { Application } from "../types";
 import CreateJobDialog from "../components/CreateJobDialog";
@@ -143,6 +144,7 @@ function GroupedBarCard({
 export default function Dashboard() {
   const navigate               = useNavigate();
   const { user }               = useAuth();
+  const { hasPermission }      = usePermissions();
   const { data: stats }        = useDashboardStats();
   const { data: trainingData }    = useTrainingByType();
   const { data: candidatesData }  = useCandidatesByProvider();
@@ -199,27 +201,33 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <button
-            id="quick-add-candidate"
-            onClick={() => setCandidateDialogOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
-          >
-            <UserPlus size={15} />+ Add Candidate
-          </button>
-          <button
-            id="quick-add-employer"
-            onClick={() => setEmployerDialogOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
-          >
-            <Building2 size={15} />+ Add Employer
-          </button>
-          <button
-            id="quick-add-vacancy"
-            onClick={() => setJobDialogOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
-          >
-            <PlusSquare size={15} />+ Add Vacancy
-          </button>
+          {hasPermission("candidates:create") && (
+            <button
+              id="quick-add-candidate"
+              onClick={() => setCandidateDialogOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
+            >
+              <UserPlus size={15} />+ Add Candidate
+            </button>
+          )}
+          {hasPermission("employers:create") && (
+            <button
+              id="quick-add-employer"
+              onClick={() => setEmployerDialogOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
+            >
+              <Building2 size={15} />+ Add Employer
+            </button>
+          )}
+          {hasPermission("jobs:create") && (
+            <button
+              id="quick-add-vacancy"
+              onClick={() => setJobDialogOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white font-medium text-sm shadow-sm transition-all duration-150 whitespace-nowrap"
+            >
+              <PlusSquare size={15} />+ Add Vacancy
+            </button>
+          )}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { ArrowLeft, Edit2, ExternalLink, Briefcase, Plus } from "lucide-react";
 import { api } from "../lib/api";
 import type { Employer, Job } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import CreateJobDialog from "../components/CreateJobDialog";
 
 interface EmployerDetailData extends Employer {
@@ -24,6 +25,7 @@ export default function EmployerDetail() {
   const { id } = useParams<{ id: string }>();
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const navigate = useNavigate();
   const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
@@ -136,10 +138,12 @@ export default function EmployerDetail() {
           <h2 className="font-semibold text-slate-900 tracking-tight flex items-center gap-2">
             <Briefcase size={15} /> Vacancies
           </h2>
-          <button onClick={() => setJobDialogOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#e88e2e] text-white rounded-lg text-sm font-medium hover:bg-[#d07d20] transition">
-            <Plus size={14} /> Add Vacancy
-          </button>
+          {hasPermission("jobs:create") && (
+            <button onClick={() => setJobDialogOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#e88e2e] text-white rounded-lg text-sm font-medium hover:bg-[#d07d20] transition">
+              <Plus size={14} /> Add Vacancy
+            </button>
+          )}
         </div>
         {!employer.jobs?.length ? (
           <p className="text-sm text-slate-400">No vacancies linked to this employer.</p>

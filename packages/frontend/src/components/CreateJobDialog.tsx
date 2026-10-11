@@ -293,9 +293,11 @@ function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }:
           <option value="">— Select Employer —</option>
           {employers.filter((e) => e.is_active !== false).map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
-        <p className="text-xs text-slate-400 mt-1">
-          Not listed? <a href="/employers/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Employer</a>
-        </p>
+        {(currentUser?.role === "super_admin" || currentUser?.role === "admin" || currentUser?.permissions?.includes("employers:create")) && (
+          <p className="text-xs text-slate-400 mt-1">
+            Not listed? <a href="/employers/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Employer</a>
+          </p>
+        )}
       </div>
 
       {/* Vacancy Sourced By (Internal Record) */}
@@ -504,6 +506,7 @@ function StepCandidateAssignment({ form, set }: {
   form: FormState;
   set: (k: keyof FormState, v: unknown) => void;
 }) {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
 
   const { data: candidatesResult } = useQuery({
@@ -555,9 +558,11 @@ function StepCandidateAssignment({ form, set }: {
                 ))}
               </div>
             )}
-            <p className="text-xs text-slate-400 mt-1">
-              Not listed? <a href="/candidates/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Candidate</a>
-            </p>
+            {(user?.role === "super_admin" || user?.role === "admin" || user?.permissions?.includes("candidates:create")) && (
+              <p className="text-xs text-slate-400 mt-1">
+                Not listed? <a href="/candidates/new" target="_blank" className="text-[#e88e2e] hover:underline">+ Add Candidate</a>
+              </p>
+            )}
           </div>
         )}
       </div>
