@@ -336,14 +336,28 @@ placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruite
     if (!existing[0]) return res.status(404).json({ success: false, error: "Placement not found" });
 
     const newStatus = employment_status !== undefined ? employment_status : existing[0].employment_status;
-    const newEndDate = end_date !== undefined ? (end_date || null) : existing[0].end_date;
+    let newEndDate = end_date !== undefined ? (end_date || null) : existing[0].end_date;
+
+    // If status is active, active placements cannot have an end date
+    if (newStatus === "active") {
+      newEndDate = null;
+    } else if (newEndDate && existing[0].start_date) {
+      const endIso = toDateOnly(newEndDate);
+      const startIso = toDateOnly(existing[0].start_date);
+      if (endIso && startIso && endIso < startIso) {
+        return res.status(400).json({
+          success: false,
+          error: `Placement end date (${formatAU(endIso)}) cannot be earlier than start date (${formatAU(startIso)})`,
+        });
+      }
+    }
 
     const { rows } = await client.query(
       `UPDATE placements
        SET employment_status    = COALESCE($1,  employment_status),
            end_date             = $2,
            notes                = COALESCE($3,  notes),
-           termination_reason   = COALESCE($4,  termination_reason),
+           termination_reason   = $4,
            wagesub_status       = COALESCE($5,  wagesub_status),
            wagesub_4wk_paid_at  = $6,
            wagesub_13wk_paid_at = $7,
@@ -353,9 +367,9 @@ placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruite
        WHERE id = $10 RETURNING *`,
       [
         employment_status    ?? null,
-        end_date             !== undefined ? (end_date || null) : existing[0].end_date,
+        newEndDate,
         notes                ?? null,
-        termination_reason   ?? null,
+        newStatus === "active" ? null : (termination_reason ?? existing[0].termination_reason),
         wagesub_status       ?? null,
         wagesub_4wk_paid_at  !== undefined ? (wagesub_4wk_paid_at  || null) : undefined,
         wagesub_13wk_paid_at !== undefined ? (wagesub_13wk_paid_at || null) : undefined,

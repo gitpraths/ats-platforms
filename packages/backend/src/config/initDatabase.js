@@ -88,6 +88,20 @@ export async function initDatabase() {
       ).catch(() => {});
     }
 
+    // 8. Clean up contradictory placement records (active placements cannot have an end_date, and end_date cannot be earlier than start_date)
+    await pool.query(`
+      UPDATE placements
+      SET end_date = NULL
+      WHERE (employment_status = 'active' OR employment_status IS NULL)
+        AND end_date IS NOT NULL;
+
+      UPDATE placements
+      SET end_date = NULL
+      WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
+    `).catch((err) => {
+      logger.warn("[DB Init] Notice on placement cleanup: " + err.message);
+    });
+
   } catch (err) {
     logger.error("[DB Init] Error during database initialization: " + err.message);
   }

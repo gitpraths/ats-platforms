@@ -1273,7 +1273,7 @@ export function VacanciesTab({
                           )}
                         </div>
                       )}
-                      {app.placement_end_date && (
+                      {app.placement_status !== "active" && app.placement_end_date && (
                         <span className="text-[10px] text-slate-400 leading-tight">
                           Ended: {fmtDate(app.placement_end_date)}
                         </span>
@@ -1329,6 +1329,35 @@ function EditCandidatePlacementModal({
 
   async function handleSave() {
     if (!app.placement_id) return;
+    if (status === "active") {
+      setSaving(true);
+      setError(null);
+      try {
+        await api.patch(`/placements/${app.placement_id}`, {
+          employment_status: "active",
+          end_date: null,
+          termination_reason: null,
+          notes: notes || null,
+        });
+        onSaved();
+        onClose();
+      } catch (e: any) {
+        setError(e?.response?.data?.error || e?.message || "Failed to update placement");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (endDate && app.placement_date) {
+      const endIso = toYYYYMMDD(endDate);
+      const startIso = toYYYYMMDD(app.placement_date);
+      if (endIso && startIso && endIso < startIso) {
+        setError(`End date (${fmtDate(endDate)}) cannot be earlier than placement start date (${fmtDate(app.placement_date)}).`);
+        return;
+      }
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -1371,7 +1400,14 @@ function EditCandidatePlacementModal({
             <label className="block text-xs font-semibold text-slate-600 mb-1">Placement Status</label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {
+                const newSt = e.target.value;
+                setStatus(newSt);
+                if (newSt === "active") {
+                  setEndDate("");
+                  setTermReason("");
+                }
+              }}
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
             >
               <option value="active">Active</option>
@@ -1381,29 +1417,38 @@ function EditCandidatePlacementModal({
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              Date of Termination / End Date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Set for resignations, terminations, or placement end</p>
-          </div>
+          {status !== "active" ? (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Date of Termination / End Date
+                </label>
+                <input
+                  type="date"
+                  min={toYYYYMMDD(app.placement_date) || undefined}
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Set for resignations, terminations, or placement end</p>
+              </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Reason for Termination / Resignation</label>
-            <input
-              type="text"
-              value={termReason}
-              onChange={(e) => setTermReason(e.target.value)}
-              placeholder="e.g. Resigned to move interstate, performance, medical..."
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
-            />
-          </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Reason for Termination / Resignation</label>
+                <input
+                  type="text"
+                  value={termReason}
+                  onChange={(e) => setTermReason(e.target.value)}
+                  placeholder="e.g. Resigned to move interstate, performance, medical..."
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-500">
+              Active placements do not have an end date. If the candidate has completed, resigned, or left this role, change status above.
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Additional Notes</label>
