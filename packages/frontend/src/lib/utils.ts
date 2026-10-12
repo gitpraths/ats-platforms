@@ -96,3 +96,23 @@ export function validateNotBeforeApplied(
   }
   return null;
 }
+
+/**
+ * Validates that targetDate is on or before (<=) referenceDate.
+ * Same-day dates (targetDate === referenceDate) are fully supported.
+ * Returns error string if targetDate > referenceDate, or null if valid.
+ */
+export function validateNotAfterDate(
+  targetDate: string | null | undefined,
+  referenceDate: string | null | undefined,
+  referenceName = "Placement Date"
+): string | null {
+  if (!targetDate || !referenceDate) return null;
+  const targetIso = toYYYYMMDD(targetDate);
+  const refIso = toYYYYMMDD(referenceDate);
+  if (targetIso && refIso && targetIso > refIso) {
+    return `Applied Date cannot be after ${referenceName}`;
+  }
+  return null;
+}
+

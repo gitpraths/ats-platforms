@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { displayEmail, stageLabel, fmtDate, fmtDateTime, validateNotBeforeApplied } from "../lib/utils";
+import { displayEmail, stageLabel, fmtDate, fmtDateTime, validateNotBeforeApplied, validateNotAfterDate, toYYYYMMDD } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
@@ -957,6 +957,8 @@ function InlineDateCellDetail({
   onSaved,
   validate,
   allowClear,
+  min,
+  max,
 }: {
   appId: string;
   field: "applied_at" | "interview_date" | "ets_date" | "placement_date";
@@ -964,6 +966,8 @@ function InlineDateCellDetail({
   onSaved: () => void;
   validate?: (newDate: string | null) => string | null;
   allowClear?: boolean;
+  min?: string;
+  max?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
@@ -1003,7 +1007,9 @@ function InlineDateCellDetail({
         <input
           type="date"
           autoFocus
-          defaultValue={value ?? ""}
+          min={min}
+          max={max}
+          defaultValue={value ? (toYYYYMMDD(value) || "") : ""}
           onBlur={() => { setEditing(false); setError(null); }}
           onChange={handleChange}
           className="border border-[#e88e2e] rounded-lg px-2 py-1 text-xs focus:outline-none w-36"
@@ -1172,6 +1178,22 @@ export function VacanciesTab({
                         value={app.applied_at}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                         allowClear
+                        max={toYYYYMMDD(app.placement_date || app.ets_date || app.interview_date) || undefined}
+                        validate={(d) => {
+                          if (app.placement_date) {
+                            const err = validateNotAfterDate(d, app.placement_date, "Placement Date");
+                            if (err) return err;
+                          }
+                          if (app.ets_date) {
+                            const err = validateNotAfterDate(d, app.ets_date, "ETS Date");
+                            if (err) return err;
+                          }
+                          if (app.interview_date) {
+                            const err = validateNotAfterDate(d, app.interview_date, "Interview Date");
+                            if (err) return err;
+                          }
+                          return null;
+                        }}
                       />
                     ) : (
                       <span className="text-xs text-slate-500 whitespace-nowrap">{fmtDate(app.applied_at)}</span>
@@ -1185,6 +1207,7 @@ export function VacanciesTab({
                         value={app.interview_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                         allowClear
+                        min={toYYYYMMDD(app.applied_at) || undefined}
                         validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
                       />
                     ) : (
@@ -1199,6 +1222,7 @@ export function VacanciesTab({
                         value={app.ets_date}
                         onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                         allowClear
+                        min={toYYYYMMDD(app.applied_at) || undefined}
                         validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
                       />
                     ) : (
@@ -1214,6 +1238,7 @@ export function VacanciesTab({
                           value={app.placement_date}
                           onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
                           allowClear
+                          min={toYYYYMMDD(app.applied_at) || undefined}
                           validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
                         />
                       ) : (

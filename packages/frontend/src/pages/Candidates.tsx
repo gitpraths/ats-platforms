@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
-import { displayEmail, fmtDate, validateNotBeforeApplied } from "../lib/utils";
+import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -181,6 +181,7 @@ function InlineDateCell({
   onSaved,
   validate,
   allowClear,
+  min,
 }: {
   appId: string | null | undefined;
   field: "interview_date" | "ets_date" | "placement_date";
@@ -188,6 +189,7 @@ function InlineDateCell({
   onSaved: () => void;
   validate?: (newDate: string | null) => string | null;
   allowClear?: boolean;
+  min?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
@@ -233,7 +235,8 @@ function InlineDateCell({
         <input
           type="date"
           autoFocus
-          defaultValue={value ?? ""}
+          min={min}
+          defaultValue={value ? (toYYYYMMDD(value) || "") : ""}
           onBlur={() => { setEditing(false); setError(null); }}
           onChange={handleChange}
           className="border border-[#e88e2e] rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 w-32"
@@ -756,6 +759,7 @@ export default function Candidates() {
                             value={row.latest_interview_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
+                            min={toYYYYMMDD(row.date_referred) || undefined}
                             validate={(d) => validateNotBeforeApplied(d, row.date_referred)}
                           />
                         </CellTooltip>
@@ -769,6 +773,7 @@ export default function Candidates() {
                             value={row.latest_ets_date}
                             onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                             allowClear
+                            min={toYYYYMMDD(row.date_referred) || undefined}
                             validate={(d) => validateNotBeforeApplied(d, row.date_referred)}
                           />
                       </td>
@@ -781,6 +786,7 @@ export default function Candidates() {
                           value={row.latest_placement_date}
                           onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate-pool"] })}
                           allowClear
+                          min={toYYYYMMDD(row.date_referred) || undefined}
                           validate={(d) => validateNotBeforeApplied(d, row.date_referred)}
                         />
                       </td>
