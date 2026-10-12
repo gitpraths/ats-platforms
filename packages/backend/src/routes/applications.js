@@ -13,6 +13,31 @@ applicationsRouter.use((req, res, next) => {
 
 const VALID_STAGES = ["applied", "screening", "interview", "ets", "hired", "rejected"];
 
+function toDateOnly(val) {
+  if (!val) return null;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(trimmed)) {
+      const parts = trimmed.split("/");
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+  }
+  const d = typeof val === "string" ? new Date(val) : val;
+  if (isNaN(d.getTime())) return null;
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatAU(isoStr) {
+  if (!isoStr) return "";
+  const parts = isoStr.split("-");
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return isoStr;
+}
+
 // ── GET /api/applications ────────────────────────────────────────────────────
 // Supports filters: job_id, candidate (name search), job_title (title search)
 applicationsRouter.get("/", async (req, res, next) => {
@@ -159,6 +184,39 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     if (updates.length === 0)
       return res.status(400).json({ success: false, error: "No updatable fields provided" });
 
+    // ── Date chronology validation ───────────────────────────────────────────
+    const effectiveAppliedAt = applied_at !== undefined ? applied_at : appRows[0].applied_at;
+    const effectivePlacementDate = placement_date !== undefined ? placement_date : appRows[0].placement_date;
+
+    if (effectivePlacementDate && effectiveAppliedAt) {
+      const plcIso = toDateOnly(effectivePlacementDate);
+      const appIso = toDateOnly(effectiveAppliedAt);
+      if (plcIso && appIso && plcIso < appIso) {
+        return res.status(400).json({
+          success: false,
+          error: `Placement date (${formatAU(plcIso)}) cannot be earlier than application date (${formatAU(appIso)})`,
+        });
+      }
+    }
+
+    // If applied_at is being updated, verify it does not conflict with existing placements table record
+    if (applied_at !== undefined && applied_at) {
+      const { rows: linkedPlacements } = await pool.query(
+        `SELECT start_date FROM placements WHERE application_id = $1`,
+        [req.params.id]
+      );
+      const appIso = toDateOnly(applied_at);
+      for (const lp of linkedPlacements) {
+        const plcIso = toDateOnly(lp.start_date);
+        if (plcIso && appIso && plcIso < appIso) {
+          return res.status(400).json({
+            success: false,
+            error: `Application date (${formatAU(appIso)}) cannot be after placement start date (${formatAU(plcIso)})`,
+          });
+        }
+      }
+    }
+
     // ── 1-active-placement-at-a-time validation ────────────────────────────────
     if (placement_date) {
       const { rows: activePlacements } = await pool.query(
@@ -194,6 +252,11 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
           [appData.id, appData.candidate_id, appData.job_id, employerId, placement_date, req.user?.id || null]
         );
         await pool.query(`UPDATE candidates SET work_status = 'placed', updated_at = NOW(), updated_by = $2 WHERE id = $1`, [appData.candidate_id, req.user?.id || null]);
+      } else {
+        await pool.query(
+          `UPDATE placements SET start_date = $1, updated_at = NOW() WHERE id = $2`,
+          [placement_date, plc[0].id]
+        );
       }
     }
 

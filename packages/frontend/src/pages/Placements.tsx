@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, CheckCircle, Mail, FileText, X, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { fmtDate } from "../lib/utils";
+import { fmtDate, toYYYYMMDD, stageLabel } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, Candidate, Employer, Provider, Application } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -95,6 +95,7 @@ export default function Placements() {
     enabled: !!createForm.candidate_id,
   });
   const candidateApplications = candidateAppsResult?.data ?? [];
+  const selectedApp = candidateApplications.find((a) => a.id === createForm.application_id);
 
   const createPlacement = useMutation({
     mutationFn: (body: CreateForm) => api.post<Placement>("/placements", body),
@@ -126,6 +127,16 @@ export default function Placements() {
     if (!createForm.candidate_id || !createForm.application_id || !createForm.start_date) {
       setCreateError("Candidate, Application, and Start Date are required.");
       return;
+    }
+    if (selectedApp?.applied_at) {
+      const startIso = toYYYYMMDD(createForm.start_date);
+      const appIso = toYYYYMMDD(selectedApp.applied_at);
+      if (startIso && appIso && startIso < appIso) {
+        setCreateError(
+          `Placement start date (${fmtDate(createForm.start_date)}) cannot be earlier than application date (${fmtDate(selectedApp.applied_at)}).`
+        );
+        return;
+      }
     }
     setCreateError("");
     createPlacement.mutate(createForm);
@@ -349,7 +360,10 @@ export default function Placements() {
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Candidate *</label>
                 <select value={createForm.candidate_id}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, candidate_id: e.target.value, application_id: "", job_id: "" }))}
+                  onChange={(e) => {
+                    setCreateError("");
+                    setCreateForm((f) => ({ ...f, candidate_id: e.target.value, application_id: "", job_id: "" }));
+                  }}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                   <option value="">Select candidate...</option>
                   {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -360,13 +374,16 @@ export default function Placements() {
                 <select value={createForm.application_id}
                   disabled={!createForm.candidate_id}
                   onChange={(e) => {
+                    setCreateError("");
                     const app = candidateApplications.find((a) => a.id === e.target.value);
                     setCreateForm((f) => ({ ...f, application_id: e.target.value, job_id: app?.job_id ?? f.job_id }));
                   }}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-400">
                   <option value="">{createForm.candidate_id ? "Select application..." : "Select a candidate first"}</option>
                   {candidateApplications.map((a) => (
-                    <option key={a.id} value={a.id}>{a.job_title} — {a.stage}</option>
+                    <option key={a.id} value={a.id}>
+                      {a.job_title} — {stageLabel(a.stage)} {a.applied_at ? `(Applied: ${fmtDate(a.applied_at)})` : ""}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -380,10 +397,29 @@ export default function Placements() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Start Date *</label>
-                <input type="date" value={createForm.start_date}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, start_date: e.target.value }))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-600">Start Date *</label>
+                  {selectedApp?.applied_at && (
+                    <span className="text-[11px] text-slate-500 font-normal">
+                      Applied: {fmtDate(selectedApp.applied_at)}
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  min={toYYYYMMDD(selectedApp?.applied_at) || undefined}
+                  value={createForm.start_date}
+                  onChange={(e) => {
+                    setCreateError("");
+                    setCreateForm((f) => ({ ...f, start_date: e.target.value }));
+                  }}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+                {selectedApp?.applied_at && (
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Must be on or after application date ({fmtDate(selectedApp.applied_at)})
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Wage Sub Process Status</label>

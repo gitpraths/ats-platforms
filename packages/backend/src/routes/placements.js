@@ -20,6 +20,31 @@ const WELFARE_OFFSETS = [
   { check_type: "month_6", months: 6 },
 ];
 
+function toDateOnly(val) {
+  if (!val) return null;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(trimmed)) {
+      const parts = trimmed.split("/");
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+  }
+  const d = typeof val === "string" ? new Date(val) : val;
+  if (isNaN(d.getTime())) return null;
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatAU(isoStr) {
+  if (!isoStr) return "";
+  const parts = isoStr.split("-");
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return isoStr;
+}
+
 function welfareCheckDueDate(startDate, offset) {
   const d = new Date(startDate);
   if (offset.days)   d.setDate(d.getDate() + offset.days);
@@ -157,6 +182,28 @@ placementsRouter.post("/", requirePermission("placements:create"), async (req, r
 
     await client.query("BEGIN");
 
+    // Check application exists and validate start_date >= applied_at
+    const { rows: appRows } = await client.query(
+      `SELECT id, applied_at FROM applications WHERE id = $1`,
+      [application_id]
+    );
+    if (!appRows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, error: "Application not found" });
+    }
+
+    if (appRows[0].applied_at) {
+      const startDateIso = toDateOnly(start_date);
+      const appliedAtIso = toDateOnly(appRows[0].applied_at);
+      if (startDateIso && appliedAtIso && startDateIso < appliedAtIso) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          success: false,
+          error: `Placement start date (${formatAU(startDateIso)}) cannot be earlier than application date (${formatAU(appliedAtIso)})`,
+        });
+      }
+    }
+
     // Enforce business rule: Single Active Placement
     const { rows: existing } = await client.query(
       `SELECT id FROM placements WHERE candidate_id = $1 AND end_date IS NULL`,
@@ -213,6 +260,23 @@ placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
 
     const { rows: existing } = await client.query("SELECT * FROM placements WHERE id = $1", [req.params.id]);
     if (!existing[0]) return res.status(404).json({ success: false, error: "Placement not found" });
+
+    if (start_date && existing[0].application_id) {
+      const { rows: appRows } = await client.query(
+        "SELECT applied_at FROM applications WHERE id = $1",
+        [existing[0].application_id]
+      );
+      if (appRows[0]?.applied_at) {
+        const startDateIso = toDateOnly(start_date);
+        const appliedAtIso = toDateOnly(appRows[0].applied_at);
+        if (startDateIso && appliedAtIso && startDateIso < appliedAtIso) {
+          return res.status(400).json({
+            success: false,
+            error: `Placement start date (${formatAU(startDateIso)}) cannot be earlier than application date (${formatAU(appliedAtIso)})`,
+          });
+        }
+      }
+    }
 
     await client.query("BEGIN");
 
