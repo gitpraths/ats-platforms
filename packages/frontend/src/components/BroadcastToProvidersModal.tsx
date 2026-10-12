@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Send, X, Users, CheckSquare, Square,
@@ -33,6 +33,7 @@ interface Props {
 
 export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClose }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [initialized, setInitialized] = useState(false);
   const [sent, setSent]               = useState<{ count: number } | null>(null);
   const [errorMsg, setErrorMsg]       = useState<string | null>(null);
   const [loading, setLoading]         = useState(false);
@@ -109,6 +110,14 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
   const providers = (data?.data ?? []).filter((p) => p.is_active && p.email);
   const noEmail   = (data?.data ?? []).filter((p) => p.is_active && !p.email);
 
+  // Pre-select all active providers by default
+  useEffect(() => {
+    if (providers.length > 0 && !initialized) {
+      setSelectedIds(new Set(providers.map((p) => p.id)));
+      setInitialized(true);
+    }
+  }, [providers, initialized]);
+
   // Filtered providers based on search query
   const filteredProviders = providers.filter((p) => {
     if (!providerSearch.trim()) return true;
@@ -174,6 +183,11 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
   };
 
   const handleClick = async () => {
+    if (selectedIds.size === 0) {
+      setErrorMsg("Please select at least one provider from the list before sending the broadcast.");
+      setActiveTab("select");
+      return;
+    }
     setLoading(true);
     await handleSend();
     setLoading(false);
@@ -382,6 +396,20 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                   </div>
                 ) : (
                   <>
+                    {/* Zero-selected reminder */}
+                    {selectedIds.size === 0 && (
+                      <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center justify-between">
+                        <span>Please select at least one provider from the list or click <strong>Select All</strong>.</span>
+                        <button
+                          type="button"
+                          onClick={toggleAll}
+                          className="ml-2 font-bold text-amber-900 underline hover:no-underline"
+                        >
+                          Select All
+                        </button>
+                      </div>
+                    )}
+
                     {/* Search Input for Providers */}
                     <div className="relative mb-3">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -509,14 +537,21 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                 </button>
                 <button
                   type="button"
-                  disabled={selectedIds.size === 0 || loading}
+                  disabled={loading}
                   onClick={handleClick}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#0f172a] hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors min-w-[160px] justify-center"
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors min-w-[160px] justify-center ${
+                    selectedIds.size === 0
+                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+                      : "bg-[#0f172a] hover:bg-slate-700 text-white"
+                  }`}
                 >
-                  {loading
-                    ? <><Loader2 size={14} className="animate-spin" /> Sending...</>
-                    : <><Send size={14} /> Send to {selectedIds.size || ""} Provider{selectedIds.size !== 1 ? "s" : ""}</>
-                  }
+                  {loading ? (
+                    <><Loader2 size={14} className="animate-spin" /> Sending...</>
+                  ) : selectedIds.size === 0 ? (
+                    <><Send size={14} /> Select Providers to Send</>
+                  ) : (
+                    <><Send size={14} /> Send to {selectedIds.size} Provider{selectedIds.size !== 1 ? "s" : ""}</>
+                  )}
                 </button>
               </div>
             </div>
