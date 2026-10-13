@@ -39,7 +39,20 @@ jobsRouter.get("/", requirePermission("jobs:view"), async (req, res, next) => {
     const params = [];
     const conditions = [];
 
-    if (status)        { params.push(status);        conditions.push(`j.status = $${params.length}`); }
+    if (status) {
+      if (status === "open") {
+        conditions.push(`j.status IN ('published', 'draft')`);
+      } else if (status === "active") {
+        conditions.push(`j.status != 'archived'`);
+      } else if (status.includes(",")) {
+        const statuses = status.split(",").map(s => s.trim());
+        params.push(statuses);
+        conditions.push(`j.status = ANY($${params.length})`);
+      } else {
+        params.push(status);
+        conditions.push(`j.status = $${params.length}`);
+      }
+    }
     if (department_id) { params.push(department_id); conditions.push(`j.department_id = $${params.length}`); }
     if (location_id)   { params.push(location_id);   conditions.push(`j.location_id = $${params.length}`); }
     if (job_type)      { params.push(job_type);       conditions.push(`j.job_type = $${params.length}`); }

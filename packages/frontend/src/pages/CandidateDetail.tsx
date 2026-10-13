@@ -1063,10 +1063,17 @@ export function VacanciesTab({
   const [selectedJob, setSelectedJob] = useState("");
   const [editingPlacement, setEditingPlacement] = useState<any | null>(null);
 
-  const { data: openJobs = [] } = useQuery<{ id: string; title: string; job_number?: string }[]>({
-    queryKey: ["jobs-open"],
-    queryFn:  () => api.get<{ id: string; title: string; job_number?: string }[]>("/jobs?status=open&limit=200"),
+  const { data: openJobs = [], isLoading: isLoadingJobs } = useQuery<{ id: string; title: string; job_number?: string; status?: string }[]>({
+    queryKey: ["jobs-available-for-candidate"],
+    queryFn: async () => {
+      const res = await api.get<any>("/jobs?limit=200");
+      const list: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      return list.filter((j) => j && j.status !== "archived" && j.status !== "closed");
+    },
   });
+
+  const appliedJobIds = new Set(applications.map((a) => a.job_id).filter(Boolean));
+  const availableJobs = openJobs.filter((j) => !appliedJobIds.has(j.id));
 
   const addToVacancy = useMutation({
     mutationFn: ({ job_id }: { job_id: string }) =>
@@ -1118,12 +1125,19 @@ export function VacanciesTab({
           <select
             value={selectedJob}
             onChange={(e) => setSelectedJob(e.target.value)}
-            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]"
+            disabled={isLoadingJobs}
+            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white disabled:bg-slate-50"
           >
-            <option value="">Select a vacancy…</option>
-            {openJobs.map((j) => (
+            <option value="">
+              {isLoadingJobs
+                ? "Loading vacancies…"
+                : availableJobs.length === 0
+                  ? "No available vacancies"
+                  : "Select a vacancy…"}
+            </option>
+            {availableJobs.map((j) => (
               <option key={j.id} value={j.id}>
-                {j.title}{j.job_number ? ` (#${j.job_number})` : ""}
+                {j.title}{j.job_number ? ` (#${j.job_number})` : ""}{j.status === "draft" ? " (Draft)" : ""}
               </option>
             ))}
           </select>
