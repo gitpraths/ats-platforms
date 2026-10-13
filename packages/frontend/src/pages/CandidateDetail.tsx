@@ -1103,9 +1103,9 @@ export function VacanciesTab({
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
+    <div className="bg-white border border-slate-200 rounded-2xl" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.07)'}}>
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+      <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200 rounded-t-2xl">
         <h3 className="text-sm font-semibold text-slate-900">
           Vacancies Applied
           <span className="ml-2 text-xs font-normal text-slate-400">({applications.length})</span>
@@ -1122,7 +1122,7 @@ export function VacanciesTab({
 
       {/* Add to vacancy inline form */}
       {adding && (
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-orange-50/40">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-orange-50/40 relative z-30">
           <div className="flex-1 min-w-[240px]">
             <SearchableSelect
               options={availableJobs.map((j) => ({
