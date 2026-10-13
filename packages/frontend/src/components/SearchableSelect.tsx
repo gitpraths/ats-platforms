@@ -12,6 +12,7 @@ interface SearchableSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   allLabel?: string;
+  hideAllOption?: boolean;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export default function SearchableSelect({
   onChange,
   placeholder = "Search...",
   allLabel = "All",
+  hideAllOption = false,
   className = "",
 }: SearchableSelectProps) {
   const [open,   setOpen]   = useState(false);
@@ -75,8 +77,8 @@ export default function SearchableSelect({
             : "border-slate-200 hover:border-slate-300"
           }`}
       >
-        <span className={selected ? "text-slate-900 font-medium" : "text-slate-400"}>
-          {selected ? selected.label : allLabel}
+        <span className={selected ? "text-slate-900 font-medium truncate" : "text-slate-400 truncate"}>
+          {selected ? selected.label : (hideAllOption ? placeholder : allLabel)}
         </span>
         <div className="flex items-center gap-1 flex-shrink-0">
           {value && (
@@ -96,7 +98,7 @@ export default function SearchableSelect({
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 min-w-full w-max max-w-xs bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-50 top-full mt-1 left-0 min-w-full w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
           {/* Search input */}
           <div className="p-2 border-b border-slate-100">
             <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-1.5">
@@ -120,17 +122,19 @@ export default function SearchableSelect({
           {/* Options list */}
           <div className="max-h-56 overflow-y-auto">
             {/* "All" option */}
-            <button
-              type="button"
-              onClick={() => handleSelect("")}
-              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                !value
-                  ? "bg-orange-50 text-[#e88e2e] font-semibold"
-                  : "text-slate-500 hover:bg-slate-50"
-              }`}
-            >
-              {allLabel}
-            </button>
+            {!hideAllOption && (
+              <button
+                type="button"
+                onClick={() => handleSelect("")}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                  !value
+                    ? "bg-orange-50 text-[#e88e2e] font-semibold"
+                    : "text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                {allLabel}
+              </button>
+            )}
 
             {filtered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-slate-400 text-center">No results found</p>

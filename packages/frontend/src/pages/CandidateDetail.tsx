@@ -4,6 +4,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
 import { api } from "../lib/api";
+import SearchableSelect from "../components/SearchableSelect";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
 import type { Candidate, ApplicationStage, CandidateDocument, CandidateNote, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
@@ -1122,25 +1123,25 @@ export function VacanciesTab({
       {/* Add to vacancy inline form */}
       {adding && (
         <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-orange-50/40">
-          <select
-            value={selectedJob}
-            onChange={(e) => setSelectedJob(e.target.value)}
-            disabled={isLoadingJobs}
-            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white disabled:bg-slate-50"
-          >
-            <option value="">
-              {isLoadingJobs
-                ? "Loading vacancies…"
-                : availableJobs.length === 0
-                  ? "No available vacancies"
-                  : "Select a vacancy…"}
-            </option>
-            {availableJobs.map((j) => (
-              <option key={j.id} value={j.id}>
-                {j.title}{j.job_number ? ` (#${j.job_number})` : ""}{j.status === "draft" ? " (Draft)" : ""}
-              </option>
-            ))}
-          </select>
+          <div className="flex-1 min-w-[240px]">
+            <SearchableSelect
+              options={availableJobs.map((j) => ({
+                value: j.id,
+                label: `${j.title}${j.job_number ? ` (#${j.job_number})` : ""}${j.status === "draft" ? " (Draft)" : ""}`,
+              }))}
+              value={selectedJob}
+              onChange={setSelectedJob}
+              placeholder={
+                isLoadingJobs
+                  ? "Loading vacancies…"
+                  : availableJobs.length === 0
+                    ? "No available vacancies"
+                    : "Search and select a vacancy…"
+              }
+              hideAllOption
+              className="w-full"
+            />
+          </div>
           <button
             onClick={handleAdd}
             disabled={!selectedJob || addToVacancy.isPending}
