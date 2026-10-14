@@ -34,9 +34,48 @@ interface ReleaseItem {
 
 const releases: ReleaseItem[] = [
   {
+    version: "1.6.0",
+    date: "14 October 2026",
+    badge: "Current Production",
+    title: "5-Role RBAC Architecture & Administrative Access Hardening",
+    summary:
+      "Enterprise authorization upgrade implementing 5 standardized roles, live PostgreSQL permission checks in middleware, unblocked provider workflows for staff, and strict Admin-only guards for Invoice generation and Important Updates.",
+    highlights: [
+      "5 Standardized Roles: super_admin, admin, staff, hr, and marketing with dedicated permission presets.",
+      "Live Database Permission Verification: Middleware queries live roles and permissions from PostgreSQL, applying changes immediately without re-authentication.",
+      "Provider Management Permission Guards: Replaced legacy admin-only requirements on provider routes with granular permissions (employers:view, employers:create, employers:edit), resolving 403 Forbidden errors for staff.",
+      "Admin-Only Invoice Protection: Placement and training invoice generation buttons are strictly restricted to Admins (isAdmin), paired with backend enforcement on POST /api/xero/invoices.",
+      "Important Updates Route & Link Hardening: Enforced Admin-only access on /hiring-board and updated Dashboard stat cards and activity links to eliminate redirect loops for non-admin users.",
+      "Comprehensive Architecture Documentation: Added ROLE_AND_PERMISSION_ARCHITECTURE.md and system changelogs under docs/.",
+    ],
+    technicalDetails: {
+      commits: ["8f008e7", "c5ad046"],
+      affectedComponents: [
+        "auth.js",
+        "providers.js",
+        "xero.js",
+        "jobs.js",
+        "AdminUsers.tsx",
+        "Placements.tsx",
+        "EnrolmentsTab.tsx",
+        "CandidateDetail.tsx",
+        "Dashboard.tsx",
+        "App.tsx",
+        "usePermissions.ts",
+      ],
+      backendChanges: [
+        "Removed legacy users_role_check constraint to support the 5-role taxonomy",
+        "Live PostgreSQL permission validation in requireRole and requirePermission middleware",
+        "Refactored /api/providers routes to requirePermission instead of requireRole('admin')",
+        "Enforced requireRole('admin') on POST /api/xero/invoices",
+        "Migrated existing staff user accounts to 17 standard permissions in PostgreSQL",
+      ],
+    },
+  },
+  {
     version: "1.5.0",
     date: "11 October 2026",
-    badge: "Current Production",
+    badge: "Prior Release",
     title: "Granular Permissions Engine & Award Wages Support",
     summary:
       "Full role-based access control with 26 modular permissions across 7 modules, real-time UI action hiding, interactive tooltips, and Australian Modern Award wages support.",
@@ -228,7 +267,8 @@ const releases: ReleaseItem[] = [
 export default function AdminReleaseNotes() {
   const [activeTab, setActiveTab] = useState<"releases" | "implementation">("releases");
   const [expandedReleases, setExpandedReleases] = useState<Record<string, boolean>>({
-    "1.5.0": true,
+    "1.6.0": true,
+    "1.5.0": false,
   });
 
   const toggleExpand = (version: string) => {
