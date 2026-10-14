@@ -91,7 +91,7 @@ xeroRouter.get("/invoices", requireAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-xeroRouter.post("/invoices", requireAuth, requirePermission("reports:financials"), async (req, res, next) => {
+xeroRouter.post("/invoices", requireAuth, requireRole("admin"), async (req, res, next) => {
   try {
     const { candidate_training_id, placement_id, unit_price, quantity = 1, xero_contact_id } = req.body;
     if ((!candidate_training_id && !placement_id) || unit_price === undefined || unit_price === null) {

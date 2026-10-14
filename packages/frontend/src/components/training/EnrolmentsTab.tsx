@@ -10,6 +10,7 @@ import type { PrefilterToEnrolments } from "../../pages/Training";
 import { GenerateInvoiceDialog } from "./GenerateInvoiceDialog";
 import { EnrolmentDialog } from "./EnrolmentDialog";
 import { useXeroInvoicesForEnrolment } from "../../hooks/useXero";
+import { usePermissions } from "../../hooks/usePermissions";
 import Pagination from "../Pagination";
 import { fmtDate } from "../../lib/utils";
 
@@ -265,9 +266,11 @@ export function EnrolmentsTab({
 }
 
 function InvoiceCell<E extends CandidateTraining>({ enrolment, onGenerate }: { enrolment: E; onGenerate: (e: E) => void }) {
+  const { isAdmin } = usePermissions();
   const { data } = useXeroInvoicesForEnrolment(enrolment.id);
   const existing = data?.data?.[0];
   if (existing) {
+    if (!isAdmin) return <span className="text-xs text-slate-400">Invoiced</span>;
     return (
       <a href={`https://invoicing.xero.com/edit/${existing.xero_invoice_id}`} target="_blank" rel="noreferrer"
          className="text-xs text-blue-600 hover:underline">
@@ -275,6 +278,7 @@ function InvoiceCell<E extends CandidateTraining>({ enrolment, onGenerate }: { e
       </a>
     );
   }
+  if (!isAdmin) return <span className="text-xs text-slate-400">—</span>;
   return (
     <button onClick={() => onGenerate(enrolment)} className="text-xs text-slate-500 hover:underline">
       Generate invoice

@@ -37,7 +37,7 @@ function weeksOnPlacement(startDate: string): number {
 
 export default function Placements() {
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isAdmin } = usePermissions();
   const canView = hasPermission("placements:view");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -317,7 +317,7 @@ export default function Placements() {
                     <div className="flex items-center gap-2 justify-end">
                       <Link to={`/placements/${p.id}`}
                         className="text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">View</Link>
-                      {canCreate && (
+                      {isAdmin && (
                         <button
                           onClick={() => setInvoicingPlacement(p)}
                           title="Generate Invoice for Placement"

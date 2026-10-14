@@ -1600,9 +1600,11 @@ export function TrainingTab({ candidateId, canWrite, candidateName }: { candidat
 }
 
 function InvoiceCell({ enrolment, onGenerate }: { enrolment: CandidateTraining; onGenerate: (e: CandidateTraining) => void }) {
+  const { isAdmin } = usePermissions();
   const { data } = useXeroInvoicesForEnrolment(enrolment.id);
   const existing = data?.data?.[0];
   if (existing) {
+    if (!isAdmin) return <span className="text-xs text-slate-400">Invoiced</span>;
     return (
       <a href={`https://invoicing.xero.com/edit/${existing.xero_invoice_id}`} target="_blank" rel="noreferrer"
          className="text-xs text-blue-600 hover:underline">
@@ -1610,6 +1612,7 @@ function InvoiceCell({ enrolment, onGenerate }: { enrolment: CandidateTraining; 
       </a>
     );
   }
+  if (!isAdmin) return <span className="text-xs text-slate-400">—</span>;
   return (
     <button onClick={() => onGenerate(enrolment)} className="text-xs text-slate-500 hover:underline">
       Generate invoice

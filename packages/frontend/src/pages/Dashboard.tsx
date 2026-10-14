@@ -144,7 +144,7 @@ function GroupedBarCard({
 export default function Dashboard() {
   const navigate               = useNavigate();
   const { user }               = useAuth();
-  const { hasPermission }      = usePermissions();
+  const { hasPermission, isAdmin } = usePermissions();
   const { data: stats }        = useDashboardStats();
   const { data: trainingData }    = useTrainingByType();
   const { data: candidatesData }  = useCandidatesByProvider();
@@ -240,8 +240,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Open Vacancies",      value: openJobs,        icon: Briefcase,    iconBg: "bg-blue-50",   iconCls: "text-blue-600",   topBorder: "border-t-blue-500",   link: hasPermission("jobs:view") ? "/jobs" : "#" },
-          { label: "Active Applications", value: activeApps,      icon: ClipboardList,iconBg: "bg-purple-50", iconCls: "text-purple-600", topBorder: "border-t-purple-500", link: "/hiring-board" },
-          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  topBorder: "border-t-emerald-500",link: "/hiring-board" },
+          { label: "Active Applications", value: activeApps,      icon: ClipboardList,iconBg: "bg-purple-50", iconCls: "text-purple-600", topBorder: "border-t-purple-500", link: isAdmin ? "/hiring-board" : "#" },
+          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  topBorder: "border-t-emerald-500",link: isAdmin ? "/hiring-board" : "#" },
           { label: "Total Candidates",    value: totalCandidates, icon: Users,        iconBg: "bg-slate-100", iconCls: "text-slate-500",  topBorder: "border-t-slate-400",  link: hasPermission("candidates:view") ? "/candidates" : "#" },
         ].map(({ label, value, icon: Icon, iconBg, iconCls, topBorder, link }) => (
           <Link
@@ -405,9 +405,11 @@ export default function Dashboard() {
             <h2 className="font-semibold text-slate-900 tracking-tight">Recent Activity</h2>
             <p className="text-xs text-slate-400 mt-0.5">Latest application updates</p>
           </div>
-          <Link to="/hiring-board" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
-            View board →
-          </Link>
+          {isAdmin && (
+            <Link to="/hiring-board" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition">
+              View board →
+            </Link>
+          )}
         </div>
         {recent.length === 0 ? (
           <p className="text-sm text-slate-400 py-6 text-center">No applications yet.</p>
