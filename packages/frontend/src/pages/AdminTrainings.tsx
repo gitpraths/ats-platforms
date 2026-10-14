@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Pencil, Power } from "lucide-react";
 import { useTrainings, useCreateTraining, useUpdateTraining, useDeleteTraining } from "../hooks/useTrainings";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import type { Training } from "../types";
 import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +16,8 @@ const STATUS_BADGE = (active: boolean) =>
 
 export default function AdminTrainings() {
   const { user } = useAuth();
-  const canEdit = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
+  const { hasPermission, isAdmin } = usePermissions();
+  const canEdit = isAdmin || hasPermission("training:manage");
 
   const [search, setSearch] = useState("");
   const [showActiveOnly, setShowActiveOnly] = useState(true);

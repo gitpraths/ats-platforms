@@ -5,12 +5,6 @@ import { sendPlacementConfirmation, sendWelfareCheckEmail } from "../services/em
 
 export const placementsRouter = Router();
 placementsRouter.use(requireAuth);
-placementsRouter.use((req, res, next) => {
-  if (req.user.role === "training_admin") {
-    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
-  }
-  next();
-});
 
 const WELFARE_OFFSETS = [
   { check_type: "day_1",   days: 1 },
@@ -253,7 +247,7 @@ placementsRouter.post("/", requirePermission("placements:create"), async (req, r
 });
 
 // ── PUT /api/placements/:id ──────────────────────────────
-placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+placementsRouter.put("/:id", requirePermission("placements:create"), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const { start_date, notes, confirmed_by_employer, employer_id } = req.body;
@@ -322,7 +316,7 @@ placementsRouter.put("/:id", requireRole("admin", "recruiter_admin", "recruiter"
 
 // ── PATCH /api/placements/:id ─────────────────────────────
 // Lightweight update: employment_status, end_date, notes, termination_reason, wagesub fields
-placementsRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+placementsRouter.patch("/:id", requirePermission("placements:create"), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const {
@@ -426,7 +420,7 @@ placementsRouter.delete("/:id", requireRole("admin"), async (req, res, next) => 
 });
 
 // ── POST /api/placements/:id/send-confirmation ───────────
-placementsRouter.post("/:id/send-confirmation", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+placementsRouter.post("/:id/send-confirmation", requirePermission("placements:confirm"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT p.*, c.name AS candidate_name, j.title AS job_title,
@@ -487,7 +481,7 @@ placementsRouter.get("/:id/welfare-checks", async (req, res, next) => {
 export const welfareChecksRouter = Router();
 welfareChecksRouter.use(requireAuth);
 
-welfareChecksRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+welfareChecksRouter.patch("/:id", requirePermission("placements:welfare"), async (req, res, next) => {
   try {
     const { employer_response, completed_at } = req.body;
 
@@ -508,7 +502,7 @@ welfareChecksRouter.patch("/:id", requireRole("admin", "recruiter_admin", "recru
   } catch (err) { next(err); }
 });
 
-welfareChecksRouter.post("/:id/send-email", requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+welfareChecksRouter.post("/:id/send-email", requirePermission("placements:welfare"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT wc.*,

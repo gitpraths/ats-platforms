@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import {
   buildXeroAuthUrl, parseXeroState, exchangeCodeForTokens,
   discoverTenant, saveConnection, getConnection, clearConnection,
@@ -14,7 +14,7 @@ import {
 
 export const xeroRouter = Router();
 xeroRouter.use(requireAuth);
-xeroRouter.use(requireRole("admin", "recruiter_admin"));
+xeroRouter.use(requirePermission("reports:financials"));
 
 // ── Connection management ────────────────────────────────────────────────────
 xeroRouter.get("/auth-url", requireAuth, requireRole("admin"), (req, res) => {
@@ -91,7 +91,7 @@ xeroRouter.get("/invoices", requireAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-xeroRouter.post("/invoices", requireAuth, requireRole("admin", "recruiter_admin", "recruiter"), async (req, res, next) => {
+xeroRouter.post("/invoices", requireAuth, requirePermission("reports:financials"), async (req, res, next) => {
   try {
     const { candidate_training_id, placement_id, unit_price, quantity = 1, xero_contact_id } = req.body;
     if ((!candidate_training_id && !placement_id) || unit_price === undefined || unit_price === null) {

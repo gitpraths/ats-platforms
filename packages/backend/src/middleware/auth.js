@@ -20,55 +20,61 @@ export function requireAuth(req, res, next) {
 }
 
 export function requireRole(...roles) {
-  return (req, res, next) => {
-    const userRole = req.user?.role;
-    if (!userRole) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
-    }
+  return async (req, res, next) => {
+    if (!req.user?.id) return res.status(401).json({ success: false, error: "Unauthorized" });
 
-    if (userRole === "super_admin" || userRole === "admin") return next();
+    try {
+      // Query live role to ensure instant reflection
+      const { pool } = await import("../config/db.js");
+      const { rows } = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.user.id]);
+      if (!rows[0]) return res.status(403).json({ success: false, error: "Forbidden" });
 
-    let allowed = false;
-    for (const r of roles) {
-      if (r === userRole) {
-        allowed = true;
-        break;
-      }
-      if (r === "staff" && ["recruiter", "recruiter_admin", "staff", "hr", "marketing"].includes(userRole)) {
-        allowed = true;
-        break;
-      }
-      if (r === "recruiter" && ["recruiter_admin", "staff"].includes(userRole)) {
-        allowed = true;
-        break;
-      }
-      if (r === "admin" && (userRole === "super_admin" || userRole === "recruiter_admin")) {
-        allowed = true;
-        break;
-      }
-    }
+      const liveRole = rows[0].role;
+      req.user.role = liveRole;
+      req.user.permissions = rows[0].permissions || [];
 
-    if (!allowed) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      // Super admin and admin bypass any role check
+      if (liveRole === "super_admin" || liveRole === "admin") return next();
+
+      let allowed = false;
+      for (const r of roles) {
+        if (r === liveRole) {
+          allowed = true;
+          break;
+        }
+        if (r === "staff" && ["staff", "hr", "marketing"].includes(liveRole)) {
+          allowed = true;
+          break;
+        }
+      }
+
+      if (!allowed) {
+        return res.status(403).json({ success: false, error: "Forbidden" });
+      }
+      next();
+    } catch (err) {
+      next(err);
     }
-    next();
   };
 }
 
 export function requirePermission(...requiredPermissions) {
   return async (req, res, next) => {
-    const userRole = req.user?.role;
-    if (!userRole) return res.status(403).json({ success: false, error: "Forbidden" });
-
-    // Super Admin and Admin bypass all granular permission checks
-    if (userRole === "super_admin" || userRole === "admin") return next();
+    if (!req.user?.id) return res.status(401).json({ success: false, error: "Unauthorized" });
 
     try {
-      // Always verify live permissions from database so changes apply in real time
+      // Always verify live role and permissions from database so changes apply in real time
       const { pool } = await import("../config/db.js");
-      const { rows } = await pool.query("SELECT permissions, role FROM users WHERE id = $1", [req.user.id]);
-      const userPerms = rows[0]?.permissions || [];
-      if (req.user) req.user.permissions = userPerms;
+      const { rows } = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.user.id]);
+      if (!rows[0]) return res.status(403).json({ success: false, error: "Forbidden" });
+
+      const liveRole = rows[0].role;
+      const userPerms = rows[0].permissions || [];
+      req.user.role = liveRole;
+      req.user.permissions = userPerms;
+
+      // Super Admin and Admin bypass all granular permission checks
+      if (liveRole === "super_admin" || liveRole === "admin") return next();
 
       const hasAll = requiredPermissions.every((p) => userPerms.includes(p));
       if (!hasAll) {

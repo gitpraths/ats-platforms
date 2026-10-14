@@ -5,6 +5,7 @@ import { ArrowLeft, Edit2, Users, Briefcase, UserCheck, UserX, UserCog, Link2, C
 import { api } from "../lib/api";
 import type { Provider, Candidate, XeroContact } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import { useXeroContactSearch, useCreateXeroContact, useLinkProviderToXero } from "../hooks/useXero";
 import { format } from "date-fns";
 import { fmtDate } from "../lib/utils";
@@ -29,8 +30,10 @@ const WORK_STATUS_BADGE: Record<string, string> = {
 export default function ProviderDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { hasPermission, isAdmin } = usePermissions();
+  const canEdit = isAdmin || hasPermission("employers:edit");
+  const canFinancials = isAdmin || hasPermission("reports:financials");
   const navigate = useNavigate();
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const { data: provider, isLoading } = useQuery<ProviderDetailData>({
     queryKey: ["provider", id],
@@ -60,7 +63,7 @@ export default function ProviderDetail() {
             {provider.is_active ? "Active" : "Inactive"}
           </span>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <button
             onClick={() => navigate(`/providers/${id}/edit`)}
             className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-slate-50"
@@ -71,7 +74,7 @@ export default function ProviderDetail() {
       </div>
 
       {/* Xero contact link */}
-      {isAdmin && (
+      {canFinancials && (
         <XeroContactSection provider={{ id: provider.id, name: provider.name, xero_contact_id: provider.xero_contact_id ?? null }} />
       )}
 
@@ -117,7 +120,7 @@ export default function ProviderDetail() {
       </div>
 
       {/* Consultants */}
-      <ConsultantsSection providerId={id!} isAdmin={isAdmin} />
+      <ConsultantsSection providerId={id!} isAdmin={canEdit} />
 
       {/* Recent candidates */}
       <div className="bg-white rounded-xl shadow-sm p-6">
@@ -157,7 +160,7 @@ export default function ProviderDetail() {
       </div>
 
       {/* Spreadsheet Sync */}
-      <SpreadsheetSyncPanel provider={provider} isAdmin={isAdmin} />
+      <SpreadsheetSyncPanel provider={provider} isAdmin={canEdit} />
     </div>
   );
 }

@@ -10,10 +10,6 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: "staff",           label: "Staff" },
   { value: "hr",              label: "HR" },
   { value: "marketing",       label: "Marketing" },
-  { value: "training_admin",  label: "Training Admin" },
-  { value: "recruiter_admin", label: "Recruiter Admin" },
-  { value: "recruiter",       label: "Recruiter" },
-  { value: "hiring_manager",  label: "Hiring Manager" },
 ];
 
 interface Props {
@@ -22,7 +18,7 @@ interface Props {
 
 export default function CreateUserDialog({ onClose }: Props) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "recruiter" as UserRole });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "staff" as UserRole });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);

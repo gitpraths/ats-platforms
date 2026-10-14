@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 
 export const departmentsRouter = Router();
 departmentsRouter.use(requireAuth);
@@ -28,7 +28,7 @@ departmentsRouter.post("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-departmentsRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+departmentsRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
@@ -42,7 +42,7 @@ departmentsRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (re
   } catch (err) { next(err); }
 });
 
-departmentsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+departmentsRouter.delete("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     await pool.query("DELETE FROM departments WHERE id = $1", [req.params.id]);
     res.json({ success: true });

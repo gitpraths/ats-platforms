@@ -144,7 +144,7 @@ reportsRouter.get("/staff", async (req, res, next) => {
          ${employerCondition}
        LEFT JOIN applications a   ON a.job_id = j.id
        LEFT JOIN placements p     ON p.job_id = j.id
-       WHERE u.role IN ('admin','recruiter_admin','recruiter')
+       WHERE u.is_active = true
        GROUP BY u.id, u.name, u.role
        ORDER BY u.name
        LIMIT $3 OFFSET $4`,

@@ -4,11 +4,7 @@ export type UserRole =
   | "staff"
   | "hr"
   | "marketing"
-  | "recruiter_admin"
-  | "recruiter"
-  | "hiring_manager"
-  | "provider"
-  | "training_admin";
+  | "provider";
 
 export interface User {
   id: string;

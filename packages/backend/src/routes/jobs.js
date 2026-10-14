@@ -6,12 +6,6 @@ import { sendVacancyBroadcast, sendMultiVacancyBroadcast } from "../services/ema
 
 export const jobsRouter = Router();
 jobsRouter.use(requireAuth);
-jobsRouter.use((req, res, next) => {
-  if (req.user.role === "training_admin") {
-    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
-  }
-  next();
-});
 
 const VALID_JOB_TYPES   = ["full_time", "part_time", "contract", "internship"];
 const VALID_WORK_MODELS = ["onsite", "remote", "hybrid"];
@@ -270,9 +264,9 @@ jobsRouter.post("/:id/recruiters", async (req, res, next) => {
     if (job.rows[0].created_by !== req.user.id)
       return res.status(403).json({ success: false, error: "Only the job owner can assign recruiters" });
 
-    // Validate all user_ids are valid recruiters
+    // Validate all user_ids are valid platform users
     const { rows: validUsers } = await pool.query(
-      `SELECT id FROM users WHERE id = ANY($1::uuid[]) AND role IN ('recruiter', 'recruiter_admin')`,
+      `SELECT id FROM users WHERE id = ANY($1::uuid[])`,
       [user_ids]
     );
     const validIds = validUsers.map((u) => u.id);
@@ -332,8 +326,6 @@ jobsRouter.delete("/:id", requirePermission("jobs:delete"), async (req, res, nex
   try {
     const { rows: jobRows } = await pool.query("SELECT created_by FROM jobs WHERE id = $1", [req.params.id]);
     if (!jobRows[0]) return res.status(404).json({ success: false, error: "Job not found" });
-    if (req.user.role !== "admin" && req.user.role !== "recruiter_admin")
-      return res.status(403).json({ success: false, error: "Only an admin can delete jobs" });
 
     const { rows } = await pool.query("DELETE FROM jobs WHERE id = $1 RETURNING id", [req.params.id]);
     res.json({ success: true, data: { id: rows[0].id, status: "DELETED" } });

@@ -134,9 +134,20 @@ usersRouter.post("/:id/avatar", (req, res, next) => {
   });
 });
 
+export const ALLOWED_ROLES = ["super_admin", "admin", "staff", "hr", "marketing"];
+
 // ── GET /api/users ────────────────────────────────────────────────────────────
-usersRouter.get("/", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+usersRouter.get("/", async (req, res, next) => {
   try {
+    const { pool } = await import("../config/db.js");
+    const { rows: me } = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.user.id]);
+    const myRole = me[0]?.role;
+    const myPerms = me[0]?.permissions || [];
+    const isAllowed = myRole === "super_admin" || myRole === "admin" || myPerms.includes("admin:users") || myPerms.includes("jobs:view") || myPerms.includes("jobs:create") || myPerms.includes("jobs:edit");
+    if (!isAllowed) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+
     const { role, q } = req.query;
     const params      = [];
     const conditions  = [];
@@ -159,6 +170,10 @@ usersRouter.post("/", requireRole("admin"), async (req, res, next) => {
     if (!name || !email || !password)
       return res.status(400).json({ success: false, error: "name, email, and password are required" });
 
+    if (role && !ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({ success: false, error: `Invalid role '${role}'. Allowed roles: ${ALLOWED_ROLES.join(", ")}` });
+    }
+
     const { ROLE_DEFAULTS } = await import("../config/permissions.js");
     const userRole = role || "staff";
     const userPerms = Array.isArray(permissions) ? permissions : (ROLE_DEFAULTS[userRole] || []);
@@ -180,6 +195,10 @@ usersRouter.put("/:id", requireRole("admin"), async (req, res, next) => {
   try {
     const { name, email, role } = req.body;
     if (!name || !email) return res.status(400).json({ success: false, error: "name and email are required" });
+
+    if (role && !ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({ success: false, error: `Invalid role '${role}'. Allowed roles: ${ALLOWED_ROLES.join(", ")}` });
+    }
 
     const existing = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.params.id]);
     if (!existing.rows[0]) return res.status(404).json({ success: false, error: "User not found" });

@@ -165,8 +165,7 @@ function ProfileMenu() {
 function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
-  const isTrainingAdmin = user?.role === "training_admin";
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 px-3 text-sm font-medium transition border-b-2 ${
@@ -177,7 +176,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   const canViewJobs       = hasPermission("jobs:view");
   const canViewCandidates = hasPermission("candidates:view");
-  const canViewTraining   = hasPermission("training:view") || isTrainingAdmin;
+  const canViewTraining   = hasPermission("training:view");
   const canViewPlacements = hasPermission("placements:view");
   const canViewEmployers  = hasPermission("employers:view");
   const canViewReports    = isAdmin || hasPermission("reports:view");
@@ -186,7 +185,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#F1F5F9]">
       <nav className="bg-white border-b border-slate-200 px-4 h-14 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-sm">
         <div className="flex items-stretch h-full gap-0">
-          <a href={isTrainingAdmin ? "/candidates" : "/dashboard"} className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none">
+          <a href="/dashboard" className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none">
             <div className="flex flex-col leading-none">
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.02em" }}>
                 <span style={{ color: "#0F172A" }}>Work</span><span style={{ color: "#e88e2e" }}>Vision</span>
@@ -194,10 +193,8 @@ function Layout({ children }: { children: React.ReactNode }) {
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.6rem", color: "#94a3b8", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "1px" }}>Australia</span>
             </div>
           </a>
-          {!isTrainingAdmin && (
-            <NavLink to="/dashboard" className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
-          )}
-          {!isTrainingAdmin && canViewJobs && (
+          <NavLink to="/dashboard" className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
+          {canViewJobs && (
             <NavLink to="/jobs" className={navClass}><Briefcase size={15} />Vacancies</NavLink>
           )}
           {isAdmin && (
@@ -209,13 +206,13 @@ function Layout({ children }: { children: React.ReactNode }) {
           {canViewTraining && (
             <NavLink to="/training" className={navClass}><Table2 size={15} />Training Program</NavLink>
           )}
-          {!isTrainingAdmin && canViewPlacements && (
+          {canViewPlacements && (
             <NavLink to="/placements" className={navClass}><UserCheck size={15} />Placements</NavLink>
           )}
-          {!isTrainingAdmin && (
+          {canViewEmployers && (
             <NavLink to="/providers" className={navClass}><MapPinIcon size={15} />Providers</NavLink>
           )}
-          {!isTrainingAdmin && canViewEmployers && (
+          {canViewEmployers && (
             <NavLink to="/employers" className={navClass}><Building2 size={15} />Employers</NavLink>
           )}
           {canViewReports && (
@@ -258,7 +255,6 @@ function StaffRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === "training_admin") return <Navigate to="/candidates" replace />;
   return (
     <>
       <SessionExpiringDialog />
@@ -276,8 +272,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== "super_admin" && user.role !== "admin" && user.role !== "recruiter_admin")
-    return <Navigate to={user.role === "training_admin" ? "/candidates" : "/dashboard"} replace />;
+  if (user.role !== "super_admin" && user.role !== "admin")
+    return <Navigate to="/dashboard" replace />;
   return (
     <>
       <SessionExpiringDialog />
@@ -298,11 +294,7 @@ function PermissionRoute({ permission, children }: { permission: string; childre
   );
   if (!user) return <Navigate to="/login" replace />;
 
-  const isTrainingAdmin = user.role === "training_admin";
-  const allowed =
-    isAdmin ||
-    (permission === "training:view" && isTrainingAdmin) ||
-    hasPermission(permission);
+  const allowed = isAdmin || hasPermission(permission);
 
   if (!allowed) {
     return <Navigate to="/dashboard" replace />;
@@ -319,7 +311,7 @@ function PermissionRoute({ permission, children }: { permission: string; childre
 // ── Routes ────────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const { user } = useAuth();
-  const defaultHome = user?.role === "training_admin" ? "/candidates" : "/dashboard";
+  const defaultHome = "/dashboard";
 
   return (
     <Routes>
@@ -337,10 +329,10 @@ function AppRoutes() {
       <Route path="/training"         element={<PermissionRoute permission="training:view"><Training /></PermissionRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
 
-      <Route path="/providers"          element={<StaffRoute><Providers       /></StaffRoute>} />
-      <Route path="/providers/new"      element={<AdminRoute><ProviderCreate     /></AdminRoute>} />
-      <Route path="/providers/:id"      element={<StaffRoute><ProviderDetail  /></StaffRoute>} />
-      <Route path="/providers/:id/edit" element={<AdminRoute><ProviderCreate      /></AdminRoute>} />
+      <Route path="/providers"          element={<PermissionRoute permission="employers:view"><Providers       /></PermissionRoute>} />
+      <Route path="/providers/new"      element={<PermissionRoute permission="employers:create"><ProviderCreate     /></PermissionRoute>} />
+      <Route path="/providers/:id"      element={<PermissionRoute permission="employers:view"><ProviderDetail  /></PermissionRoute>} />
+      <Route path="/providers/:id/edit" element={<PermissionRoute permission="employers:edit"><ProviderCreate      /></PermissionRoute>} />
 
       <Route path="/employers"          element={<PermissionRoute permission="employers:view"><Employers /></PermissionRoute>} />
       <Route path="/employers/new"      element={<PermissionRoute permission="employers:create"><EmployerCreate /></PermissionRoute>} />
@@ -352,15 +344,15 @@ function AppRoutes() {
 
       <Route path="/reports"            element={<PermissionRoute permission="reports:view"><Reports /></PermissionRoute>} />
 
-      <Route path="/admin/master/industries"  element={<AdminRoute><MasterIndustries /></AdminRoute>} />
-      <Route path="/admin/master/work-types"  element={<AdminRoute><MasterWorkTypes  /></AdminRoute>} />
-      <Route path="/admin/master/work-status" element={<AdminRoute><MasterWorkStatus /></AdminRoute>} />
+      <Route path="/admin/master/industries"  element={<PermissionRoute permission="admin:master_data"><MasterIndustries /></PermissionRoute>} />
+      <Route path="/admin/master/work-types"  element={<PermissionRoute permission="admin:master_data"><MasterWorkTypes  /></PermissionRoute>} />
+      <Route path="/admin/master/work-status" element={<PermissionRoute permission="admin:master_data"><MasterWorkStatus /></PermissionRoute>} />
 
       <Route path="/admin/users"       element={<AdminRoute><AdminUsers       /></AdminRoute>} />
-      <Route path="/admin/departments" element={<AdminRoute><AdminDepartments /></AdminRoute>} />
-      <Route path="/admin/locations"   element={<AdminRoute><AdminLocations   /></AdminRoute>} />
-      <Route path="/admin/trainings"   element={<AdminRoute><AdminTrainings   /></AdminRoute>} />
-      <Route path="/admin/xero"        element={<AdminRoute><AdminXero        /></AdminRoute>} />
+      <Route path="/admin/departments" element={<PermissionRoute permission="employers:edit"><AdminDepartments /></PermissionRoute>} />
+      <Route path="/admin/locations"   element={<PermissionRoute permission="employers:edit"><AdminLocations   /></PermissionRoute>} />
+      <Route path="/admin/trainings"   element={<PermissionRoute permission="training:manage"><AdminTrainings   /></PermissionRoute>} />
+      <Route path="/admin/xero"        element={<PermissionRoute permission="reports:financials"><AdminXero        /></PermissionRoute>} />
       <Route path="/admin/release-notes" element={<AdminRoute><AdminReleaseNotes /></AdminRoute>} />
 
       <Route path="*" element={<NotFound />} />

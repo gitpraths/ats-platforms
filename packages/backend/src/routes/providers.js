@@ -1,17 +1,11 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import { runSync, resolveShareUrl, searchOneDriveFiles, listWorksheets } from '../services/spreadsheet.js';
 import { getValidAccessToken } from '../services/ms-auth.js';
 
 export const providersRouter = Router();
 providersRouter.use(requireAuth);
-providersRouter.use((req, res, next) => {
-  if (req.user.role === "training_admin") {
-    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
-  }
-  next();
-});
 
 // ── GET /api/providers ───────────────────────────────────
 providersRouter.get("/", async (req, res, next) => {
@@ -43,7 +37,7 @@ providersRouter.get("/", async (req, res, next) => {
 });
 
 // ── GET /api/providers/:id/onedrive/files ────────────────
-providersRouter.get('/:id/onedrive/files', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+providersRouter.get('/:id/onedrive/files', requirePermission('employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
@@ -64,7 +58,7 @@ providersRouter.get('/:id/onedrive/files', requireRole('admin', 'recruiter_admin
 });
 
 // ── GET /api/providers/:id/onedrive/files/:fileId/sheets ─
-providersRouter.get('/:id/onedrive/files/:fileId/sheets', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+providersRouter.get('/:id/onedrive/files/:fileId/sheets', requirePermission('employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
@@ -116,7 +110,7 @@ providersRouter.get("/:id", async (req, res, next) => {
 });
 
 // ── POST /api/providers ──────────────────────────────────
-providersRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+providersRouter.post("/", requirePermission("employers:create"), async (req, res, next) => {
   try {
     const { name, contact_name, email, phone, address, is_active = true } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
@@ -138,7 +132,7 @@ providersRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, r
 });
 
 // ── PUT /api/providers/:id ───────────────────────────────
-providersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+providersRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     const { name, contact_name, email, phone, address, is_active, xero_contact_id } = req.body;
 
@@ -176,7 +170,7 @@ providersRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req,
 });
 
 // ── DELETE /api/providers/:id (soft delete) ──────────────
-providersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
+providersRouter.delete("/:id", requirePermission("employers:delete"), async (req, res, next) => {
   try {
     const { rows: active } = await pool.query(
       `SELECT COUNT(*)::int AS cnt FROM candidates
@@ -204,7 +198,7 @@ providersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
 });
 
 // ── PATCH /api/providers/:id/spreadsheet ─────────────────
-providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+providersRouter.patch('/:id/spreadsheet', requirePermission('employers:edit'), async (req, res, next) => {
   try {
     const { onedrive_url, onedrive_file_id: directFileId, onedrive_sheet_name = 'Sheet1' } = req.body;
 
@@ -248,7 +242,7 @@ providersRouter.patch('/:id/spreadsheet', requireRole('admin', 'recruiter_admin'
 });
 
 // ── POST /api/providers/:id/sync ─────────────────────────
-providersRouter.post('/:id/sync', requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+providersRouter.post('/:id/sync', requirePermission('employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });

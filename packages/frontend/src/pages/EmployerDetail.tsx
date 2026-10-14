@@ -25,9 +25,9 @@ export default function EmployerDetail() {
   const { id } = useParams<{ id: string }>();
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isAdmin } = usePermissions();
   const navigate = useNavigate();
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
+  const canEdit = isAdmin || hasPermission("employers:edit");
 
   const { data: employer, isLoading } = useQuery<EmployerDetailData>({
     queryKey: ["employer", id],
@@ -66,7 +66,7 @@ export default function EmployerDetail() {
             </span>
           </div>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <button onClick={() => navigate(`/employers/${id}/edit`)}
             className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-slate-50">
             <Edit2 size={14} /> Edit

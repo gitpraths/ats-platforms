@@ -4,12 +4,6 @@ import { requireAuth, requireRole, requirePermission } from "../middleware/auth.
 
 export const employersRouter = Router();
 employersRouter.use(requireAuth);
-employersRouter.use((req, res, next) => {
-  if (req.user.role === "training_admin") {
-    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
-  }
-  next();
-});
 
 // ── GET /api/employers ───────────────────────────────────
 employersRouter.get("/", requirePermission("employers:view"), async (req, res, next) => {

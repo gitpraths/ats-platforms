@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 
 // ── Generic master table router factory ──────────────────────────────────────
 function makeMasterRouter(table) {
@@ -16,7 +16,7 @@ function makeMasterRouter(table) {
     } catch (err) { next(err); }
   });
 
-  router.post("/", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+  router.post("/", requirePermission("admin:master_data"), async (req, res, next) => {
     try {
       const { name } = req.body;
       if (!name?.trim()) return res.status(400).json({ success: false, error: "name is required" });
@@ -33,7 +33,7 @@ function makeMasterRouter(table) {
     } catch (err) { next(err); }
   });
 
-  router.put("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+  router.put("/:id", requirePermission("admin:master_data"), async (req, res, next) => {
     try {
       const { name } = req.body;
       if (!name?.trim()) return res.status(400).json({ success: false, error: "name is required" });
@@ -46,7 +46,7 @@ function makeMasterRouter(table) {
     } catch (err) { next(err); }
   });
 
-  router.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+  router.delete("/:id", requirePermission("admin:master_data"), async (req, res, next) => {
     try {
       await pool.query(`DELETE FROM ${table} WHERE id=$1`, [req.params.id]);
       res.json({ success: true });

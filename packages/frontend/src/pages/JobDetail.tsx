@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { fmtDate, fmtDateTime } from "../lib/utils";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import type { Job, Application, ApplicationStage } from "../types";
 import AssignTalentDialog from "../components/AssignTalentDialog";
 import BroadcastToProvidersModal from "../components/BroadcastToProvidersModal";
@@ -81,6 +82,7 @@ export default function JobDetail() {
   const navigate    = useNavigate();
   const queryClient = useQueryClient();
   const { user }    = useAuth();
+  const { hasPermission, isAdmin } = usePermissions();
 
   const [assignOpen,     setAssignOpen]     = useState(false);
   const [broadcastOpen,  setBroadcastOpen]  = useState(false);
@@ -134,7 +136,7 @@ export default function JobDetail() {
 
   const isOwner    = job.created_by === user?.id;
   const isRecruiter = (job as any).recruiters?.some((r: any) => r.id === user?.id);
-  const canEdit    = isOwner || isRecruiter || user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
+  const canEdit    = isAdmin || hasPermission("jobs:edit") || isOwner || isRecruiter;
 
   const formatPayRateDetail = (rate: any, type?: string) => {
     if (!rate) return null;
@@ -253,7 +255,7 @@ export default function JobDetail() {
               >
                 <Edit2 size={15} /> Edit
               </button>
-              {(user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin") && (
+              {(isAdmin || hasPermission("jobs:delete")) && (
                 <button
                   onClick={() => { if (confirm("Permanently delete this vacancy?")) deleteJob.mutate(); }}
                   className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"

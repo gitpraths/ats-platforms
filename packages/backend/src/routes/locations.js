@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 
 export const locationsRouter = Router();
 locationsRouter.use(requireAuth);
@@ -33,7 +33,7 @@ locationsRouter.post("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-locationsRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+locationsRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     const { city, state, country, is_remote } = req.body;
     if (!city)    return res.status(400).json({ success: false, error: "city is required" });
@@ -48,7 +48,7 @@ locationsRouter.put("/:id", requireRole("admin", "recruiter_admin"), async (req,
   } catch (err) { next(err); }
 });
 
-locationsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+locationsRouter.delete("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     await pool.query("DELETE FROM locations WHERE id = $1", [req.params.id]);
     res.json({ success: true });

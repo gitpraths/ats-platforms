@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import {
   listEnrolmentsForCandidate,
   getEnrolment,
@@ -77,7 +77,7 @@ candidateTrainingsRouter.get("/:id", async (req, res, next) => {
 
 candidateTrainingsRouter.post(
   "/bulk",
-  requireRole("admin", "recruiter_admin", "recruiter"),
+  requirePermission("training:enroll"),
   async (req, res, next) => {
     try {
       const { training_id, start_date, end_date, candidate_ids } = req.body;
@@ -110,7 +110,7 @@ candidateTrainingsRouter.post(
 
 candidateTrainingsRouter.post(
   "/",
-  requireRole("admin", "recruiter_admin", "recruiter"),
+  requirePermission("training:enroll"),
   async (req, res, next) => {
     try {
       const { candidate_id, training_id, start_date, end_date } = req.body;
@@ -129,7 +129,7 @@ candidateTrainingsRouter.post(
 
 candidateTrainingsRouter.patch(
   "/:id",
-  requireRole("admin", "recruiter_admin", "recruiter"),
+  requirePermission("training:enroll"),
   async (req, res, next) => {
     try {
       const { start_date, end_date } = req.body;
@@ -144,7 +144,7 @@ candidateTrainingsRouter.patch(
   }
 );
 
-candidateTrainingsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+candidateTrainingsRouter.delete("/:id", requirePermission("training:enroll"), async (req, res, next) => {
   try {
     const ok = await deleteEnrolment(req.params.id);
     if (!ok) return res.status(404).json({ success: false, error: "Enrolment not found" });

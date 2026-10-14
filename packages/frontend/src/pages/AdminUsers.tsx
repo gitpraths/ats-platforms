@@ -81,10 +81,6 @@ const ROLES: { value: UserRole; label: string; badge: string }[] = [
   { value: "staff",           label: "Staff",           badge: "border border-blue-400 text-blue-600 bg-transparent" },
   { value: "hr",              label: "HR",              badge: "border border-emerald-500 text-emerald-700 bg-emerald-50" },
   { value: "marketing",       label: "Marketing",       badge: "border border-amber-500 text-amber-700 bg-amber-50" },
-  { value: "training_admin",  label: "Training Admin",  badge: "border border-orange-400 text-orange-600 bg-transparent" },
-  { value: "recruiter_admin", label: "Recruiter Admin", badge: "border border-purple-400 text-purple-600 bg-transparent" },
-  { value: "recruiter",       label: "Recruiter",       badge: "border border-slate-400 text-slate-600 bg-transparent" },
-  { value: "hiring_manager",  label: "Hiring Manager",  badge: "border border-green-500 text-green-700 bg-transparent" },
 ];
 
 function roleBadge(role: UserRole) {

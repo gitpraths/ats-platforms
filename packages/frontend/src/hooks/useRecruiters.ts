@@ -5,7 +5,7 @@ import type { User } from "../types";
 export function useRecruiters() {
   return useQuery<User[]>({
     queryKey: ["recruiters"],
-    queryFn:  () => api.get<User[]>("/users?role=recruiter"),
+    queryFn:  () => api.get<User[]>("/users?role=staff"),
     staleTime: 60_000,
   });
 }
@@ -13,7 +13,7 @@ export function useRecruiters() {
 export function useRecruiterAdmins() {
   return useQuery<User[]>({
     queryKey: ["recruiter-admins"],
-    queryFn:  () => api.get<User[]>("/users?role=recruiter_admin"),
+    queryFn:  () => api.get<User[]>("/users?role=admin"),
     staleTime: 60_000,
   });
 }

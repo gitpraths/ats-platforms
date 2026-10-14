@@ -9,6 +9,7 @@ import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel
 import type { CandidateFormData } from "../components/CandidateFormPanel";
 import type { Candidate, ApplicationStage, CandidateDocument, CandidateNote, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import {
   useCandidateTrainings,
   useCreateEnrolment,
@@ -77,9 +78,9 @@ export default function CandidateDetail() {
   const { id }      = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { user }    = useAuth();
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
-  const canWrite = user?.role !== "provider" && user?.role !== "training_admin";
-  const canWriteTraining = user?.role !== "provider";
+  const { hasPermission, isAdmin } = usePermissions();
+  const canWrite = isAdmin || hasPermission("candidates:edit");
+  const canWriteTraining = isAdmin || hasPermission("training:enroll") || hasPermission("training:manage");
 
   const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications"|"notes">("overview");
   const [editing, setEditing] = useState(false);

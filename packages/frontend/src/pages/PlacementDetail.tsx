@@ -7,6 +7,7 @@ import { fmtDate } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, WelfareCheck, WelfareCheckType } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 
 const CHECK_LABELS: Record<WelfareCheckType, string> = {
   day_1:   "Day 1 Check",
@@ -55,8 +56,11 @@ function WagesubNotes({ value, onSave, isPending }: { value: string; onSave: (v:
 export default function PlacementDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { hasPermission, isAdmin } = usePermissions();
   const queryClient = useQueryClient();
-  const canAct = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin" || user?.role === "recruiter";
+  const canAct = isAdmin || hasPermission("placements:create");
+  const canConfirm = isAdmin || hasPermission("placements:confirm");
+  const canWelfare = isAdmin || hasPermission("placements:welfare");
 
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [employerResponse, setEmployerResponse] = useState("");
@@ -193,7 +197,7 @@ export default function PlacementDetail() {
             >
               <Pencil size={14} /> Edit
             </button>
-            {!placement.confirmed_by_employer && (
+            {!placement.confirmed_by_employer && canConfirm && (
               <button onClick={() => {
                 if (window.confirm("Are you sure you want to send the confirmation email to this employer?")) {
                   sendConfirmation.mutate();
@@ -443,7 +447,7 @@ export default function PlacementDetail() {
                     </p>
                   )}
                 </div>
-                {canAct && (
+                {canWelfare && (
                   <div className="flex-shrink-0 flex flex-col gap-2">
                     {!wc.email_sent_at && !wc.completed_at && (
                       <button onClick={() => sendWelfareEmail.mutate(wc.id)}

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../config/db.js';
-import { requireAuth, requireRole } from '../middleware/auth.js';
+import { requireAuth, requireRole, requirePermission } from '../middleware/auth.js';
 import {
   buildOAuthUrl,
   parseStateJwt,
@@ -11,7 +11,7 @@ import {
 export const msAuthRouter = Router();
 
 // GET /api/providers/:id/ms-auth/url
-msAuthRouter.get('/providers/:id/ms-auth/url', requireAuth, requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+msAuthRouter.get('/providers/:id/ms-auth/url', requireAuth, requirePermission('employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT id FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
@@ -79,7 +79,7 @@ msAuthRouter.get('/ms-auth/callback', async (req, res, next) => {
 });
 
 // DELETE /api/providers/:id/ms-auth
-msAuthRouter.delete('/providers/:id/ms-auth', requireAuth, requireRole('admin', 'recruiter_admin'), async (req, res, next) => {
+msAuthRouter.delete('/providers/:id/ms-auth', requireAuth, requirePermission('employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT id FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });

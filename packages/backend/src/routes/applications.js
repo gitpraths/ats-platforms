@@ -4,12 +4,6 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 
 export const applicationsRouter = Router();
 applicationsRouter.use(requireAuth);
-applicationsRouter.use((req, res, next) => {
-  if (req.user.role === "training_admin") {
-    return res.status(403).json({ success: false, error: "Access denied for Training Admin" });
-  }
-  next();
-});
 
 const VALID_STAGES = ["applied", "screening", "interview", "ets", "hired", "rejected"];
 
@@ -43,7 +37,7 @@ function formatAU(isoStr) {
 applicationsRouter.get("/", async (req, res, next) => {
   try {
     const { candidate, job_title, job_id, candidate_id } = req.query;
-    const isAdmin = ["admin", "recruiter_admin"].includes(req.user.role);
+    const isAdmin = ["super_admin", "admin"].includes(req.user.role);
     const params = isAdmin ? [] : [req.user.id];
     const conditions = isAdmin ? [] : [
       `(j.created_by = $1 OR EXISTS (
@@ -129,7 +123,7 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     );
     if (!appRows[0]) return res.status(404).json({ success: false, error: "Application not found" });
 
-    const isAdmin = ["admin", "recruiter_admin"].includes(req.user.role);
+    const isAdmin = ["super_admin", "admin"].includes(req.user.role);
     const isOwner = appRows[0].created_by === req.user.id;
     const { rows: recruiterRows } = await pool.query(
       "SELECT 1 FROM job_recruiter WHERE job_id = $1 AND user_id = $2",
@@ -265,7 +259,7 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 });
 
 // ── DELETE /api/applications/:id ─────────────────────────────────────────────
-applicationsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+applicationsRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       "UPDATE applications SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id",

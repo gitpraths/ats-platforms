@@ -5,13 +5,17 @@ import { Plus, Search, Users, Eye, Edit2 } from "lucide-react";
 import { api } from "../lib/api";
 import type { Provider } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { usePermissions } from "../hooks/usePermissions";
 import Pagination from "../components/Pagination";
 
 export default function Providers() {
   const { user } = useAuth();
+  const { hasPermission, isAdmin } = usePermissions();
+  const canCreate = isAdmin || hasPermission("employers:create");
+  const canEdit = isAdmin || hasPermission("employers:edit");
+  const canDelete = isAdmin || hasPermission("employers:delete");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "recruiter_admin";
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -37,7 +41,7 @@ export default function Providers() {
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Providers</h1>
           <p className="text-sm text-slate-500 mt-0.5">Organisations that refer candidates</p>
         </div>
-        {isAdmin && (
+        {canCreate && (
           <button
             onClick={() => navigate("/providers/new")}
             className="flex items-center gap-2 px-4 py-2 bg-[#e88e2e] text-white rounded-lg hover:bg-[#d07d20] text-sm font-medium"
@@ -108,13 +112,13 @@ export default function Providers() {
                         className="flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
                         <Eye size={12} /> View
                       </Link>
-                      {isAdmin && (
+                      {canEdit && (
                         <Link to={`/providers/${p.id}/edit`}
                           className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50">
                           <Edit2 size={12} /> Edit
                         </Link>
                       )}
-                      {(user?.role === "super_admin" || user?.role === "admin") && p.is_active && (
+                      {canDelete && p.is_active && (
                         <button
                           onClick={() => {
                             if (confirm(`Deactivate "${p.name}"?`)) deactivate.mutate(p.id);

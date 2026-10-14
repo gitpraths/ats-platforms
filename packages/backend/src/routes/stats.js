@@ -9,7 +9,7 @@ statsRouter.use(requireAuth);
 statsRouter.get("/", async (req, res, next) => {
   try {
     const userId  = req.user.id;
-    const isAdmin = ["admin", "recruiter_admin"].includes(req.user.role);
+    const isAdmin = ["super_admin", "admin"].includes(req.user.role);
 
     // Applications scope: admins see all, others see only their jobs
     const appScopeWhere = isAdmin
@@ -79,7 +79,7 @@ statsRouter.get("/", async (req, res, next) => {
            )::int AS placements_this_month
          FROM users u
          LEFT JOIN placements p ON p.created_by = u.id
-         WHERE u.role IN ('admin', 'recruiter_admin', 'recruiter')
+         WHERE u.is_active = true
            ${staffScope}
          GROUP BY u.id, u.name
          ORDER BY total_placements DESC, u.name ASC`,
@@ -248,7 +248,7 @@ statsRouter.get("/placements-by-staff", async (_req, res, next) => {
         COUNT(pl.id)::int                                         AS count
       FROM placements pl
       JOIN users u ON u.id = pl.created_by
-      WHERE u.role IN ('admin', 'recruiter_admin', 'recruiter')
+      WHERE u.is_active = true
         AND pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
         AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2

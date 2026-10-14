@@ -38,7 +38,7 @@ trainingsRouter.get("/:id", requirePermission("training:view"), async (req, res,
   } catch (err) { next(err); }
 });
 
-trainingsRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+trainingsRouter.post("/", requirePermission("training:manage"), async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || !name.trim()) {
@@ -49,7 +49,7 @@ trainingsRouter.post("/", requireRole("admin", "recruiter_admin"), async (req, r
   } catch (err) { next(err); }
 });
 
-trainingsRouter.patch("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+trainingsRouter.patch("/:id", requirePermission("training:manage"), async (req, res, next) => {
   try {
     const row = await updateTraining(req.params.id, req.body);
     if (!row) return res.status(404).json({ success: false, error: "Training not found" });
@@ -57,7 +57,7 @@ trainingsRouter.patch("/:id", requireRole("admin", "recruiter_admin"), async (re
   } catch (err) { next(err); }
 });
 
-trainingsRouter.delete("/:id", requireRole("admin", "recruiter_admin"), async (req, res, next) => {
+trainingsRouter.delete("/:id", requirePermission("training:manage"), async (req, res, next) => {
   try {
     const row = await softDeleteTraining(req.params.id);
     if (!row) return res.status(404).json({ success: false, error: "Training not found" });
