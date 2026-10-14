@@ -496,8 +496,7 @@ export default function AdminReleaseNotes() {
                     WorkVision ATS Capability Implementation Report
                   </h2>
                   <p className="text-sm text-slate-600 mt-1">
-                    System Architecture, Granular Permissions Engine, Award Wages & Cross-Cutting
-                    Testing Rationale
+                    System Architecture, 5-Role RBAC Architecture, Granular Permissions & Administrative Access Hardening
                   </p>
                 </div>
                 <div className="text-right text-xs text-slate-500">
@@ -506,11 +505,13 @@ export default function AdminReleaseNotes() {
                     Australia
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-700">Scope:</span> Award Wages & RBAC
-                    Permissions
+                    <span className="font-semibold text-slate-700">Scope:</span> 5-Role RBAC & Access Hardening
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-700">Status:</span> Production Verified
+                    <span className="font-semibold text-slate-700">Status:</span> Production Verified (v1.6.0)
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-700">Date:</span> 14 October 2026
                   </p>
                 </div>
               </div>
@@ -523,9 +524,31 @@ export default function AdminReleaseNotes() {
               </h3>
               <p className="text-sm text-slate-700 leading-relaxed">
                 This report confirms the implementation, unit testing, regression testing, and
-                verification of two foundational platform capabilities:
+                verification of foundational platform capabilities:
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                  <h4 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <Shield size={16} className="text-slate-700" /> 5-Role RBAC & Live Authorization
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Formal 5-role architecture (Super Admin, Admin, Staff, HR, Marketing) with 26
+                    modular permissions, real-time database validation in backend middleware, and
+                    unblocked provider management for staff.
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                  <h4 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <Lock size={16} className="text-slate-700" /> Administrative Access Hardening
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Strict Admin-only guards on Xero invoice creation (Placements table, Training
+                    enrolments, and POST /api/xero/invoices) and Important Updates pipeline board
+                    (/hiring-board).
+                  </p>
+                </div>
+
                 <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
                   <h4 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-1.5">
                     <Briefcase size={16} className="text-slate-700" /> Modern Award Wages & Pay Rates
@@ -533,18 +556,7 @@ export default function AdminReleaseNotes() {
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Full integration of Fair Work Australian Modern Awards, support for
                     alphanumeric pay rates and ranges, automated validation checks, and seamless
-                    syncing across vacancy cards and edit dialogs.
-                  </p>
-                </div>
-
-                <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-                  <h4 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-1.5">
-                    <Shield size={16} className="text-slate-700" /> Granular Permissions Engine
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Enterprise role-based access control engine providing 26 distinct permissions
-                    across 7 modules, three account tiers, role presets, and UI-level button
-                    enforcement across all platform screens.
+                    syncing across vacancy cards.
                   </p>
                 </div>
               </div>
@@ -678,33 +690,49 @@ export default function AdminReleaseNotes() {
               </div>
             </div>
 
-            {/* Section 4: Account Tier Safeguards */}
+            {/* Section 4: 5-Role Account Tier Architecture */}
             <div>
               <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                <Lock size={18} className="text-[#e88e2e]" /> 4. Account Tier Safeguards
+                <Lock size={18} className="text-[#e88e2e]" /> 4. 5-Role Account Tier Architecture
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
                 <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="font-bold text-slate-900 block mb-1">Super Admin Tier</span>
+                  <span className="font-bold text-slate-900 block mb-1">Super Admin</span>
                   <p className="text-slate-600 leading-relaxed">
                     Unrestricted platform control. Protected against deletion, permission stripping,
-                    or status deactivation at both API and frontend levels (Kavil Desai, Dhaval Desai).
+                    or status deactivation at both API and frontend levels.
                   </p>
                 </div>
 
                 <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="font-bold text-slate-900 block mb-1">Admin Tier</span>
+                  <span className="font-bold text-slate-900 block mb-1">Admin</span>
                   <p className="text-slate-600 leading-relaxed">
-                    Full operational control across candidates, vacancies, placements, and reports.
-                    Cannot modify or delete Super Admin records.
+                    Full operational control across vacancies, placements, training, invoices, and
+                    important updates. Cannot delete Super Admins.
                   </p>
                 </div>
 
                 <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="font-bold text-slate-900 block mb-1">Staff Tier (Granular)</span>
+                  <span className="font-bold text-slate-900 block mb-1">Staff</span>
                   <p className="text-slate-600 leading-relaxed">
-                    Access strictly defined by assigned permissions. Includes one-click presets for
-                    Recruiter, Account Manager, and Compliance Officer.
+                    Operational role with 17 standard permissions covering vacancies, candidates,
+                    providers, and placements. Invoicing strictly gated.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                  <span className="font-bold text-slate-900 block mb-1">HR</span>
+                  <p className="text-slate-600 leading-relaxed">
+                    Dedicated talent and training management. Assigned candidate profiles, placement
+                    welfare tracking, and training course cohort enrollments.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                  <span className="font-bold text-slate-900 block mb-1">Marketing</span>
+                  <p className="text-slate-600 leading-relaxed">
+                    Read-only visibility for published vacancies and full reporting exports for
+                    campaign analysis and recruitment performance tracking.
                   </p>
                 </div>
               </div>
@@ -856,6 +884,76 @@ export default function AdminReleaseNotes() {
                       </td>
                       <td className="px-4 py-2.5 text-slate-600">
                         Dark floating tooltips appear immediately
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                          PASS
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5 font-bold text-slate-900">Staff Provider Access</td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Staff user with standard permissions creates or edits an apprenticeship provider
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Provider successfully saved and updated without 403 Forbidden
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                          PASS
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5 font-bold text-slate-900">Placement Invoice Guard</td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Staff user opens /placements and inspects candidate placement rows
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Yellow "Invoice" button is hidden; only "View" button is accessible
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                          PASS
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5 font-bold text-slate-900">Training Invoicing Guard</td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Staff user opens Training Program enrolments and candidate training tabs
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        "Generate invoice" action is hidden; non-admins cannot initiate billing
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                          PASS
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5 font-bold text-slate-900">Important Updates Guard</td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Staff user inspects top navigation and attempts direct URL to /hiring-board
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Tab omitted from navigation bar; direct URL safely redirects to /dashboard
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                          PASS
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5 font-bold text-slate-900">Backend API Invoice RBAC</td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Non-admin token sends POST request to /api/xero/invoices
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-600">
+                        Rejected with HTTP 403 Forbidden by requireRole("admin")
                       </td>
                       <td className="px-4 py-2.5 text-center">
                         <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
