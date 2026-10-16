@@ -174,12 +174,13 @@ function Layout({ children }: { children: React.ReactNode }) {
         : "border-transparent text-slate-500 hover:text-slate-900"
     }`;
 
-  const canViewJobs       = hasPermission("jobs:view");
-  const canViewCandidates = hasPermission("candidates:view");
-  const canViewTraining   = hasPermission("training:view");
-  const canViewPlacements = hasPermission("placements:view");
-  const canViewEmployers  = hasPermission("employers:view");
-  const canViewReports    = isAdmin || hasPermission("reports:view");
+  const canViewJobs             = hasPermission("jobs:view");
+  const canViewImportantUpdates = isAdmin || hasPermission("important_updates:view");
+  const canViewCandidates       = hasPermission("candidates:view");
+  const canViewTraining         = hasPermission("training:view");
+  const canViewPlacements       = hasPermission("placements:view");
+  const canViewEmployers        = hasPermission("employers:view");
+  const canViewReports          = isAdmin || hasPermission("reports:view");
 
   return (
     <div className="min-h-screen bg-[#F1F5F9]">
@@ -194,26 +195,26 @@ function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </a>
           <NavLink to="/dashboard" className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
-          {canViewJobs && (
-            <NavLink to="/jobs" className={navClass}><Briefcase size={15} />Vacancies</NavLink>
-          )}
-          {isAdmin && (
-            <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
-          )}
           {canViewCandidates && (
             <NavLink to="/candidates" className={navClass}><Users size={15} />Candidates</NavLink>
-          )}
-          {canViewTraining && (
-            <NavLink to="/training" className={navClass}><Table2 size={15} />Training Program</NavLink>
           )}
           {canViewPlacements && (
             <NavLink to="/placements" className={navClass}><UserCheck size={15} />Placements</NavLink>
           )}
-          {canViewEmployers && (
-            <NavLink to="/providers" className={navClass}><MapPinIcon size={15} />Providers</NavLink>
+          {canViewImportantUpdates && (
+            <NavLink to="/hiring-board" className={navClass}><Columns size={15} />Important Updates</NavLink>
+          )}
+          {canViewJobs && (
+            <NavLink to="/jobs" className={navClass}><Briefcase size={15} />Vacancies</NavLink>
           )}
           {canViewEmployers && (
             <NavLink to="/employers" className={navClass}><Building2 size={15} />Employers</NavLink>
+          )}
+          {canViewEmployers && (
+            <NavLink to="/providers" className={navClass}><MapPinIcon size={15} />Providers</NavLink>
+          )}
+          {canViewTraining && (
+            <NavLink to="/training" className={navClass}><Table2 size={15} />Training Program</NavLink>
           )}
           {canViewReports && (
             <NavLink to="/reports" className={navClass}><BarChart2 size={15} />Reports</NavLink>
@@ -322,7 +323,7 @@ function AppRoutes() {
       <Route path="/jobs"             element={<PermissionRoute permission="jobs:view"><Jobs /></PermissionRoute>} />
       <Route path="/jobs/:id"         element={<PermissionRoute permission="jobs:view"><JobDetail /></PermissionRoute>} />
       <Route path="/jobs/:id/edit"    element={<PermissionRoute permission="jobs:edit"><JobEdit /></PermissionRoute>} />
-      <Route path="/hiring-board"     element={<AdminRoute><HiringBoard      /></AdminRoute>} />
+      <Route path="/hiring-board"     element={<PermissionRoute permission="important_updates:view"><HiringBoard /></PermissionRoute>} />
       <Route path="/candidates"        element={<PermissionRoute permission="candidates:view"><Candidates /></PermissionRoute>} />
       <Route path="/candidates/new"   element={<PermissionRoute permission="candidates:create"><CandidateNew /></PermissionRoute>} />
       <Route path="/candidates/:id"   element={<PermissionRoute permission="candidates:view"><CandidateDetail /></PermissionRoute>} />

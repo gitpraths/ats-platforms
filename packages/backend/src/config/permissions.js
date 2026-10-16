@@ -30,6 +30,14 @@ export const PERMISSIONS_CATALOG = [
     ],
   },
   {
+    module: "important_updates",
+    name: "Important Updates",
+    description: "Application tracking board and stage transitions",
+    permissions: [
+      { id: "important_updates:view", label: "View Important Updates", description: "Access and view the Important Updates hiring board" },
+    ],
+  },
+  {
     module: "candidates",
     name: "Candidates & Talent",
     description: "Candidate database, resumes, skills, and talent matching",
@@ -83,7 +91,7 @@ export const PERMISSIONS_CATALOG = [
   },
 ];
 
-// Flat list of all 24 permission IDs
+// Flat list of all permission IDs
 export const ALL_PERMISSION_IDS = PERMISSIONS_CATALOG.flatMap((m) =>
   m.permissions.map((p) => p.id)
 );
@@ -100,6 +108,7 @@ export const ROLE_DEFAULTS = {
     "jobs:view",
     "jobs:create",
     "jobs:edit",
+    "important_updates:view",
     "candidates:view",
     "candidates:create",
     "candidates:edit",
@@ -115,6 +124,7 @@ export const ROLE_DEFAULTS = {
     "candidates:view",
     "candidates:create",
     "candidates:edit",
+    "important_updates:view",
     "placements:view",
     "placements:welfare",
     "training:view",

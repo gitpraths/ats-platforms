@@ -71,6 +71,12 @@ pool.query(`
 
   UPDATE jobs SET status = 'published' WHERE status = 'open';
 
+  UPDATE users 
+  SET permissions = permissions || '["important_updates:view"]'::jsonb
+  WHERE role IN ('super_admin', 'admin', 'staff', 'hr')
+    AND permissions IS NOT NULL
+    AND NOT (permissions ? 'important_updates:view');
+
   DELETE FROM employers WHERE id = '8712b284-ca4b-429b-a1bf-9843622f892d';
 `).catch((err) => console.error("[migration] schema updates:", err.message));
 

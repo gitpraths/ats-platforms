@@ -54,6 +54,14 @@ const DEFAULT_CATALOG: PermissionModule[] = [
     ],
   },
   {
+    module: "important_updates",
+    name: "Important Updates",
+    description: "Application tracking board and stage transitions",
+    permissions: [
+      { id: "important_updates:view", label: "View Important Updates", description: "Access and view the Important Updates hiring board" },
+    ],
+  },
+  {
     module: "candidates",
     name: "Candidates & Talent",
     description: "Candidate database, resumes, skills, and talent matching",
@@ -115,6 +123,7 @@ const DEFAULT_ROLE_PRESETS: Record<string, string[]> = {
   staff: [
     "employers:view", "employers:create",
     "jobs:view", "jobs:create", "jobs:publish",
+    "important_updates:view",
     "candidates:view", "candidates:create", "candidates:edit",
     "placements:view", "placements:create", "placements:welfare",
     "training:view", "training:enroll",
@@ -122,6 +131,7 @@ const DEFAULT_ROLE_PRESETS: Record<string, string[]> = {
   ],
   hr: [
     "candidates:view", "candidates:create", "candidates:edit",
+    "important_updates:view",
     "placements:view", "placements:welfare",
     "training:view", "training:enroll", "training:manage",
     "reports:view",
