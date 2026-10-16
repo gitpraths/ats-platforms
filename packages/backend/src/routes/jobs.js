@@ -215,6 +215,14 @@ jobsRouter.patch("/:id", requirePermission("jobs:edit"), async (req, res, next) 
     if (req.body.work_model && !VALID_WORK_MODELS.includes(req.body.work_model))
       return res.status(400).json({ success: false, error: `work_model must be one of: ${VALID_WORK_MODELS.join(", ")}` });
 
+    let oldStatus = null;
+    if (req.body.status) {
+      const currentRes = await pool.query("SELECT status FROM jobs WHERE id = $1", [req.params.id]);
+      if (currentRes.rows[0]) {
+        oldStatus = currentRes.rows[0].status === "open" ? "published" : currentRes.rows[0].status;
+      }
+    }
+
     params.push(req.user.id, req.params.id);
     const { rows } = await pool.query(
       `UPDATE jobs SET ${updates.join(", ")}, updated_at = NOW(), updated_by = $${params.length - 1}
@@ -223,13 +231,21 @@ jobsRouter.patch("/:id", requirePermission("jobs:edit"), async (req, res, next) 
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Job not found" });
 
-    // If status was explicitly updated via vacancy edit, log to job_activity
-    if (req.body.status) {
-      await pool.query(
-        `INSERT INTO job_activity (job_id, user_id, job_status, comment)
-         VALUES ($1, $2, $3, $4)`,
-        [req.params.id, req.user.id, req.body.status, req.body.status_comment || (req.body.status === "published" ? "Published via vacancy edit" : req.body.status === "draft" ? "Reverted to draft via vacancy edit" : "Updated via vacancy edit")]
-      ).catch(() => {});
+    // If status was explicitly changed to a DIFFERENT status via vacancy edit, log to job_activity
+    if (req.body.status && oldStatus) {
+      const targetStatus = req.body.status === "open" ? "published" : req.body.status;
+      if (targetStatus !== oldStatus) {
+        await pool.query(
+          `INSERT INTO job_activity (job_id, user_id, job_status, comment)
+           VALUES ($1, $2, $3, $4)`,
+          [
+            req.params.id,
+            req.user.id,
+            targetStatus,
+            req.body.status_comment || (targetStatus === "published" ? "Published via vacancy edit" : targetStatus === "draft" ? "Reverted to draft via vacancy edit" : `Status changed to ${targetStatus}`)
+          ]
+        ).catch(() => {});
+      }
     }
 
     const job = { ...rows[0], recruiters: await getRecruiters(req.params.id) };
@@ -248,6 +264,11 @@ jobsRouter.patch("/:id/status", async (req, res, next) => {
 
     const jobCheck = await pool.query("SELECT id, status FROM jobs WHERE id = $1", [req.params.id]);
     if (!jobCheck.rows[0]) return res.status(404).json({ success: false, error: "Job not found" });
+
+    const currentNorm = jobCheck.rows[0].status === "open" ? "published" : jobCheck.rows[0].status;
+    if (currentNorm === job_status) {
+      return res.json({ success: true, data: { job_status, created_at: new Date().toISOString() } });
+    }
 
     validateJobStatusTransition(jobCheck.rows[0].status, job_status);
 
