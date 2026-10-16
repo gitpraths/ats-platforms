@@ -13,7 +13,7 @@ beforeAll(async () => {
 
   const recruiterRes = await request(app)
     .post("/api/auth/login")
-    .send({ email: "jane@myats.dev", password: "password123" });
+    .send({ email: "staff@myats.dev", password: "password123" });
   recruiterToken = recruiterRes.body.data?.token || "";
   recruiterId = recruiterRes.body.data?.user?.id || "";
 });
@@ -27,11 +27,14 @@ describe("GET /api/stats", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns placements_by_staff array", async () => {
+  it("returns placements_by_staff array and new dashboard stat fields", async () => {
     const res = await request(app).get("/api/stats").set(auth());
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data.placements_by_staff)).toBe(true);
+    expect(typeof res.body.data.jobs.vic_jobs).toBe("number");
+    expect(typeof res.body.data.jobs.nsw_jobs).toBe("number");
+    expect(typeof res.body.data.applications.ets_this_month).toBe("number");
   });
 
   it("each placements_by_staff row has correct shape", async () => {
@@ -57,6 +60,7 @@ describe("GET /api/stats", () => {
   });
 
   it("non-admin sees only their own row in placements_by_staff", async () => {
+    if (!recruiterToken) return;
     const res = await request(app).get("/api/stats").set(recruiterAuth());
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

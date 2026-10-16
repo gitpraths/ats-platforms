@@ -29,8 +29,15 @@ statsRouter.get("/", async (req, res, next) => {
            COUNT(*) FILTER (WHERE status = 'draft')              AS draft_jobs,
            COUNT(*) FILTER (WHERE status = 'open'
                               OR status = 'published')           AS published_jobs,
-           COUNT(*) FILTER (WHERE status = 'archived')           AS archived_jobs
-         FROM jobs`
+           COUNT(*) FILTER (WHERE status = 'archived')           AS archived_jobs,
+           COUNT(*) FILTER (WHERE (status = 'open' OR status = 'published') AND (
+             j.work_location ILIKE '%VIC%' OR j.work_location ILIKE '%Victoria%' OR l.state = 'VIC' OR l.city ILIKE '%Melbourne%' OR j.work_location ~ '\\m3[0-9]{3}\\M'
+           )) AS vic_jobs,
+           COUNT(*) FILTER (WHERE (status = 'open' OR status = 'published') AND (
+             j.work_location ILIKE '%NSW%' OR j.work_location ILIKE '%New South Wales%' OR l.state = 'NSW' OR l.city ILIKE '%Sydney%' OR j.work_location ~ '\\m2[0-9]{3}\\M'
+           )) AS nsw_jobs
+         FROM jobs j
+         LEFT JOIN locations l ON j.location_id = l.id`
       ),
       pool.query(
         `SELECT
@@ -38,6 +45,10 @@ statsRouter.get("/", async (req, res, next) => {
            COUNT(*) FILTER (WHERE a.stage NOT IN ('hired','rejected'))        AS active_applications,
            COUNT(*) FILTER (WHERE a.stage = 'hired'
              AND DATE_TRUNC('month', a.updated_at) = DATE_TRUNC('month', NOW())) AS hired_this_month,
+           COUNT(*) FILTER (
+             WHERE (a.stage = 'ets' AND DATE_TRUNC('month', COALESCE(a.ets_date, a.updated_at)) = DATE_TRUNC('month', NOW()))
+                OR (a.ets_date IS NOT NULL AND DATE_TRUNC('month', a.ets_date) = DATE_TRUNC('month', NOW()))
+           ) AS ets_this_month,
            COUNT(*) FILTER (WHERE a.stage = 'applied')    AS applied_count,
            COUNT(*) FILTER (WHERE a.stage = 'screening')  AS screening_count,
            COUNT(*) FILTER (WHERE a.stage = 'interview')  AS interview_count,
@@ -103,11 +114,14 @@ statsRouter.get("/", async (req, res, next) => {
           draft:     Number(jobs.rows[0].draft_jobs),
           published: Number(jobs.rows[0].published_jobs),
           archived:  Number(jobs.rows[0].archived_jobs),
+          vic_jobs:  Number(jobs.rows[0].vic_jobs || 0),
+          nsw_jobs:  Number(jobs.rows[0].nsw_jobs || 0),
         },
         applications: {
           total:            Number(apps.rows[0].total_applications),
           active:           Number(apps.rows[0].active_applications),
           hired_this_month: Number(apps.rows[0].hired_this_month),
+          ets_this_month:   Number(apps.rows[0].ets_this_month || 0),
           by_stage: {
             applied:   Number(apps.rows[0].applied_count),
             screening: Number(apps.rows[0].screening_count),

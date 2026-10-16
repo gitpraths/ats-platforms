@@ -7,11 +7,14 @@ export interface DashboardStats {
     draft: number;
     published: number;
     archived: number;
+    vic_jobs?: number;
+    nsw_jobs?: number;
   };
   applications: {
     total: number;
     active: number;
     hired_this_month: number;
+    ets_this_month?: number;
     by_stage: {
       applied: number;
       screening: number;

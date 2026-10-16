@@ -166,9 +166,9 @@ export default function Dashboard() {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
-  const openJobs            = stats?.jobs.published              ?? 0;
-  const activeApps          = stats?.applications.active         ?? 0;
-  const hiredThisMonth      = stats?.applications.hired_this_month ?? 0;
+  const vicJobs             = stats?.jobs.vic_jobs                 ?? 0;
+  const nswJobs             = stats?.jobs.nsw_jobs                 ?? 0;
+  const etsThisMonth        = stats?.applications.ets_this_month   ?? 0;
   const totalCandidates     = stats?.candidates.total            ?? 0;
   const totalPlacements     = stats?.placements?.total           ?? 0;
   const confirmedPlacements = stats?.placements?.confirmed       ?? 0;
@@ -239,9 +239,9 @@ export default function Dashboard() {
       {/* ── Row 1: Core stat cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open Vacancies",      value: openJobs,        icon: Briefcase,    iconBg: "bg-blue-50",   iconCls: "text-blue-600",   topBorder: "border-t-blue-500",   link: hasPermission("jobs:view") ? "/jobs" : "#" },
-          { label: "Active Applications", value: activeApps,      icon: ClipboardList,iconBg: "bg-purple-50", iconCls: "text-purple-600", topBorder: "border-t-purple-500", link: isAdmin ? "/hiring-board" : "#" },
-          { label: "Hired This Month",    value: hiredThisMonth,  icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  topBorder: "border-t-emerald-500",link: isAdmin ? "/hiring-board" : "#" },
+          { label: "VIC Vacancies",       value: vicJobs,         icon: Briefcase,    iconBg: "bg-blue-50",   iconCls: "text-blue-600",   topBorder: "border-t-blue-500",   link: hasPermission("jobs:view") ? "/jobs" : "#" },
+          { label: "NSW Vacancies",       value: nswJobs,         icon: MapPin,       iconBg: "bg-purple-50", iconCls: "text-purple-600", topBorder: "border-t-purple-500", link: hasPermission("jobs:view") ? "/jobs" : "#" },
+          { label: "ETS This Month",      value: etsThisMonth,    icon: CheckCircle,  iconBg: "bg-green-50",  iconCls: "text-green-600",  topBorder: "border-t-emerald-500",link: (isAdmin || hasPermission("important_updates:view")) ? "/hiring-board" : "#" },
           { label: "Total Candidates",    value: totalCandidates, icon: Users,        iconBg: "bg-slate-100", iconCls: "text-slate-500",  topBorder: "border-t-slate-400",  link: hasPermission("candidates:view") ? "/candidates" : "#" },
         ].map(({ label, value, icon: Icon, iconBg, iconCls, topBorder, link }) => (
           <Link
