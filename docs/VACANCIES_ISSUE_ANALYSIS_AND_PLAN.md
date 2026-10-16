@@ -99,7 +99,53 @@ From the client feedback spreadsheet, the Vacancies module has four directly rel
 
 ---
 
-## 4. Current Status
+## 4. Client Testing & Verification Case: Warehouse Operator
 
-No code or database modifications have been applied.  
-Awaiting explicit user confirmation to begin Step 1.
+When communicating with the client or having them test the **Award Wage** feature, provide this exact sample scenario from the data folder (`data/vacancies_import_template.xlsx`):
+
+### Sample Vacancy Test Data
+* **Job Title:** Warehouse Operator
+* **Employer:** Acme Manufacturing
+* **Industry:** Warehouse
+* **Work Type:** Full-time
+* **No. of Positions:** 2
+* **Pay Rate Option:** Select **Award Wage**
+* **Pay Rate Value:** `Award Wage - Level 2`
+* **Work Location:** `Parramatta NSW 2150`
+* **Police Check:** Not Required
+* **Drug & Alcohol Test:** No
+* **WWC:** No
+* **Car Required:** No
+* **Public Transport:** Yes
+
+### Testing Steps for Client:
+1. Navigate to **Vacancies** (`/jobs`) and click **+ Add Vacancy**.
+2. Select **Acme Manufacturing** and enter the title `Warehouse Operator`.
+3. In the **Pay Rate** section:
+   * Notice the three options: **Per Hour**, **Annual**, and **Award Wage**.
+   * Click **Award Wage** (the currency symbol `$` is automatically hidden).
+   * Enter `Award Wage - Level 2` (or leave default `Award Wage`).
+   * Test switching to **Per Hour** / **Annual** — verify the text automatically clears to empty.
+   * Switch back to **Award Wage** and proceed.
+4. Click through and save the vacancy.
+5. On the vacancy details page, verify the pay rate badge displays cleanly as **Award Wage (Level 2)** without `$NaN`.
+6. Open **Edit Vacancy** (`/jobs/:id/edit`), confirm the Award Wage toggle is preserved, and save changes.
+
+---
+
+## 5. Ready-to-Send Client Message
+
+> "Hi team,
+> 
+> We have completed and deployed the update for the Award Wage option in the vacancy creation and edit screens. 
+> 
+> For testing, please try creating or editing a vacancy with the following sample details:
+> - **Job Title:** Warehouse Operator
+> - **Employer:** Acme Manufacturing
+> - **Pay Rate Option:** Award Wage
+> - **Pay Rate Classification:** Award Wage - Level 2
+> - **Location:** Parramatta NSW 2150
+> 
+> You will notice that selecting 'Award Wage' removes the dollar sign prefix and supports award classification levels. If you switch between Award Wage and Hourly/Annual, the field automatically clears cleanly.
+> 
+> Please test this on your end and let us know if everything functions smoothly for your team."
