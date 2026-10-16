@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, ChevronRight, ChevronLeft, Check, Hash, MapPin, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import type { Employer, Candidate, User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -283,6 +284,7 @@ function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }:
       <div>
         <Label required>Job Title</Label>
         <input value={form.title} onChange={(e) => set("title", e.target.value)}
+          onBlur={() => set("title", toTitleCase(form.title))}
           className={cls} placeholder="e.g. Warehouse Packer" autoFocus />
       </div>
 
@@ -674,7 +676,7 @@ export default function CreateJobDialog({ isOpen, onClose }: Props) {
   function handleSubmit() {
     setError("");
     createJob.mutate({
-      title:                 form.title.trim(),
+      title:                 toTitleCase(form.title.trim()),
       employer_id:           form.employer_id        || undefined,
       sourced_by_type:       form.sourced_by_type,
       sourced_by_user_id:    form.sourced_by_type === "staff" ? (form.sourced_by_user_id || user?.id || undefined) : undefined,

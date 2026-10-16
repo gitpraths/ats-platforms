@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save } from "lucide-react";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import type { Provider } from "../types";
 
 export default function ProviderCreate() {
@@ -57,7 +58,9 @@ export default function ProviderCreate() {
     e.preventDefault();
     if (!form.name.trim()) { setError("Name is required."); return; }
     setError("");
-    save.mutate(form);
+    const cleanName = toTitleCase(form.name.trim());
+    const cleanContact = form.contact_name ? toTitleCase(form.contact_name.trim()) : "";
+    save.mutate({ ...form, name: cleanName, contact_name: cleanContact });
   }
 
   return (
@@ -79,6 +82,7 @@ export default function ProviderCreate() {
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Name *</label>
           <input value={form.name} onChange={(e) => set("name", e.target.value)}
+            onBlur={() => set("name", toTitleCase(form.name))}
             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
         </div>
 
@@ -86,6 +90,7 @@ export default function ProviderCreate() {
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Contact Name</label>
             <input value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)}
+              onBlur={() => set("contact_name", toTitleCase(form.contact_name))}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
           </div>
           <div>

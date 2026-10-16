@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, ExternalLink, MapPin, Globe, FileText, RotateCcw } from "lucide-react";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import type { Job, Employer } from "../types";
 
 // ── Australian Address Autocomplete ──────────────────────────────────────────
@@ -236,7 +237,7 @@ export default function JobEdit() {
     }
     const finalStatus = targetStatus ?? currentStatus;
     updateJob.mutate({
-      title:                 form.title.trim(),
+      title:                 toTitleCase(form.title.trim()),
       employer_id:           form.employer_id || null,
       industry:              form.industry.trim() || null,
       vacancy_type:          form.vacancy_type || null,
@@ -400,6 +401,7 @@ export default function JobEdit() {
           <div>
             <Label>Job Title *</Label>
             <input required value={form.title} onChange={(e) => set("title", e.target.value)}
+              onBlur={() => set("title", toTitleCase(form.title))}
               className={cls} placeholder="e.g. Warehouse Storeperson" />
           </div>
 

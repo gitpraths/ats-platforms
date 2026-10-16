@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { displayEmail, stageLabel, fmtDate, fmtDateTime, validateNotBeforeApplied, validateNotAfterDate, toYYYYMMDD } from "../lib/utils";
+import { displayEmail, stageLabel, fmtDate, fmtDateTime, validateNotBeforeApplied, validateNotAfterDate, toYYYYMMDD, toTitleCase } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
@@ -191,7 +191,10 @@ export default function CandidateDetail() {
   }
 
   function handleSave() {
-    const fullName = [editForm.first_name, editForm.last_name].filter(Boolean).join(" ");
+    const cleanFirst = toTitleCase(editForm.first_name);
+    const cleanLast = toTitleCase(editForm.last_name);
+    const cleanSuburb = toTitleCase(editForm.suburb);
+    const fullName = [cleanFirst, cleanLast].filter(Boolean).join(" ");
     if (!fullName.trim()) { setSaveError("First name is required."); return; }
     if (!editForm.phone)   { setSaveError("Phone is required."); return; }
     if (!/^\d{10}$/.test(editForm.phone.replace(/\s/g, ""))) {
@@ -201,7 +204,7 @@ export default function CandidateDetail() {
       name:                fullName,
       email:               editForm.email,
       phone:               editForm.phone,
-      city:                editForm.suburb,
+      city:                cleanSuburb,
       state:               editForm.state,
       postcode:            editForm.postcode,
       provider_id:         editForm.provider_id || null,
@@ -212,7 +215,7 @@ export default function CandidateDetail() {
         ? Number(editForm.wage_subsidy_amount) : undefined,
       notes:               editForm.comments,
       // New fields
-      suburb:              editForm.suburb,
+      suburb:              cleanSuburb,
       car:                 editForm.car,
       police_check:        editForm.police_check,
       wwc:                 editForm.wwc,

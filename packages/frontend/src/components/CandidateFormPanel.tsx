@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, AlertCircle, Plus, X, Check, Upload, FileText, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import type { Provider } from "../types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -91,8 +92,9 @@ function AddConsultantPopup({ providerId, onSave, onClose }: {
     if (!name.trim()) return;
     setSaving(true);
     try {
+      const cleanName = toTitleCase(name.trim());
       const result = await api.post<Consultant>("/consultants", {
-        provider_id: providerId, name: name.trim(), email: email.trim() || undefined,
+        provider_id: providerId, name: cleanName, email: email.trim() || undefined,
       });
       onSave(result);
     } finally { setSaving(false); }
@@ -108,7 +110,7 @@ function AddConsultantPopup({ providerId, onSave, onClose }: {
         <div className="space-y-3">
           <div>
             <Label required>Name</Label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={CLS} placeholder="e.g. Sarah Jones" />
+            <input value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setName(toTitleCase(name))} className={CLS} placeholder="e.g. Sarah Jones" />
           </div>
           <div>
             <Label>Email</Label>
@@ -351,14 +353,22 @@ export function CandidateFormPanel({
             <Label required>First Name</Label>
             <input value={form.first_name}
               onChange={(e) => set("first_name", e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
-              onBlur={() => checkDuplicateName(form.first_name, form.last_name)}
+              onBlur={() => {
+                const formatted = toTitleCase(form.first_name);
+                set("first_name", formatted);
+                checkDuplicateName(formatted, form.last_name);
+              }}
               className={CLS} placeholder="Jane" />
           </div>
           <div>
             <Label>Last Name</Label>
             <input value={form.last_name}
               onChange={(e) => set("last_name", e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
-              onBlur={() => checkDuplicateName(form.first_name, form.last_name)}
+              onBlur={() => {
+                const formatted = toTitleCase(form.last_name);
+                set("last_name", formatted);
+                checkDuplicateName(form.first_name, formatted);
+              }}
               className={CLS} placeholder="Smith" />
           </div>
           <div>
@@ -412,6 +422,7 @@ export function CandidateFormPanel({
               </select>
             ) : (
               <input value={form.suburb} onChange={(e) => set("suburb", e.target.value)}
+                onBlur={() => set("suburb", toTitleCase(form.suburb))}
                 className={CLS} placeholder="Auto-filled" />
             )}
           </div>

@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import { toTitleCase } from "../utils/index.js";
 
 export async function listTrainings({ search, providerId, isActive, page = 1, limit = 20 }) {
   const conditions = [];
@@ -54,16 +55,18 @@ export async function getTraining(id) {
 }
 
 export async function createTraining({ name, code, description, duration_days, provider_id, is_active, unit_price }) {
+  const cleanName = name ? toTitleCase(name.trim()) : name;
   const { rows } = await pool.query(
     `INSERT INTO trainings (name, code, description, duration_days, provider_id, is_active, unit_price)
      VALUES ($1, $2, $3, $4, $5, COALESCE($6, true), $7)
      RETURNING *`,
-    [name, code || null, description || null, duration_days || null, provider_id || null, is_active, unit_price ?? null]
+    [cleanName, code || null, description || null, duration_days || null, provider_id || null, is_active, unit_price ?? null]
   );
   return rows[0];
 }
 
 export async function updateTraining(id, { name, code, description, duration_days, provider_id, is_active, unit_price }) {
+  const cleanName = name !== undefined ? (name ? toTitleCase(name.trim()) : null) : undefined;
   const { rows } = await pool.query(
     `UPDATE trainings
         SET name          = COALESCE($1, name),
@@ -76,7 +79,7 @@ export async function updateTraining(id, { name, code, description, duration_day
             updated_at    = NOW()
       WHERE id = $8
       RETURNING *`,
-    [name, code, description, duration_days, provider_id, is_active, unit_price, id]
+    [cleanName !== undefined ? cleanName : null, code, description, duration_days, provider_id, is_active, unit_price, id]
   );
   return rows[0] || null;
 }

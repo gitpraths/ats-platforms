@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
 import type { Training } from "../types";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 interface ProviderOption { id: string; name: string }
@@ -153,8 +154,9 @@ function TrainingFormDialog({ training, providers, onClose }: DialogProps) {
     e.preventDefault();
     setError("");
     if (!name.trim()) { setError("Name is required."); return; }
+    const cleanName = toTitleCase(name.trim());
     const body = {
-      name: name.trim(),
+      name: cleanName,
       code: code.trim() || null,
       description: description.trim() || null,
       duration_days: durationDays ? Number(durationDays) : null,
@@ -183,7 +185,9 @@ function TrainingFormDialog({ training, providers, onClose }: DialogProps) {
         <form onSubmit={handleSave} className="space-y-3">
           <div>
             <label className="text-xs text-slate-500">Name *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+            <input value={name} onChange={(e) => setName(e.target.value)}
+              onBlur={() => setName(toTitleCase(name))}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

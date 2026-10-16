@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
 import { useXeroContactSearch, useCreateXeroContact, useLinkProviderToXero } from "../hooks/useXero";
 import { format } from "date-fns";
-import { fmtDate } from "../lib/utils";
+import { fmtDate, toTitleCase } from "../lib/utils";
 import SpreadsheetSyncPanel from "../components/SpreadsheetSyncPanel";
 
 interface ProviderDetailData extends Provider {
@@ -309,7 +309,7 @@ function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdm
 
   const addConsultant = useMutation({
     mutationFn: () =>
-      api.post("/consultants", { provider_id: providerId, name: name.trim(), email: email.trim() || undefined, phone: phone.trim() || undefined }),
+      api.post("/consultants", { provider_id: providerId, name: toTitleCase(name.trim()), email: email.trim() || undefined, phone: phone.trim() || undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consultants", providerId] });
       setName(""); setEmail(""); setPhone(""); setAdding(false);
@@ -346,6 +346,7 @@ function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdm
             <div>
               <label className="block text-xs text-slate-500 mb-1">Name <span className="text-red-500">*</span></label>
               <input value={name} onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
+                onBlur={() => setName(toTitleCase(name))}
                 placeholder="Full name"
                 className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
             </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateNotBeforeApplied, toYYYYMMDD } from "./utils";
+import { validateNotBeforeApplied, toYYYYMMDD, toTitleCase } from "./utils";
 
 describe("toYYYYMMDD", () => {
   it("converts YYYY-MM-DD strings", () => {
@@ -43,5 +43,34 @@ describe("validateNotBeforeApplied", () => {
     expect(validateNotBeforeApplied(null, "2026-08-06")).toBeNull();
     expect(validateNotBeforeApplied("2026-08-10", null)).toBeNull();
     expect(validateNotBeforeApplied(null, null)).toBeNull();
+  });
+});
+
+describe("toTitleCase", () => {
+  it("formats all-caps names into title case", () => {
+    expect(toTitleCase("GAKU MORIMOTO")).toBe("Gaku Morimoto");
+    expect(toTitleCase("JOHN SMITH")).toBe("John Smith");
+  });
+
+  it("formats lowercase names into title case", () => {
+    expect(toTitleCase("gaku morimoto")).toBe("Gaku Morimoto");
+  });
+
+  it("handles apostrophes and hyphens properly", () => {
+    expect(toTitleCase("O'CONNOR")).toBe("O'Connor");
+    expect(toTitleCase("o'connor")).toBe("O'Connor");
+    expect(toTitleCase("D'ARCY")).toBe("D'Arcy");
+    expect(toTitleCase("SMITH-JONES")).toBe("Smith-Jones");
+  });
+
+  it("handles Scottish Mc prefix and roman numerals", () => {
+    expect(toTitleCase("MCDONALD")).toBe("McDonald");
+    expect(toTitleCase("CERTIFICATE III IN WAREHOUSING")).toBe("Certificate III In Warehousing");
+  });
+
+  it("handles empty or null gracefully", () => {
+    expect(toTitleCase("")).toBe("");
+    expect(toTitleCase(null)).toBe("");
+    expect(toTitleCase(undefined)).toBe("");
   });
 });

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import { CandidateFormPanel, EMPTY_FORM } from "./CandidateFormPanel";
 import type { CandidateFormData } from "./CandidateFormPanel";
 
@@ -110,14 +111,17 @@ export default function AddCandidateDialog({ isOpen, onClose }: Props) {
   function handleSubmit() {
     setError("");
     setExistingCandidateId(undefined);
-    const fullName = [form.first_name, form.last_name].filter(Boolean).join(" ");
+    const cleanFirst = toTitleCase(form.first_name);
+    const cleanLast = toTitleCase(form.last_name);
+    const cleanSuburb = toTitleCase(form.suburb);
+    const fullName = [cleanFirst, cleanLast].filter(Boolean).join(" ");
     if (!fullName.trim())      { setError("First name is required."); return; }
     if (!form.phone)           { setError("Phone is required."); return; }
     if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) { setError("Phone must be 10 digits."); return; }
     if (!form.provider_id)     { setError("Provider is required."); return; }
     if (!form.benchmark_hours) { setError("Benchmark hours is required."); return; }
     if (!form.car)             { setError("Car preference is required."); return; }
-    create.mutate({ ...form });
+    create.mutate({ ...form, first_name: cleanFirst, last_name: cleanLast, suburb: cleanSuburb });
   }
 
   if (!isOpen) return null;

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import type { Employer } from "../types";
 
 export default function EmployerCreate() {
@@ -85,7 +86,10 @@ export default function EmployerCreate() {
     e.preventDefault();
     if (!form.name.trim()) { setError("Company name is required."); return; }
     setError("");
-    save.mutate(form);
+    const cleanName = toTitleCase(form.name.trim());
+    const cleanContact = form.contact_name ? toTitleCase(form.contact_name.trim()) : "";
+    const cleanSuburb = form.suburb ? toTitleCase(form.suburb.trim()) : "";
+    save.mutate({ ...form, name: cleanName, contact_name: cleanContact, suburb: cleanSuburb });
   }
 
   return (
@@ -108,6 +112,7 @@ export default function EmployerCreate() {
           <div className="sm:col-span-2">
             <label className="block text-xs font-medium text-slate-600 mb-1">Company Name *</label>
             <input value={form.name} onChange={(e) => set("name", e.target.value)}
+              onBlur={() => set("name", toTitleCase(form.name))}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
           </div>
           <div>
@@ -135,6 +140,7 @@ export default function EmployerCreate() {
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Contact Name</label>
               <input value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)}
+                onBlur={() => set("contact_name", toTitleCase(form.contact_name))}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>
             <div>
@@ -207,6 +213,7 @@ export default function EmployerCreate() {
                   type="text"
                   value={form.suburb}
                   onChange={(e) => set("suburb", e.target.value)}
+                  onBlur={() => set("suburb", toTitleCase(form.suburb))}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50"
                 />
               )}

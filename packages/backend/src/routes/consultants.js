@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { toTitleCase } from "../utils/index.js";
 
 export const consultantsRouter = Router();
 consultantsRouter.use(requireAuth);
@@ -34,10 +35,11 @@ consultantsRouter.post("/", async (req, res, next) => {
     const { provider_id, name, email, phone } = req.body;
     if (!provider_id) return res.status(400).json({ success: false, error: "provider_id is required" });
     if (!name)        return res.status(400).json({ success: false, error: "name is required" });
+    const cleanName = toTitleCase(name.trim());
     const { rows } = await pool.query(
       `INSERT INTO consultants (provider_id, name, email, phone)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [provider_id, name.trim(), email || null, phone || null]
+      [provider_id, cleanName, email || null, phone || null]
     );
     res.status(201).json({ success: true, data: rows[0] });
   } catch (err) { next(err); }
@@ -47,6 +49,7 @@ consultantsRouter.post("/", async (req, res, next) => {
 consultantsRouter.patch("/:id", async (req, res, next) => {
   try {
     const { name, email, phone, is_active } = req.body;
+    const cleanName = name !== undefined ? (name ? toTitleCase(name.trim()) : null) : undefined;
     const { rows } = await pool.query(
       `UPDATE consultants SET
          name      = COALESCE($1, name),
@@ -54,7 +57,7 @@ consultantsRouter.patch("/:id", async (req, res, next) => {
          phone     = COALESCE($3, phone),
          is_active = COALESCE($4, is_active)
        WHERE id = $5 RETURNING *`,
-      [name || null, email || null, phone || null, is_active ?? null, req.params.id]
+      [cleanName !== undefined ? cleanName : null, email || null, phone || null, is_active ?? null, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Consultant not found" });
     res.json({ success: true, data: rows[0] });

@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { mountCandidateTrainingsList } from "./candidate-trainings.js";
+import { toTitleCase } from "../utils/toTitleCase.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -194,7 +195,11 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
       wage_subsidy, wage_subsidy_amount, interested_job, intention_to_work,
     } = req.body;
 
-    const fullName = name || [first_name, last_name].filter(Boolean).join(" ");
+    const cleanFirst = first_name ? toTitleCase(first_name.trim()) : null;
+    const cleanLast = last_name ? toTitleCase(last_name.trim()) : null;
+    const fullName = toTitleCase((name || [cleanFirst, cleanLast].filter(Boolean).join(" ")).trim());
+    const cleanSuburb = (suburb || city) ? toTitleCase((suburb || city).trim()) : null;
+
     if (!fullName.trim()) return res.status(400).json({ success: false, error: "Name is required" });
     if (!phone)          return res.status(400).json({ success: false, error: "Phone is required" });
     if (!provider_id)    return res.status(400).json({ success: false, error: "Provider is required" });
@@ -217,10 +222,10 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
       }
     }
 
-    if (first_name && last_name) {
+    if (cleanFirst && cleanLast) {
       const { rows: exName } = await pool.query(
         `SELECT id, name, first_name, last_name, email FROM candidates WHERE LOWER(TRIM(first_name)) = LOWER(TRIM($1)) AND LOWER(TRIM(last_name)) = LOWER(TRIM($2)) LIMIT 1`,
-        [first_name.trim(), last_name.trim()]
+        [cleanFirst.trim(), cleanLast.trim()]
       );
       if (exName.length > 0) {
         const c = exName[0];
@@ -250,8 +255,8 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$28)
        RETURNING *`,
       [
-        sr_no, fullName, first_name || null, last_name || null,
-        email || null, phone, suburb || city || null, suburb || city || null, state || null,
+        sr_no, fullName, cleanFirst || null, cleanLast || null,
+        email || null, phone, cleanSuburb || null, cleanSuburb || null, state || null,
         postcode || null, "Australia",
         provider_id, consultant_id || null, date_referred || null,
         benchmark_hours ? Number(benchmark_hours) : null, availability || null,
@@ -296,7 +301,15 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
       wage_subsidy, wage_subsidy_amount, work_status, intention_to_work,
     } = req.body;
 
-    const fullName = name || (first_name && last_name ? `${first_name} ${last_name}` : (first_name || undefined));
+    const cleanFirst = first_name !== undefined ? (first_name ? toTitleCase(first_name.trim()) : null) : undefined;
+    const cleanLast = last_name !== undefined ? (last_name ? toTitleCase(last_name.trim()) : null) : undefined;
+    const cleanName = name !== undefined
+      ? (name ? toTitleCase(name.trim()) : null)
+      : (cleanFirst && cleanLast ? `${cleanFirst} ${cleanLast}` : (cleanFirst || undefined));
+    const cleanSuburb = (suburb !== undefined || city !== undefined)
+      ? (suburb || city ? toTitleCase((suburb || city).trim()) : null)
+      : undefined;
+
     const { rows } = await pool.query(
       `UPDATE candidates SET
          name                = COALESCE($1,  name),
@@ -328,12 +341,12 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
          updated_by          = $25
        WHERE id = $24 RETURNING *`,
       [
-        fullName || null,
-        first_name || null,
-        last_name  || null,
+        cleanName !== undefined ? cleanName : null,
+        cleanFirst !== undefined ? cleanFirst : null,
+        cleanLast !== undefined ? cleanLast : null,
         email      || null,
         phone      || null,
-        suburb || city || null,
+        cleanSuburb !== undefined ? cleanSuburb : null,
         state      || null,
         postcode   || null,
         provider_id   || null,

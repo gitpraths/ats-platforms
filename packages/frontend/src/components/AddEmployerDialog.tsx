@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Save, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { toTitleCase } from "../lib/utils";
 import type { Employer } from "../types";
 
 interface Props {
@@ -80,7 +81,10 @@ export default function AddEmployerDialog({ isOpen, onClose }: Props) {
     e.preventDefault();
     if (!form.name.trim()) { setError("Company name is required."); return; }
     setError("");
-    save.mutate(form);
+    const cleanName = toTitleCase(form.name.trim());
+    const cleanContact = form.contact_name ? toTitleCase(form.contact_name.trim()) : "";
+    const cleanSuburb = form.suburb ? toTitleCase(form.suburb.trim()) : "";
+    save.mutate({ ...form, name: cleanName, contact_name: cleanContact, suburb: cleanSuburb });
   }
 
   if (!isOpen) return null;
@@ -128,6 +132,7 @@ export default function AddEmployerDialog({ isOpen, onClose }: Props) {
                 <input
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
+                  onBlur={() => set("name", toTitleCase(form.name))}
                   placeholder="e.g. Acme Corporation"
                   className={inputCls}
                 />
@@ -173,6 +178,7 @@ export default function AddEmployerDialog({ isOpen, onClose }: Props) {
                   <input
                     value={form.contact_name}
                     onChange={(e) => set("contact_name", e.target.value)}
+                    onBlur={() => set("contact_name", toTitleCase(form.contact_name))}
                     className={inputCls}
                   />
                 </div>
@@ -259,6 +265,7 @@ export default function AddEmployerDialog({ isOpen, onClose }: Props) {
                       type="text"
                       value={form.suburb}
                       onChange={(e) => set("suburb", e.target.value)}
+                      onBlur={() => set("suburb", toTitleCase(form.suburb))}
                       className={`${inputCls} bg-slate-50`}
                       placeholder="Auto-filled"
                     />

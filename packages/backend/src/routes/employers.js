@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
+import { toTitleCase } from "../utils/index.js";
 
 export const employersRouter = Router();
 employersRouter.use(requireAuth);
@@ -88,18 +89,21 @@ employersRouter.post("/", requirePermission("employers:create"), async (req, res
   try {
     const { name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, abn } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
+    const cleanName = toTitleCase(name.trim());
+    const cleanContact = contact_name ? toTitleCase(contact_name.trim()) : null;
+    const cleanSuburb = suburb ? toTitleCase(suburb.trim()) : null;
 
     const { rows } = await pool.query(
       `INSERT INTO employers (name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, abn)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [name, industry || null, website || null, description || null,
-       contact_name || null, contact_email || null, contact_phone || null, address || null, postcode || null, suburb || null, state || null, abn || null]
+      [cleanName, industry || null, website || null, description || null,
+       cleanContact, contact_email || null, contact_phone || null, address || null, postcode || null, cleanSuburb, state || null, abn || null]
     );
 
     pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
        VALUES ('employer', $1, 'created', $2, $3)`,
-      [rows[0].id, req.user.id, JSON.stringify({ name })]
+      [rows[0].id, req.user.id, JSON.stringify({ name: cleanName })]
     ).catch(() => {});
 
     res.status(201).json({ success: true, data: rows[0] });
@@ -110,6 +114,10 @@ employersRouter.post("/", requirePermission("employers:create"), async (req, res
 employersRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     const { name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, is_active, abn } = req.body;
+
+    const cleanName = name !== undefined ? (name ? toTitleCase(name.trim()) : null) : undefined;
+    const cleanContact = contact_name !== undefined ? (contact_name ? toTitleCase(contact_name.trim()) : null) : undefined;
+    const cleanSuburb = suburb !== undefined ? (suburb ? toTitleCase(suburb.trim()) : null) : undefined;
 
     const { rows } = await pool.query(
       `UPDATE employers
@@ -128,7 +136,7 @@ employersRouter.put("/:id", requirePermission("employers:edit"), async (req, res
            abn           = COALESCE($13, abn),
            updated_at    = NOW()
        WHERE id = $14 RETURNING *`,
-      [name, industry, website, description, contact_name, contact_email, contact_phone, address, postcode, suburb, state, is_active, abn, req.params.id]
+      [cleanName !== undefined ? cleanName : null, industry, website, description, cleanContact !== undefined ? cleanContact : null, contact_email, contact_phone, address, postcode, cleanSuburb !== undefined ? cleanSuburb : null, state, is_active, abn, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Employer not found" });
 

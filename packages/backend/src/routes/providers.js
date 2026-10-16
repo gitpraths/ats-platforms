@@ -3,6 +3,7 @@ import { pool } from "../config/db.js";
 import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import { runSync, resolveShareUrl, searchOneDriveFiles, listWorksheets } from '../services/spreadsheet.js';
 import { getValidAccessToken } from '../services/ms-auth.js';
+import { toTitleCase } from "../utils/index.js";
 
 export const providersRouter = Router();
 providersRouter.use(requireAuth);
@@ -114,17 +115,19 @@ providersRouter.post("/", requirePermission("employers:create"), async (req, res
   try {
     const { name, contact_name, email, phone, address, is_active = true } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
+    const cleanName = toTitleCase(name.trim());
+    const cleanContact = contact_name ? toTitleCase(contact_name.trim()) : null;
 
     const { rows } = await pool.query(
       `INSERT INTO providers (name, contact_name, email, phone, address, is_active)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [name, contact_name || null, email || null, phone || null, address || null, is_active]
+      [cleanName, cleanContact, email || null, phone || null, address || null, is_active]
     );
 
     pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
        VALUES ('provider', $1, 'created', $2, $3)`,
-      [rows[0].id, req.user.id, JSON.stringify({ name })]
+      [rows[0].id, req.user.id, JSON.stringify({ name: cleanName })]
     ).catch(() => {});
 
     res.status(201).json({ success: true, data: rows[0] });
@@ -135,6 +138,9 @@ providersRouter.post("/", requirePermission("employers:create"), async (req, res
 providersRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
   try {
     const { name, contact_name, email, phone, address, is_active, xero_contact_id } = req.body;
+
+    const cleanName = name !== undefined ? (name ? toTitleCase(name.trim()) : null) : undefined;
+    const cleanContact = contact_name !== undefined ? (contact_name ? toTitleCase(contact_name.trim()) : null) : undefined;
 
     // xero_contact_id is a special case: callers may pass `null` to UNLINK,
     // which COALESCE would treat as "keep existing". So we branch on whether
@@ -154,8 +160,8 @@ providersRouter.put("/:id", requirePermission("employers:edit"), async (req, res
            updated_at  = NOW()
        WHERE id = $7 RETURNING *`,
       xeroProvided
-        ? [name, contact_name, email, phone, address, is_active, req.params.id, xero_contact_id]
-        : [name, contact_name, email, phone, address, is_active, req.params.id]
+        ? [cleanName !== undefined ? cleanName : null, cleanContact !== undefined ? cleanContact : null, email, phone, address, is_active, req.params.id, xero_contact_id]
+        : [cleanName !== undefined ? cleanName : null, cleanContact !== undefined ? cleanContact : null, email, phone, address, is_active, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Provider not found" });
 

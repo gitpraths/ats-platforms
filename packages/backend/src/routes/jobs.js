@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
-import { validateJobStatusTransition } from "../utils/index.js";
+import { validateJobStatusTransition, toTitleCase } from "../utils/index.js";
 import { sendVacancyBroadcast, sendMultiVacancyBroadcast } from "../services/email.js";
 
 export const jobsRouter = Router();
@@ -135,6 +135,7 @@ jobsRouter.post("/", requirePermission("jobs:create"), async (req, res, next) =>
     } = req.body;
 
     if (!title) return res.status(400).json({ success: false, error: "title is required" });
+    const cleanTitle = toTitleCase(title.trim());
 
     const { rows } = await pool.query(
       `INSERT INTO jobs (
@@ -155,7 +156,7 @@ jobsRouter.post("/", requirePermission("jobs:create"), async (req, res, next) =>
          $36,$37,$37
        ) RETURNING id, job_number, created_at`,
       [
-        title, description || null, employer_id || null,
+        cleanTitle, description || null, employer_id || null,
         industry || null, pay_rate !== undefined && pay_rate !== null && pay_rate !== "" ? String(pay_rate).trim() : null, pay_rate_type || 'per_hour',
         positions_count || 1, vacancy_type || null, work_location || null, job_board_url || null,
         police_check || 'not_required', drug_alcohol_test || 'no', wwc || 'no',
@@ -198,7 +199,9 @@ jobsRouter.patch("/:id", requirePermission("jobs:edit"), async (req, res, next) 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
         let val = req.body[key];
-        if (key === "pay_rate") {
+        if (key === "title" && typeof val === "string") {
+          val = toTitleCase(val.trim());
+        } else if (key === "pay_rate") {
           val = val !== null && val !== "" ? String(val).trim() : null;
         }
         params.push(val);
