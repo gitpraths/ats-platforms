@@ -223,6 +223,15 @@ jobsRouter.patch("/:id", requirePermission("jobs:edit"), async (req, res, next) 
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Job not found" });
 
+    // If status was explicitly updated via vacancy edit, log to job_activity
+    if (req.body.status) {
+      await pool.query(
+        `INSERT INTO job_activity (job_id, user_id, job_status, comment)
+         VALUES ($1, $2, $3, $4)`,
+        [req.params.id, req.user.id, req.body.status, req.body.status_comment || (req.body.status === "published" ? "Published via vacancy edit" : req.body.status === "draft" ? "Reverted to draft via vacancy edit" : "Updated via vacancy edit")]
+      ).catch(() => {});
+    }
+
     const job = { ...rows[0], recruiters: await getRecruiters(req.params.id) };
     res.json({ success: true, data: job });
   } catch (err) { next(err); }
@@ -231,8 +240,9 @@ jobsRouter.patch("/:id", requirePermission("jobs:edit"), async (req, res, next) 
 // ── PATCH /api/jobs/:id/status ────────────────────────────────────────────────
 jobsRouter.patch("/:id/status", async (req, res, next) => {
   try {
-    const { job_status, comment } = req.body;
+    let { job_status, comment } = req.body;
     if (!job_status) return res.status(400).json({ success: false, error: "job_status is required" });
+    if (job_status === "open") job_status = "published";
     if (!VALID_STATUSES.includes(job_status))
       return res.status(400).json({ success: false, error: `job_status must be one of: ${VALID_STATUSES.join(", ")}` });
 

@@ -8,9 +8,10 @@
  */
 
 const TRANSITIONS = {
-  draft:     ["published"],
+  draft:     ["published", "archived"],
   published: ["draft", "archived"],
-  archived:  ["published"],
+  open:      ["draft", "archived", "published"],
+  archived:  ["draft", "published"],
 };
 
 /**
@@ -21,13 +22,16 @@ const TRANSITIONS = {
  * @throws {Error} with `.status = 422` if the transition is invalid.
  */
 export function validateJobStatusTransition(currentStatus, nextStatus) {
-  const allowed = TRANSITIONS[currentStatus];
+  const normCurrent = currentStatus === "open" ? "published" : currentStatus;
+  const normNext    = nextStatus === "open" ? "published" : nextStatus;
+
+  const allowed = TRANSITIONS[normCurrent] || TRANSITIONS[currentStatus];
   if (!allowed) {
     const err = new Error(`Unknown current status: "${currentStatus}".`);
     err.status = 422;
     throw err;
   }
-  if (!allowed.includes(nextStatus)) {
+  if (!allowed.includes(normNext) && !allowed.includes(nextStatus)) {
     const err = new Error(
       `Cannot transition job from "${currentStatus}" to "${nextStatus}". ` +
       `Allowed transitions from "${currentStatus}": ${allowed.join(", ")}.`
@@ -44,5 +48,6 @@ export function validateJobStatusTransition(currentStatus, nextStatus) {
  * @returns {string[]}
  */
 export function allowedNextStatuses(currentStatus) {
-  return TRANSITIONS[currentStatus] ?? [];
+  const normCurrent = currentStatus === "open" ? "published" : currentStatus;
+  return TRANSITIONS[normCurrent] ?? TRANSITIONS[currentStatus] ?? [];
 }

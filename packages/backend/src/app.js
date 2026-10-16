@@ -69,6 +69,8 @@ pool.query(`
   ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_pay_rate_type_check;
   ALTER TABLE jobs ADD CONSTRAINT jobs_pay_rate_type_check CHECK (pay_rate_type IN ('per_hour', 'annual', 'award_wage'));
 
+  UPDATE jobs SET status = 'published' WHERE status = 'open';
+
   DELETE FROM employers WHERE id = '8712b284-ca4b-429b-a1bf-9843622f892d';
 `).catch((err) => console.error("[migration] schema updates:", err.message));
 

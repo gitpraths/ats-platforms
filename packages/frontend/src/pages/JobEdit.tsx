@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, ExternalLink, MapPin } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink, MapPin, Globe, FileText, RotateCcw } from "lucide-react";
 import { api } from "../lib/api";
 import type { Job, Employer } from "../types";
 
@@ -223,12 +223,18 @@ export default function JobEdit() {
     },
   });
 
+  const currentStatus = ((job?.status as string) === "open" ? "published" : job?.status) ?? "draft";
+  const formRef = useRef<HTMLFormElement>(null);
+
   function set(key: string, value: unknown) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSaveWithStatus(targetStatus?: string) {
+    if (formRef.current && !formRef.current.reportValidity()) {
+      return;
+    }
+    const finalStatus = targetStatus ?? currentStatus;
     updateJob.mutate({
       title:                 form.title.trim(),
       employer_id:           form.employer_id || null,
@@ -247,7 +253,109 @@ export default function JobEdit() {
       public_transport:      form.public_transport || "no",
       wage_subsidy_required: form.wage_subsidy_required || "no",
       comments:              form.comments.trim() || null,
+      status:                finalStatus,
     });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    handleSaveWithStatus(currentStatus);
+  }
+
+  function renderActionButtons() {
+    const isPending = updateJob.isPending;
+
+    return (
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Link
+          to={`/jobs/${id}`}
+          className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
+        >
+          Cancel
+        </Link>
+
+        {currentStatus === "draft" && (
+          <>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleSaveWithStatus("draft")}
+              className="flex items-center gap-2 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <FileText size={15} />
+              {isPending ? "Saving..." : "Save Draft"}
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleSaveWithStatus("published")}
+              className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+            >
+              <Globe size={15} />
+              {isPending ? "Publishing..." : "Save & Publish"}
+            </button>
+          </>
+        )}
+
+        {currentStatus === "published" && (
+          <>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleSaveWithStatus("draft")}
+              className="flex items-center gap-2 border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <RotateCcw size={15} />
+              {isPending ? "Updating..." : "Revert to Draft"}
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleSaveWithStatus("published")}
+              className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+            >
+              <Save size={15} />
+              {isPending ? "Saving..." : "Save Changes"}
+            </button>
+          </>
+        )}
+
+        {currentStatus === "archived" && (
+          <>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleSaveWithStatus("published")}
+              className="flex items-center gap-2 border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <RotateCcw size={15} />
+              {isPending ? "Restoring..." : "Restore to Open"}
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleSaveWithStatus("archived")}
+              className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+            >
+              <Save size={15} />
+              {isPending ? "Saving..." : "Save Changes"}
+            </button>
+          </>
+        )}
+
+        {currentStatus !== "draft" && currentStatus !== "published" && currentStatus !== "archived" && (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => handleSaveWithStatus()}
+            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+          >
+            <Save size={15} />
+            {isPending ? "Saving..." : "Save Changes"}
+          </button>
+        )}
+      </div>
+    );
   }
 
   if (isLoading) return <p className="p-6 text-slate-500">Loading...</p>;
@@ -260,19 +368,30 @@ export default function JobEdit() {
       <Link to={`/jobs/${id}`} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4">
         <ArrowLeft size={15} /> Back to Vacancy
       </Link>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Edit Vacancy</h1>
-        <button
-          type="submit"
-          form="edit-vacancy-form"
-          disabled={updateJob.isPending}
-          className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
-        >
-          <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
-        </button>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Edit Vacancy</h1>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+            currentStatus === "published"
+              ? "bg-green-100 text-green-700"
+              : currentStatus === "archived"
+              ? "bg-amber-100 text-amber-700"
+              : "bg-slate-100 text-slate-700"
+          }`}>
+            {currentStatus === "published" ? "Open" : currentStatus === "archived" ? "Archived" : "Draft"}
+          </span>
+        </div>
+        {renderActionButtons()}
       </div>
 
-      <form id="edit-vacancy-form" onSubmit={handleSubmit} className="space-y-6">
+      {updateJob.isError && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Failed to save changes: {(updateJob.error as Error)?.message || "Please check your inputs and try again."}
+        </div>
+      )}
+
+      <form ref={formRef} id="edit-vacancy-form" onSubmit={handleSubmit} className="space-y-6">
 
         {/* ── Section 1: Vacancy Details ── */}
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
@@ -423,20 +542,8 @@ export default function JobEdit() {
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link
-            to={`/jobs/${id}`}
-            className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={updateJob.isPending}
-            className="flex items-center gap-2 bg-[#e88e2e] hover:bg-[#d07d20] text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
-          >
-            <Save size={15} /> {updateJob.isPending ? "Saving..." : "Save Changes"}
-          </button>
+        <div className="flex items-center justify-end pt-2">
+          {renderActionButtons()}
         </div>
 
       </form>
