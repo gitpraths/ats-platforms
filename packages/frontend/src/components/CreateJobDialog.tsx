@@ -396,50 +396,41 @@ function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }:
           <div className="flex border border-slate-200 rounded-lg overflow-hidden text-xs">
             <button
               type="button"
-              onClick={() => set("pay_rate_type", "per_hour")}
+              onClick={() => {
+                set("pay_rate_type", "per_hour");
+                if (form.pay_rate.trim().toLowerCase().includes("award")) {
+                  set("pay_rate", "");
+                }
+              }}
               className={`px-3 py-2 font-medium transition ${form.pay_rate_type === "per_hour" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
             >Per Hour</button>
             <button
               type="button"
-              onClick={() => set("pay_rate_type", "annual")}
+              onClick={() => {
+                set("pay_rate_type", "annual");
+                if (form.pay_rate.trim().toLowerCase().includes("award")) {
+                  set("pay_rate", "");
+                }
+              }}
               className={`px-3 py-2 font-medium transition ${form.pay_rate_type === "annual" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
             >Annual</button>
             <button
               type="button"
               onClick={() => {
                 set("pay_rate_type", "award_wage");
-                if (!form.pay_rate) set("pay_rate", "Award Wage");
+                if (!form.pay_rate.trim() || !isNaN(Number(form.pay_rate.trim()))) {
+                  set("pay_rate", "Award Wage");
+                }
               }}
               className={`px-3 py-2 font-medium transition ${form.pay_rate_type === "award_wage" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
             >Award Wage</button>
           </div>
         </div>
-        <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
-          <span>{form.pay_rate_type === "award_wage" ? "Specify award name, grade, or leave as Award Wage" : "Accepts amounts, ranges (e.g. 33-35), or text"}</span>
-          {form.pay_rate_type !== "award_wage" ? (
-            <button
-              type="button"
-              onClick={() => {
-                set("pay_rate_type", "award_wage");
-                set("pay_rate", "Award Wage");
-              }}
-              className="text-[#e88e2e] hover:underline font-medium"
-            >
-              Use "Award Wage"
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                set("pay_rate_type", "per_hour");
-                if (form.pay_rate === "Award Wage") set("pay_rate", "");
-              }}
-              className="text-[#e88e2e] hover:underline font-medium"
-            >
-              Switch to Hourly
-            </button>
-          )}
-        </div>
+        <p className="mt-1 text-xs text-slate-400">
+          {form.pay_rate_type === "award_wage"
+            ? "Specify modern award name, classification level, or leave as Award Wage"
+            : "Accepts numeric amounts or ranges (e.g. 33.50 or 33-35)"}
+        </p>
       </div>
 
       {/* No. of Positions + Work Location */}

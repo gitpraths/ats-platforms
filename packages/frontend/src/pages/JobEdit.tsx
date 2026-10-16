@@ -333,7 +333,15 @@ export default function JobEdit() {
                 {(["per_hour", "annual", "award_wage"] as const).map((t) => (
                   <button key={t} type="button" onClick={() => {
                     set("pay_rate_type", t);
-                    if (t === "award_wage" && !form.pay_rate) set("pay_rate", "Award Wage");
+                    if (t === "award_wage") {
+                      if (!form.pay_rate.trim() || !isNaN(Number(form.pay_rate.trim()))) {
+                        set("pay_rate", "Award Wage");
+                      }
+                    } else {
+                      if (form.pay_rate.trim().toLowerCase().includes("award")) {
+                        set("pay_rate", "");
+                      }
+                    }
                   }}
                     className={`px-3 py-2 font-medium transition-colors ${
                       form.pay_rate_type === t
@@ -345,32 +353,11 @@ export default function JobEdit() {
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
-              <span>{form.pay_rate_type === "award_wage" ? "Specify award name, grade, or leave as Award Wage" : "Accepts amounts, ranges (e.g. 33-35), or text"}</span>
-              {form.pay_rate_type !== "award_wage" ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    set("pay_rate_type", "award_wage");
-                    set("pay_rate", "Award Wage");
-                  }}
-                  className="text-[#e88e2e] hover:underline font-medium"
-                >
-                  Use "Award Wage"
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    set("pay_rate_type", "per_hour");
-                    if (form.pay_rate === "Award Wage") set("pay_rate", "");
-                  }}
-                  className="text-[#e88e2e] hover:underline font-medium"
-                >
-                  Switch to Hourly
-                </button>
-              )}
-            </div>
+            <p className="mt-1 text-xs text-slate-400">
+              {form.pay_rate_type === "award_wage"
+                ? "Specify modern award name, classification level, or leave as Award Wage"
+                : "Accepts numeric amounts or ranges (e.g. 33.50 or 33-35)"}
+            </p>
           </div>
 
           <div>
