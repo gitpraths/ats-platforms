@@ -106,13 +106,22 @@ function complianceBadge(label, value) {
   return `<span style="display:inline-block;background:${yes ? "#f0fdf4" : "#fef2f2"};color:${colour};border:1px solid ${yes ? "#bbf7d0" : "#fecaca"};border-radius:999px;padding:3px 10px;font-size:12px;margin:2px 4px 2px 0;">${icon} ${label}</span>`;
 }
 
+function formatBroadcastPayRate(rate, rateType) {
+  if (rateType === "award_wage") {
+    if (!rate || String(rate).trim().toLowerCase() === "award wage") return "Award Wage";
+    return String(rate).toLowerCase().includes("award") ? String(rate) : `Award Wage (${rate})`;
+  }
+  if (!rate) return null;
+  const num = Number(rate);
+  const suffix = rateType === "annual" ? "/yr" : "/hr";
+  return isNaN(num) ? `${rate} ${suffix}` : `$${num.toLocaleString()}${suffix}`;
+}
+
 // ── Broadcast vacancy to training providers ───────────────────────────────────
 export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl, customSubject, customMessage, customBody }) {
   const baseUrl = appUrl || process.env.APP_URL || "https://comfortable-mindfulness-production.up.railway.app";
 
-  const payStr    = job.pay_rate
-    ? `$${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`
-    : null;
+  const payStr = formatBroadcastPayRate(job.pay_rate, job.pay_rate_type);
 
   const location  = job.work_location || job.city
     ? [job.work_location || job.city, job.state].filter(Boolean).join(", ")
@@ -231,9 +240,7 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
 
   // Render HTML card for each vacancy in the digest
   const jobsHtml = jobs.map((job, idx) => {
-    const payStr = job.pay_rate
-      ? `$${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`
-      : null;
+    const payStr = formatBroadcastPayRate(job.pay_rate, job.pay_rate_type);
     const location = job.work_location || job.city
       ? [job.work_location || job.city, job.state].filter(Boolean).join(", ")
       : null;

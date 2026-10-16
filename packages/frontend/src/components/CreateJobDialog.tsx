@@ -172,7 +172,7 @@ interface FormState {
   sourced_by_custom_name: string;
   industry:               string;
   pay_rate:               string;
-  pay_rate_type:          "per_hour" | "annual";
+  pay_rate_type:          "per_hour" | "annual" | "award_wage";
   positions_count:        number;
   work_type:              string;
   work_location:          string;
@@ -382,37 +382,63 @@ function StepVacancyDetails({ form, set, employers, staffMembers, currentUser }:
         <Label>Pay Rate</Label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+            {form.pay_rate_type !== "award_wage" && (
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
+            )}
             <input
               type="text"
               value={form.pay_rate}
               onChange={(e) => set("pay_rate", e.target.value)}
-              className="w-full border border-slate-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]"
-              placeholder="e.g. 33.50, 33-35, or Award Wage"
+              className={`w-full border border-slate-200 rounded-lg pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e] ${form.pay_rate_type === "award_wage" ? "pl-3" : "pl-7"}`}
+              placeholder={form.pay_rate_type === "award_wage" ? "e.g. Award Wage or Clerks Level 2" : "e.g. 33.50, 33-35"}
             />
           </div>
-          <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+          <div className="flex border border-slate-200 rounded-lg overflow-hidden text-xs">
             <button
               type="button"
               onClick={() => set("pay_rate_type", "per_hour")}
-              className={`px-3 py-2 text-xs font-medium transition ${form.pay_rate_type === "per_hour" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
+              className={`px-3 py-2 font-medium transition ${form.pay_rate_type === "per_hour" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
             >Per Hour</button>
             <button
               type="button"
               onClick={() => set("pay_rate_type", "annual")}
-              className={`px-3 py-2 text-xs font-medium transition ${form.pay_rate_type === "annual" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
+              className={`px-3 py-2 font-medium transition ${form.pay_rate_type === "annual" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
             >Annual</button>
+            <button
+              type="button"
+              onClick={() => {
+                set("pay_rate_type", "award_wage");
+                if (!form.pay_rate) set("pay_rate", "Award Wage");
+              }}
+              className={`px-3 py-2 font-medium transition ${form.pay_rate_type === "award_wage" ? "bg-[#e88e2e] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`}
+            >Award Wage</button>
           </div>
         </div>
         <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
-          <span>Accepts amounts, ranges (e.g. 33-35), or text</span>
-          <button
-            type="button"
-            onClick={() => set("pay_rate", "Award Wage")}
-            className="text-[#e88e2e] hover:underline font-medium"
-          >
-            Use "Award Wage"
-          </button>
+          <span>{form.pay_rate_type === "award_wage" ? "Specify award name, grade, or leave as Award Wage" : "Accepts amounts, ranges (e.g. 33-35), or text"}</span>
+          {form.pay_rate_type !== "award_wage" ? (
+            <button
+              type="button"
+              onClick={() => {
+                set("pay_rate_type", "award_wage");
+                set("pay_rate", "Award Wage");
+              }}
+              className="text-[#e88e2e] hover:underline font-medium"
+            >
+              Use "Award Wage"
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                set("pay_rate_type", "per_hour");
+                if (form.pay_rate === "Award Wage") set("pay_rate", "");
+              }}
+              className="text-[#e88e2e] hover:underline font-medium"
+            >
+              Switch to Hourly
+            </button>
+          )}
         </div>
       </div>
 

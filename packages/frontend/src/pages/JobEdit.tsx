@@ -315,40 +315,61 @@ export default function JobEdit() {
           </div>
 
           <div>
-            <Label>Pay Rate ($)</Label>
+            <Label>Pay Rate</Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
+                {form.pay_rate_type !== "award_wage" && (
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
+                )}
                 <input
                   type="text"
                   value={form.pay_rate}
                   onChange={(e) => set("pay_rate", e.target.value)}
-                  className={`${cls} pl-7`}
-                  placeholder="e.g. 33.50, 33-35, or Award Wage"
+                  className={`${cls} ${form.pay_rate_type === "award_wage" ? "pl-3" : "pl-7"}`}
+                  placeholder={form.pay_rate_type === "award_wage" ? "e.g. Award Wage or Clerks Level 2" : "e.g. 33.50, 33-35"}
                 />
               </div>
               <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm">
-                {(["per_hour", "annual"] as const).map((t) => (
-                  <button key={t} type="button" onClick={() => set("pay_rate_type", t)}
+                {(["per_hour", "annual", "award_wage"] as const).map((t) => (
+                  <button key={t} type="button" onClick={() => {
+                    set("pay_rate_type", t);
+                    if (t === "award_wage" && !form.pay_rate) set("pay_rate", "Award Wage");
+                  }}
                     className={`px-3 py-2 font-medium transition-colors ${
                       form.pay_rate_type === t
                         ? "bg-[#e88e2e] text-white"
                         : "bg-white text-slate-600 hover:bg-slate-50"
                     }`}>
-                    {t === "per_hour" ? "Per Hour" : "Annual"}
+                    {t === "per_hour" ? "Per Hour" : t === "annual" ? "Annual" : "Award Wage"}
                   </button>
                 ))}
               </div>
             </div>
             <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
-              <span>Accepts amounts, ranges (e.g. 33-35), or text</span>
-              <button
-                type="button"
-                onClick={() => set("pay_rate", "Award Wage")}
-                className="text-[#e88e2e] hover:underline font-medium"
-              >
-                Use "Award Wage"
-              </button>
+              <span>{form.pay_rate_type === "award_wage" ? "Specify award name, grade, or leave as Award Wage" : "Accepts amounts, ranges (e.g. 33-35), or text"}</span>
+              {form.pay_rate_type !== "award_wage" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    set("pay_rate_type", "award_wage");
+                    set("pay_rate", "Award Wage");
+                  }}
+                  className="text-[#e88e2e] hover:underline font-medium"
+                >
+                  Use "Award Wage"
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    set("pay_rate_type", "per_hour");
+                    if (form.pay_rate === "Award Wage") set("pay_rate", "");
+                  }}
+                  className="text-[#e88e2e] hover:underline font-medium"
+                >
+                  Switch to Hourly
+                </button>
+              )}
             </div>
           </div>
 

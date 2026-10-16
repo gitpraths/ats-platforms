@@ -151,6 +151,10 @@ export default function Jobs() {
   const total = data?.meta?.total ?? 0;
 
   function formatPayRate(job: Job) {
+    if (job.pay_rate_type === "award_wage") {
+      if (!job.pay_rate || String(job.pay_rate).trim().toLowerCase() === "award wage") return "Award Wage";
+      return String(job.pay_rate).toLowerCase().includes("award") ? String(job.pay_rate) : `Award Wage (${job.pay_rate})`;
+    }
     if (!job.pay_rate) return null;
     const str = String(job.pay_rate).trim();
     if (!str) return null;

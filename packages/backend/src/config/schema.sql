@@ -625,7 +625,7 @@ UPDATE candidates SET suburb = city WHERE suburb IS NULL AND city IS NOT NULL;
 ALTER TABLE jobs
   ADD COLUMN IF NOT EXISTS industry              TEXT,
   ADD COLUMN IF NOT EXISTS pay_rate              NUMERIC(10,2),
-  ADD COLUMN IF NOT EXISTS pay_rate_type         TEXT DEFAULT 'per_hour' CHECK (pay_rate_type IN ('per_hour','annual')),
+  ADD COLUMN IF NOT EXISTS pay_rate_type         TEXT DEFAULT 'per_hour' CHECK (pay_rate_type IN ('per_hour','annual','award_wage')),
   ADD COLUMN IF NOT EXISTS work_location         TEXT,
   ADD COLUMN IF NOT EXISTS police_check          TEXT DEFAULT 'not_required' CHECK (police_check IN ('yes','no','not_required')),
   ADD COLUMN IF NOT EXISTS drug_alcohol_test     TEXT DEFAULT 'no' CHECK (drug_alcohol_test IN ('yes','no')),

@@ -31,6 +31,17 @@ interface Props {
   onClose: () => void;
 }
 
+function formatBroadcastPayRate(rate: any, type?: string) {
+  if (type === "award_wage") {
+    if (!rate || String(rate).trim().toLowerCase() === "award wage") return "Award Wage";
+    return String(rate).toLowerCase().includes("award") ? String(rate) : `Award Wage (${rate})`;
+  }
+  if (!rate) return null;
+  const num = Number(rate);
+  const suffix = type === "annual" ? "/yr" : "/hr";
+  return isNaN(num) ? `${rate} ${suffix}` : `$${num.toLocaleString()}${suffix}`;
+}
+
 export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClose }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [initialized, setInitialized] = useState(false);
@@ -52,7 +63,8 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
     if (job?.work_location || job?.city) overviewLines.push(`• Location: ${job.work_location || [job.city, job.state].filter(Boolean).join(", ")}`);
     if (job?.industry) overviewLines.push(`• Industry: ${job.industry}`);
     if (job?.vacancy_type) overviewLines.push(`• Work Type: ${job.vacancy_type.replace(/_/g, " ").toUpperCase()}`);
-    if (job?.pay_rate) overviewLines.push(`• Pay Rate: $${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`);
+    const formattedPay = formatBroadcastPayRate(job?.pay_rate, job?.pay_rate_type);
+    if (formattedPay) overviewLines.push(`• Pay Rate: ${formattedPay}`);
     if (job?.positions_count) overviewLines.push(`• Vacancies Available: ${job.positions_count}`);
 
     if (overviewLines.length > 0) {
@@ -193,9 +205,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
     setLoading(false);
   };
 
-  const payRateStr = job?.pay_rate
-    ? `$${Number(job.pay_rate).toLocaleString()}${job.pay_rate_type === "annual" ? "/yr" : "/hr"}`
-    : null;
+  const payRateStr = formatBroadcastPayRate(job?.pay_rate, job?.pay_rate_type);
 
   return (
     <div

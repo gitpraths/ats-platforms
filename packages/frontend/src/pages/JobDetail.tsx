@@ -139,6 +139,10 @@ export default function JobDetail() {
   const canEdit    = isAdmin || hasPermission("jobs:edit") || isOwner || isRecruiter;
 
   const formatPayRateDetail = (rate: any, type?: string) => {
+    if (type === "award_wage") {
+      if (!rate || String(rate).trim().toLowerCase() === "award wage") return "Award Wage";
+      return String(rate).toLowerCase().includes("award") ? String(rate) : `Award Wage (${rate})`;
+    }
     if (!rate) return null;
     const str = String(rate).trim();
     if (!str) return null;

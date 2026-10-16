@@ -264,7 +264,11 @@ export default function Reports() {
         work_location: r.work_location || [r.city, r.state].filter(Boolean).join(", ") || "—",
         positions_count: r.positions_count || 1,
         application_count: r.application_count || 0,
-        pay_rate: r.pay_rate ? `$${r.pay_rate}${r.pay_rate_type === "annual" ? "/yr" : "/hr"}` : "—",
+        pay_rate: r.pay_rate
+          ? (r.pay_rate_type === "award_wage"
+              ? (String(r.pay_rate).toLowerCase().includes("award") ? String(r.pay_rate) : `Award Wage (${r.pay_rate})`)
+              : (isNaN(Number(r.pay_rate)) ? `${r.pay_rate} ${r.pay_rate_type === "annual" ? "/yr" : "/hr"}` : `$${Number(r.pay_rate).toLocaleString()}${r.pay_rate_type === "annual" ? "/yr" : "/hr"}`))
+          : (r.pay_rate_type === "award_wage" ? "Award Wage" : "—"),
         created_at: r.created_at ? format(parseISO(r.created_at), "yyyy-MM-dd") : "—",
       }));
       downloadCsv(jsonToCsv(vacancyCsvData as any), `vacancy-report-${d}.csv`);
@@ -646,8 +650,10 @@ export default function Reports() {
               ) : sortedVacancies.map((r) => {
                 const loc = r.work_location || [r.city, r.state].filter(Boolean).join(", ") || "—";
                 const pay = r.pay_rate
-                  ? `$${Number(r.pay_rate).toLocaleString()}${r.pay_rate_type === "annual" ? "/yr" : "/hr"}`
-                  : "—";
+                  ? (r.pay_rate_type === "award_wage"
+                      ? (String(r.pay_rate).toLowerCase().includes("award") ? String(r.pay_rate) : `Award Wage (${r.pay_rate})`)
+                      : (isNaN(Number(r.pay_rate)) ? `${r.pay_rate} ${r.pay_rate_type === "annual" ? "/yr" : "/hr"}` : `$${Number(r.pay_rate).toLocaleString()}${r.pay_rate_type === "annual" ? "/yr" : "/hr"}`))
+                  : (r.pay_rate_type === "award_wage" ? "Award Wage" : "—");
                 return (
                   <tr key={r.id} className="hover:bg-slate-50 cursor-pointer"
                     onClick={() => window.location.href = `/jobs/${r.id}`}>
