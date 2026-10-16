@@ -334,7 +334,7 @@ export default function JobEdit() {
                   <button key={t} type="button" onClick={() => {
                     set("pay_rate_type", t);
                     if (t === "award_wage") {
-                      if (!form.pay_rate.trim() || !isNaN(Number(form.pay_rate.trim()))) {
+                      if (!form.pay_rate.trim().toLowerCase().includes("award")) {
                         set("pay_rate", "Award Wage");
                       }
                     } else {
