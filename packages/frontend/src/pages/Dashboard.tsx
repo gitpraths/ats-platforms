@@ -265,7 +265,7 @@ export default function Dashboard() {
         {[
           { label: "Total Placements",      value: totalPlacements,     icon: UserCheck,  iconBg: "bg-indigo-50", iconCls: "text-indigo-600", topBorder: "border-t-indigo-500", link: hasPermission("placements:view") ? "/placements" : "#" },
           { label: "Placements This Month", value: placementsThisMonth, icon: CheckCircle,iconBg: "bg-teal-50",   iconCls: "text-teal-600",   topBorder: "border-t-teal-500",  link: hasPermission("placements:view") ? "/placements" : "#" },
-          { label: "Active Providers",      value: activeProviders,     icon: MapPin,     iconBg: "bg-orange-50", iconCls: "text-orange-600", topBorder: "border-t-orange-500",link: "/providers" },
+          { label: "Active Providers",      value: activeProviders,     icon: MapPin,     iconBg: "bg-orange-50", iconCls: "text-orange-600", topBorder: "border-t-orange-500",link: hasPermission("providers:view") ? "/providers" : "#" },
           { label: "Active Employers",      value: activeEmployers,     icon: Building2,  iconBg: "bg-cyan-50",   iconCls: "text-cyan-600",   topBorder: "border-t-cyan-500",  link: hasPermission("employers:view") ? "/employers" : "#" },
         ].map(({ label, value, icon: Icon, iconBg, iconCls, topBorder, link }) => (
           <Link

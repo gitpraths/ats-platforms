@@ -11,9 +11,9 @@ import Pagination from "../components/Pagination";
 export default function Providers() {
   const { user } = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
-  const canCreate = isAdmin || hasPermission("providers:create") || hasPermission("employers:create");
-  const canEdit = isAdmin || hasPermission("providers:edit") || hasPermission("employers:edit");
-  const canDelete = isAdmin || hasPermission("providers:delete") || hasPermission("employers:delete");
+  const canCreate = isAdmin || hasPermission("providers:create");
+  const canEdit = isAdmin || hasPermission("providers:edit");
+  const canDelete = isAdmin || hasPermission("providers:delete");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

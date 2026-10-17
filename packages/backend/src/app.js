@@ -78,10 +78,17 @@ pool.query(`
     AND NOT (permissions ? 'important_updates:view');
 
   UPDATE users 
-  SET permissions = permissions || '["providers:view", "providers:create", "providers:edit"]'::jsonb
+  SET permissions = permissions || '["providers:view", "providers:create", "providers:edit", "providers:add_consultant"]'::jsonb
   WHERE role IN ('super_admin', 'admin', 'staff')
     AND permissions IS NOT NULL
     AND NOT (permissions ? 'providers:view');
+
+  UPDATE users 
+  SET permissions = permissions || '["providers:add_consultant"]'::jsonb
+  WHERE role IN ('super_admin', 'admin', 'staff')
+    AND permissions IS NOT NULL
+    AND (permissions ? 'providers:edit')
+    AND NOT (permissions ? 'providers:add_consultant');
 
   UPDATE users 
   SET permissions = permissions || '["providers:view"]'::jsonb

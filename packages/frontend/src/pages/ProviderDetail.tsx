@@ -31,7 +31,9 @@ export default function ProviderDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
-  const canEdit = isAdmin || hasPermission("providers:edit") || hasPermission("employers:edit");
+  const canEdit = isAdmin || hasPermission("providers:edit");
+  const canAddConsultant = isAdmin || hasPermission("providers:add_consultant") || hasPermission("providers:create");
+  const canDeleteConsultant = isAdmin || hasPermission("providers:delete");
   const canFinancials = isAdmin || hasPermission("reports:financials");
   const navigate = useNavigate();
 
@@ -120,7 +122,7 @@ export default function ProviderDetail() {
       </div>
 
       {/* Consultants */}
-      <ConsultantsSection providerId={id!} isAdmin={canEdit} />
+      <ConsultantsSection providerId={id!} canAdd={canAddConsultant} canDelete={canDeleteConsultant} />
 
       {/* Recent candidates */}
       <div className="bg-white rounded-xl shadow-sm p-6">
@@ -295,7 +297,7 @@ function XeroContactSection({ provider }: { provider: { id: string; name: string
 
 interface Consultant { id: string; name: string; email?: string | null; phone?: string | null; }
 
-function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdmin: boolean }) {
+function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: string; canAdd: boolean; canDelete: boolean }) {
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [name,   setName]   = useState("");
@@ -330,7 +332,7 @@ function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdm
             <span className="ml-2 text-xs font-normal text-slate-400">({consultants.length})</span>
           )}
         </h2>
-        {isAdmin && !adding && (
+        {canAdd && !adding && (
           <button onClick={() => setAdding(true)}
             className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
             <Plus size={12} /> Add Consultant
@@ -389,7 +391,7 @@ function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdm
               <th className="pb-2">Name</th>
               <th className="pb-2">Email</th>
               <th className="pb-2">Phone</th>
-              {isAdmin && <th className="pb-2" />}
+              {canDelete && <th className="pb-2" />}
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -398,7 +400,7 @@ function ConsultantsSection({ providerId, isAdmin }: { providerId: string; isAdm
                 <td className="py-2 font-medium text-slate-900">{c.name}</td>
                 <td className="py-2 text-slate-500">{c.email || "—"}</td>
                 <td className="py-2 text-slate-500">{c.phone || "—"}</td>
-                {isAdmin && (
+                {canDelete && (
                   <td className="py-2 text-right">
                     <button
                       onClick={() => { if (confirm(`Remove ${c.name}?`)) deleteConsultant.mutate(c.id); }}

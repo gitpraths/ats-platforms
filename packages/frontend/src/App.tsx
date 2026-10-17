@@ -180,7 +180,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const canViewTraining         = hasPermission("training:view");
   const canViewPlacements       = hasPermission("placements:view");
   const canViewEmployers        = hasPermission("employers:view");
-  const canViewProviders        = hasPermission("providers:view") || hasPermission("employers:view");
+  const canViewProviders        = hasPermission("providers:view");
   const canViewReports          = isAdmin || hasPermission("reports:view");
 
   return (
@@ -332,10 +332,10 @@ function AppRoutes() {
       <Route path="/training"         element={<PermissionRoute permission="training:view"><Training /></PermissionRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
 
-      <Route path="/providers"          element={<PermissionRoute permission={["providers:view", "employers:view"]}><Providers       /></PermissionRoute>} />
-      <Route path="/providers/new"      element={<PermissionRoute permission={["providers:create", "employers:create"]}><ProviderCreate     /></PermissionRoute>} />
-      <Route path="/providers/:id"      element={<PermissionRoute permission={["providers:view", "employers:view"]}><ProviderDetail  /></PermissionRoute>} />
-      <Route path="/providers/:id/edit" element={<PermissionRoute permission={["providers:edit", "employers:edit"]}><ProviderCreate      /></PermissionRoute>} />
+      <Route path="/providers"          element={<PermissionRoute permission="providers:view"><Providers       /></PermissionRoute>} />
+      <Route path="/providers/new"      element={<PermissionRoute permission="providers:create"><ProviderCreate     /></PermissionRoute>} />
+      <Route path="/providers/:id"      element={<PermissionRoute permission="providers:view"><ProviderDetail  /></PermissionRoute>} />
+      <Route path="/providers/:id/edit" element={<PermissionRoute permission="providers:edit"><ProviderCreate      /></PermissionRoute>} />
 
       <Route path="/employers"          element={<PermissionRoute permission="employers:view"><Employers /></PermissionRoute>} />
       <Route path="/employers/new"      element={<PermissionRoute permission="employers:create"><EmployerCreate /></PermissionRoute>} />

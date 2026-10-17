@@ -46,10 +46,11 @@ const DEFAULT_CATALOG: PermissionModule[] = [
     name: "Providers & Consultants",
     description: "Referral organizations, apprenticeship networks, and consultant profiles",
     permissions: [
-      { id: "providers:view",   label: "View Providers",   description: "Browse provider directory, view profiles and consultant rosters" },
-      { id: "providers:create", label: "Create Providers", description: "Add new referral providers and organisations" },
-      { id: "providers:edit",   label: "Edit Providers",   description: "Update provider information, contacts, and manage consultants" },
-      { id: "providers:delete", label: "Delete Providers", description: "Deactivate or remove referral providers" },
+      { id: "providers:view",           label: "View Providers",   description: "Browse provider directory, view profiles and consultant rosters" },
+      { id: "providers:create",         label: "Create Providers", description: "Add new referral providers and organisations" },
+      { id: "providers:edit",           label: "Edit Providers",   description: "Update provider information, contacts, and settings" },
+      { id: "providers:add_consultant", label: "Add Consultant",   description: "Add and assign consultants within a provider" },
+      { id: "providers:delete",         label: "Delete Providers", description: "Deactivate or remove referral providers" },
     ],
   },
   {
@@ -133,7 +134,7 @@ const DEFAULT_ROLE_PRESETS: Record<string, string[]> = {
   admin: [...DEFAULT_ALL_IDS],
   staff: [
     "employers:view", "employers:create",
-    "providers:view", "providers:create", "providers:edit",
+    "providers:view", "providers:create", "providers:edit", "providers:add_consultant",
     "jobs:view", "jobs:create", "jobs:publish",
     "important_updates:view",
     "candidates:view", "candidates:create", "candidates:edit",
