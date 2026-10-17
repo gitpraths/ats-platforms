@@ -146,7 +146,7 @@ candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, r
 
     // Active application dates and placement details
     const { rows: apps } = await pool.query(
-      `SELECT a.id, a.stage, a.source, a.score, a.applied_at,
+      `SELECT a.id, a.job_id, a.stage, a.source, a.score, a.applied_at,
               a.interview_date, a.ets_date, a.placement_date,
               j.title AS job_title,
               p.id AS placement_id,
@@ -164,7 +164,7 @@ candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, r
 
     // Full application history (including soft-deleted applications)
     const { rows: appHistory } = await pool.query(
-      `SELECT a.id, a.stage, a.source, a.applied_at, a.deleted_at,
+      `SELECT a.id, a.job_id, a.stage, a.source, a.applied_at, a.deleted_at,
               a.interview_date, a.ets_date, a.placement_date,
               j.title AS job_title,
               p.id AS placement_id,
