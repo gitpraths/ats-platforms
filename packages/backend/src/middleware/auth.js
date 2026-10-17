@@ -89,3 +89,34 @@ export function requirePermission(...requiredPermissions) {
     }
   };
 }
+
+export function requireAnyPermission(...permissions) {
+  return async (req, res, next) => {
+    if (!req.user?.id) return res.status(401).json({ success: false, error: "Unauthorized" });
+
+    try {
+      const { pool } = await import("../config/db.js");
+      const { rows } = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.user.id]);
+      if (!rows[0]) return res.status(403).json({ success: false, error: "Forbidden" });
+
+      const liveRole = rows[0].role;
+      const userPerms = rows[0].permissions || [];
+      req.user.role = liveRole;
+      req.user.permissions = userPerms;
+
+      if (liveRole === "super_admin" || liveRole === "admin") return next();
+
+      const hasAny = permissions.some((p) => userPerms.includes(p));
+      if (!hasAny) {
+        return res.status(403).json({
+          success: false,
+          error: `Permission denied. Required one of: ${permissions.join(", ")}`,
+        });
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+

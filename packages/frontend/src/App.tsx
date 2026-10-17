@@ -180,6 +180,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const canViewTraining         = hasPermission("training:view");
   const canViewPlacements       = hasPermission("placements:view");
   const canViewEmployers        = hasPermission("employers:view");
+  const canViewProviders        = hasPermission("providers:view") || hasPermission("employers:view");
   const canViewReports          = isAdmin || hasPermission("reports:view");
 
   return (
@@ -210,7 +211,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           {canViewEmployers && (
             <NavLink to="/employers" className={navClass}><Building2 size={15} />Employers</NavLink>
           )}
-          {canViewEmployers && (
+          {canViewProviders && (
             <NavLink to="/providers" className={navClass}><MapPinIcon size={15} />Providers</NavLink>
           )}
           {canViewTraining && (
@@ -284,7 +285,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 // ── Permission Route ──────────────────────────────────────────────────────────
-function PermissionRoute({ permission, children }: { permission: string; children: React.ReactNode }) {
+function PermissionRoute({ permission, children }: { permission: string | string[]; children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
 
@@ -295,7 +296,8 @@ function PermissionRoute({ permission, children }: { permission: string; childre
   );
   if (!user) return <Navigate to="/login" replace />;
 
-  const allowed = isAdmin || hasPermission(permission);
+  const permissions = Array.isArray(permission) ? permission : [permission];
+  const allowed = isAdmin || permissions.some((p) => hasPermission(p));
 
   if (!allowed) {
     return <Navigate to="/dashboard" replace />;
@@ -330,10 +332,10 @@ function AppRoutes() {
       <Route path="/training"         element={<PermissionRoute permission="training:view"><Training /></PermissionRoute>} />
       <Route path="/profile"          element={<ProtectedRoute><Profile          /></ProtectedRoute>} />
 
-      <Route path="/providers"          element={<PermissionRoute permission="employers:view"><Providers       /></PermissionRoute>} />
-      <Route path="/providers/new"      element={<PermissionRoute permission="employers:create"><ProviderCreate     /></PermissionRoute>} />
-      <Route path="/providers/:id"      element={<PermissionRoute permission="employers:view"><ProviderDetail  /></PermissionRoute>} />
-      <Route path="/providers/:id/edit" element={<PermissionRoute permission="employers:edit"><ProviderCreate      /></PermissionRoute>} />
+      <Route path="/providers"          element={<PermissionRoute permission={["providers:view", "employers:view"]}><Providers       /></PermissionRoute>} />
+      <Route path="/providers/new"      element={<PermissionRoute permission={["providers:create", "employers:create"]}><ProviderCreate     /></PermissionRoute>} />
+      <Route path="/providers/:id"      element={<PermissionRoute permission={["providers:view", "employers:view"]}><ProviderDetail  /></PermissionRoute>} />
+      <Route path="/providers/:id/edit" element={<PermissionRoute permission={["providers:edit", "employers:edit"]}><ProviderCreate      /></PermissionRoute>} />
 
       <Route path="/employers"          element={<PermissionRoute permission="employers:view"><Employers /></PermissionRoute>} />
       <Route path="/employers/new"      element={<PermissionRoute permission="employers:create"><EmployerCreate /></PermissionRoute>} />

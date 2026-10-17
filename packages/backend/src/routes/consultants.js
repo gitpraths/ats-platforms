@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireAnyPermission } from "../middleware/auth.js";
 import { toTitleCase } from "../utils/index.js";
 
 export const consultantsRouter = Router();
 consultantsRouter.use(requireAuth);
 
 // GET /api/consultants?provider_id=xxx
-consultantsRouter.get("/", async (req, res, next) => {
+consultantsRouter.get("/", requireAnyPermission("providers:view", "employers:view", "candidates:view", "candidates:create", "candidates:edit"), async (req, res, next) => {
   try {
     const { provider_id } = req.query;
     const conditions = ["c.is_active = TRUE"];
@@ -30,7 +30,7 @@ consultantsRouter.get("/", async (req, res, next) => {
 });
 
 // POST /api/consultants
-consultantsRouter.post("/", async (req, res, next) => {
+consultantsRouter.post("/", requireAnyPermission("providers:edit", "providers:create", "employers:edit"), async (req, res, next) => {
   try {
     const { provider_id, name, email, phone } = req.body;
     if (!provider_id) return res.status(400).json({ success: false, error: "provider_id is required" });
@@ -46,7 +46,7 @@ consultantsRouter.post("/", async (req, res, next) => {
 });
 
 // PATCH /api/consultants/:id
-consultantsRouter.patch("/:id", async (req, res, next) => {
+consultantsRouter.patch("/:id", requireAnyPermission("providers:edit", "employers:edit"), async (req, res, next) => {
   try {
     const { name, email, phone, is_active } = req.body;
     const cleanName = name !== undefined ? (name ? toTitleCase(name.trim()) : null) : undefined;
@@ -65,7 +65,7 @@ consultantsRouter.patch("/:id", async (req, res, next) => {
 });
 
 // DELETE /api/consultants/:id
-consultantsRouter.delete("/:id", async (req, res, next) => {
+consultantsRouter.delete("/:id", requireAnyPermission("providers:edit", "providers:delete", "employers:delete"), async (req, res, next) => {
   try {
     await pool.query("UPDATE consultants SET is_active = FALSE WHERE id = $1", [req.params.id]);
     res.json({ success: true });

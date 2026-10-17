@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
+import { requireAuth, requireRole, requirePermission, requireAnyPermission } from "../middleware/auth.js";
 import { runSync, resolveShareUrl, searchOneDriveFiles, listWorksheets } from '../services/spreadsheet.js';
 import { getValidAccessToken } from '../services/ms-auth.js';
 import { toTitleCase } from "../utils/index.js";
@@ -9,7 +9,7 @@ export const providersRouter = Router();
 providersRouter.use(requireAuth);
 
 // ── GET /api/providers ───────────────────────────────────
-providersRouter.get("/", async (req, res, next) => {
+providersRouter.get("/", requireAnyPermission("providers:view", "employers:view"), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = "" } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -38,7 +38,7 @@ providersRouter.get("/", async (req, res, next) => {
 });
 
 // ── GET /api/providers/:id/onedrive/files ────────────────
-providersRouter.get('/:id/onedrive/files', requirePermission('employers:edit'), async (req, res, next) => {
+providersRouter.get('/:id/onedrive/files', requireAnyPermission('providers:edit', 'employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
@@ -59,7 +59,7 @@ providersRouter.get('/:id/onedrive/files', requirePermission('employers:edit'), 
 });
 
 // ── GET /api/providers/:id/onedrive/files/:fileId/sheets ─
-providersRouter.get('/:id/onedrive/files/:fileId/sheets', requirePermission('employers:edit'), async (req, res, next) => {
+providersRouter.get('/:id/onedrive/files/:fileId/sheets', requireAnyPermission('providers:edit', 'employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
@@ -82,7 +82,7 @@ providersRouter.get('/:id/onedrive/files/:fileId/sheets', requirePermission('emp
 
 
 // ── GET /api/providers/:id ───────────────────────────────
-providersRouter.get("/:id", async (req, res, next) => {
+providersRouter.get("/:id", requireAnyPermission("providers:view", "employers:view"), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT p.*,
@@ -111,7 +111,7 @@ providersRouter.get("/:id", async (req, res, next) => {
 });
 
 // ── POST /api/providers ──────────────────────────────────
-providersRouter.post("/", requirePermission("employers:create"), async (req, res, next) => {
+providersRouter.post("/", requireAnyPermission("providers:create", "employers:create"), async (req, res, next) => {
   try {
     const { name, contact_name, email, phone, address, is_active = true } = req.body;
     if (!name) return res.status(400).json({ success: false, error: "name is required" });
@@ -135,7 +135,7 @@ providersRouter.post("/", requirePermission("employers:create"), async (req, res
 });
 
 // ── PUT /api/providers/:id ───────────────────────────────
-providersRouter.put("/:id", requirePermission("employers:edit"), async (req, res, next) => {
+providersRouter.put("/:id", requireAnyPermission("providers:edit", "employers:edit"), async (req, res, next) => {
   try {
     const { name, contact_name, email, phone, address, is_active, xero_contact_id } = req.body;
 
@@ -176,7 +176,7 @@ providersRouter.put("/:id", requirePermission("employers:edit"), async (req, res
 });
 
 // ── DELETE /api/providers/:id (soft delete) ──────────────
-providersRouter.delete("/:id", requirePermission("employers:delete"), async (req, res, next) => {
+providersRouter.delete("/:id", requireAnyPermission("providers:delete", "employers:delete"), async (req, res, next) => {
   try {
     const { rows: active } = await pool.query(
       `SELECT COUNT(*)::int AS cnt FROM candidates
@@ -204,7 +204,7 @@ providersRouter.delete("/:id", requirePermission("employers:delete"), async (req
 });
 
 // ── PATCH /api/providers/:id/spreadsheet ─────────────────
-providersRouter.patch('/:id/spreadsheet', requirePermission('employers:edit'), async (req, res, next) => {
+providersRouter.patch('/:id/spreadsheet', requireAnyPermission('providers:edit', 'employers:edit'), async (req, res, next) => {
   try {
     const { onedrive_url, onedrive_file_id: directFileId, onedrive_sheet_name = 'Sheet1' } = req.body;
 
@@ -248,7 +248,7 @@ providersRouter.patch('/:id/spreadsheet', requirePermission('employers:edit'), a
 });
 
 // ── POST /api/providers/:id/sync ─────────────────────────
-providersRouter.post('/:id/sync', requirePermission('employers:edit'), async (req, res, next) => {
+providersRouter.post('/:id/sync', requireAnyPermission('providers:edit', 'employers:edit'), async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM providers WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Provider not found' });
@@ -265,7 +265,7 @@ providersRouter.post('/:id/sync', requirePermission('employers:edit'), async (re
 });
 
 // ── GET /api/providers/:id/sync-logs ─────────────────────
-providersRouter.get('/:id/sync-logs', async (req, res, next) => {
+providersRouter.get('/:id/sync-logs', requireAnyPermission('providers:view', 'employers:view'), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT psl.*, u.name AS triggered_by_name

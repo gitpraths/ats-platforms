@@ -18,6 +18,17 @@ export const PERMISSIONS_CATALOG = [
     ],
   },
   {
+    module: "providers",
+    name: "Providers & Consultants",
+    description: "Referral organizations, apprenticeship networks, and consultant profiles",
+    permissions: [
+      { id: "providers:view",   label: "View Providers",   description: "Browse provider directory, view profiles and consultant rosters" },
+      { id: "providers:create", label: "Create Providers", description: "Add new referral providers and organisations" },
+      { id: "providers:edit",   label: "Edit Providers",   description: "Update provider information, contacts, and manage consultants" },
+      { id: "providers:delete", label: "Delete Providers", description: "Deactivate or remove referral providers" },
+    ],
+  },
+  {
     module: "jobs",
     name: "Vacancies",
     description: "Job postings, requirements, compliance, and public listings",
@@ -105,6 +116,9 @@ export const ROLE_DEFAULTS = {
   staff: [
     "employers:view",
     "employers:create",
+    "providers:view",
+    "providers:create",
+    "providers:edit",
     "jobs:view",
     "jobs:create",
     "jobs:edit",
@@ -130,6 +144,7 @@ export const ROLE_DEFAULTS = {
     "training:view",
     "training:enroll",
     "employers:view",
+    "providers:view",
     "reports:view",
   ],
 

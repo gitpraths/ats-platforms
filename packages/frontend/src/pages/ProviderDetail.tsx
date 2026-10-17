@@ -31,7 +31,7 @@ export default function ProviderDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
-  const canEdit = isAdmin || hasPermission("employers:edit");
+  const canEdit = isAdmin || hasPermission("providers:edit") || hasPermission("employers:edit");
   const canFinancials = isAdmin || hasPermission("reports:financials");
   const navigate = useNavigate();
 

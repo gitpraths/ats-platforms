@@ -77,6 +77,18 @@ pool.query(`
     AND permissions IS NOT NULL
     AND NOT (permissions ? 'important_updates:view');
 
+  UPDATE users 
+  SET permissions = permissions || '["providers:view", "providers:create", "providers:edit"]'::jsonb
+  WHERE role IN ('super_admin', 'admin', 'staff')
+    AND permissions IS NOT NULL
+    AND NOT (permissions ? 'providers:view');
+
+  UPDATE users 
+  SET permissions = permissions || '["providers:view"]'::jsonb
+  WHERE role = 'hr'
+    AND permissions IS NOT NULL
+    AND NOT (permissions ? 'providers:view');
+
   DELETE FROM employers WHERE id = '8712b284-ca4b-429b-a1bf-9843622f892d';
 `).catch((err) => console.error("[migration] schema updates:", err.message));
 
