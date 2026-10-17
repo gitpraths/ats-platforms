@@ -26,11 +26,29 @@ const MIME = {
 createServer((req, res) => {
   try {
     const url = req.url.split("?")[0];
+    let isHtml = false;
     let filePath = join(dist, url === "/" ? "index.html" : url);
-    if (!existsSync(filePath)) filePath = join(dist, "index.html");
+    if (!existsSync(filePath) || url === "/" || !extname(filePath)) {
+      filePath = join(dist, "index.html");
+      isHtml = true;
+    }
     const ext = extname(filePath);
+    if (ext === ".html") isHtml = true;
+
     const content = readFileSync(filePath);
-    res.writeHead(200, { "Content-Type": MIME[ext] || "text/html" });
+    const headers = { "Content-Type": MIME[ext] || "text/html" };
+
+    if (isHtml) {
+      headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+      headers["Pragma"] = "no-cache";
+      headers["Expires"] = "0";
+    } else if (url.startsWith("/assets/")) {
+      headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    } else {
+      headers["Cache-Control"] = "public, max-age=3600";
+    }
+
+    res.writeHead(200, headers);
     res.end(content);
   } catch (err) {
     console.error("Request error:", err.message);
