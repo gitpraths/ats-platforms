@@ -30,7 +30,7 @@ consultantsRouter.get("/", requireAnyPermission("providers:view", "candidates:vi
 });
 
 // POST /api/consultants
-consultantsRouter.post("/", requireAnyPermission("providers:add_consultant", "providers:create"), async (req, res, next) => {
+consultantsRouter.post("/", requirePermission("providers:add_consultant"), async (req, res, next) => {
   try {
     const { provider_id, name, email, phone } = req.body;
     if (!provider_id) return res.status(400).json({ success: false, error: "provider_id is required" });

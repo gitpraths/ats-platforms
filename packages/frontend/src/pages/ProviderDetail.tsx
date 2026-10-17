@@ -32,8 +32,9 @@ export default function ProviderDetail() {
   const { user } = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
   const canEdit = isAdmin || hasPermission("providers:edit");
-  const canAddConsultant = isAdmin || hasPermission("providers:add_consultant") || hasPermission("providers:create");
-  const canDeleteConsultant = isAdmin || hasPermission("providers:delete");
+  const canAddConsultant = isAdmin || hasPermission("providers:add_consultant");
+  const canEditConsultant = isAdmin || hasPermission("providers:edit");
+  const canDeleteConsultant = isAdmin || hasPermission("providers:delete") || hasPermission("providers:edit");
   const canFinancials = isAdmin || hasPermission("reports:financials");
   const navigate = useNavigate();
 
@@ -122,7 +123,7 @@ export default function ProviderDetail() {
       </div>
 
       {/* Consultants */}
-      <ConsultantsSection providerId={id!} canAdd={canAddConsultant} canDelete={canDeleteConsultant} />
+      <ConsultantsSection providerId={id!} canAdd={canAddConsultant} canEdit={canEditConsultant} canDelete={canDeleteConsultant} />
 
       {/* Recent candidates */}
       <div className="bg-white rounded-xl shadow-sm p-6">
@@ -297,12 +298,27 @@ function XeroContactSection({ provider }: { provider: { id: string; name: string
 
 interface Consultant { id: string; name: string; email?: string | null; phone?: string | null; }
 
-function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: string; canAdd: boolean; canDelete: boolean }) {
+function ConsultantsSection({
+  providerId,
+  canAdd,
+  canEdit,
+  canDelete,
+}: {
+  providerId: string;
+  canAdd: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}) {
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [name,   setName]   = useState("");
   const [email,  setEmail]  = useState("");
   const [phone,  setPhone]  = useState("");
+
+  const [editingConsultant, setEditingConsultant] = useState<Consultant | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
 
   const { data: consultants = [], isLoading } = useQuery<Consultant[]>({
     queryKey: ["consultants", providerId],
@@ -311,10 +327,28 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
 
   const addConsultant = useMutation({
     mutationFn: () =>
-      api.post("/consultants", { provider_id: providerId, name: toTitleCase(name.trim()), email: email.trim() || undefined, phone: phone.trim() || undefined }),
+      api.post("/consultants", {
+        provider_id: providerId,
+        name: toTitleCase(name.trim()),
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consultants", providerId] });
       setName(""); setEmail(""); setPhone(""); setAdding(false);
+    },
+  });
+
+  const updateConsultant = useMutation({
+    mutationFn: () =>
+      api.patch(`/consultants/${editingConsultant?.id}`, {
+        name: toTitleCase(editName.trim()),
+        email: editEmail.trim() || undefined,
+        phone: editPhone.trim() || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultants", providerId] });
+      setEditingConsultant(null);
     },
   });
 
@@ -322,6 +356,14 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
     mutationFn: (cid: string) => api.delete(`/consultants/${cid}`),
     onSuccess:  () => queryClient.invalidateQueries({ queryKey: ["consultants", providerId] }),
   });
+
+  function startEdit(c: Consultant) {
+    setAdding(false);
+    setEditingConsultant(c);
+    setEditName(c.name || "");
+    setEditEmail(c.email || "");
+    setEditPhone(c.phone || "");
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
@@ -333,7 +375,7 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
           )}
         </h2>
         {canAdd && !adding && (
-          <button onClick={() => setAdding(true)}
+          <button onClick={() => { setEditingConsultant(null); setAdding(true); }}
             className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-3 py-1.5 transition-colors">
             <Plus size={12} /> Add Consultant
           </button>
@@ -350,19 +392,19 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
               <input value={name} onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
                 onBlur={() => setName(toTitleCase(name))}
                 placeholder="Full name"
-                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white" />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Email</label>
               <input value={email} onChange={(e) => setEmail(e.target.value)} type="email"
                 placeholder="email@example.com"
-                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white" />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Phone</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} type="tel"
                 placeholder="0412 345 678"
-                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e]" />
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white" />
             </div>
           </div>
           <div className="flex gap-2">
@@ -372,7 +414,46 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
               {addConsultant.isPending ? "Saving…" : "Save"}
             </button>
             <button onClick={() => { setAdding(false); setName(""); setEmail(""); setPhone(""); }}
-              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-4 py-1.5 hover:bg-slate-100 transition-colors">
+              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-4 py-1.5 hover:bg-slate-100 transition-colors bg-white">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit form */}
+      {editingConsultant && (
+        <div className="mb-4 p-4 bg-amber-50/70 rounded-xl border border-amber-200">
+          <p className="text-xs font-semibold text-slate-700 mb-3">Edit Consultant: {editingConsultant.name}</p>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Name <span className="text-red-500">*</span></label>
+              <input value={editName} onChange={(e) => setEditName(e.target.value.replace(/[^a-zA-Z\s'\-]/g, ""))}
+                onBlur={() => setEditName(toTitleCase(editName))}
+                placeholder="Full name"
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Email</label>
+              <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} type="email"
+                placeholder="email@example.com"
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Phone</label>
+              <input value={editPhone} onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} type="tel"
+                placeholder="0412 345 678"
+                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/40 focus:border-[#e88e2e] bg-white" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => updateConsultant.mutate()}
+              disabled={!editName.trim() || updateConsultant.isPending}
+              className="text-xs font-medium text-white bg-[#e88e2e] hover:bg-[#d07d20] rounded-lg px-4 py-1.5 transition-colors disabled:opacity-50">
+              {updateConsultant.isPending ? "Updating…" : "Update Consultant"}
+            </button>
+            <button onClick={() => setEditingConsultant(null)}
+              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-lg px-4 py-1.5 hover:bg-slate-100 transition-colors bg-white">
               Cancel
             </button>
           </div>
@@ -391,7 +472,7 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
               <th className="pb-2">Name</th>
               <th className="pb-2">Email</th>
               <th className="pb-2">Phone</th>
-              {canDelete && <th className="pb-2" />}
+              {(canEdit || canDelete) && <th className="pb-2 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -400,13 +481,28 @@ function ConsultantsSection({ providerId, canAdd, canDelete }: { providerId: str
                 <td className="py-2 font-medium text-slate-900">{c.name}</td>
                 <td className="py-2 text-slate-500">{c.email || "—"}</td>
                 <td className="py-2 text-slate-500">{c.phone || "—"}</td>
-                {canDelete && (
+                {(canEdit || canDelete) && (
                   <td className="py-2 text-right">
-                    <button
-                      onClick={() => { if (confirm(`Remove ${c.name}?`)) deleteConsultant.mutate(c.id); }}
-                      className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors">
-                      <Trash2 size={13} />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      {canEdit && (
+                        <button
+                          onClick={() => startEdit(c)}
+                          title="Edit Consultant"
+                          className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => { if (confirm(`Remove ${c.name}?`)) deleteConsultant.mutate(c.id); }}
+                          title="Delete Consultant"
+                          className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 )}
               </tr>
