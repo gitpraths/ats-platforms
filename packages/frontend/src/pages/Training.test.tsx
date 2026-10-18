@@ -9,6 +9,10 @@ const listMock = vi.fn();
 const getMock  = vi.fn();
 const postMock = vi.fn();
 
+vi.mock("../contexts/AuthContext", () => ({
+  useAuth: () => ({ user: { id: "1", role: "admin", permissions: ["training:view", "training:enroll"] } }),
+}));
+
 vi.mock("../lib/api", () => ({
   api: {
     list: (path: string) => listMock(path),

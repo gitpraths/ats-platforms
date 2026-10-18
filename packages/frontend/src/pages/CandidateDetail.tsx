@@ -80,7 +80,7 @@ export default function CandidateDetail() {
   const { user }    = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
   const canWrite = isAdmin || hasPermission("candidates:edit");
-  const canWriteTraining = isAdmin || hasPermission("training:enroll") || hasPermission("training:manage");
+  const canWriteTraining = isAdmin || hasPermission("training:enroll");
 
   const [activeTab, setActiveTab] = useState<"overview"|"documents"|"training"|"applications"|"notes">("overview");
   const [editing, setEditing] = useState(false);

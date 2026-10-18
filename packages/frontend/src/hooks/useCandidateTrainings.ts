@@ -27,6 +27,8 @@ export function useCreateEnrolment() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate-trainings", vars.candidate_id] });
       qc.invalidateQueries({ queryKey: ["candidate", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["candidate-trainings-list"] });
+      qc.invalidateQueries({ queryKey: ["training-stats"] });
     },
   });
 }
@@ -45,6 +47,8 @@ export function useUpdateEnrolment() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate-trainings", vars.candidate_id] });
       qc.invalidateQueries({ queryKey: ["candidate", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["candidate-trainings-list"] });
+      qc.invalidateQueries({ queryKey: ["training-stats"] });
     },
   });
 }
@@ -56,6 +60,8 @@ export function useDeleteEnrolment(candidateId: string | undefined) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["candidate-trainings", candidateId] });
       qc.invalidateQueries({ queryKey: ["candidate", candidateId] });
+      qc.invalidateQueries({ queryKey: ["candidate-trainings-list"] });
+      qc.invalidateQueries({ queryKey: ["training-stats"] });
     },
   });
 }
