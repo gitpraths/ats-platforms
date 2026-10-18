@@ -16,5 +16,6 @@ coverage/
 *.jpeg
 *.jpg
 *.png
+!packages/frontend/public/*.png
 .worktrees/
 CRM Portal.docx

@@ -4,6 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { TrainingTab } from "./CandidateDetail";
 
+vi.mock("../contexts/AuthContext", () => ({
+  useAuth: () => ({ user: { id: "1", role: "admin", permissions: [] } }),
+}));
+
 vi.mock("../lib/api", () => ({
   api: {
     get: vi.fn(async (path: string) => {

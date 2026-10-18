@@ -187,13 +187,8 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#F1F5F9]">
       <nav className="bg-white border-b border-slate-200 px-4 h-14 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-sm">
         <div className="flex items-stretch h-full gap-0">
-          <a href="/dashboard" className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none">
-            <div className="flex flex-col leading-none">
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.02em" }}>
-                <span style={{ color: "#0F172A" }}>Work</span><span style={{ color: "#e88e2e" }}>Vision</span>
-              </span>
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.6rem", color: "#94a3b8", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "1px" }}>Australia</span>
-            </div>
+          <a href="/dashboard" className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none py-1.5" title="WorkVision Australia">
+            <img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-9 w-auto max-h-9 object-contain" />
           </a>
           <NavLink to="/dashboard" className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
           {canViewCandidates && (
