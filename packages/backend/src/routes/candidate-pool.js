@@ -52,6 +52,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       provider_q     = "",
       industry_q     = "",
       comments_q     = "",
+      staff_id       = "",
       consultant_id  = "",
       intention_to_work = "",
       referral_date  = "",
@@ -89,7 +90,17 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     if (industry_q) { conditions.push(`EXISTS (SELECT 1 FROM unnest(c.industry_preference) ind WHERE ind ILIKE $${idx++})`); params.push(`%${industry_q}%`); }
     if (comments_q) { conditions.push(`COALESCE(c.comments, c.notes) ILIKE $${idx++}`); params.push(`%${comments_q}%`); }
 
-    // Staff / Consultant filter
+    // Internal Staff filter (WorkVision Staff - Row 56: Candidates Managed by staff)
+    if (staff_id) {
+      if (staff_id === "unassigned") {
+        conditions.push(`c.created_by IS NULL`);
+      } else {
+        conditions.push(`c.created_by = $${idx++}`);
+        params.push(staff_id);
+      }
+    }
+
+    // Provider Consultant filter
     if (consultant_id) {
       if (consultant_id === "unassigned") {
         conditions.push(`c.consultant_id IS NULL`);
@@ -118,6 +129,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     const lateralJoins = `
        LEFT JOIN providers pr    ON pr.id = c.provider_id
        LEFT JOIN consultants con ON con.id = c.consultant_id
+       LEFT JOIN users u_staff   ON u_staff.id = c.created_by
        LEFT JOIN LATERAL (
          SELECT id, job_id, employer_id, start_date, confirmed_by_employer
          FROM placements
@@ -147,6 +159,8 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          c.work_status,
          c.intention_to_work,
          c.consultant_id,
+         c.created_by    AS staff_id,
+         u_staff.name    AS staff_name,
          c.car, c.police_check, c.wwc,
          COALESCE(c.comments, c.notes) AS comments,
          c.benchmark_hours,

@@ -316,6 +316,8 @@ export interface CandidatePoolRow {
   provider_contact_email?: string;
   consultant_id?: string | null;
   consultant_name?: string;
+  staff_id?: string | null;
+  staff_name?: string | null;
   intention_to_work?: string;
   placement_id?: string | null;
   job_start_date?: string | null;

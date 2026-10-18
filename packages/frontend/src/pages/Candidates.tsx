@@ -1,7 +1,7 @@
-import { Fragment, useState, useEffect, useRef, useCallback } from "react";
+import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
-import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock, User, Briefcase } from "lucide-react";
+import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock, User, Users, Briefcase } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
@@ -9,7 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
 import { api } from "../lib/api";
 import { useToast } from "../components/ui/use-toast";
-import type { CandidatePoolRow as BaseCandidatePoolRow, CandidateWorkStatus } from "../types";
+import type { CandidatePoolRow as BaseCandidatePoolRow, CandidateWorkStatus, User as UserRecord } from "../types";
 import Pagination from "../components/Pagination";
 import { CellTooltip } from "../components/CellTooltip";
 
@@ -114,6 +114,12 @@ function InfoTooltip({ row }: { row: CandidatePoolRow }) {
               <div className="flex justify-between">
                 <span className="text-slate-400">Location</span>
                 <span className="font-medium text-slate-700">{[row.suburb || row.city, row.state].filter(Boolean).join(", ")}</span>
+              </div>
+            )}
+            {row.staff_name && (
+              <div className="flex justify-between">
+                <span className="text-slate-400">Staff</span>
+                <span className="font-medium text-slate-700">{row.staff_name}</span>
               </div>
             )}
             {row.consultant_name && (
@@ -342,6 +348,7 @@ export default function Candidates() {
   const [tab,          setTab]          = useState<Tab>("all");
   const [page,         setPage]         = useState(1);
   const [dateFilter,   setDateFilter]   = useState<DateFilter>("all");
+  const [selectedStaffId, setSelectedStaffId] = useState("");
   const [selectedConsultantId, setSelectedConsultantId] = useState("");
   const [selectedIntention, setSelectedIntention] = useState("");
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -386,6 +393,7 @@ export default function Candidates() {
   function clearAll() {
     setColFilters(EMPTY_FILTERS);
     setDebounced(EMPTY_FILTERS);
+    setSelectedStaffId("");
     setSelectedConsultantId("");
     setSelectedIntention("");
     setDateFilter("all");
@@ -394,6 +402,7 @@ export default function Candidates() {
 
   const hasFilters =
     Object.values(colFilters).some(Boolean) ||
+    Boolean(selectedStaffId) ||
     Boolean(selectedConsultantId) ||
     Boolean(selectedIntention) ||
     dateFilter !== "all";
@@ -402,7 +411,19 @@ export default function Candidates() {
   const canCreate = hasPermission("candidates:create");
   const canView   = hasPermission("candidates:view");
 
-  const { data: consultants = [] } = useQuery<{ id: string; name: string }[]>({
+  const { data: users = [] } = useQuery<UserRecord[]>({
+    queryKey: ["users-staff"],
+    queryFn: () => api.get("/users"),
+    enabled: canView,
+  });
+
+  const staffMembers = useMemo(() => {
+    return users
+      .filter((u) => u.role !== "provider")
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [users]);
+
+  const { data: consultants = [] } = useQuery<{ id: string; name: string; provider_name?: string }[]>({
     queryKey: ["consultants-all"],
     queryFn: () => api.get("/consultants"),
     enabled: canView,
@@ -417,6 +438,7 @@ export default function Candidates() {
     provider_q:        debounced.provider,
     industry_q:        debounced.industry,
     comments_q:        debounced.comments,
+    staff_id:          selectedStaffId,
     consultant_id:     selectedConsultantId,
     intention_to_work: selectedIntention,
     referral_date:     debounced.referral_date,
@@ -526,18 +548,36 @@ export default function Candidates() {
           ))}
         </div>
 
-        {/* Staff / Consultant Filter (Row 56: Candidates Managed by staff) */}
+        {/* Staff Filter (Internal WorkVision Staff - Row 56) */}
         <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs shadow-sm">
           <User size={13} className="text-slate-400" />
           <span className="text-slate-400 mr-1">Staff:</span>
           <select
-            value={selectedConsultantId}
-            onChange={(e) => { setSelectedConsultantId(e.target.value); setPage(1); }}
+            value={selectedStaffId}
+            onChange={(e) => { setSelectedStaffId(e.target.value); setPage(1); }}
             className="text-xs font-medium text-slate-700 bg-transparent focus:outline-none cursor-pointer max-w-[160px]"
           >
             <option value="">All Staff</option>
+            {staffMembers.map((u) => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Consultant Filter (External Provider Consultants) */}
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs shadow-sm">
+          <Users size={13} className="text-slate-400" />
+          <span className="text-slate-400 mr-1">Consultant:</span>
+          <select
+            value={selectedConsultantId}
+            onChange={(e) => { setSelectedConsultantId(e.target.value); setPage(1); }}
+            className="text-xs font-medium text-slate-700 bg-transparent focus:outline-none cursor-pointer max-w-[180px]"
+          >
+            <option value="">All Consultants</option>
             {consultants.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}{c.provider_name ? ` (${c.provider_name})` : ""}
+              </option>
             ))}
           </select>
         </div>

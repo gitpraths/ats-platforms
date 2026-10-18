@@ -143,7 +143,7 @@ usersRouter.get("/", async (req, res, next) => {
     const { rows: me } = await pool.query("SELECT role, permissions FROM users WHERE id = $1", [req.user.id]);
     const myRole = me[0]?.role;
     const myPerms = me[0]?.permissions || [];
-    const isAllowed = myRole === "super_admin" || myRole === "admin" || myPerms.includes("admin:users") || myPerms.includes("jobs:view") || myPerms.includes("jobs:create") || myPerms.includes("jobs:edit");
+    const isAllowed = myRole === "super_admin" || myRole === "admin" || myPerms.includes("admin:users") || myPerms.includes("jobs:view") || myPerms.includes("jobs:create") || myPerms.includes("jobs:edit") || myPerms.includes("candidates:view");
     if (!isAllowed) {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
