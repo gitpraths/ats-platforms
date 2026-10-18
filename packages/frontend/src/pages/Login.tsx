@@ -30,7 +30,12 @@ export default function Login() {
 
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-14 w-auto" />
+          <img
+            src="/WV-Logo-v2.png"
+            srcSet="/WV-Logo-v2.png 1x, /WV-Logo-v2@2x.png 2x"
+            alt="WorkVision Australia"
+            className="h-20 w-auto object-contain"
+          />
         </div>
 
         {/* Error */}

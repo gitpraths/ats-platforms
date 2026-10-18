@@ -187,8 +187,16 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#F1F5F9]">
       <nav className="bg-white border-b border-slate-200 px-4 h-14 flex items-center justify-between fixed top-0 inset-x-0 z-50 shadow-sm">
         <div className="flex items-stretch h-full gap-0">
-          <a href="/dashboard" className="flex items-center mr-4 pr-4 border-r border-slate-200 select-none py-1.5" title="WorkVision Australia">
-            <img src="/WV-Logo-v2.png" alt="WorkVision Australia" className="h-9 w-auto max-h-9 object-contain" />
+          <a href="/dashboard" className="flex items-center gap-2.5 mr-4 pr-4 border-r border-slate-200 select-none py-1 group" title="WorkVision Australia">
+            <img src="/favicon.svg" alt="WorkVision" className="h-8 w-auto object-contain transition-transform group-hover:scale-105" />
+            <div className="flex flex-col leading-none">
+              <span className="text-[1.15rem] font-bold tracking-tight leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <span className="text-slate-900">Work</span><span className="text-[#E88E2E]">Vision</span>
+              </span>
+              <span className="text-[0.625rem] font-semibold text-slate-500 tracking-[0.2em] uppercase mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                AUSTRALIA
+              </span>
+            </div>
           </a>
           <NavLink to="/dashboard" className={navClass}><LayoutDashboard size={15} />Dashboard</NavLink>
           {canViewCandidates && (
