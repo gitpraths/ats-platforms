@@ -5,14 +5,14 @@ import { requireAuth, requirePermission } from "../middleware/auth.js";
 export const candidatePoolRouter = Router();
 candidatePoolRouter.use(requireAuth);
 
-function tabCondition(tab) {
+function tabCondition(tab, intentionFilter = "") {
   switch (tab) {
     case "in_progress":
       return `EXISTS (
         SELECT 1 FROM applications a
         WHERE a.candidate_id = c.id
           AND a.stage IN ('applied','screening','interview','ets')
-      )`;
+      ) AND c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list'`;
     case "placed":
       return `c.work_status = 'placed'`;
     case "not_successful":
@@ -25,11 +25,15 @@ function tabCondition(tab) {
           SELECT 1 FROM applications a2
           WHERE a2.candidate_id = c.id AND a2.stage = 'rejected'
         )
-        AND c.work_status NOT IN ('placed','inactive')`;
+        AND c.work_status NOT IN ('placed','inactive')
+        AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list'`;
     case "inactive":
-      return `c.work_status = 'inactive'`;
+      return `(c.work_status = 'inactive' OR c.intention_to_work = 'remove_from_main_list')`;
     default:
-      return "1=1";
+      if (intentionFilter === "remove_from_main_list") {
+        return "1=1";
+      }
+      return `(c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list')`;
   }
 }
 
@@ -48,6 +52,8 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       provider_q     = "",
       industry_q     = "",
       comments_q     = "",
+      consultant_id  = "",
+      intention_to_work = "",
       referral_date  = "",
       training_date  = "",
       interview_date = "",
@@ -82,6 +88,22 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     if (provider_q) { conditions.push(`pr.name ILIKE $${idx++}`);                      params.push(`%${provider_q}%`); }
     if (industry_q) { conditions.push(`EXISTS (SELECT 1 FROM unnest(c.industry_preference) ind WHERE ind ILIKE $${idx++})`); params.push(`%${industry_q}%`); }
     if (comments_q) { conditions.push(`COALESCE(c.comments, c.notes) ILIKE $${idx++}`); params.push(`%${comments_q}%`); }
+
+    // Staff / Consultant filter
+    if (consultant_id) {
+      if (consultant_id === "unassigned") {
+        conditions.push(`c.consultant_id IS NULL`);
+      } else {
+        conditions.push(`c.consultant_id = $${idx++}`);
+        params.push(consultant_id);
+      }
+    }
+
+    // Intention to work filter
+    if (intention_to_work) {
+      conditions.push(`c.intention_to_work = $${idx++}`);
+      params.push(intention_to_work);
+    }
 
     // Date column filters (exact date match)
     if (referral_date)  { conditions.push(`c.date_referred = $${idx++}`);       params.push(referral_date); }
@@ -123,6 +145,8 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          c.sr_no,
          c.city, c.state, c.suburb, c.date_referred,
          c.work_status,
+         c.intention_to_work,
+         c.consultant_id,
          c.car, c.police_check, c.wwc,
          COALESCE(c.comments, c.notes) AS comments,
          c.benchmark_hours,
@@ -145,7 +169,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          la.placement_date AS latest_placement_date
        FROM candidates c
        ${lateralJoins}
-       WHERE ${tabCondition(tab)} ${colWhere}
+       WHERE ${tabCondition(tab, intention_to_work)} ${colWhere}
        ORDER BY COALESCE(c.date_referred, c.created_at::date) DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, limit, offset]
@@ -176,7 +200,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       `SELECT COUNT(*)::int AS total
        FROM candidates c
        ${lateralJoins}
-       WHERE ${tabCondition(tab)} ${colWhere}`,
+       WHERE ${tabCondition(tab, intention_to_work)} ${colWhere}`,
       params
     );
     const total = totalRows[0].total;
@@ -184,12 +208,12 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     // ── Tab counts (unfiltered — always show overall tab totals) ──
     const { rows: countRows } = await pool.query(
       `SELECT
-         COUNT(*)::int AS all_count,
+         COUNT(*) FILTER (WHERE c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list')::int AS all_count,
          COUNT(*) FILTER (WHERE EXISTS (
            SELECT 1 FROM applications a
            WHERE a.candidate_id = c.id
              AND a.stage IN ('applied','screening','interview','ets')
-         ))::int AS in_progress_count,
+         ) AND c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list')::int AS in_progress_count,
          COUNT(*) FILTER (WHERE c.work_status = 'placed')::int AS placed_count,
          COUNT(*) FILTER (WHERE
            NOT EXISTS (
@@ -202,8 +226,9 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
              WHERE a2.candidate_id = c.id AND a2.stage = 'rejected'
            )
            AND c.work_status NOT IN ('placed','inactive')
+           AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list'
          )::int AS not_successful_count,
-         COUNT(*) FILTER (WHERE c.work_status = 'inactive')::int AS inactive_count
+         COUNT(*) FILTER (WHERE c.work_status = 'inactive' OR c.intention_to_work = 'remove_from_main_list')::int AS inactive_count
        FROM candidates c`
     );
 

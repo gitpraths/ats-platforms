@@ -296,6 +296,7 @@ export interface CandidatePoolMeta {
 
 export interface CandidatePoolRow {
   id: string;
+  sr_no?: string | null;
   name: string;
   email: string;
   phone?: string;
@@ -313,7 +314,9 @@ export interface CandidatePoolRow {
   provider_name?: string;
   provider_contact_name?: string;
   provider_contact_email?: string;
+  consultant_id?: string | null;
   consultant_name?: string;
+  intention_to_work?: string;
   placement_id?: string | null;
   job_start_date?: string | null;
   confirmed_by_employer?: boolean;

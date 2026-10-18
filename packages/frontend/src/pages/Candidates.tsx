@@ -1,8 +1,8 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
 import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
-import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock, User, Briefcase } from "lucide-react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
 import { useAuth } from "../contexts/AuthContext";
@@ -342,6 +342,8 @@ export default function Candidates() {
   const [tab,          setTab]          = useState<Tab>("all");
   const [page,         setPage]         = useState(1);
   const [dateFilter,   setDateFilter]   = useState<DateFilter>("all");
+  const [selectedConsultantId, setSelectedConsultantId] = useState("");
+  const [selectedIntention, setSelectedIntention] = useState("");
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   // Per-column filter state
@@ -381,29 +383,48 @@ export default function Candidates() {
   function setCol(key: keyof ColFilters, val: string) {
     setColFilters((prev) => ({ ...prev, [key]: val }));
   }
-  function clearAll() { setColFilters(EMPTY_FILTERS); setDebounced(EMPTY_FILTERS); setPage(1); }
+  function clearAll() {
+    setColFilters(EMPTY_FILTERS);
+    setDebounced(EMPTY_FILTERS);
+    setSelectedConsultantId("");
+    setSelectedIntention("");
+    setDateFilter("all");
+    setPage(1);
+  }
 
-  const hasFilters = Object.values(colFilters).some(Boolean);
+  const hasFilters =
+    Object.values(colFilters).some(Boolean) ||
+    Boolean(selectedConsultantId) ||
+    Boolean(selectedIntention) ||
+    dateFilter !== "all";
 
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission("candidates:create");
   const canView   = hasPermission("candidates:view");
 
+  const { data: consultants = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["consultants-all"],
+    queryFn: () => api.get("/consultants"),
+    enabled: canView,
+  });
+
   const { data, isLoading } = useCandidatePool({
     tab, page,
-    date_from:      getDateFrom(dateFilter),
-    name_q:         debounced.name,
-    email_q:        debounced.email,
-    phone_q:        debounced.phone,
-    provider_q:     debounced.provider,
-    industry_q:     debounced.industry,
-    comments_q:     debounced.comments,
-    referral_date:  debounced.referral_date,
-    training_date:  debounced.training_date,
-    interview_date: debounced.interview_date,
-    ets_date:       debounced.ets_date,
-    placement_date: debounced.placement_date,
-    enabled:        canView,
+    date_from:         getDateFrom(dateFilter),
+    name_q:            debounced.name,
+    email_q:           debounced.email,
+    phone_q:           debounced.phone,
+    provider_q:        debounced.provider,
+    industry_q:        debounced.industry,
+    comments_q:        debounced.comments,
+    consultant_id:     selectedConsultantId,
+    intention_to_work: selectedIntention,
+    referral_date:     debounced.referral_date,
+    training_date:     debounced.training_date,
+    interview_date:    debounced.interview_date,
+    ets_date:          debounced.ets_date,
+    placement_date:    debounced.placement_date,
+    enabled:           canView,
   });
 
   const rows       = data?.data ?? [];
@@ -487,10 +508,10 @@ export default function Candidates() {
         </div>
       </div>
 
-      {/* ── Top bar: date pills + clear all ──────────────────── */}
+      {/* ── Top bar: date pills + staff & intention filters + clear all ──────────────────── */}
       <div className="flex flex-wrap gap-3 mb-3 items-center">
         {/* Referral date filter pills */}
-        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1">
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
           <Calendar size={13} className="text-slate-400 ml-1.5" />
           <span className="text-xs text-slate-400 mr-1">Referred:</span>
           {DATE_FILTERS.map((df) => (
@@ -505,10 +526,42 @@ export default function Candidates() {
           ))}
         </div>
 
+        {/* Staff / Consultant Filter (Row 56: Candidates Managed by staff) */}
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs shadow-sm">
+          <User size={13} className="text-slate-400" />
+          <span className="text-slate-400 mr-1">Staff:</span>
+          <select
+            value={selectedConsultantId}
+            onChange={(e) => { setSelectedConsultantId(e.target.value); setPage(1); }}
+            className="text-xs font-medium text-slate-700 bg-transparent focus:outline-none cursor-pointer max-w-[160px]"
+          >
+            <option value="">All Staff</option>
+            {consultants.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Intention to Work Filter (Rows 59-62) */}
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs shadow-sm">
+          <Briefcase size={13} className="text-slate-400" />
+          <span className="text-slate-400 mr-1">Intention:</span>
+          <select
+            value={selectedIntention}
+            onChange={(e) => { setSelectedIntention(e.target.value); setPage(1); }}
+            className="text-xs font-medium text-slate-700 bg-transparent focus:outline-none cursor-pointer"
+          >
+            <option value="">All Intentions</option>
+            <option value="suitable">Suitable</option>
+            <option value="not_suitable">Not Suitable</option>
+            <option value="remove_from_main_list">Remove from Main List</option>
+          </select>
+        </div>
+
         {/* Clear all column filters */}
         {hasFilters && (
           <button onClick={clearAll}
-            className="flex items-center gap-1.5 text-xs font-medium text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl px-3 py-2 transition">
+            className="flex items-center gap-1.5 text-xs font-medium text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl px-3 py-2 transition shadow-sm">
             <FilterX size={13} /> Clear All Filters
           </button>
         )}
@@ -639,14 +692,16 @@ export default function Candidates() {
                   <Fragment key={row.id}>
                     <tr onClick={() => navigate(`/candidates/${row.id}`)}
                       className={`cursor-pointer border-b transition group ${
-                        (row as any).intention_to_work === "not_suitable"
+                        row.intention_to_work === "not_suitable"
                           ? "bg-red-50/60 hover:bg-red-50"
+                          : row.intention_to_work === "remove_from_main_list"
+                          ? "bg-slate-50/80 hover:bg-slate-100 opacity-75"
                           : "hover:bg-orange-50/40"
                       }`}>
 
                       {/* SR # */}
                       <td className="px-4 py-3 text-xs text-slate-400 font-mono whitespace-nowrap">
-                        {(row as any).sr_no || "—"}
+                        {row.sr_no || "—"}
                       </td>
 
                       {/* Candidate name + pipeline dot + info icon */}
@@ -656,12 +711,18 @@ export default function Candidates() {
                             {row.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className={`font-medium whitespace-nowrap ${
-                                (row as any).intention_to_work === "not_suitable" ? "text-red-700" : "text-slate-900"
+                                row.intention_to_work === "not_suitable" ? "text-red-700" : "text-slate-900"
                               }`}>{row.name}</span>
-                              {(row as any).intention_to_work === "not_suitable" && (
+                              {row.intention_to_work === "not_suitable" && (
                                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">Not Suitable</span>
+                              )}
+                              {row.intention_to_work === "remove_from_main_list" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">Removed</span>
+                              )}
+                              {row.intention_to_work === "suitable" && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Suitable</span>
                               )}
                               <InfoTooltip row={row} />
                             </div>
@@ -681,19 +742,24 @@ export default function Candidates() {
                       {/* Mobile */}
                       <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">{row.phone || "—"}</td>
 
-                      {/* Provider */}
+                      {/* Provider & Consultant */}
                       <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
                         <CellTooltip
-                          title="Provider"
+                          title="Provider & Consultant"
                           items={[
                             { key: "Consultant", value: row.consultant_name },
                             { key: "Contact",    value: (row as any).provider_contact_name },
                             { key: "Email",      value: (row as any).provider_contact_email },
                           ]}
                         >
-                          {row.provider_name
-                            ? <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">{row.provider_name}</span>
-                            : <span className="text-slate-300">—</span>}
+                          <div>
+                            {row.provider_name
+                              ? <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium inline-block">{row.provider_name}</span>
+                              : <span className="text-slate-300">—</span>}
+                            {row.consultant_name && (
+                              <p className="text-[11px] text-slate-400 mt-0.5">{row.consultant_name}</p>
+                            )}
+                          </div>
                         </CellTooltip>
                       </td>
 
@@ -830,7 +896,18 @@ export default function Candidates() {
                   {row.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-900 truncate">{row.name}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-semibold text-slate-900 truncate">{row.name}</p>
+                    {row.intention_to_work === "not_suitable" && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">Not Suitable</span>
+                    )}
+                    {row.intention_to_work === "remove_from_main_list" && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">Removed</span>
+                    )}
+                    {row.intention_to_work === "suitable" && (
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Suitable</span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500 truncate">{displayEmail(row.email)}</p>
                 </div>
               </div>
@@ -848,9 +925,10 @@ export default function Candidates() {
                 }`}>
                   {getStatusLabel(row)}
                 </span>
-                {row.provider_name && (
-                  <span className="text-xs text-slate-400 truncate ml-2">{row.provider_name}</span>
-                )}
+                <div className="flex flex-col items-end text-xs text-slate-400 truncate ml-2">
+                  {row.provider_name && <span className="truncate font-medium">{row.provider_name}</span>}
+                  {row.consultant_name && <span className="text-[10px] text-slate-400">{row.consultant_name}</span>}
+                </div>
               </div>
             </button>
           ))}

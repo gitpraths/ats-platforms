@@ -15,6 +15,8 @@ export interface UseCandidatePoolOptions {
   provider_q?:      string;
   industry_q?:      string;
   comments_q?:      string;
+  consultant_id?:   string;
+  intention_to_work?: string;
   // Per-column date filters
   referral_date?:   string;
   training_date?:   string;
@@ -29,6 +31,7 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
     tab = "all", page = 1, limit = 20,
     q = "", date_from = "",
     name_q = "", email_q = "", phone_q = "", provider_q = "", industry_q = "", comments_q = "",
+    consultant_id = "", intention_to_work = "",
     referral_date = "", training_date = "",
     interview_date = "", ets_date = "", placement_date = "",
     enabled = true,
@@ -39,23 +42,26 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
     queryKey: ["candidate-pool", {
       tab, page, q, date_from,
       name_q, email_q, phone_q, provider_q, industry_q, comments_q,
+      consultant_id, intention_to_work,
       referral_date, training_date, interview_date, ets_date, placement_date,
     }],
     queryFn: async () => {
       const params = new URLSearchParams({ tab, page: String(page), limit: String(limit) });
-      if (q)              params.set("q",              q);
-      if (date_from)      params.set("date_from",      date_from);
-      if (name_q)         params.set("name_q",         name_q);
-      if (email_q)        params.set("email_q",        email_q);
-      if (phone_q)        params.set("phone_q",        phone_q);
-      if (provider_q)     params.set("provider_q",     provider_q);
-      if (industry_q)     params.set("industry_q",     industry_q);
-      if (comments_q)     params.set("comments_q",     comments_q);
-      if (referral_date)  params.set("referral_date",  referral_date);
-      if (training_date)  params.set("training_date",  training_date);
-      if (interview_date) params.set("interview_date", interview_date);
-      if (ets_date)       params.set("ets_date",       ets_date);
-      if (placement_date) params.set("placement_date", placement_date);
+      if (q)                 params.set("q",                 q);
+      if (date_from)         params.set("date_from",         date_from);
+      if (name_q)            params.set("name_q",            name_q);
+      if (email_q)           params.set("email_q",           email_q);
+      if (phone_q)           params.set("phone_q",           phone_q);
+      if (provider_q)        params.set("provider_q",        provider_q);
+      if (industry_q)        params.set("industry_q",        industry_q);
+      if (comments_q)        params.set("comments_q",        comments_q);
+      if (consultant_id)     params.set("consultant_id",     consultant_id);
+      if (intention_to_work) params.set("intention_to_work", intention_to_work);
+      if (referral_date)     params.set("referral_date",     referral_date);
+      if (training_date)     params.set("training_date",     training_date);
+      if (interview_date)    params.set("interview_date",    interview_date);
+      if (ets_date)          params.set("ets_date",          ets_date);
+      if (placement_date)    params.set("placement_date",    placement_date);
       const result = await api.list<CandidatePoolRow>(`/candidate-pool?${params}`);
       return result as { data: CandidatePoolRow[]; meta: CandidatePoolMeta };
     },

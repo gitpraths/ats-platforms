@@ -437,10 +437,26 @@ export function CandidateFormPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Job Seeker Intention to Work</Label>
-            <select value={form.intention_to_work} onChange={(e) => set("intention_to_work", e.target.value)} className={CLS}>
+            <select
+              value={form.intention_to_work}
+              onChange={(e) => {
+                const val = e.target.value;
+                set("intention_to_work", val);
+                if (val === "remove_from_main_list") {
+                  set("work_status", "inactive");
+                }
+              }}
+              className={CLS}
+            >
               <option value="suitable">Suitable</option>
               <option value="not_suitable">Not Suitable</option>
+              <option value="remove_from_main_list">Remove from Main List (Auto-Archive)</option>
             </select>
+            {form.intention_to_work === "remove_from_main_list" && (
+              <p className="text-xs text-amber-600 mt-1">
+                Candidate will be auto-archived and removed from the active candidate pool.
+              </p>
+            )}
           </div>
         </div>
       </div>

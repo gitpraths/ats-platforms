@@ -263,7 +263,8 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
         industry_preference || [],
         car || null, police_check || null, wwc || null,
         comments || notes || null, notes || comments || null, interested_job || null,
-        wage_subsidy ?? false, wage_subsidy_amount || null, "job_seeking",
+        wage_subsidy ?? false, wage_subsidy_amount || null,
+        intention_to_work === "remove_from_main_list" ? "inactive" : "job_seeking",
         intention_to_work || "suitable",
         req.user.id
       ]
@@ -335,7 +336,10 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
          interested_job      = COALESCE($19, interested_job),
          wage_subsidy        = COALESCE($20, wage_subsidy),
          wage_subsidy_amount = COALESCE($21, wage_subsidy_amount),
-         work_status         = COALESCE($22, work_status),
+         work_status         = CASE
+                                 WHEN $23 = 'remove_from_main_list' THEN 'inactive'
+                                 ELSE COALESCE($22, work_status)
+                               END,
          intention_to_work   = COALESCE($23, intention_to_work),
          updated_at          = NOW(),
          updated_by          = $25

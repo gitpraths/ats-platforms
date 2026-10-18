@@ -184,6 +184,7 @@ export default function CandidateDetail() {
       industry_preference: ext.industry_preference ?? [],
       comments:            ext.comments ?? candidate.notes ?? "",
       date_referred:       ext.date_referred ? ext.date_referred.slice(0, 10) : "",
+      intention_to_work:   (ext as any).intention_to_work ?? "suitable",
       training_ids:        [],   // trainings managed via Training tab
     });
     setSaveError("");
@@ -221,6 +222,7 @@ export default function CandidateDetail() {
       wwc:                 editForm.wwc,
       industry_preference: editForm.industry_preference,
       consultant_id:       editForm.consultant_id || null,
+      intention_to_work:   editForm.intention_to_work || "suitable",
       comments:            editForm.comments,
       date_referred:       editForm.date_referred || null,
     } as unknown as Partial<Candidate>);
@@ -694,10 +696,21 @@ export default function CandidateDetail() {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                      <span className={`inline-flex text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
-                        {statusCfg.label}
-                      </span>
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`inline-flex text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                          {statusCfg.label}
+                        </span>
+                        {(ext as any).intention_to_work === "not_suitable" && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">Not Suitable</span>
+                        )}
+                        {(ext as any).intention_to_work === "remove_from_main_list" && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">Removed</span>
+                        )}
+                        {(ext as any).intention_to_work === "suitable" && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Suitable</span>
+                        )}
+                      </div>
                       {candidate.benchmark_hours && (
                         <span className="text-xs text-slate-500 font-medium">
                           Benchmark: <span className="font-semibold text-slate-800">{candidate.benchmark_hours}</span> hrs/wk
