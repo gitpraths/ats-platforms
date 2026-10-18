@@ -86,6 +86,17 @@ applicationsRouter.post("/", async (req, res, next) => {
     if (!job_id || !candidate_id)
       return res.status(400).json({ success: false, error: "job_id and candidate_id are required" });
 
+    if (placement_date) {
+      const pDate = toDateOnly(placement_date);
+      const aDate = toDateOnly(applied_at);
+      if (pDate && aDate && pDate < aDate) {
+        return res.status(400).json({
+          success: false,
+          error: `Placement start date (${formatAU(pDate)}) cannot be earlier than application date (${formatAU(aDate)})`,
+        });
+      }
+    }
+
     // Build dynamic insert to handle optional dates
     const cols = ["job_id", "candidate_id", "source", "score", "stage"];
     const vals = [job_id, candidate_id, source || "manual", 0, stage || "applied"];
@@ -136,6 +147,18 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 
     if (stage && !VALID_STAGES.includes(stage))
       return res.status(400).json({ success: false, error: `stage must be one of: ${VALID_STAGES.join(", ")}` });
+
+    if (placement_date) {
+      const pDate = toDateOnly(placement_date);
+      const refAppDate = applied_at || appRows[0].applied_at;
+      const aDate = toDateOnly(refAppDate);
+      if (pDate && aDate && pDate < aDate) {
+        return res.status(400).json({
+          success: false,
+          error: `Placement start date (${formatAU(pDate)}) cannot be earlier than application date (${formatAU(aDate)})`,
+        });
+      }
+    }
 
     let targetStage = stage !== undefined ? stage : appRows[0].stage;
     
