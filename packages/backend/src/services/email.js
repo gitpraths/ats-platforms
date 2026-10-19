@@ -6,7 +6,7 @@ let transporter;
 async function getTransporter() {
   if (transporter) return transporter;
 
-  if (!process.env.SMTP_HOST) {
+  if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
     // Development fallback: Ethereal fake SMTP
     const testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
@@ -17,13 +17,24 @@ async function getTransporter() {
     });
     logger.info(`Email: using Ethereal test account — ${testAccount.user}`);
   } else {
+    const host = process.env.SMTP_HOST || "smtppro.zoho.com.au";
+    const port = Number(process.env.SMTP_PORT) || 465;
+    // Port 465 requires secure: true (direct SSL). Port 587 requires secure: false (STARTTLS).
+    let secure = port === 465;
+    if (port === 465) {
+      secure = true;
+    } else if (port === 587) {
+      secure = false;
+    } else if (process.env.SMTP_SECURE !== undefined && process.env.SMTP_SECURE !== "") {
+      secure = process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === true;
+    }
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true",
+      host,
+      port,
+      secure,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: process.env.SMTP_USER || "connect@workvision.com.au",
+        pass: process.env.SMTP_PASS || "Email@WVA24",
       },
     });
   }
@@ -37,10 +48,15 @@ export async function testEmailConnection() {
 }
 
 export async function sendEmail({ to, subject, html, text }) {
+  const t = await getTransporter();
+  const defaultFrom = process.env.SMTP_USER
+    ? `WorkVision Australia <${process.env.SMTP_USER}>`
+    : "WorkVision Australia <connect@workvision.com.au>";
+  const from = process.env.EMAIL_FROM || defaultFrom;
+
   try {
-    const t = await getTransporter();
     const info = await t.sendMail({
-      from: process.env.EMAIL_FROM || "WorkVision CRM <noreply@workvision.com.au>",
+      from,
       to,
       subject,
       html,
@@ -51,9 +67,10 @@ export async function sendEmail({ to, subject, html, text }) {
     // Log Ethereal preview URL in dev
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) logger.info(`Email preview: ${previewUrl}`);
+    return info;
   } catch (err) {
     logger.error(`Email send failed: to=${to} subject="${subject}" error=${err.message}`);
-    // Non-blocking — do not rethrow
+    throw err;
   }
 }
 
