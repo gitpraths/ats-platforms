@@ -90,7 +90,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
       parts.push(`\nAdditional Notes:\n${job.description.trim()}`);
     }
 
-    parts.push(`\nIf you have suitable, job-ready candidates registered with your service, please click the referral link in this email or submit their profiles directly via the WorkVision ATS portal.`);
+    parts.push("\nIf you have suitable, job-ready candidates registered with your service, please reply directly to this email with candidate resume(s) or contact our recruitment team.");
 
     return parts.join("\n");
   }, [job, jobTitle]);

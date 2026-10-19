@@ -32,8 +32,13 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
   // Tabs: "customize" (draft multi-vacancy email) vs "select" (providers checklist)
   const [activeTab, setActiveTab]                     = useState<"customize" | "select">("customize");
 
-  const initialSubject = `Multiple New Vacancies Alert (${jobs.length} Roles Available) — WorkVision`;
-  const initialIntro   = `We are pleased to share ${jobs.length} new open vacancies currently available across our network. Please review the roles below and submit any suitable, job-ready candidates directly through the referral links or your WorkVision ATS portal.`;
+  const isSingle = jobs.length === 1;
+  const initialSubject = isSingle
+    ? `New Vacancy Alert: ${jobs[0].title} — WorkVision`
+    : `Multiple New Vacancies Alert (${jobs.length} Roles Available) — WorkVision`;
+  const initialIntro = isSingle
+    ? "We are pleased to share 1 new open vacancy currently available across our network. Please review the role details below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us."
+    : `We are pleased to share ${jobs.length} new open vacancies currently available across our network. Please review the roles below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us.`;
 
   const [customSubject, setCustomSubject] = useState(initialSubject);
   const [customIntro, setCustomIntro]     = useState(initialIntro);

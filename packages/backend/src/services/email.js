@@ -114,13 +114,15 @@ export async function sendWelfareCheckEmail({ welfareCheck, placement, employer,
   await sendEmail({ to: employer.contact_email, subject, html, text });
 }
 
-// ── Compliance badge helper ───────────────────────────────────────────────────
-function complianceBadge(label, value) {
-  if (!value || value === "not_required") return "";
-  const yes = value === "yes" || value === true;
-  const colour = yes ? "#16a34a" : "#dc2626";
-  const icon   = yes ? "✅" : "❌";
-  return `<span style="display:inline-block;background:${yes ? "#f0fdf4" : "#fef2f2"};color:${colour};border:1px solid ${yes ? "#bbf7d0" : "#fecaca"};border-radius:999px;padding:3px 10px;font-size:12px;margin:2px 4px 2px 0;">${icon} ${label}</span>`;
+// ── Helper to format candidate requirements checklist ────────────────────────
+function getComplianceList(job) {
+  const items = [];
+  if (job.police_check && job.police_check !== "not_required") items.push("National Police Check Required");
+  if (job.wwc && job.wwc !== "not_required") items.push("Working with Children Check (WWC)");
+  if (job.drug_alcohol_test && job.drug_alcohol_test !== "not_required") items.push("Drug & Alcohol Screening");
+  if (job.car_required && job.car_required !== "not_required") items.push("Own Reliable Vehicle / Driver's Licence");
+  if (job.wage_subsidy_required && job.wage_subsidy_required !== "not_required") items.push("Wage Subsidy Eligible Preferred");
+  return items;
 }
 
 function formatBroadcastPayRate(rate, rateType) {
@@ -134,29 +136,19 @@ function formatBroadcastPayRate(rate, rateType) {
   return isNaN(num) ? `${rate} ${suffix}` : `$${num.toLocaleString()}${suffix}`;
 }
 
-// ── Broadcast vacancy to training providers ───────────────────────────────────
+// ── Broadcast single vacancy to training providers ───────────────────────────
 export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl, customSubject, customMessage, customBody }) {
-  const baseUrl = appUrl || process.env.APP_URL || "https://comfortable-mindfulness-production.up.railway.app";
+  const baseUrl = appUrl || process.env.APP_URL || "https://crm.workvision.com.au";
 
   const payStr = formatBroadcastPayRate(job.pay_rate, job.pay_rate_type);
-
-  const location  = job.work_location || job.city
+  const location = job.work_location || job.city
     ? [job.work_location || job.city, job.state].filter(Boolean).join(", ")
     : null;
+  const complianceList = getComplianceList(job);
 
-  const compliance = [
-    complianceBadge("Police Check",        job.police_check),
-    complianceBadge("WWC",                 job.wwc),
-    complianceBadge("Drug & Alcohol Test", job.drug_alcohol_test),
-    complianceBadge("Car Required",        job.car_required),
-    complianceBadge("Wage Subsidy",        job.wage_subsidy_required),
-  ].filter(Boolean).join("");
+  const defaultSubject = `New Vacancy Alert: ${job.title}${location ? ` (${location})` : ""} — WorkVision Australia`;
+  const subject = (customSubject && customSubject.trim()) ? customSubject.trim() : defaultSubject;
 
-  const referralUrl = `${baseUrl}/jobs/${job.id}`;
-  const defaultSubject = `New Vacancy Alert: ${job.title}${location ? ` — ${location}` : ""}`;
-  const subject     = (customSubject && customSubject.trim()) ? customSubject.trim() : defaultSubject;
-
-  // Build a send task for each provider and fire them ALL in parallel
   const sendTasks = providers
     .filter((p) => p.email)
     .map(async (provider) => {
@@ -164,67 +156,109 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 0;">
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:36px 0;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);border:1px solid #e2e8f0;">
+        
+        <!-- Clean White Header with Official Crisp Retina Logo -->
         <tr>
-          <td style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#e88e2e 100%);padding:28px 32px;">
-            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">Work<span style="color:#e88e2e;">Vision</span></p>
-            <p style="margin:6px 0 0;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;">New Vacancy Alert</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:28px 32px 0;">
-            <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">📋 Vacancy</p>
-            <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0f172a;line-height:1.25;">${job.title}</h1>
-            <table cellpadding="0" cellspacing="0">
-              ${job.employer_name ? `<tr><td style="padding:3px 0;font-size:13px;color:#475569;">🏢 &nbsp;<strong>${job.employer_name}</strong></td></tr>` : ""}
-              ${location          ? `<tr><td style="padding:3px 0;font-size:13px;color:#475569;">📍 &nbsp;${location}</td></tr>` : ""}
-              ${job.industry      ? `<tr><td style="padding:3px 0;font-size:13px;color:#475569;">🏷️ &nbsp;${job.industry}</td></tr>` : ""}
-              ${payStr            ? `<tr><td style="padding:3px 0;font-size:18px;font-weight:800;color:#e88e2e;">${payStr}</td></tr>` : ""}
-            </table>
-          </td>
-        </tr>
-        ${compliance ? `
-        <tr>
-          <td style="padding:20px 32px 0;">
-            <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">✅ Requirements</p>
-            <div>${compliance}</div>
-          </td>
-        </tr>` : ""}
-        ${customMessage && customMessage.trim() ? `
-        <tr>
-          <td style="padding:20px 32px 0;">
-            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:6px;padding:12px 16px;">
-              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#b45309;">💬 Note from Recruiter</p>
-              <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;white-space:pre-wrap;">${customMessage.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>
-            </div>
-          </td>
-        </tr>` : ""}
-        ${(customBody !== undefined ? customBody : job.description) ? `
-        <tr>
-          <td style="padding:20px 32px 0;">
-            <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;">📝 About the Role</p>
-            <p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">${(customBody !== undefined ? customBody : (job.description || "")).replace(/\n/g, "<br>")}</p>
-          </td>
-        </tr>` : ""}
-        <tr>
-          <td style="padding:28px 32px 32px;">
-            <table cellpadding="0" cellspacing="0" width="100%">
+          <td style="background:#ffffff;padding:24px 32px;border-bottom:2px solid #f1f5f9;">
+            <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;">
-                  <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0f172a;">Do you have a suitable candidate?</p>
-                  <p style="margin:0 0 16px;font-size:13px;color:#64748b;">Dear ${provider.contact_name || provider.name}, please refer any job-ready candidates directly from the WorkVision portal.</p>
-                  <a href="${referralUrl}" style="display:inline-block;background:#e88e2e;color:#ffffff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;">Refer a Candidate for this Role →</a>
+                <td valign="middle">
+                  <img src="https://crm.workvision.com.au/WV-Logo-v2@2x.png" alt="WorkVision Australia" width="180" style="display:block;max-width:180px;height:auto;border:0;" />
+                </td>
+                <td align="right" valign="middle">
+                  <span style="display:inline-block;background:#f8fafc;color:#0f172a;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border-radius:20px;border:1px solid #e2e8f0;">
+                    Vacancy Alert
+                  </span>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
+        
+        <!-- Recipient Greeting -->
         <tr>
-          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;">
-            <p style="margin:0;font-size:11px;color:#94a3b8;">Sent by <strong>${sentByName}</strong> via WorkVision ATS &bull; This is an automated vacancy broadcast.</p>
+          <td style="padding:28px 32px 14px;">
+            <p style="margin:0 0 10px;font-size:15px;font-weight:600;color:#0f172a;">
+              Dear ${provider.contact_name || provider.name || "Partner"},
+            </p>
+            <p style="margin:0;font-size:14px;color:#475569;line-height:1.6;">
+              We are pleased to share a new open vacancy currently available across our employer network. Please review the role details below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Recruiter Note (if provided) -->
+        ${customMessage && customMessage.trim() ? `
+        <tr>
+          <td style="padding:0 32px 16px;">
+            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#92400e;">Note from Recruiter</p>
+              <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;white-space:pre-wrap;">${customMessage.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>
+            </div>
+          </td>
+        </tr>` : ""}
+
+        <!-- Role Overview Card -->
+        <tr>
+          <td style="padding:10px 32px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:22px 24px;">
+              <tr>
+                <td>
+                  <h2 style="margin:0 0 14px;font-size:20px;font-weight:700;color:#0f172a;">${job.title}</h2>
+                  
+                  <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.9;color:#334155;">
+                    ${job.employer_name ? `<tr><td width="140" style="color:#64748b;font-weight:600;padding:3px 0;">Employer / Client:</td><td style="font-weight:700;color:#0f172a;padding:3px 0;">${job.employer_name}</td></tr>` : ""}
+                    ${location ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Location:</td><td style="color:#0f172a;padding:3px 0;">${location}</td></tr>` : ""}
+                    ${job.industry ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Industry:</td><td style="color:#0f172a;padding:3px 0;">${job.industry}</td></tr>` : ""}
+                    ${job.vacancy_type ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Work Type:</td><td style="color:#0f172a;padding:3px 0;">${job.vacancy_type.replace(/_/g, " ").toUpperCase()}</td></tr>` : ""}
+                    ${job.positions_count ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Positions Available:</td><td style="color:#0f172a;padding:3px 0;">${job.positions_count}</td></tr>` : ""}
+                    ${payStr ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Pay Rate:</td><td style="color:#c2410c;font-weight:700;font-size:14px;padding:3px 0;">${payStr}</td></tr>` : ""}
+                  </table>
+
+                  ${complianceList.length > 0 ? `
+                  <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                    <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;">Candidate Requirements:</p>
+                    <div>
+                      ${complianceList.map((item) => `<span style="display:inline-block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;margin:2px 6px 4px 0;">${item}</span>`).join("")}
+                    </div>
+                  </div>` : ""}
+
+                  ${(customBody !== undefined ? customBody : job.description) ? `
+                  <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                    <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;">Role Description & Responsibilities:</p>
+                    <p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">${(customBody !== undefined ? customBody : (job.description || "")).replace(/\n/g, "<br>")}</p>
+                  </div>` : ""}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- How to Refer Candidates Note -->
+        <tr>
+          <td style="padding:0 32px 28px;">
+            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;">How to Refer Candidates</p>
+              <p style="margin:0;font-size:13px;color:#78350f;line-height:1.5;">
+                To submit candidate profiles for this vacancy, please reply directly to this email with candidate resume(s) and details, or contact our recruitment team.
+              </p>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:18px 32px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:12px;color:#64748b;">
+              Sent by <strong>${sentByName}</strong> via <strong>WorkVision Australia ATS</strong> &bull; Vacancy Broadcast
+            </p>
+            <p style="margin:0;font-size:11px;color:#94a3b8;">
+              WorkVision Australia &bull; connect@workvision.com.au &bull; crm.workvision.com.au
+            </p>
           </td>
         </tr>
       </table>
@@ -234,7 +268,7 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
 </html>`;
 
       const effectiveDesc = (customBody !== undefined ? customBody : (job.description || "")).trim();
-      const text = `${subject}\n\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${job.industry ? `Industry: ${job.industry}\n` : ""}${customMessage && customMessage.trim() ? `\nNote from Recruiter:\n${customMessage.trim()}\n` : ""}${effectiveDesc ? `\nAbout the Role:\n${effectiveDesc}\n` : ""}\nRefer a candidate here:\n${referralUrl}\n\nSent by ${sentByName} via WorkVision ATS`;
+      const text = `${subject}\n\nDear ${provider.contact_name || provider.name || "Partner"},\n\nWe have a new open vacancy:\nRole: ${job.title}\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${complianceList.length ? `Requirements:\n${complianceList.map((c) => `- ${c}`).join("\n")}\n` : ""}${effectiveDesc ? `\nAbout the Role:\n${effectiveDesc}\n` : ""}\nTo submit candidates, reply directly to this email.\n\nSent by ${sentByName} via WorkVision Australia ATS`;
 
       try {
         await sendEmail({ to: provider.email, subject, html, text });
@@ -244,50 +278,56 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
       }
     });
 
-  // Run all sends in parallel
   const settled = await Promise.allSettled(sendTasks);
   return settled.map((r) => r.status === "fulfilled" ? r.value : { status: "failed", error: r.reason?.message });
 }
 
 // ── Multi-Vacancy Broadcast to training providers ─────────────────────────────
 export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, appUrl, customSubject, customMessage, customIntro }) {
-  const baseUrl = appUrl || process.env.APP_URL || "https://comfortable-mindfulness-production.up.railway.app";
-  const defaultSubject = `Multiple New Vacancies Alert (${jobs.length} Roles Available) — WorkVision`;
+  const isSingle = jobs.length === 1;
+  const defaultSubject = isSingle
+    ? `New Vacancy Alert: ${jobs[0].title} — WorkVision Australia`
+    : `Multiple New Vacancies Alert (${jobs.length} Roles Available) — WorkVision Australia`;
   const subject = (customSubject && customSubject.trim()) ? customSubject.trim() : defaultSubject;
 
-  // Render HTML card for each vacancy in the digest
+  // Render cards for each vacancy
   const jobsHtml = jobs.map((job, idx) => {
     const payStr = formatBroadcastPayRate(job.pay_rate, job.pay_rate_type);
     const location = job.work_location || job.city
       ? [job.work_location || job.city, job.state].filter(Boolean).join(", ")
       : null;
-    const compliance = [
-      complianceBadge("Police Check",        job.police_check),
-      complianceBadge("WWC",                 job.wwc),
-      complianceBadge("Drug & Alcohol Test", job.drug_alcohol_test),
-      complianceBadge("Car Required",        job.car_required),
-      complianceBadge("Wage Subsidy",        job.wage_subsidy_required),
-    ].filter(Boolean).join("");
-    const referralUrl = `${baseUrl}/jobs/${job.id}`;
+    const complianceList = getComplianceList(job);
 
     return `
       <tr>
-        <td style="padding:16px 0;border-bottom:${idx === jobs.length - 1 ? "none" : "1px solid #e2e8f0"};">
-          <table width="100%" cellpadding="0" cellspacing="0">
+        <td style="padding:0 32px ${idx === jobs.length - 1 ? "20px" : "14px"};">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:20px 24px;">
             <tr>
               <td>
-                <span style="display:inline-block;background:#0f172a;color:#ffffff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;margin-bottom:6px;">Role ${idx + 1}</span>
-                <h3 style="margin:4px 0 6px;font-size:18px;font-weight:700;color:#0f172a;">${job.title}</h3>
-                <div style="font-size:13px;color:#475569;margin-bottom:8px;line-height:1.5;">
-                  ${job.employer_name ? `🏢 <strong>${job.employer_name}</strong> &nbsp;&bull;&nbsp; ` : ""}
-                  ${location ? `📍 ${location} &nbsp;&bull;&nbsp; ` : ""}
-                  ${payStr ? `<strong style="color:#e88e2e;">💰 ${payStr}</strong>` : ""}
-                </div>
-                ${compliance ? `<div style="margin-bottom:8px;">${compliance}</div>` : ""}
-                ${job.description ? `<p style="margin:4px 0 10px;font-size:12px;color:#64748b;line-height:1.5;">${job.description.slice(0, 200).replace(/\n/g, " ")}${job.description.length > 200 ? "..." : ""}</p>` : ""}
-                <a href="${referralUrl}" style="display:inline-block;background:#e88e2e;color:#ffffff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;">
-                  View & Refer Candidates &rarr;
-                </a>
+                <span style="display:inline-block;background:#0f172a;color:#ffffff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;margin-bottom:6px;">Role ${idx + 1} of ${jobs.length}</span>
+                <h3 style="margin:4px 0 12px;font-size:19px;font-weight:700;color:#0f172a;">${job.title}</h3>
+                
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.9;color:#334155;">
+                  ${job.employer_name ? `<tr><td width="140" style="color:#64748b;font-weight:600;padding:3px 0;">Employer / Client:</td><td style="font-weight:700;color:#0f172a;padding:3px 0;">${job.employer_name}</td></tr>` : ""}
+                  ${location ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Location:</td><td style="color:#0f172a;padding:3px 0;">${location}</td></tr>` : ""}
+                  ${job.industry ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Industry:</td><td style="color:#0f172a;padding:3px 0;">${job.industry}</td></tr>` : ""}
+                  ${job.vacancy_type ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Work Type:</td><td style="color:#0f172a;padding:3px 0;">${job.vacancy_type.replace(/_/g, " ").toUpperCase()}</td></tr>` : ""}
+                  ${job.positions_count ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Positions Available:</td><td style="color:#0f172a;padding:3px 0;">${job.positions_count}</td></tr>` : ""}
+                  ${payStr ? `<tr><td style="color:#64748b;font-weight:600;padding:3px 0;">Pay Rate:</td><td style="color:#c2410c;font-weight:700;font-size:14px;padding:3px 0;">${payStr}</td></tr>` : ""}
+                </table>
+
+                ${complianceList.length > 0 ? `
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
+                  <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;">Candidate Requirements:</p>
+                  <div>
+                    ${complianceList.map((item) => `<span style="display:inline-block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;margin:2px 6px 4px 0;">${item}</span>`).join("")}
+                  </div>
+                </div>` : ""}
+
+                ${job.description ? `
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
+                  <p style="margin:0;font-size:12px;color:#64748b;line-height:1.6;">${job.description.slice(0, 240).replace(/\n/g, " ")}${job.description.length > 240 ? "..." : ""}</p>
+                </div>` : ""}
               </td>
             </tr>
           </table>
@@ -299,47 +339,92 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
   const sendTasks = providers
     .filter((p) => p.email)
     .map(async (provider) => {
+      const defaultIntro = isSingle
+        ? "We are pleased to share 1 new open vacancy currently available across our employer network. Please review the role details below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us."
+        : `We are pleased to share ${jobs.length} new open vacancies currently available across our employer network. Please review the roles below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us.`;
+
+      const introText = customIntro && customIntro.trim() ? customIntro.trim() : defaultIntro;
+
       const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 0;">
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:36px 0;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);border:1px solid #e2e8f0;">
+        
+        <!-- Clean White Header with Official Crisp Retina Logo -->
         <tr>
-          <td style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#e88e2e 100%);padding:28px 32px;">
-            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">Work<span style="color:#e88e2e;">Vision</span></p>
-            <p style="margin:6px 0 0;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;">Multiple Vacancies Broadcast &bull; ${jobs.length} Active Roles</p>
+          <td style="background:#ffffff;padding:24px 32px;border-bottom:2px solid #f1f5f9;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td valign="middle">
+                  <img src="https://crm.workvision.com.au/WV-Logo-v2@2x.png" alt="WorkVision Australia" width="180" style="display:block;max-width:180px;height:auto;border:0;" />
+                </td>
+                <td align="right" valign="middle">
+                  <span style="display:inline-block;background:#f8fafc;color:#0f172a;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border-radius:20px;border:1px solid #e2e8f0;">
+                    ${isSingle ? "Vacancy Alert" : `Multiple Vacancies (${jobs.length} Roles)`}
+                  </span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
+        
+        <!-- Recipient Greeting & Intro -->
         <tr>
-          <td style="padding:24px 32px 12px;">
-            <p style="margin:0 0 10px;font-size:14px;color:#334155;line-height:1.6;">
-              Dear ${provider.contact_name || provider.name},<br/>
-              ${customIntro && customIntro.trim() ? customIntro.trim() : "Please see our latest open vacancies below. We welcome referrals for any job-ready candidates."}
+          <td style="padding:28px 32px 14px;">
+            <p style="margin:0 0 10px;font-size:15px;font-weight:600;color:#0f172a;">
+              Dear ${provider.contact_name || provider.name || "Partner"},
+            </p>
+            <p style="margin:0;font-size:14px;color:#475569;line-height:1.6;">
+              ${introText}
             </p>
           </td>
         </tr>
+
+        <!-- Recruiter Custom Note (if provided) -->
         ${customMessage && customMessage.trim() ? `
         <tr>
           <td style="padding:0 32px 16px;">
-            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:6px;padding:12px 16px;">
-              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#b45309;">💬 Note from Recruiter</p>
+            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#92400e;">Note from Recruiter</p>
               <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;white-space:pre-wrap;">${customMessage.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>
             </div>
           </td>
         </tr>` : ""}
+
+        <!-- List of Vacancies Cards -->
         <tr>
-          <td style="padding:0 32px 24px;">
+          <td>
             <table width="100%" cellpadding="0" cellspacing="0">
               ${jobsHtml}
             </table>
           </td>
         </tr>
+
+        <!-- How to Refer Candidates Note -->
         <tr>
-          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;">
-            <p style="margin:0;font-size:11px;color:#94a3b8;">Sent by <strong>${sentByName}</strong> via WorkVision ATS &bull; This is an automated multiple vacancy broadcast.</p>
+          <td style="padding:0 32px 28px;">
+            <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;">How to Refer Candidates</p>
+              <p style="margin:0;font-size:13px;color:#78350f;line-height:1.5;">
+                To submit candidate profiles for any of the roles above, please reply directly to this email with candidate resume(s) and role reference, or contact our recruitment team.
+              </p>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:18px 32px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:12px;color:#64748b;">
+              Sent by <strong>${sentByName}</strong> via <strong>WorkVision Australia ATS</strong> &bull; Vacancy Broadcast
+            </p>
+            <p style="margin:0;font-size:11px;color:#94a3b8;">
+              WorkVision Australia &bull; connect@workvision.com.au &bull; crm.workvision.com.au
+            </p>
           </td>
         </tr>
       </table>
@@ -348,7 +433,7 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
 </body>
 </html>`;
 
-      const text = `${subject}\n\nDear ${provider.contact_name || provider.name},\n${customIntro || "We have multiple open vacancies:"}\n\n${jobs.map((j, i) => `${i + 1}. ${j.title} (${j.work_location || j.city || "Location TBA"}) - ${baseUrl}/jobs/${j.id}`).join("\n")}\n\nSent by ${sentByName} via WorkVision ATS`;
+      const text = `${subject}\n\nDear ${provider.contact_name || provider.name || "Partner"},\n\n${introText}\n\n${jobs.map((j, i) => `${i + 1}. ${j.title} (${j.work_location || j.city || "Location TBA"}) - Pay: ${formatBroadcastPayRate(j.pay_rate, j.pay_rate_type) || "TBA"}`).join("\n")}\n\nTo submit candidate profiles, reply directly to this email.\n\nSent by ${sentByName} via WorkVision Australia ATS`;
 
       try {
         await sendEmail({ to: provider.email, subject, html, text });
