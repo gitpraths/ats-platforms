@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Send, X, Users, CheckSquare, Square,
-  Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, RotateCcw, Search, Briefcase
+  Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, RotateCcw, Search, Briefcase, Mail, Plus
 } from "lucide-react";
 import { api, ApiError } from "../lib/api";
 import type { Job } from "../types";
@@ -107,23 +107,52 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
     });
   }, []);
 
+  // Custom individual email recipients
+  const [additionalEmails, setAdditionalEmails] = useState<string[]>([]);
+  const [customEmailInput, setCustomEmailInput] = useState("");
+  const [customEmailError, setCustomEmailError] = useState<string | null>(null);
+
+  const addCustomEmail = () => {
+    const trimmed = customEmailInput.trim().toLowerCase();
+    setCustomEmailError(null);
+    if (!trimmed) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      setCustomEmailError("Please enter a valid email address.");
+      return;
+    }
+    if (additionalEmails.includes(trimmed)) {
+      setCustomEmailError("This email has already been added.");
+      return;
+    }
+    setAdditionalEmails((prev) => [...prev, trimmed]);
+    setCustomEmailInput("");
+  };
+
+  const removeCustomEmail = (emailToRemove: string) => {
+    setAdditionalEmails((prev) => prev.filter((e) => e !== emailToRemove));
+  };
+
+  const totalRecipients = selectedProviderIds.size + additionalEmails.length;
+
   const handleSend = async () => {
     setErrorMsg(null);
     const pIds = Array.from(selectedProviderIds);
-    if (pIds.length === 0) return;
+    if (pIds.length === 0 && additionalEmails.length === 0) return;
 
     try {
       await api.post<{ sent: number; jobs_count: number; queued?: boolean; message?: string }>(
         "/jobs/broadcast-multi",
         {
-          job_ids:        jobs.map((j) => j.id),
-          provider_ids:   pIds,
-          custom_subject: customSubject.trim(),
-          custom_intro:   customIntro.trim(),
-          custom_message: customNote.trim(),
+          job_ids:           jobs.map((j) => j.id),
+          provider_ids:      pIds,
+          additional_emails: additionalEmails,
+          custom_subject:    customSubject.trim(),
+          custom_intro:      customIntro.trim(),
+          custom_message:    customNote.trim(),
         }
       );
-      setSent({ count: pIds.length });
+      setSent({ count: pIds.length + additionalEmails.length });
       onSuccess?.();
     } catch (err) {
       const msg = err instanceof ApiError
@@ -136,8 +165,8 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
   };
 
   const handleClick = async () => {
-    if (selectedProviderIds.size === 0) {
-      setErrorMsg("Please select at least one provider from the list before sending the broadcast.");
+    if (selectedProviderIds.size === 0 && additionalEmails.length === 0) {
+      setErrorMsg("Please select at least one provider or add an individual email address before sending.");
       setActiveTab("select");
       return;
     }
@@ -240,7 +269,7 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
                     : "border-transparent text-slate-400 hover:text-slate-700"
                 }`}
               >
-                <Users size={14} /> 2. Select Providers ({selectedProviderIds.size})
+                <Users size={14} /> 2. Select Recipients ({totalRecipients})
               </button>
             </div>
 
@@ -365,18 +394,77 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
                 ) : (
                   <>
                     {/* Zero-selected reminder */}
-                    {selectedProviderIds.size === 0 && (
+                    {totalRecipients === 0 && (
                       <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center justify-between">
-                        <span>Please select at least one provider from the list or click <strong>Select All</strong>.</span>
+                        <span>Please select at least one provider from the list or add an individual email address below.</span>
                         <button
                           type="button"
                           onClick={toggleAll}
                           className="ml-2 font-bold text-amber-900 underline hover:no-underline"
                         >
-                          Select All
+                          Select All Providers
                         </button>
                       </div>
                     )}
+
+                    {/* Send to Individual / Test Email */}
+                    <div className="mb-3.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                          <Mail size={13} className="text-[#e88e2e]" /> Send to Individual / Test Email
+                        </label>
+                        <span className="text-[10px] text-slate-400">e.g. dhaval@workvision.com.au</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={customEmailInput}
+                          onChange={(e) => {
+                            setCustomEmailInput(e.target.value);
+                            if (customEmailError) setCustomEmailError(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addCustomEmail();
+                            }
+                          }}
+                          placeholder="Enter email address and press Add..."
+                          className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={addCustomEmail}
+                          className="px-3.5 py-1.5 text-xs font-semibold bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition flex items-center gap-1 shadow-sm"
+                        >
+                          <Plus size={13} /> Add Email
+                        </button>
+                      </div>
+                      {customEmailError && (
+                        <p className="text-[11px] text-red-600 font-medium">{customEmailError}</p>
+                      )}
+                      {additionalEmails.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {additionalEmails.map((email) => (
+                            <span
+                              key={email}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-xs font-medium"
+                            >
+                              <Mail size={11} className="text-amber-600" />
+                              {email}
+                              <button
+                                type="button"
+                                onClick={() => removeCustomEmail(email)}
+                                className="text-amber-600 hover:text-red-600 p-0.5 rounded-full hover:bg-amber-100 transition"
+                                title="Remove email"
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Search Input for Providers */}
                     <div className="relative mb-3">
@@ -474,14 +562,17 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-white">
               <div className="text-xs text-slate-500">
-                <span className="font-bold text-slate-800">{selectedProviderIds.size}</span> of {providers.length} providers selected
+                <span className="font-bold text-slate-800">{totalRecipients}</span> recipient{totalRecipients !== 1 ? "s" : ""} selected
+                {additionalEmails.length > 0 && (
+                  <span className="text-slate-400 ml-1">({selectedProviderIds.size} providers + {additionalEmails.length} custom)</span>
+                )}
                 {activeTab === "customize" && (
                   <button
                     type="button"
                     onClick={() => setActiveTab("select")}
                     className="ml-2 text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
                   >
-                    Select recipients ({selectedProviderIds.size}) &rarr;
+                    Select recipients ({totalRecipients}) &rarr;
                   </button>
                 )}
                 {activeTab === "select" && (
@@ -508,17 +599,17 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
                   disabled={loading}
                   onClick={handleClick}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors min-w-[180px] justify-center ${
-                    selectedProviderIds.size === 0
+                    totalRecipients === 0
                       ? "bg-amber-600 hover:bg-amber-700 text-white"
                       : "bg-[#0f172a] hover:bg-slate-700 text-white"
                   }`}
                 >
                   {loading ? (
                     <><Loader2 size={14} className="animate-spin" /> Broadcasting...</>
-                  ) : selectedProviderIds.size === 0 ? (
-                    <><Send size={14} /> Select Providers to Broadcast</>
+                  ) : totalRecipients === 0 ? (
+                    <><Send size={14} /> Select Recipients to Broadcast</>
                   ) : (
-                    <><Send size={14} /> Broadcast {jobs.length} Roles to {selectedProviderIds.size} Provider{selectedProviderIds.size !== 1 ? "s" : ""}</>
+                    <><Send size={14} /> Broadcast {jobs.length} Roles to {totalRecipients} Recipient{totalRecipients !== 1 ? "s" : ""}</>
                   )}
                 </button>
               </div>

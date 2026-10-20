@@ -481,16 +481,13 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
 });
 
 // ── POST /api/jobs/broadcast-multi ────────────────────────────────────────────
-// Broadcasts multiple selected vacancies to training providers via one consolidated email digest.
-// Body: { job_ids: string[], provider_ids: string[], custom_subject?: string, custom_message?: string, custom_intro?: string }
+// Broadcasts multiple selected vacancies to training providers and custom emails via one consolidated email digest.
+// Body: { job_ids: string[], provider_ids?: string[], custom_subject?: string, custom_message?: string, custom_intro?: string, additional_emails?: string[] }
 jobsRouter.post("/broadcast-multi", async (req, res, next) => {
   try {
-    const { job_ids, provider_ids, custom_subject, custom_message, custom_intro } = req.body;
+    const { job_ids, provider_ids = [], custom_subject, custom_message, custom_intro, additional_emails = [] } = req.body;
     if (!Array.isArray(job_ids) || job_ids.length === 0) {
       return res.status(400).json({ success: false, error: "job_ids must be a non-empty array" });
-    }
-    if (!Array.isArray(provider_ids) || provider_ids.length === 0) {
-      return res.status(400).json({ success: false, error: "provider_ids must be a non-empty array" });
     }
 
     // Fetch full details for all selected jobs
@@ -510,18 +507,38 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
       return res.status(404).json({ success: false, error: "None of the selected vacancies were found" });
     }
 
-    // Fetch selected active providers (only those with an email address)
-    const { rows: providers } = await pool.query(
-      `SELECT id, name, contact_name, email
-       FROM providers
-       WHERE id = ANY($1::uuid[])
-         AND is_active = true
-         AND email IS NOT NULL`,
-      [provider_ids]
-    );
+    const recipients = [];
 
-    if (providers.length === 0) {
-      return res.status(400).json({ success: false, error: "No active providers with email addresses found in the selection" });
+    // Fetch selected active providers (only those with an email address)
+    if (Array.isArray(provider_ids) && provider_ids.length > 0) {
+      const { rows: providers } = await pool.query(
+        `SELECT id, name, contact_name, email
+         FROM providers
+         WHERE id = ANY($1::uuid[])
+           AND is_active = true
+           AND email IS NOT NULL`,
+        [provider_ids]
+      );
+      recipients.push(...providers);
+    }
+
+    // Include additional custom / test emails
+    if (Array.isArray(additional_emails)) {
+      for (const email of additional_emails) {
+        const cleaned = String(email).trim();
+        if (cleaned && cleaned.includes("@") && !recipients.some(r => r.email.toLowerCase() === cleaned.toLowerCase())) {
+          recipients.push({
+            id: `custom-${recipients.length}`,
+            name: cleaned,
+            contact_name: cleaned,
+            email: cleaned,
+          });
+        }
+      }
+    }
+
+    if (recipients.length === 0) {
+      return res.status(400).json({ success: false, error: "No recipients found. Please select providers or enter a recipient email." });
     }
 
     const sentByName = req.user.name || req.user.email;
@@ -531,17 +548,17 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        sent:          providers.length,
+        sent:          recipients.length,
         jobs_count:    jobs.length,
         queued:        true,
-        message:       `Consolidated broadcast with ${jobs.length} vacancies queued for ${providers.length} provider${providers.length !== 1 ? "s" : ""}.`,
+        message:       `Consolidated broadcast with ${jobs.length} vacancies queued for ${recipients.length} recipient${recipients.length !== 1 ? "s" : ""}.`,
       },
     });
 
     // Fire and forget emails
     sendMultiVacancyBroadcast({
       jobs,
-      providers,
+      providers:     recipients,
       sentByName,
       appUrl:        process.env.APP_URL,
       customSubject: custom_subject,
