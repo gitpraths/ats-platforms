@@ -266,14 +266,14 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
               <CheckCircle2 size={40} className="text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 mb-2">Broadcast Sent! ✅</p>
+              <p className="text-2xl font-bold text-slate-900 mb-2">Broadcast Sent</p>
               <p className="text-base text-slate-600">
                 Emails have been queued for{" "}
                 <span className="font-bold text-[#0f172a]">{sent.count}</span>{" "}
-                provider{sent.count !== 1 ? "s" : ""}.
+                recipient{sent.count !== 1 ? "s" : ""}.
               </p>
               <p className="text-sm text-slate-400 mt-1">
-                Providers will receive your customized draft alert in their inbox shortly.
+                Recipients will receive your customized draft alert in their inbox shortly.
               </p>
             </div>
             <button
@@ -302,7 +302,7 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
             {/* ── Load error ── */}
             {loadError && (
               <div className="mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                ⚠️ Could not load providers. Check your connection and try again.
+                Could not load providers. Check your connection and try again.
               </div>
             )}
 
@@ -411,14 +411,14 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                     </p>
                     {customNote.trim() && (
                       <div className="bg-amber-50 border-l-4 border-amber-400 p-2.5 rounded text-amber-900 text-xs">
-                        <strong className="block text-[11px] uppercase tracking-wider text-amber-800">💬 Note from Recruiter:</strong>
+                        <strong className="block text-[11px] uppercase tracking-wider text-amber-800">Note from Recruiter:</strong>
                         <span className="whitespace-pre-wrap">{customNote.trim()}</span>
                       </div>
                     )}
                     <div className="text-[11px] text-slate-500 flex flex-wrap gap-2 pt-1 border-t border-slate-100">
-                      {job?.employer_name && <span>🏢 {job.employer_name}</span>}
-                      {job?.work_location && <span>📍 {job.work_location}</span>}
-                      {payRateStr && <span className="text-orange-600 font-bold">💰 {payRateStr}</span>}
+                      {job?.employer_name && <span>Client: {job.employer_name}</span>}
+                      {job?.work_location && <span>Location: {job.work_location}</span>}
+                      {payRateStr && <span className="text-orange-600 font-bold">Pay: {payRateStr}</span>}
                     </div>
                   </div>
                 </div>

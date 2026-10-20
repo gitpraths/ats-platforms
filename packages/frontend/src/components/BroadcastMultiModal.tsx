@@ -207,7 +207,7 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
               <CheckCircle2 size={40} className="text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 mb-2">Digest Broadcast Sent! ✅</p>
+              <p className="text-2xl font-bold text-slate-900 mb-2">Digest Broadcast Sent</p>
               <p className="text-base text-slate-600">
                 A single consolidated email with <strong className="text-slate-900">{jobs.length} vacancies</strong> has been sent to{" "}
                 <span className="font-bold text-[#0f172a]">{sent.count}</span>{" "}
@@ -243,7 +243,7 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
             {/* ── Load error ── */}
             {loadError && (
               <div className="mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                ⚠️ Could not load providers. Check your connection and try again.
+                Could not load providers. Check your connection and try again.
               </div>
             )}
 
@@ -366,7 +366,7 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
                     </p>
                     {customNote.trim() && (
                       <div className="bg-amber-50 border-l-4 border-amber-400 p-2.5 rounded text-amber-900 text-xs">
-                        <strong className="block text-[11px] uppercase tracking-wider text-amber-800">💬 Note from Recruiter:</strong>
+                        <strong className="block text-[11px] uppercase tracking-wider text-amber-800">Note from Recruiter:</strong>
                         <span className="whitespace-pre-wrap">{customNote.trim()}</span>
                       </div>
                     )}
