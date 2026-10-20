@@ -168,7 +168,7 @@ export default function Dashboard() {
 
   const vicJobs             = stats?.jobs.vic_jobs                 ?? 0;
   const nswJobs             = stats?.jobs.nsw_jobs                 ?? 0;
-  const etsThisMonth        = stats?.applications.ets_this_month   ?? 0;
+  const etsThisMonth        = stats?.applications.by_stage?.ets ?? stats?.applications.ets_count ?? stats?.applications.ets_this_month ?? 0;
   const totalCandidates     = stats?.candidates.total            ?? 0;
   const totalPlacements     = stats?.placements?.total           ?? 0;
   const confirmedPlacements = stats?.placements?.confirmed       ?? 0;

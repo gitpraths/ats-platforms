@@ -15,6 +15,7 @@ export interface DashboardStats {
     active: number;
     hired_this_month: number;
     ets_this_month?: number;
+    ets_count?: number;
     by_stage: {
       applied: number;
       screening: number;
