@@ -411,7 +411,7 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
                     <div className="mb-3.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                          <Mail size={13} className="text-[#e88e2e]" /> Send to Individual / Test Email
+                          <Mail size={13} className="text-[#e88e2e]" /> Send to Individual Email
                         </label>
                         <span className="text-[10px] text-slate-400">e.g. dhaval@workvision.com.au</span>
                       </div>
