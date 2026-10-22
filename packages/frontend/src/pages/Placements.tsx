@@ -123,6 +123,7 @@ export default function Placements() {
   const placementPages  = Math.max(1, Math.ceil(placementTotal / PER_PAGE));
 
   type PlacementSortField =
+    | "candidate_sr_no"
     | "candidate_name"
     | "job_title"
     | "employer_name"
@@ -273,7 +274,19 @@ export default function Placements() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b select-none">
             <tr>
-              <th className="text-center px-3 py-3 text-xs font-semibold text-slate-400 uppercase w-12">#</th>
+              <th
+                onClick={() => handleSort("candidate_sr_no")}
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>SR #</span>
+                  {sortField === "candidate_sr_no" ? (
+                    sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
+                  ) : (
+                    <ArrowUpDown size={12} className="text-slate-400 opacity-60" />
+                  )}
+                </div>
+              </th>
               <th
                 onClick={() => handleSort("candidate_name")}
                 className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
@@ -363,28 +376,26 @@ export default function Placements() {
             ) : sortedPlacements.length === 0 ? (
               <tr><td colSpan={10} className="px-4 py-8 text-center text-slate-400">No placements found.</td></tr>
             ) : (
-              sortedPlacements.map((p, idx) => {
-                const rowNumber = (page - 1) * PER_PAGE + idx + 1;
+              sortedPlacements.map((p) => {
                 return (
                   <tr key={p.id} className="hover:bg-slate-50 transition">
-                    <td className="px-3 py-3 text-center font-mono text-xs text-slate-400">
-                      {rowNumber}
+                    <td className="px-4 py-3">
+                      {p.candidate_sr_no ? (
+                        <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">
+                          {p.candidate_sr_no}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {p.candidate_sr_no && (
-                            <span className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold text-slate-700">
-                              {p.candidate_sr_no}
-                            </span>
-                          )}
-                          <Link
-                            to={`/candidates/${p.candidate_id}`}
-                            className="font-semibold text-slate-900 hover:text-[#e88e2e] hover:underline"
-                          >
-                            {formatName(p.candidate_name)}
-                          </Link>
-                        </div>
+                        <Link
+                          to={`/candidates/${p.candidate_id}`}
+                          className="font-semibold text-slate-900 hover:text-[#e88e2e] hover:underline"
+                        >
+                          {formatName(p.candidate_name)}
+                        </Link>
                         {p.candidate_work_status && (
                           <span className="text-xs text-purple-600 block mt-0.5">{p.candidate_work_status.replace("_", " ")}</span>
                         )}

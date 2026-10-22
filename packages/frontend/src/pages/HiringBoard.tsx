@@ -308,13 +308,10 @@ function SortHeader({
   );
 }
 
-// ── List View ─────────────────────────────────────────────────────────────────
 function ListView({
   applications,
   onOpenStageDialog,
   onDelete,
-  page,
-  perPage,
   sortField,
   sortDir,
   onSort,
@@ -322,8 +319,6 @@ function ListView({
   applications: Application[];
   onOpenStageDialog: (app: Application) => void;
   onDelete: (id: string) => void;
-  page: number;
-  perPage: number;
   sortField: SortField;
   sortDir: "asc" | "desc";
   onSort: (field: SortField) => void;
@@ -333,8 +328,7 @@ function ListView({
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b text-left text-xs text-slate-500 uppercase tracking-wide">
-            <th className="py-3 px-3 font-semibold uppercase tracking-wide text-slate-400 w-12 text-center">#</th>
-            <SortHeader field="candidate_sr_no" label="Candidate ID" currentField={sortField} currentDir={sortDir} onSort={onSort} />
+            <SortHeader field="candidate_sr_no" label="SR #" currentField={sortField} currentDir={sortDir} onSort={onSort} className="pl-3" />
             <SortHeader field="candidate_name" label="Applicant" currentField={sortField} currentDir={sortDir} onSort={onSort} />
             <SortHeader field="job_title" label="Job Posting" currentField={sortField} currentDir={sortDir} onSort={onSort} />
             <SortHeader field="stage" label="Status" currentField={sortField} currentDir={sortDir} onSort={onSort} />
@@ -345,14 +339,10 @@ function ListView({
           </tr>
         </thead>
         <tbody>
-          {applications.map((app, idx) => {
-            const rowNumber = (page - 1) * perPage + idx + 1;
+          {applications.map((app) => {
             return (
               <tr key={app.id} className="border-b hover:bg-slate-50 transition">
-                <td className="py-3 px-3 text-center font-mono text-xs text-slate-400">
-                  {rowNumber}
-                </td>
-                <td className="py-3 pr-4">
+                <td className="py-3 pl-3 pr-4">
                   {app.candidate_sr_no ? (
                     <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">
                       {app.candidate_sr_no}
@@ -520,8 +510,6 @@ export default function HiringBoard() {
               applications={sortedApplications.slice((listPage - 1) * PER_PAGE, listPage * PER_PAGE)}
               onOpenStageDialog={setStageDialogApp}
               onDelete={(id) => deleteApp.mutate(id)}
-              page={listPage}
-              perPage={PER_PAGE}
               sortField={sortField}
               sortDir={sortDir}
               onSort={handleSort}
