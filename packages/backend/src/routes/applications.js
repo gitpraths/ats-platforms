@@ -58,6 +58,7 @@ applicationsRouter.get("/", async (req, res, next) => {
          j.job_number   AS job_number,
          j.status       AS job_status,
          c.name         AS candidate_name,
+         c.sr_no        AS candidate_sr_no,
          c.email        AS candidate_email,
          c.city         AS candidate_city,
          c.state        AS candidate_state,

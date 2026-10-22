@@ -100,6 +100,7 @@ export interface Placement {
   application_id: string;
   candidate_id: string;
   candidate_name?: string;
+  candidate_sr_no?: string;
   candidate_work_status?: CandidateWorkStatus;
   job_id: string;
   job_title?: string;
@@ -262,6 +263,7 @@ export interface Application {
   job_title?: string;
   candidate_id: string;
   candidate_name?: string;
+  candidate_sr_no?: string;
   candidate_email?: string;
   employer_name?: string;
   // Flattened job location fields returned by GET /applications

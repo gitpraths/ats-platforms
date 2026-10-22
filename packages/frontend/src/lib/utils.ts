@@ -24,18 +24,52 @@ export function stageLabel(s: string | null | undefined): string {
   return STAGE_LABELS[s] ?? s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ");
 }
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 /**
- * Format a date string or Date object as DD/MM/YYYY (Australian standard).
+ * Capitalizes the first letter of each word in a name (e.g., "kavil desai" -> "Kavil Desai").
+ */
+export function formatName(name: string | null | undefined): string {
+  if (!name) return "";
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/(?:^|\s|-|')\S/g, (match) => match.toUpperCase());
+}
+
+/**
+ * Format a date string or Date object as DD-MMM-YYYY (e.g. 26-Oct-2026).
  * Returns "—" for null / undefined / empty values.
  */
 export function fmtDate(value: string | Date | null | undefined): string {
   if (!value) return "—";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const matchIso = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+    if (matchIso) {
+      const year = matchIso[1];
+      const monthIdx = parseInt(matchIso[2], 10) - 1;
+      const day = matchIso[3];
+      if (monthIdx >= 0 && monthIdx < 12) {
+        return `${day}-${MONTH_NAMES[monthIdx]}-${year}`;
+      }
+    }
+    const matchAu = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(trimmed);
+    if (matchAu) {
+      const day = matchAu[1].padStart(2, "0");
+      const monthIdx = parseInt(matchAu[2], 10) - 1;
+      const year = matchAu[3];
+      if (monthIdx >= 0 && monthIdx < 12) {
+        return `${day}-${MONTH_NAMES[monthIdx]}-${year}`;
+      }
+    }
+  }
   const d = typeof value === "string" ? new Date(value) : value;
   if (isNaN(d.getTime())) return "—";
-  const day   = String(d.getUTCDate()).padStart(2, "0");
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const year  = d.getUTCFullYear();
-  return `${day}/${month}/${year}`;
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const monthIdx = d.getUTCMonth();
+  const year = d.getUTCFullYear();
+  return `${day}-${MONTH_NAMES[monthIdx]}-${year}`;
 }
 
 /**
