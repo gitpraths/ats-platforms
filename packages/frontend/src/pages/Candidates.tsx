@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD } from "../lib/utils";
+import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD, formatName } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock, User, Users, Briefcase } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -669,16 +669,22 @@ export default function Candidates() {
               <thead className="bg-slate-50 sticky top-0 z-20 shadow-sm border-b border-slate-200">
               {/* Row 1: Column labels */}
               <tr className="bg-slate-50">
-                {["SR #","Candidate","Email","Mobile","Provider","Industry","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
+                <th className="sticky left-0 top-0 z-30 bg-slate-50 text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap w-[90px] min-w-[90px] max-w-[90px]">
+                  SR #
+                </th>
+                <th className="sticky left-[90px] top-0 z-30 bg-slate-50 text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap min-w-[240px] border-r border-slate-200 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                  Candidate
+                </th>
+                {["Email","Mobile","Provider","Industry","Referral Date","Training Date","Interview Date","ETS Date","Placement Date","Comments",""].map((h) => (
                   <th key={h} className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
               {/* Row 2: Per-column search inputs */}
               <tr className="border-t border-slate-100 bg-slate-50">
                 {/* SR # — no search */}
-                <th className="px-3 pb-2 pt-1" />
+                <th className="sticky left-0 z-30 bg-slate-50 px-3 pb-2 pt-1 w-[90px] min-w-[90px] max-w-[90px]" />
                 {/* Candidate */}
-                <th className="px-3 pb-2 pt-1">
+                <th className="sticky left-[90px] z-30 bg-slate-50 px-3 pb-2 pt-1 min-w-[240px] border-r border-slate-200 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.06)]">
                   <ColInput value={colFilters.name}     onChange={(v) => setCol("name", v)}     placeholder="Name…" />
                 </th>
                 {/* Email */}
@@ -736,16 +742,32 @@ export default function Candidates() {
                           ? "bg-red-50/60 hover:bg-red-50"
                           : row.intention_to_work === "remove_from_main_list"
                           ? "bg-slate-50/80 hover:bg-slate-100 opacity-75"
-                          : "hover:bg-orange-50/40"
+                          : "bg-white hover:bg-orange-50/40"
                       }`}>
 
                       {/* SR # */}
-                      <td className="px-4 py-3 text-xs text-slate-400 font-mono whitespace-nowrap">
-                        {row.sr_no || "—"}
+                      <td className={`sticky left-0 z-10 w-[90px] min-w-[90px] max-w-[90px] px-3 py-3 text-xs text-slate-500 font-mono font-semibold whitespace-nowrap transition-colors ${
+                        row.intention_to_work === "not_suitable"
+                          ? "bg-red-50/90 group-hover:bg-red-100/90"
+                          : row.intention_to_work === "remove_from_main_list"
+                          ? "bg-slate-50/90 group-hover:bg-slate-100"
+                          : "bg-white group-hover:bg-orange-50/60"
+                      }`}>
+                        {row.sr_no ? (
+                          <span className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">
+                            {row.sr_no}
+                          </span>
+                        ) : "—"}
                       </td>
 
                       {/* Candidate name + pipeline dot + info icon */}
-                      <td className="px-4 py-3">
+                      <td className={`sticky left-[90px] z-10 min-w-[240px] px-3 py-3 border-r border-slate-200 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.06)] transition-colors ${
+                        row.intention_to_work === "not_suitable"
+                          ? "bg-red-50/90 group-hover:bg-red-100/90"
+                          : row.intention_to_work === "remove_from_main_list"
+                          ? "bg-slate-50/90 group-hover:bg-slate-100"
+                          : "bg-white group-hover:bg-orange-50/60"
+                      }`}>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                             {row.name.charAt(0).toUpperCase()}
@@ -754,7 +776,7 @@ export default function Candidates() {
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className={`font-medium whitespace-nowrap ${
                                 row.intention_to_work === "not_suitable" ? "text-red-700" : "text-slate-900"
-                              }`}>{row.name}</span>
+                              }`}>{formatName(row.name)}</span>
                               {row.intention_to_work === "not_suitable" && (
                                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">Not Suitable</span>
                               )}
