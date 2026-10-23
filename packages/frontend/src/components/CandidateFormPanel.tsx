@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, AlertCircle, Plus, X, Check, Upload, FileText, ExternalLink } from "lucide-react";
 import { api } from "../lib/api";
@@ -33,6 +33,7 @@ export interface CandidateFormData {
   comments:            string;
   work_status:         string;
   intention_to_work:   string;
+  staff_id?:           string;
 }
 
 export const EMPTY_FORM: CandidateFormData = {
@@ -42,6 +43,7 @@ export const EMPTY_FORM: CandidateFormData = {
   car: "", police_check: "", wwc: "",
   wage_subsidy: false, wage_subsidy_amount: "",
   comments: "", work_status: "job_seeking", intention_to_work: "suitable",
+  staff_id: "",
 };
 
 // ── Shared Styles ──────────────────────────────────────────────────────────────
@@ -196,6 +198,16 @@ export function CandidateFormPanel({
     ...(consultantsData ?? []),
     ...extraConsultants.filter((ec) => !(consultantsData ?? []).some((c) => c.id === ec.id)),
   ];
+
+  const { data: usersData } = useQuery<{ id: string; name: string; email: string; role: string }[]>({
+    queryKey: ["users-staff"],
+    queryFn: () => api.get("/users"),
+  });
+  const staffMembers = useMemo(() => {
+    return (usersData ?? [])
+      .filter((u) => u.role !== "provider")
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [usersData]);
 
   // Postcode auto-fill
   const lookupPostcode = useCallback(async (postcode: string) => {
@@ -461,10 +473,10 @@ export function CandidateFormPanel({
         </div>
       </div>
 
-      {/* ── Section 3: Provider & Consultant ── */}
+      {/* ── Section 3: Provider & Staff Details ── */}
       <div className={sectionCls}>
-        <p className={sectionTitle}>Provider Details</p>
-        <div className="grid grid-cols-2 gap-4">
+        <p className={sectionTitle}>Provider &amp; Staff Assignment</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label required>Provider</Label>
             <select value={form.provider_id}
@@ -491,6 +503,19 @@ export function CandidateFormPanel({
                 </button>
               )}
             </div>
+          </div>
+          <div>
+            <Label>Managed By (Staff) <span className="text-slate-400 font-normal">(Optional)</span></Label>
+            <select
+              value={form.staff_id || ""}
+              onChange={(e) => set("staff_id", e.target.value)}
+              className={CLS}
+            >
+              <option value="">— Select Staff Member —</option>
+              {staffMembers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

@@ -23,6 +23,7 @@ interface ProviderReport {
 interface PlacementReport {
   placement_id: string; candidate_name: string; candidate_sr_no?: string;
   job_title: string; employer_name: string; provider_name: string;
+  staff_name?: string; staff_id?: string;
   start_date: string; confirmed_by_employer: boolean;
   welfare_checks: Record<WelfareCheckType, { due_date: string; completed: boolean }>;
 }
@@ -30,7 +31,7 @@ interface PlacementReport {
 interface StaffReport {
   user_id: string; user_name: string; role: string;
   jobs_assigned: number; active_jobs: number;
-  total_applications: number; total_placements: number;
+  total_applications: number; candidates_managed?: number; total_placements: number;
 }
 
 interface VacancyReport {
@@ -243,6 +244,7 @@ export default function Reports() {
           role: r.role,
           no_of_referrals: r.jobs_assigned,
           interview: r.active_jobs,
+          candidates_managed: r.candidates_managed ?? 0,
           placements: r.total_placements,
           conversion_rate: `${rate}%`,
         };
@@ -250,7 +252,17 @@ export default function Reports() {
       downloadCsv(jsonToCsv(staffCsvData as any), `staff-kpi-${d}.csv`);
     } else if (tab === "placement_monthly") {
       downloadCsv(jsonToCsv(
-        placementReport.map((r) => ({ ...r, welfare_checks: JSON.stringify(r.welfare_checks) })) as any
+        placementReport.map((r) => ({
+          candidate: r.candidate_name,
+          candidate_sr_no: r.candidate_sr_no || "",
+          job: r.job_title,
+          employer: r.employer_name,
+          provider: r.provider_name,
+          managed_by: r.staff_name || "—",
+          start_date: r.start_date,
+          confirmed: r.confirmed_by_employer ? "Yes" : "Pending",
+          welfare_checks: JSON.stringify(r.welfare_checks),
+        })) as any
       ), `placement-monthly-${d}.csv`);
     } else {
       const vacancyCsvData = sortedVacancies.map((r) => ({
@@ -512,15 +524,16 @@ export default function Reports() {
                 <th className={thCls}>Role</th>
                 <SortTh label="No Of Referrals" col="jobs_assigned"      sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
                 <SortTh label="Interview"       col="active_jobs"        sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
+                <SortTh label="Managed Candidates" col="candidates_managed" sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
                 <SortTh label="Placements"      col="total_placements"   sort={staffSort} onSort={(c) => toggleSort(staffSort, setStaffSort, c)} />
                 <th className={thCls}>Conversion Rate</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingStaff ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : sortedStaff.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
               ) : sortedStaff.map((r) => {
                 const rate = r.total_applications > 0
                   ? Math.round((r.total_placements / r.total_applications) * 100)
@@ -535,6 +548,7 @@ export default function Reports() {
                     </td>
                     <td className={`${tdCls} text-slate-700`}>{r.jobs_assigned}</td>
                     <td className={`${tdCls} text-slate-700`}>{r.active_jobs}</td>
+                    <td className={`${tdCls} text-slate-700 font-semibold`}>{r.candidates_managed ?? 0}</td>
                     <td className={tdCls}>
                       <span className={`font-bold text-base ${r.total_placements > 0 ? "text-[#e88e2e]" : "text-slate-400"}`}>
                         {r.total_placements}
@@ -565,16 +579,16 @@ export default function Reports() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {["Candidate", "Job", "Employer", "Provider", "Start Date", "Month", "Confirmed", "D1", "W1", "M1", "M3", "M6"].map((h) => (
+                {["Candidate", "Job", "Employer", "Provider", "Managed By", "Start Date", "Month", "Confirmed", "D1", "W1", "M1", "M3", "M6"].map((h) => (
                   <th key={h} className="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingPlacements ? (
-                <tr><td colSpan={12} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={13} className="px-4 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : placementReport.length === 0 ? (
-                <tr><td colSpan={12} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
+                <tr><td colSpan={13} className="px-4 py-10 text-center text-slate-400">{!hasSearched ? "Set your filters and click Search to load results." : "No data found for this period."}</td></tr>
               ) : (() => {
                 // Group rows — add month label to first row of each month
                 const sorted = [...placementReport].sort(
@@ -596,7 +610,7 @@ export default function Reports() {
                     <>
                       {isNewMonth && (
                         <tr key={`month-${month}`} className="bg-orange-50/60">
-                          <td colSpan={12} className="px-4 py-2 text-xs font-bold text-[#e88e2e] uppercase tracking-wider border-t-2 border-orange-200">
+                          <td colSpan={13} className="px-4 py-2 text-xs font-bold text-[#e88e2e] uppercase tracking-wider border-t-2 border-orange-200">
                             {month}
                           </td>
                         </tr>
@@ -613,6 +627,7 @@ export default function Reports() {
                         <td className="px-3 py-3 text-slate-700">{r.job_title}</td>
                         <td className="px-3 py-3 text-slate-600">{r.employer_name || "—"}</td>
                         <td className="px-3 py-3 text-slate-600">{r.provider_name || "—"}</td>
+                        <td className="px-3 py-3 text-slate-700 whitespace-nowrap font-medium">{r.staff_name || "—"}</td>
                         <td className="px-3 py-3 text-slate-700 whitespace-nowrap">{format(parseISO(r.start_date), "d MMM yyyy")}</td>
                         <td className="px-3 py-3 text-slate-500 text-xs font-medium">{month}</td>
                         <td className="px-3 py-3">

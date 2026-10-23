@@ -114,6 +114,14 @@ export default function CandidateDetail() {
     staleTime: 0,
   });
 
+  const { data: usersData = [] } = useQuery<{ id: string; name: string; role: string }[]>({
+    queryKey: ["users-staff"],
+    queryFn: () => api.get("/users"),
+  });
+  const staffMembers = (usersData ?? [])
+    .filter((u) => u.role !== "provider")
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
   const [noteBody, setNoteBody]         = useState("");
   const [noteSubmitting, setNoteSubmitting] = useState(false);
   const [noteError, setNoteError]       = useState("");
@@ -174,6 +182,7 @@ export default function CandidateDetail() {
       state:               candidate.state ?? "",
       provider_id:         candidate.provider_id ?? "",
       consultant_id:       ext.consultant_id ?? "",
+      staff_id:            candidate.staff_id ?? "",
       benchmark_hours:     candidate.benchmark_hours ? String(candidate.benchmark_hours) : "",
       availability:        candidate.availability ?? "Monday to Friday",
       work_status:         candidate.work_status ?? "job_seeking",
@@ -223,6 +232,7 @@ export default function CandidateDetail() {
       wwc:                 editForm.wwc,
       industry_preference: editForm.industry_preference,
       consultant_id:       editForm.consultant_id || null,
+      staff_id:            editForm.staff_id || null,
       intention_to_work:   editForm.intention_to_work || "suitable",
       comments:            editForm.comments,
       date_referred:       editForm.date_referred || null,
@@ -370,6 +380,12 @@ export default function CandidateDetail() {
                     Referred {fmtDate(ext.date_referred)}
                   </span>
                 )}
+                {candidate.staff_name && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-600 px-3">
+                    <User size={11} className="text-orange-400 flex-shrink-0" />
+                    Managed by {candidate.staff_name}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -456,7 +472,7 @@ export default function CandidateDetail() {
 
                   {/* Provider & Consultant */}
                   <div className="border-t border-slate-200/60 px-6 py-3">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Provider &amp; Consultant</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Provider &amp; Staff Assignment</p>
                     <div className="grid grid-cols-3 gap-x-8 gap-y-3">
                       <div>
                         <p className="text-xs font-medium text-slate-400 mb-0.5">Organisation</p>
@@ -472,6 +488,24 @@ export default function CandidateDetail() {
                       <div>
                         <p className="text-xs font-medium text-slate-400 mb-0.5">Consultant</p>
                         <p className="text-sm font-semibold text-slate-900">{ext.consultant_name || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Managed By</p>
+                        {canWrite && staffMembers.length > 0 ? (
+                          <select
+                            value={candidate.staff_id || ""}
+                            onChange={(e) => updateCandidate.mutate({ staff_id: e.target.value || null } as any)}
+                            disabled={updateCandidate.isPending}
+                            className="text-sm font-semibold text-slate-900 bg-transparent border-b border-dashed border-slate-300 hover:border-[#e88e2e] focus:outline-none focus:border-[#e88e2e] cursor-pointer py-0.5 max-w-full truncate"
+                          >
+                            <option value="">— Unassigned —</option>
+                            {staffMembers.map((s) => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-sm font-semibold text-slate-900">{candidate.staff_name || "—"}</p>
+                        )}
                       </div>
                     </div>
                   </div>

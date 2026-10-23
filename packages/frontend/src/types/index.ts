@@ -237,6 +237,11 @@ export interface Candidate {
   application_count?: number;
   provider_id?: string | null;
   provider_name?: string;
+  staff_id?: string | null;
+  staff_name?: string | null;
+  staff_email?: string | null;
+  created_by?: string | null;
+  created_by_name?: string | null;
   address_line1?: string;
   address_line2?: string;
   postcode?: string;
