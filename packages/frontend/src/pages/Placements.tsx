@@ -276,10 +276,10 @@ export default function Placements() {
             <tr>
               <th
                 onClick={() => handleSort("candidate_sr_no")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors w-[105px] min-w-[105px] whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
-                  <span>SR #</span>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="whitespace-nowrap">SR #</span>
                   {sortField === "candidate_sr_no" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
                   ) : (
@@ -289,9 +289,9 @@ export default function Placements() {
               </th>
               <th
                 onClick={() => handleSort("candidate_name")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Candidate</span>
                   {sortField === "candidate_name" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
@@ -302,9 +302,9 @@ export default function Placements() {
               </th>
               <th
                 onClick={() => handleSort("job_title")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Job</span>
                   {sortField === "job_title" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
@@ -315,9 +315,9 @@ export default function Placements() {
               </th>
               <th
                 onClick={() => handleSort("employer_name")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Employer</span>
                   {sortField === "employer_name" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
@@ -328,9 +328,9 @@ export default function Placements() {
               </th>
               <th
                 onClick={() => handleSort("provider_name")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Provider</span>
                   {sortField === "provider_name" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
@@ -341,9 +341,9 @@ export default function Placements() {
               </th>
               <th
                 onClick={() => handleSort("start_date")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Start Date</span>
                   {sortField === "start_date" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
@@ -352,13 +352,13 @@ export default function Placements() {
                   )}
                 </div>
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Weeks</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Confirmed</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Weeks</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Confirmed</th>
               <th
                 onClick={() => handleSort("wagesub_status")}
-                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors"
+                className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition-colors whitespace-nowrap"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Wage Sub Process Status</span>
                   {sortField === "wagesub_status" ? (
                     sortDir === "asc" ? <ArrowUp size={13} className="text-[#e88e2e]" /> : <ArrowDown size={13} className="text-[#e88e2e]" />
@@ -379,9 +379,9 @@ export default function Placements() {
               sortedPlacements.map((p) => {
                 return (
                   <tr key={p.id} className="hover:bg-slate-50 transition">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 w-[105px] min-w-[105px] whitespace-nowrap">
                       {p.candidate_sr_no ? (
-                        <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">
+                        <span className="inline-flex items-center bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono font-semibold text-slate-700 whitespace-nowrap select-none">
                           {p.candidate_sr_no}
                         </span>
                       ) : (

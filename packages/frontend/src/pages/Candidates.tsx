@@ -754,7 +754,7 @@ export default function Candidates() {
                           : "bg-white group-hover:bg-orange-50/60"
                       }`}>
                         {row.sr_no ? (
-                          <span className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">
+                          <span className="inline-flex items-center bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-mono font-semibold text-slate-700 whitespace-nowrap select-none">
                             {row.sr_no}
                           </span>
                         ) : "—"}

@@ -325,23 +325,23 @@ function ListView({
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b text-left text-xs text-slate-500 uppercase tracking-wide">
-            <SortHeader field="candidate_sr_no" label="SR #" currentField={sortField} currentDir={sortDir} onSort={onSort} className="pl-3" />
-            <SortHeader field="candidate_name" label="Applicant" currentField={sortField} currentDir={sortDir} onSort={onSort} />
-            <SortHeader field="job_title" label="Job Posting" currentField={sortField} currentDir={sortDir} onSort={onSort} />
-            <SortHeader field="stage" label="Status" currentField={sortField} currentDir={sortDir} onSort={onSort} />
-            <SortHeader field="interview_date" label="Interview Date" currentField={sortField} currentDir={sortDir} onSort={onSort} />
-            <SortHeader field="ets_date" label="ETS Date" currentField={sortField} currentDir={sortDir} onSort={onSort} />
-            <SortHeader field="applied_at" label="Applied" currentField={sortField} currentDir={sortDir} onSort={onSort} />
-            <th className="py-3 pr-4 text-right">Actions</th>
+            <SortHeader field="candidate_sr_no" label="SR #" currentField={sortField} currentDir={sortDir} onSort={onSort} className="pl-3 w-[105px] min-w-[105px] whitespace-nowrap" />
+            <SortHeader field="candidate_name" label="Applicant" currentField={sortField} currentDir={sortDir} onSort={onSort} className="whitespace-nowrap" />
+            <SortHeader field="job_title" label="Job Posting" currentField={sortField} currentDir={sortDir} onSort={onSort} className="whitespace-nowrap" />
+            <SortHeader field="stage" label="Status" currentField={sortField} currentDir={sortDir} onSort={onSort} className="whitespace-nowrap" />
+            <SortHeader field="interview_date" label="Interview Date" currentField={sortField} currentDir={sortDir} onSort={onSort} className="whitespace-nowrap" />
+            <SortHeader field="ets_date" label="ETS Date" currentField={sortField} currentDir={sortDir} onSort={onSort} className="whitespace-nowrap" />
+            <SortHeader field="applied_at" label="Applied" currentField={sortField} currentDir={sortDir} onSort={onSort} className="whitespace-nowrap" />
+            <th className="py-3 pr-4 text-right whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody>
           {applications.map((app) => {
             return (
               <tr key={app.id} className="border-b hover:bg-slate-50 transition">
-                <td className="py-3 pl-3 pr-4">
+                <td className="py-3 pl-3 pr-4 w-[105px] min-w-[105px] whitespace-nowrap">
                   {app.candidate_sr_no ? (
-                    <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">
+                    <span className="inline-flex items-center bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono font-semibold text-slate-700 whitespace-nowrap select-none">
                       {app.candidate_sr_no}
                     </span>
                   ) : (
