@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { displayEmail, stageLabel, fmtDate, fmtDateTime, validateNotBeforeApplied, validateNotAfterDate, toYYYYMMDD, toTitleCase } from "../lib/utils";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X, ChevronDown } from "lucide-react";
 import { api } from "../lib/api";
 import SearchableSelect from "../components/SearchableSelect";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
@@ -493,20 +493,27 @@ export default function CandidateDetail() {
                         <p className="text-sm font-semibold text-slate-900">{ext.consultant_name || "—"}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-slate-400 mb-1">Managed By (Staff)</p>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-slate-400">Managed By (Staff)</p>
+                          {canWrite && (
+                            <span className="text-[10px] text-[#e88e2e] font-semibold">Click to change</span>
+                          )}
+                        </div>
                         {canWrite ? (
                           <div className="relative">
                             <select
                               value={candidate.staff_id || ""}
                               onChange={(e) => updateCandidate.mutate({ staff_id: e.target.value || null } as any)}
                               disabled={updateCandidate.isPending}
-                              className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 shadow-sm hover:border-[#e88e2e] focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/20 focus:border-[#e88e2e] cursor-pointer transition-colors"
+                              className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-lg pl-7 pr-7 py-1.5 shadow-sm hover:border-[#e88e2e] focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/20 focus:border-[#e88e2e] cursor-pointer transition-colors appearance-none"
                             >
                               <option value="">— Select Staff Member —</option>
                               {staffMembers.map((s) => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
                               ))}
                             </select>
+                            <User size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none" />
+                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                           </div>
                         ) : (
                           <div className="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
