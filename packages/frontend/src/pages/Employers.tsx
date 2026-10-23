@@ -31,6 +31,19 @@ export default function Employers() {
   const deactivate = useMutation({
     mutationFn: (id: string) => api.delete(`/employers/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employers"] }),
+    onError: (err: any) => alert(err?.message || err?.error || "Failed to deactivate employer"),
+  });
+
+  const activate = useMutation({
+    mutationFn: (id: string) => api.post(`/employers/${id}/activate`, {}),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employers"] }),
+    onError: (err: any) => alert(err?.message || err?.error || "Failed to activate employer"),
+  });
+
+  const deletePermanent = useMutation({
+    mutationFn: (id: string) => api.delete(`/employers/${id}?permanent=true`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employers"] }),
+    onError: (err: any) => alert(err?.message || err?.error || "Failed to delete employer"),
   });
 
   const employers = data?.data ?? [];
@@ -98,23 +111,29 @@ export default function Employers() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b">
             <tr>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[70px] min-w-[70px] whitespace-nowrap">SR #</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Company</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Industry</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Contact</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Open Vacancies</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Total Vacancies</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3 text-right" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {isLoading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
             ) : employers.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No employers found.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">No employers found.</td></tr>
             ) : (
-              employers.map((e) => (
+              employers.map((e, idx) => (
                 <tr key={e.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 w-[70px] min-w-[70px] whitespace-nowrap">
+                    <span className="inline-flex items-center bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-mono font-semibold text-slate-700 select-none">
+                      {(page - 1) * 20 + idx + 1}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 font-medium text-slate-900">{e.name}</td>
                   <td className="px-4 py-3 text-slate-600">{e.industry || "—"}</td>
                   <td className="px-4 py-3 text-slate-600">{e.contact_name || "—"}</td>
@@ -134,7 +153,7 @@ export default function Employers() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 justify-end">
+                    <div className="flex items-center gap-1.5 justify-end flex-wrap">
                       <Link to={`/employers/${e.id}`}
                         className="flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
                         <Eye size={12} /> View
@@ -145,14 +164,36 @@ export default function Employers() {
                           <Edit2 size={12} /> Edit
                         </Link>
                       )}
+                      {hasPermission("employers:edit") && !e.is_active && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Activate "${e.name}"?`)) activate.mutate(e.id);
+                          }}
+                          className="text-xs text-green-700 border border-green-300 rounded px-2 py-1 hover:bg-green-50"
+                        >
+                          Activate
+                        </button>
+                      )}
                       {hasPermission("employers:delete") && e.is_active && (
                         <button
                           onClick={() => {
                             if (confirm(`Deactivate "${e.name}"?`)) deactivate.mutate(e.id);
                           }}
-                          className="text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50"
+                          className="text-xs text-amber-700 border border-amber-300 rounded px-2 py-1 hover:bg-amber-50"
                         >
                           Deactivate
+                        </button>
+                      )}
+                      {hasPermission("employers:delete") && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Permanently delete employer "${e.name}"? This cannot be undone.`)) {
+                              deletePermanent.mutate(e.id);
+                            }
+                          }}
+                          className="text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50"
+                        >
+                          Delete
                         </button>
                       )}
                     </div>

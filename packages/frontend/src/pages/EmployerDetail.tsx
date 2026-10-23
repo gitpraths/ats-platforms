@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Edit2, ExternalLink, Briefcase, Plus } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Edit2, ExternalLink, Briefcase, Plus, Trash2 } from "lucide-react";
 import { api } from "../lib/api";
 import { fmtDate, formatName } from "../lib/utils";
 import type { Employer, Job } from "../types";
@@ -29,7 +29,36 @@ export default function EmployerDetail() {
   const { user } = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const canEdit = isAdmin || hasPermission("employers:edit");
+  const canDelete = isAdmin || hasPermission("employers:delete");
+
+  const deactivate = useMutation({
+    mutationFn: () => api.delete(`/employers/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employer", id] });
+      queryClient.invalidateQueries({ queryKey: ["employers"] });
+    },
+    onError: (err: any) => alert(err?.message || err?.error || "Failed to deactivate employer"),
+  });
+
+  const activate = useMutation({
+    mutationFn: () => api.post(`/employers/${id}/activate`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employer", id] });
+      queryClient.invalidateQueries({ queryKey: ["employers"] });
+    },
+    onError: (err: any) => alert(err?.message || err?.error || "Failed to activate employer"),
+  });
+
+  const deletePermanent = useMutation({
+    mutationFn: () => api.delete(`/employers/${id}?permanent=true`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employers"] });
+      navigate("/employers");
+    },
+    onError: (err: any) => alert(err?.message || err?.error || "Failed to delete employer"),
+  });
 
   const { data: employer, isLoading } = useQuery<EmployerDetailData>({
     queryKey: ["employer", id],
@@ -68,12 +97,49 @@ export default function EmployerDetail() {
             </span>
           </div>
         </div>
-        {canEdit && (
-          <button onClick={() => navigate(`/employers/${id}/edit`)}
-            className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-slate-50">
-            <Edit2 size={14} /> Edit
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canEdit && (
+            <button onClick={() => navigate(`/employers/${id}/edit`)}
+              className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm hover:bg-slate-50">
+              <Edit2 size={14} /> Edit
+            </button>
+          )}
+          {canDelete && !employer.is_active && (
+            <button
+              onClick={() => {
+                if (confirm(`Activate "${employer.name}"?`)) activate.mutate();
+              }}
+              disabled={activate.isPending}
+              className="px-3 py-2 border border-green-300 text-green-700 rounded-lg text-sm hover:bg-green-50"
+            >
+              Activate
+            </button>
+          )}
+          {canDelete && employer.is_active && (
+            <button
+              onClick={() => {
+                if (confirm(`Deactivate "${employer.name}"?`)) deactivate.mutate();
+              }}
+              disabled={deactivate.isPending}
+              className="px-3 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm hover:bg-amber-50"
+            >
+              Deactivate
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => {
+                if (confirm(`Permanently delete employer "${employer.name}"? This cannot be undone.`)) {
+                  deletePermanent.mutate();
+                }
+              }}
+              disabled={deletePermanent.isPending}
+              className="flex items-center gap-1.5 px-3 py-2 border border-red-200 text-red-600 rounded-lg text-sm hover:bg-red-50"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}

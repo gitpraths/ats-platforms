@@ -136,13 +136,33 @@ employersRouter.put("/:id", requirePermission("employers:edit"), async (req, res
            abn           = COALESCE($13, abn),
            updated_at    = NOW()
        WHERE id = $14 RETURNING *`,
-      [cleanName !== undefined ? cleanName : null, industry, website, description, cleanContact !== undefined ? cleanContact : null, contact_email, contact_phone, address, postcode, cleanSuburb !== undefined ? cleanSuburb : null, state, is_active, abn, req.params.id]
+      [cleanName !== undefined ? cleanName : null, industry, website, description, cleanContact !== undefined ? cleanContact : null, contact_email, contact_phone, address, postcode, cleanSuburb !== undefined ? cleanSuburb : null, state, is_active !== undefined ? is_active : null, abn, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: "Employer not found" });
+
+    const action = is_active === false ? "deactivated" : is_active === true ? "activated" : "updated";
+    pool.query(
+      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by)
+       VALUES ('employer', $1, $2, $3)`,
+      [req.params.id, action, req.user.id]
+    ).catch(() => {});
+
+    res.json({ success: true, data: rows[0] });
+  } catch (err) { next(err); }
+});
+
+// ── POST /api/employers/:id/activate ─────────────────────
+employersRouter.post("/:id/activate", requirePermission("employers:edit"), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE employers SET is_active = true, updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Employer not found" });
 
     pool.query(
       `INSERT INTO activity_log (entity_type, entity_id, action, performed_by)
-       VALUES ('employer', $1, 'updated', $2)`,
+       VALUES ('employer', $1, 'activated', $2)`,
       [req.params.id, req.user.id]
     ).catch(() => {});
 
@@ -150,14 +170,61 @@ employersRouter.put("/:id", requirePermission("employers:edit"), async (req, res
   } catch (err) { next(err); }
 });
 
-// ── DELETE /api/employers/:id (soft delete) ──────────────
+// ── DELETE /api/employers/:id (soft deactivate or permanent delete) ──
 employersRouter.delete("/:id", requirePermission("employers:delete"), async (req, res, next) => {
   try {
+    const isPermanent = req.query.permanent === "true" || req.query.permanent === "1";
+
+    if (isPermanent) {
+      // 1. Check for placements
+      const { rows: placements } = await pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM placements WHERE employer_id = $1`,
+        [req.params.id]
+      );
+      if (placements[0]?.cnt > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "Cannot delete employer with associated placements. Please remove or reassign placements first.",
+        });
+      }
+
+      // 2. Check for jobs with applications
+      const { rows: appRows } = await pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM applications a JOIN jobs j ON j.id = a.job_id WHERE j.employer_id = $1`,
+        [req.params.id]
+      );
+      if (appRows[0]?.cnt > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "Cannot delete employer with vacancy applications. Please close or remove the vacancies first.",
+        });
+      }
+
+      // 3. Remove vacancies that have no applications
+      await pool.query(`DELETE FROM jobs WHERE employer_id = $1`, [req.params.id]);
+
+      // 4. Delete the employer
+      const { rows: delRows } = await pool.query(
+        `DELETE FROM employers WHERE id = $1 RETURNING id, name`,
+        [req.params.id]
+      );
+      if (!delRows[0]) return res.status(404).json({ success: false, error: "Employer not found" });
+
+      pool.query(
+        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+         VALUES ('employer', $1, 'deleted', $2, $3)`,
+        [req.params.id, req.user.id, JSON.stringify({ name: delRows[0].name })]
+      ).catch(() => {});
+
+      return res.json({ success: true, deleted: true });
+    }
+
+    // Default: Soft delete / deactivate
     const { rows: openJobs } = await pool.query(
       `SELECT COUNT(*)::int AS cnt FROM jobs WHERE employer_id = $1 AND status = 'open'`,
       [req.params.id]
     );
-    if (openJobs[0].cnt > 0) {
+    if (openJobs[0]?.cnt > 0) {
       return res.status(409).json({ success: false, error: "Employer has open jobs. Close them before deactivating." });
     }
 
@@ -173,6 +240,6 @@ employersRouter.delete("/:id", requirePermission("employers:delete"), async (req
       [req.params.id, req.user.id]
     ).catch(() => {});
 
-    res.json({ success: true });
+    res.json({ success: true, deactivated: true });
   } catch (err) { next(err); }
 });
