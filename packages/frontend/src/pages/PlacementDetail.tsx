@@ -3,11 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle, Clock, AlertTriangle, Mail, Check, Pencil } from "lucide-react";
 import { format } from "date-fns";
-import { fmtDate } from "../lib/utils";
+import { fmtDate, formatName } from "../lib/utils";
 import { api } from "../lib/api";
 import type { Placement, WelfareCheck, WelfareCheckType } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 const CHECK_LABELS: Record<WelfareCheckType, string> = {
   day_1:   "Day 1 Check",
@@ -145,9 +146,12 @@ export default function PlacementDetail() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
-            {placement.candidate_name} → {placement.job_title}
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <CandidateBadge srNo={placement.candidate_sr_no} className="text-xs px-2 py-0.5" />
+            <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
+              {formatName(placement.candidate_name)} → {placement.job_title}
+            </h1>
+          </div>
           {placement.employer_name && (
             <p className="text-sm text-slate-500 mt-1">
               <Link to={`/employers/${placement.employer_id}`} className="hover:underline text-slate-600">
@@ -216,8 +220,13 @@ export default function PlacementDetail() {
       <div className="grid sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl shadow-sm p-4">
           <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Candidate</p>
-          <Link to={`/candidates/${placement.candidate_id}`}
-            className="font-medium text-slate-600 hover:underline text-sm">{placement.candidate_name}</Link>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <CandidateBadge srNo={placement.candidate_sr_no} />
+            <Link to={`/candidates/${placement.candidate_id}`}
+              className="font-medium text-slate-900 hover:text-[#e88e2e] hover:underline text-sm">
+              {formatName(placement.candidate_name)}
+            </Link>
+          </div>
           {placement.candidate_work_status && (
             <p className="text-xs text-slate-500 mt-1">{placement.candidate_work_status.replace("_", " ")}</p>
           )}

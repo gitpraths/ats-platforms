@@ -7,13 +7,14 @@ import {
   ChevronUp, ChevronRight, Clock, UserCheck, FileText, Minus, Send,
 } from "lucide-react";
 import { format } from "date-fns";
-import { fmtDate, fmtDateTime } from "../lib/utils";
+import { fmtDate, fmtDateTime, formatName } from "../lib/utils";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
 import type { Job, Application, ApplicationStage } from "../types";
 import AssignTalentDialog from "../components/AssignTalentDialog";
 import BroadcastToProvidersModal from "../components/BroadcastToProvidersModal";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 // ── Stage colours ─────────────────────────────────────────────────────────────
 const STAGE_BADGE: Record<ApplicationStage, string> = {
@@ -343,9 +344,12 @@ export default function JobDetail() {
                   >
                     <Avatar name={app.candidate_name ?? "?"} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 group-hover:text-[#e88e2e] transition-colors">
-                        {app.candidate_name}
-                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <CandidateBadge srNo={app.candidate_sr_no} />
+                        <p className="text-sm font-medium text-slate-900 group-hover:text-[#e88e2e] transition-colors">
+                          {formatName(app.candidate_name)}
+                        </p>
+                      </div>
                       <p className="text-xs text-slate-400 truncate">{app.candidate_email}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">

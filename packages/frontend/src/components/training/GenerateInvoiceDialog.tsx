@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useGenerateXeroInvoice } from "../../hooks/useXero";
 import { ApiError } from "../../lib/api";
 import type { CandidateTraining, XeroContact } from "../../types";
-import { fmtDate } from "../../lib/utils";
+import { fmtDate, formatName } from "../../lib/utils";
+import { CandidateBadge } from "../CandidateBadge";
 
 interface Props {
   enrolment: CandidateTraining & { candidate_name?: string };
@@ -75,7 +76,7 @@ export function GenerateInvoiceDialog({ enrolment, candidateName, defaultUnitPri
     <Backdrop onClose={onClose}>
       <h2 className="text-lg font-semibold text-slate-900 mb-4">Generate invoice (DRAFT)</h2>
       <dl className="text-sm text-slate-600 space-y-1 mb-4">
-        <div className="flex"><dt className="w-28 text-slate-400">Candidate</dt><dd className="text-slate-900">{candidateName}</dd></div>
+        <div className="flex items-center"><dt className="w-28 text-slate-400">Candidate</dt><dd className="text-slate-900 font-medium flex items-center gap-1.5">{enrolment.candidate_sr_no && <CandidateBadge srNo={enrolment.candidate_sr_no} />}{formatName(candidateName)}</dd></div>
         <div className="flex"><dt className="w-28 text-slate-400">Course</dt><dd>{enrolment.training_name}</dd></div>
         <div className="flex"><dt className="w-28 text-slate-400">Dates</dt><dd>{fmtDate(enrolment.start_date)} → {fmtDate(enrolment.end_date)}</dd></div>
       </dl>

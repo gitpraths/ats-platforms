@@ -12,7 +12,8 @@ import { EnrolmentDialog } from "./EnrolmentDialog";
 import { useXeroInvoicesForEnrolment } from "../../hooks/useXero";
 import { usePermissions } from "../../hooks/usePermissions";
 import Pagination from "../Pagination";
-import { fmtDate } from "../../lib/utils";
+import { fmtDate, formatName } from "../../lib/utils";
+import { CandidateBadge } from "../CandidateBadge";
 
 const ALL_STATUSES: TrainingStatus[] = ["enrolled", "in_progress", "completed", "withdrawn", "failed"];
 
@@ -191,12 +192,15 @@ export function EnrolmentsTab({
               {rows.map((e) => (
                 <tr key={e.id}>
                   <td className="px-4 py-2.5">
-                    <Link
-                      to={`/candidates/${e.candidate_id}`}
-                      className="text-[#e88e2e] hover:underline font-medium"
-                    >
-                      {e.candidate_name}
-                    </Link>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <CandidateBadge srNo={e.candidate_sr_no} />
+                      <Link
+                        to={`/candidates/${e.candidate_id}`}
+                        className="text-[#e88e2e] hover:underline font-medium"
+                      >
+                        {formatName(e.candidate_name)}
+                      </Link>
+                    </div>
                   </td>
                   <td className="px-4 py-2.5 text-slate-700">
                     {e.training_name}

@@ -73,6 +73,7 @@ reportsRouter.get("/placements", async (req, res, next) => {
       `SELECT
          p.id AS placement_id,
          c.name AS candidate_name,
+         c.sr_no AS candidate_sr_no,
          j.title AS job_title,
          e.name AS employer_name,
          pr.name AS provider_name,

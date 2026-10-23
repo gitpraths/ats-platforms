@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Search } from "lucide-react";
 import { api } from "../lib/api";
-import { displayEmail } from "../lib/utils";
+import { displayEmail, formatName } from "../lib/utils";
 import type { Candidate } from "../types";
+import { CandidateBadge } from "./CandidateBadge";
 
 interface Props {
   jobId: string;
@@ -88,7 +89,10 @@ export default function AssignTalentDialog({ jobId, isOpen, onClose }: Props) {
                 {c.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="font-medium text-sm text-gray-900">{c.name}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <CandidateBadge srNo={c.sr_no} />
+                  <p className="font-medium text-sm text-gray-900">{formatName(c.name)}</p>
+                </div>
                 <p className="text-xs text-gray-500 truncate">{displayEmail(c.email)}</p>
                 {(c.city || c.state) && (
                   <p className="text-xs text-gray-400">{[c.city, c.state].filter(Boolean).join(", ")}</p>

@@ -71,7 +71,7 @@ employersRouter.get("/:id", requirePermission("employers:view"), async (req, res
     );
 
     const { rows: placements } = await pool.query(
-      `SELECT p.id, p.start_date, j.title AS job_title, c.name AS candidate_name
+      `SELECT p.id, p.start_date, j.title AS job_title, c.name AS candidate_name, c.sr_no AS candidate_sr_no
        FROM placements p
        JOIN jobs j ON p.job_id = j.id
        JOIN candidates c ON p.candidate_id = c.id

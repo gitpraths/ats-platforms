@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, Search, BarChart2, Users, Briefcase, TrendingUp, Building2, MapPin, ChevronUp, ChevronDown } from "lucide-react";
 import { format, startOfMonth, parseISO } from "date-fns";
 import { api } from "../lib/api";
+import { formatName } from "../lib/utils";
 import type { Employer, Provider, WelfareCheckType } from "../types";
 import WelfareCheckDots from "../components/WelfareCheckDots";
 import SearchableSelect from "../components/SearchableSelect";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = "provider" | "staff" | "placement_monthly" | "vacancy";
@@ -19,7 +21,7 @@ interface ProviderReport {
 }
 
 interface PlacementReport {
-  placement_id: string; candidate_name: string;
+  placement_id: string; candidate_name: string; candidate_sr_no?: string;
   job_title: string; employer_name: string; provider_name: string;
   start_date: string; confirmed_by_employer: boolean;
   welfare_checks: Record<WelfareCheckType, { due_date: string; completed: boolean }>;
@@ -602,7 +604,12 @@ export default function Reports() {
                       <tr key={r.placement_id}
                         className="hover:bg-slate-50 cursor-pointer"
                         onClick={() => window.location.href = `/placements/${r.placement_id}`}>
-                        <td className="px-3 py-3 font-medium text-slate-900">{r.candidate_name}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <CandidateBadge srNo={r.candidate_sr_no} />
+                            <span className="font-medium text-slate-900">{formatName(r.candidate_name)}</span>
+                          </div>
+                        </td>
                         <td className="px-3 py-3 text-slate-700">{r.job_title}</td>
                         <td className="px-3 py-3 text-slate-600">{r.employer_name || "—"}</td>
                         <td className="px-3 py-3 text-slate-600">{r.provider_name || "—"}</td>

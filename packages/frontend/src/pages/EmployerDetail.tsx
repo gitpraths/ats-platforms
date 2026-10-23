@@ -3,14 +3,16 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Edit2, ExternalLink, Briefcase, Plus } from "lucide-react";
 import { api } from "../lib/api";
+import { fmtDate, formatName } from "../lib/utils";
 import type { Employer, Job } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
 import CreateJobDialog from "../components/CreateJobDialog";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 interface EmployerDetailData extends Employer {
   jobs: Pick<Job, "id" | "title" | "status" | "job_type" | "positions_count">[];
-  placements?: { id: string; start_date: string; job_title: string; candidate_name: string }[];
+  placements?: { id: string; start_date: string; job_title: string; candidate_name: string; candidate_sr_no?: string }[];
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -206,9 +208,14 @@ export default function EmployerDetail() {
               {employer.placements.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50 cursor-pointer"
                   onClick={() => navigate(`/placements/${p.id}`)}>
-                  <td className="py-2 font-medium text-slate-900">{p.candidate_name}</td>
+                  <td className="py-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <CandidateBadge srNo={p.candidate_sr_no} />
+                      <span className="font-medium text-slate-900">{formatName(p.candidate_name)}</span>
+                    </div>
+                  </td>
                   <td className="py-2 text-slate-500">{p.job_title}</td>
-                  <td className="py-2 text-slate-500">{p.start_date ? new Date(p.start_date).toLocaleDateString() : "—"}</td>
+                  <td className="py-2 text-slate-500">{fmtDate(p.start_date)}</td>
                 </tr>
               ))}
             </tbody>

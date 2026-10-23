@@ -6,8 +6,10 @@ import { api } from "../../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import type { Training } from "../../types";
 import type { PrefilterToEnrolments } from "../../pages/Training";
+import { CandidateBadge } from "../CandidateBadge";
+import { formatName } from "../../lib/utils";
 
-interface CandidateRow { id: string; name: string; email: string | null }
+interface CandidateRow { id: string; name: string; email: string | null; sr_no?: string | null }
 
 function addDays(iso: string, days: number): string {
   const d = new Date(iso);
@@ -158,9 +160,10 @@ export function CohortEnrolTab({ onViewEnrolments }: { onViewEnrolments: (f: Pre
                 candidates.map((c) => {
                   const checked = selected.some((s) => s.id === c.id);
                   return (
-                    <label key={c.id} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer">
+                    <label key={c.id} className="flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer">
                       <input type="checkbox" checked={checked} onChange={() => toggleSelected(c)} />
-                      <span className="text-slate-900">{c.name}</span>
+                      <CandidateBadge srNo={c.sr_no} />
+                      <span className="text-slate-900 font-medium">{formatName(c.name)}</span>
                       {c.email && <span className="text-xs text-slate-400 ml-auto">{c.email}</span>}
                     </label>
                   );

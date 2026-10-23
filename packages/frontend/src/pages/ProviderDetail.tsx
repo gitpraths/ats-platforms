@@ -8,8 +8,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
 import { useXeroContactSearch, useCreateXeroContact, useLinkProviderToXero } from "../hooks/useXero";
 import { format } from "date-fns";
-import { fmtDate, toTitleCase } from "../lib/utils";
+import { fmtDate, toTitleCase, formatName } from "../lib/utils";
 import SpreadsheetSyncPanel from "../components/SpreadsheetSyncPanel";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 interface ProviderDetailData extends Provider {
   candidate_count: number;
@@ -17,7 +18,7 @@ interface ProviderDetailData extends Provider {
   job_seeking_count: number;
   employed_count: number;
   inactive_count: number;
-  recent_candidates: Pick<Candidate, "id" | "name" | "work_status" | "created_at">[];
+  recent_candidates: Pick<Candidate, "id" | "name" | "sr_no" | "work_status" | "created_at">[];
 }
 
 const WORK_STATUS_BADGE: Record<string, string> = {
@@ -148,7 +149,12 @@ export default function ProviderDetail() {
               {provider.recent_candidates.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 cursor-pointer"
                   onClick={() => navigate(`/candidates/${c.id}`)}>
-                  <td className="py-2 font-medium text-slate-900">{c.name}</td>
+                  <td className="py-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <CandidateBadge srNo={c.sr_no} />
+                      <span className="font-medium text-slate-900">{formatName(c.name)}</span>
+                    </div>
+                  </td>
                   <td className="py-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${WORK_STATUS_BADGE[c.work_status ?? "job_seeking"]}`}>
                       {c.work_status?.replace("_", " ") ?? "job seeking"}

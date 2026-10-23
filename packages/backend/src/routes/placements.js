@@ -137,7 +137,7 @@ placementsRouter.get("/:id", requirePermission("placements:view"), async (req, r
   try {
     const { rows } = await pool.query(
       `SELECT p.*,
-              c.name AS candidate_name, c.work_status AS candidate_work_status, c.provider_id,
+              c.name AS candidate_name, c.sr_no AS candidate_sr_no, c.work_status AS candidate_work_status, c.provider_id,
               j.title AS job_title, j.job_type,
               e.name AS employer_name, e.contact_email AS employer_email, e.contact_name AS employer_contact,
               pr.name AS provider_name

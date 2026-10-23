@@ -20,11 +20,12 @@ import {
 } from "../hooks/useDashboardStats";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
-import { stageLabel } from "../lib/utils";
+import { stageLabel, formatName } from "../lib/utils";
 import type { Application } from "../types";
 import CreateJobDialog from "../components/CreateJobDialog";
 import AddCandidateDialog from "../components/AddCandidateDialog";
 import AddEmployerDialog from "../components/AddEmployerDialog";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 // ── Colour palette for grouped bar charts ─────────────────────────────────────
 const BAR_COLOURS = [
@@ -419,8 +420,16 @@ export default function Dashboard() {
               <div key={app.id} className="flex items-center gap-3 py-3">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STAGE_DOT[app.stage] ?? "bg-slate-400"}`} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900 truncate">{app.candidate_name}</p>
-                  <p className="text-xs text-slate-500 truncate">{app.job_title}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <CandidateBadge srNo={app.candidate_sr_no} />
+                    <Link
+                      to={`/candidates/${app.candidate_id}`}
+                      className="text-sm font-semibold text-slate-900 hover:text-[#e88e2e] hover:underline truncate"
+                    >
+                      {formatName(app.candidate_name)}
+                    </Link>
+                  </div>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">{app.job_title}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium bg-transparent ${STAGE_BADGE[app.stage]}`}>

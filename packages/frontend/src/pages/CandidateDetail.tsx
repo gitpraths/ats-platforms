@@ -7,6 +7,7 @@ import { api } from "../lib/api";
 import SearchableSelect from "../components/SearchableSelect";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
+import { CandidateBadge } from "../components/CandidateBadge";
 import type { Candidate, ApplicationStage, CandidateDocument, CandidateNote, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
@@ -335,9 +336,7 @@ export default function CandidateDetail() {
               <div className="flex items-center gap-3 mb-1.5">
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">{candidate.name}</h1>
                 {ext.sr_no && (
-                  <span className="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">
-                    #{ext.sr_no}
-                  </span>
+                  <CandidateBadge srNo={ext.sr_no} className="text-xs px-2 py-0.5" />
                 )}
                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
                   {statusCfg.label}

@@ -194,7 +194,8 @@ export async function listEnrolments(filters) {
     `SELECT ct.*,
             t.name AS training_name, t.code AS training_code,
             p.name AS provider_name,
-            c.name AS candidate_name
+            c.name AS candidate_name,
+            c.sr_no AS candidate_sr_no
        FROM candidate_trainings ct
        JOIN trainings t      ON t.id = ct.training_id
        LEFT JOIN providers p ON p.id = t.provider_id
@@ -307,7 +308,8 @@ export async function bulkEnrol({ training_id, start_date, end_date, candidate_i
       `SELECT ct.*,
               t.name AS training_name, t.code AS training_code,
               p.name AS provider_name,
-              c.name AS candidate_name
+              c.name AS candidate_name,
+              c.sr_no AS candidate_sr_no
          FROM candidate_trainings ct
          JOIN trainings t      ON t.id = ct.training_id
          LEFT JOIN providers p ON p.id = t.provider_id

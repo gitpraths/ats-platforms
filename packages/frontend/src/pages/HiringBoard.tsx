@@ -7,6 +7,7 @@ import { api } from "../lib/api";
 import type { Application, ApplicationStage } from "../types";
 import { stageLabel, fmtDate, formatName } from "../lib/utils";
 import Pagination, { PER_PAGE } from "../components/Pagination";
+import { CandidateBadge } from "../components/CandidateBadge";
 
 const STAGES: ApplicationStage[] = ["applied", "interview", "ets", "hired", "rejected"];
 
@@ -216,11 +217,7 @@ function PipelineView({
                           <div className="flex items-start justify-between gap-1">
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                {app.candidate_sr_no && (
-                                  <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-semibold">
-                                    {app.candidate_sr_no}
-                                  </span>
-                                )}
+                                <CandidateBadge srNo={app.candidate_sr_no} />
                                 <Link
                                   to={`/candidates/${app.candidate_id}`}
                                   className="font-semibold text-slate-900 hover:text-[#e88e2e] hover:underline truncate"

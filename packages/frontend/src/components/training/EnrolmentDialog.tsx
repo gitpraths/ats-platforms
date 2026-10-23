@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTrainings } from "../../hooks/useTrainings";
 import { useCreateEnrolment, useUpdateEnrolment, useDeleteEnrolment } from "../../hooks/useCandidateTrainings";
 import { api } from "../../lib/api";
+import { formatName } from "../../lib/utils";
 import SearchableSelect from "../SearchableSelect";
 import type { CandidateTraining, Training, TrainingStatus } from "../../types";
 
@@ -48,13 +49,13 @@ export function EnrolmentDialog({
   // Candidate selection query when opened from Training page
   const { data: candidatesResult, isLoading: loadingCandidates } = useQuery({
     queryKey: ["candidates-pick-enrolment"],
-    queryFn: () => api.list<{ id: string; name: string; email: string | null }>("/candidates?limit=200"),
+    queryFn: () => api.list<{ id: string; name: string; email: string | null; sr_no?: string | null }>("/candidates?limit=200"),
     enabled: !initialCandidateId && !enrolment,
   });
 
   const candidateOptions = (candidatesResult?.data ?? []).map((c) => ({
     value: c.id,
-    label: `${c.name}${c.email ? ` (${c.email})` : ""}`,
+    label: `${c.sr_no ? `[${c.sr_no}] ` : ""}${formatName(c.name)}${c.email ? ` (${c.email})` : ""}`,
   }));
 
   const activeCandidateId = initialCandidateId || selectedCandidateId;

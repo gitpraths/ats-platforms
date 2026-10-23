@@ -100,7 +100,7 @@ providersRouter.get("/:id", requirePermission("providers:view"), async (req, res
     if (!rows[0]) return res.status(404).json({ success: false, error: "Provider not found" });
 
     const { rows: candidates } = await pool.query(
-      `SELECT id, name, work_status, created_at
+      `SELECT id, name, sr_no, work_status, created_at
        FROM candidates WHERE provider_id = $1
        ORDER BY created_at DESC LIMIT 5`,
       [req.params.id]

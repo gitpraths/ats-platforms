@@ -224,6 +224,7 @@ export interface Job {
 
 export interface Candidate {
   id: string;
+  sr_no?: string | null;
   name: string;
   email: string;
   phone?: string;
@@ -368,6 +369,8 @@ export interface CandidateTraining {
   training_name: string;
   training_code: string | null;
   provider_name: string | null;
+  candidate_name?: string;
+  candidate_sr_no?: string;
 }
 
 export interface XeroConnection {
