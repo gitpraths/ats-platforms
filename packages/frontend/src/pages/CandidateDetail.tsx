@@ -475,8 +475,8 @@ export default function CandidateDetail() {
 
                   {/* Provider & Consultant */}
                   <div className="border-t border-slate-200/60 px-6 py-3">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Provider &amp; Staff Assignment</p>
-                    <div className="grid grid-cols-3 gap-x-8 gap-y-3">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Provider &amp; Consultant</p>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                       <div>
                         <p className="text-xs font-medium text-slate-400 mb-0.5">Organisation</p>
                         {candidate.provider_id ? (
@@ -491,35 +491,6 @@ export default function CandidateDetail() {
                       <div>
                         <p className="text-xs font-medium text-slate-400 mb-0.5">Consultant</p>
                         <p className="text-sm font-semibold text-slate-900">{ext.consultant_name || "—"}</p>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-medium text-slate-400">Managed By (Staff)</p>
-                          {canWrite && (
-                            <span className="text-[10px] text-[#e88e2e] font-semibold">Click to change</span>
-                          )}
-                        </div>
-                        {canWrite ? (
-                          <div className="relative">
-                            <select
-                              value={candidate.staff_id || ""}
-                              onChange={(e) => updateCandidate.mutate({ staff_id: e.target.value || null } as any)}
-                              disabled={updateCandidate.isPending}
-                              className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-lg pl-7 pr-7 py-1.5 shadow-sm hover:border-[#e88e2e] focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/20 focus:border-[#e88e2e] cursor-pointer transition-colors appearance-none"
-                            >
-                              <option value="">— Select Staff Member —</option>
-                              {staffMembers.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                              ))}
-                            </select>
-                            <User size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none" />
-                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                          </div>
-                        ) : (
-                          <div className="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                            {candidate.staff_name || "— Unassigned —"}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -571,12 +542,40 @@ export default function CandidateDetail() {
                 {/* ── Xero-style Communication Notes ── */}
                 <div className="flex-shrink-0 bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(15,23,42,0.05)'}}>
                   {/* Header */}
-                  <div className="flex items-center justify-between px-5 py-3 bg-amber-50 border-b border-amber-100 rounded-t-2xl">
+                  <div className="flex items-center justify-between px-5 py-3 bg-amber-50 border-b border-amber-100 rounded-t-2xl gap-3 flex-wrap">
                     <div>
                       <h2 className="text-sm font-semibold text-amber-900">Communication Notes</h2>
                       <p className="text-xs text-amber-700/70 mt-0.5">{notes.length} {notes.length === 1 ? "note" : "notes"} logged</p>
                     </div>
-                    <button onClick={() => refetchNotes()} className="text-xs text-amber-700/60 hover:text-amber-900 border border-amber-200 rounded-lg px-2 py-0.5 transition-colors">↻</button>
+
+                    {/* Managed By (Staff) Dropdown moved to Communication Notes per user request */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-amber-900 whitespace-nowrap">Managed By:</span>
+                        {canWrite ? (
+                          <div className="relative">
+                            <select
+                              value={candidate.staff_id || ""}
+                              onChange={(e) => updateCandidate.mutate({ staff_id: e.target.value || null } as any)}
+                              disabled={updateCandidate.isPending}
+                              className="text-xs font-semibold text-slate-800 bg-white border border-amber-300 rounded-lg pl-7 pr-7 py-1.5 shadow-sm hover:border-[#e88e2e] focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/20 focus:border-[#e88e2e] cursor-pointer transition-colors appearance-none min-w-[170px]"
+                            >
+                              <option value="">— Select Staff —</option>
+                              {staffMembers.map((s) => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                              ))}
+                            </select>
+                            <User size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none" />
+                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          </div>
+                        ) : (
+                          <div className="text-xs font-semibold text-slate-800 bg-white border border-amber-200 rounded-lg px-2.5 py-1.5 shadow-sm">
+                            {candidate.staff_name || "— Unassigned —"}
+                          </div>
+                        )}
+                      </div>
+                      <button onClick={() => refetchNotes()} className="text-xs text-amber-700/60 hover:text-amber-900 border border-amber-200 bg-white rounded-lg px-2 py-1 transition-colors shadow-sm" title="Refresh notes">↻</button>
+                    </div>
                   </div>
 
                   {/* Error state */}
