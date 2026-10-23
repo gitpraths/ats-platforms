@@ -67,7 +67,7 @@ export default function Employers() {
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
-      <div className="max-w-6xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
+      <div className="max-w-7xl xl:max-w-[1400px] mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
         <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Employers</h1>
@@ -107,18 +107,18 @@ export default function Employers() {
         total={total} perPage={20} onChange={setPage} label="employers" />
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
+      <div className="bg-white rounded-xl shadow-sm overflow-x-auto mt-3">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[70px] min-w-[70px] whitespace-nowrap">SR #</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Company</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Industry</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Contact</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Open Vacancies</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Total Vacancies</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-right" />
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Company</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Industry</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Contact</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Open Vacancies</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Total Vacancies</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -152,15 +152,15 @@ export default function Employers() {
                       {e.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5 justify-end flex-wrap">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <div className="inline-flex items-center gap-1.5 justify-end whitespace-nowrap">
                       <Link to={`/employers/${e.id}`}
-                        className="flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
+                        className="inline-flex items-center gap-1 text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50 whitespace-nowrap">
                         <Eye size={12} /> View
                       </Link>
                       {hasPermission("employers:edit") && (
                         <Link to={`/employers/${e.id}/edit`}
-                          className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50">
+                          className="inline-flex items-center gap-1 text-xs text-slate-600 border border-slate-200 rounded px-2 py-1 hover:bg-slate-50 whitespace-nowrap">
                           <Edit2 size={12} /> Edit
                         </Link>
                       )}
@@ -169,7 +169,7 @@ export default function Employers() {
                           onClick={() => {
                             if (confirm(`Activate "${e.name}"?`)) activate.mutate(e.id);
                           }}
-                          className="text-xs text-green-700 border border-green-300 rounded px-2 py-1 hover:bg-green-50"
+                          className="inline-flex items-center text-xs text-green-700 border border-green-300 rounded px-2 py-1 hover:bg-green-50 whitespace-nowrap"
                         >
                           Activate
                         </button>
@@ -179,7 +179,7 @@ export default function Employers() {
                           onClick={() => {
                             if (confirm(`Deactivate "${e.name}"?`)) deactivate.mutate(e.id);
                           }}
-                          className="text-xs text-amber-700 border border-amber-300 rounded px-2 py-1 hover:bg-amber-50"
+                          className="inline-flex items-center text-xs text-amber-700 border border-amber-300 rounded px-2 py-1 hover:bg-amber-50 whitespace-nowrap"
                         >
                           Deactivate
                         </button>
@@ -191,7 +191,7 @@ export default function Employers() {
                               deletePermanent.mutate(e.id);
                             }
                           }}
-                          className="text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50"
+                          className="inline-flex items-center text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50 whitespace-nowrap"
                         >
                           Delete
                         </button>
