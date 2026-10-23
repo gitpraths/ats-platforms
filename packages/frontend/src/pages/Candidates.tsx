@@ -768,30 +768,39 @@ export default function Candidates() {
                           ? "bg-slate-50/90 group-hover:bg-slate-100"
                           : "bg-white group-hover:bg-orange-50/60"
                       }`}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#e88e2e] to-[#f5a623] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                            {row.name.charAt(0).toUpperCase()}
+                        <div className="min-w-0">
+                          {/* Line 1: Candidate Name + Info Tooltip */}
+                          <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span className={`font-semibold text-sm ${
+                              row.intention_to_work === "not_suitable" ? "text-red-700" : "text-slate-900"
+                            }`}>
+                              {formatName(row.name)}
+                            </span>
+                            <InfoTooltip row={row} />
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className={`font-medium whitespace-nowrap ${
-                                row.intention_to_work === "not_suitable" ? "text-red-700" : "text-slate-900"
-                              }`}>{formatName(row.name)}</span>
-                              {row.intention_to_work === "not_suitable" && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">Not Suitable</span>
-                              )}
-                              {row.intention_to_work === "remove_from_main_list" && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">Removed</span>
-                              )}
-                              {row.intention_to_work === "suitable" && (
-                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Suitable</span>
-                              )}
-                              <InfoTooltip row={row} />
-                            </div>
-                            <div className="flex items-center gap-1 mt-0.5">
+
+                          {/* Line 2: Pipeline Stage + Intention Badge */}
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <div className="flex items-center gap-1">
                               <span className={`inline-block w-1.5 h-1.5 rounded-full ${stage.bg}`} />
-                              <span className={`text-[10px] font-medium ${stage.color}`}>{stage.label}</span>
+                              <span className={`text-[11px] font-medium ${stage.color}`}>{stage.label}</span>
                             </div>
+
+                            {row.intention_to_work === "not_suitable" && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
+                                Not Suitable
+                              </span>
+                            )}
+                            {row.intention_to_work === "remove_from_main_list" && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                                Removed
+                              </span>
+                            )}
+                            {row.intention_to_work === "suitable" && (
+                              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Suitable
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
