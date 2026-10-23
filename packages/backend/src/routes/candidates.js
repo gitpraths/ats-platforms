@@ -354,7 +354,7 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
                                  ELSE COALESCE($22, work_status)
                                END,
          intention_to_work   = COALESCE($23, intention_to_work),
-         staff_id            = COALESCE($24, staff_id),
+         staff_id            = CASE WHEN $27 = true THEN $24 ELSE staff_id END,
          updated_at          = NOW(),
          updated_by          = $26
        WHERE id = $25 RETURNING *`,
@@ -385,6 +385,7 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
         staff_id !== undefined ? (staff_id || null) : null,
         req.params.id,
         req.user.id,
+        staff_id !== undefined,
       ]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Candidate not found" });

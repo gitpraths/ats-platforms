@@ -8,6 +8,7 @@ import SearchableSelect from "../components/SearchableSelect";
 import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
 import { CandidateBadge } from "../components/CandidateBadge";
+import { useToast } from "../components/ui/use-toast";
 import type { Candidate, ApplicationStage, CandidateDocument, CandidateNote, CandidateWorkStatus, CandidateTraining, TrainingStatus, Training } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
@@ -78,6 +79,7 @@ interface CandidateWithApps extends Candidate {
 export default function CandidateDetail() {
   const { id }      = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { toast }   = useToast();
   const { user }    = useAuth();
   const { hasPermission, isAdmin } = usePermissions();
   const canWrite = isAdmin || hasPermission("candidates:edit");
@@ -150,6 +152,7 @@ export default function CandidateDetail() {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
       setEditing(false);
       setSaveError("");
+      toast({ title: "Updated", description: "Candidate updated successfully." });
     },
     onError: (err: Error) => setSaveError(err.message),
   });
@@ -490,21 +493,25 @@ export default function CandidateDetail() {
                         <p className="text-sm font-semibold text-slate-900">{ext.consultant_name || "—"}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-slate-400 mb-0.5">Managed By</p>
-                        {canWrite && staffMembers.length > 0 ? (
-                          <select
-                            value={candidate.staff_id || ""}
-                            onChange={(e) => updateCandidate.mutate({ staff_id: e.target.value || null } as any)}
-                            disabled={updateCandidate.isPending}
-                            className="text-sm font-semibold text-slate-900 bg-transparent border-b border-dashed border-slate-300 hover:border-[#e88e2e] focus:outline-none focus:border-[#e88e2e] cursor-pointer py-0.5 max-w-full truncate"
-                          >
-                            <option value="">— Unassigned —</option>
-                            {staffMembers.map((s) => (
-                              <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                          </select>
+                        <p className="text-xs font-medium text-slate-400 mb-1">Managed By (Staff)</p>
+                        {canWrite ? (
+                          <div className="relative">
+                            <select
+                              value={candidate.staff_id || ""}
+                              onChange={(e) => updateCandidate.mutate({ staff_id: e.target.value || null } as any)}
+                              disabled={updateCandidate.isPending}
+                              className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 shadow-sm hover:border-[#e88e2e] focus:outline-none focus:ring-2 focus:ring-[#e88e2e]/20 focus:border-[#e88e2e] cursor-pointer transition-colors"
+                            >
+                              <option value="">— Select Staff Member —</option>
+                              {staffMembers.map((s) => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                              ))}
+                            </select>
+                          </div>
                         ) : (
-                          <p className="text-sm font-semibold text-slate-900">{candidate.staff_name || "—"}</p>
+                          <div className="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                            {candidate.staff_name || "— Unassigned —"}
+                          </div>
                         )}
                       </div>
                     </div>
