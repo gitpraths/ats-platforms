@@ -711,3 +711,9 @@ ALTER TABLE employers
   ADD COLUMN IF NOT EXISTS suburb   VARCHAR(255),
   ADD COLUMN IF NOT EXISTS state    VARCHAR(50),
   ADD COLUMN IF NOT EXISTS abn      VARCHAR(50);
+
+-- >>> 019-candidate-managed-by-staff.sql
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS staff_id UUID REFERENCES users(id) ON DELETE SET NULL;
+
+UPDATE candidates SET staff_id = created_by WHERE staff_id IS NULL AND created_by IS NOT NULL;

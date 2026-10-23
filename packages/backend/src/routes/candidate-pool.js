@@ -93,9 +93,9 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     // Internal Staff filter (WorkVision Staff - Row 56: Candidates Managed by staff)
     if (staff_id) {
       if (staff_id === "unassigned") {
-        conditions.push(`c.created_by IS NULL`);
+        conditions.push(`COALESCE(c.staff_id, c.created_by) IS NULL`);
       } else {
-        conditions.push(`c.created_by = $${idx++}`);
+        conditions.push(`COALESCE(c.staff_id, c.created_by) = $${idx++}`);
         params.push(staff_id);
       }
     }
@@ -129,7 +129,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     const lateralJoins = `
        LEFT JOIN providers pr    ON pr.id = c.provider_id
        LEFT JOIN consultants con ON con.id = c.consultant_id
-       LEFT JOIN users u_staff   ON u_staff.id = c.created_by
+       LEFT JOIN users u_staff   ON u_staff.id = COALESCE(c.staff_id, c.created_by)
        LEFT JOIN LATERAL (
          SELECT id, job_id, employer_id, start_date, confirmed_by_employer
          FROM placements
@@ -159,7 +159,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          c.work_status,
          c.intention_to_work,
          c.consultant_id,
-         c.created_by    AS staff_id,
+         COALESCE(c.staff_id, c.created_by) AS staff_id,
          u_staff.name    AS staff_name,
          c.car, c.police_check, c.wwc,
          COALESCE(c.comments, c.notes) AS comments,

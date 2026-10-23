@@ -263,7 +263,8 @@ statsRouter.get("/placements-by-staff", async (_req, res, next) => {
         u.name                                                    AS group_key,
         COUNT(pl.id)::int                                         AS count
       FROM placements pl
-      JOIN users u ON u.id = pl.created_by
+      LEFT JOIN candidates c ON c.id = pl.candidate_id
+      JOIN users u ON u.id = COALESCE(c.staff_id, c.created_by, pl.created_by)
       WHERE u.is_active = true
         AND pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
         AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'

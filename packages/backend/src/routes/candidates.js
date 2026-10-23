@@ -72,7 +72,7 @@ candidatesRouter.get("/check-duplicate", async (req, res, next) => {
 // ── GET /api/candidates ──────────────────────────────────
 candidatesRouter.get("/", requirePermission("candidates:view"), async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, q, search, work_status, provider_id } = req.query;
+    const { page = 1, limit = 20, q, search, work_status, provider_id, staff_id } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
     const searchTerm = `%${q || search || ""}%`;
 
@@ -104,18 +104,27 @@ candidatesRouter.get("/", requirePermission("candidates:view"), async (req, res,
       idx++;
     }
 
+    if (staff_id) {
+      conditions.push(`COALESCE(c.staff_id, c.created_by) = $${idx}`);
+      params.push(staff_id);
+      idx++;
+    }
+
     const where = `WHERE ${conditions.join(" AND ")}`;
 
     const { rows } = await pool.query(
       `SELECT c.*, COUNT(a.id)::int AS application_count,
               pr.name AS provider_name,
-              con.name AS consultant_name
+              con.name AS consultant_name,
+              COALESCE(c.staff_id, c.created_by) AS staff_id,
+              u_staff.name AS staff_name
        FROM candidates c
        LEFT JOIN applications a  ON a.candidate_id = c.id
        LEFT JOIN providers pr    ON pr.id = c.provider_id
        LEFT JOIN consultants con ON con.id = c.consultant_id
+       LEFT JOIN users u_staff   ON u_staff.id = COALESCE(c.staff_id, c.created_by)
        ${where}
-       GROUP BY c.id, pr.name, con.name
+       GROUP BY c.id, pr.name, con.name, u_staff.name
        ORDER BY c.created_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, Number(limit), offset]
@@ -130,10 +139,14 @@ candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, r
     const { rows } = await pool.query(
       `SELECT c.*,
               pr.name  AS provider_name,
-              con.name AS consultant_name
+              con.name AS consultant_name,
+              COALESCE(c.staff_id, c.created_by) AS staff_id,
+              u_staff.name  AS staff_name,
+              u_staff.email AS staff_email
        FROM candidates c
-       LEFT JOIN providers   pr  ON pr.id  = c.provider_id
-       LEFT JOIN consultants con ON con.id = c.consultant_id
+       LEFT JOIN providers   pr      ON pr.id  = c.provider_id
+       LEFT JOIN consultants con     ON con.id = c.consultant_id
+       LEFT JOIN users       u_staff ON u_staff.id = COALESCE(c.staff_id, c.created_by)
        WHERE c.id = $1`,
       [req.params.id]
     );
@@ -188,7 +201,7 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
     const {
       first_name, last_name, name,
       email, phone, suburb, city, state, postcode,
-      provider_id, consultant_id,
+      provider_id, consultant_id, staff_id,
       date_referred, benchmark_hours, availability,
       industry_preference, car, police_check, wwc,
       comments, notes,
@@ -246,19 +259,19 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
       `INSERT INTO candidates
          (sr_no, name, first_name, last_name,
           email, phone, suburb, city, state, postcode, country,
-          provider_id, consultant_id, date_referred,
+          provider_id, consultant_id, staff_id, date_referred,
           benchmark_hours, availability, industry_preference,
           car, police_check, wwc,
           comments, notes, interested_job,
           wage_subsidy, wage_subsidy_amount, work_status, intention_to_work,
           created_by, updated_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$28)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29)
        RETURNING *`,
       [
         sr_no, fullName, cleanFirst || null, cleanLast || null,
         email || null, phone, cleanSuburb || null, cleanSuburb || null, state || null,
         postcode || null, "Australia",
-        provider_id, consultant_id || null, date_referred || null,
+        provider_id, consultant_id || null, staff_id || req.user.id, date_referred || null,
         benchmark_hours ? Number(benchmark_hours) : null, availability || null,
         industry_preference || [],
         car || null, police_check || null, wwc || null,
@@ -295,7 +308,7 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
     const {
       first_name, last_name, name,
       email, phone, suburb, city, state, postcode,
-      provider_id, consultant_id, date_referred,
+      provider_id, consultant_id, staff_id, date_referred,
       benchmark_hours, availability, industry_preference,
       car, police_check, wwc,
       comments, notes, interested_job,
@@ -341,9 +354,10 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
                                  ELSE COALESCE($22, work_status)
                                END,
          intention_to_work   = COALESCE($23, intention_to_work),
+         staff_id            = COALESCE($24, staff_id),
          updated_at          = NOW(),
-         updated_by          = $25
-       WHERE id = $24 RETURNING *`,
+         updated_by          = $26
+       WHERE id = $25 RETURNING *`,
       [
         cleanName !== undefined ? cleanName : null,
         cleanFirst !== undefined ? cleanFirst : null,
@@ -368,6 +382,7 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
         wage_subsidy_amount || null,
         work_status || null,
         intention_to_work || null,
+        staff_id !== undefined ? (staff_id || null) : null,
         req.params.id,
         req.user.id,
       ]

@@ -53,7 +53,7 @@ reportsRouter.get("/providers", async (req, res, next) => {
 // ── GET /api/reports/placements ──────────────────────────
 reportsRouter.get("/placements", async (req, res, next) => {
   try {
-    const { from, to, employer_id, provider_id, page = 1, limit = 50 } = req.query;
+    const { from, to, employer_id, provider_id, staff_id, page = 1, limit = 50 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
     const conditions = [];
@@ -66,6 +66,7 @@ reportsRouter.get("/placements", async (req, res, next) => {
     if (to)          { conditions.push(`p.start_date <= $${idx}::date`);   params.push(to);          idx++; }
     if (employer_id) { conditions.push(`p.employer_id = $${idx}`);         params.push(employer_id); idx++; }
     if (provider_id) { conditions.push(`c.provider_id = $${idx}`);         params.push(provider_id); idx++; }
+    if (staff_id)    { conditions.push(`COALESCE(c.staff_id, c.created_by, p.created_by) = $${idx}`); params.push(staff_id); idx++; }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
@@ -77,6 +78,8 @@ reportsRouter.get("/placements", async (req, res, next) => {
          j.title AS job_title,
          e.name AS employer_name,
          pr.name AS provider_name,
+         COALESCE(u_staff.name, '—') AS staff_name,
+         COALESCE(c.staff_id, c.created_by, p.created_by) AS staff_id,
          p.start_date,
          p.confirmed_by_employer
        FROM placements p
@@ -84,6 +87,7 @@ reportsRouter.get("/placements", async (req, res, next) => {
        JOIN jobs j        ON j.id = p.job_id
        LEFT JOIN employers e  ON e.id = p.employer_id
        LEFT JOIN providers pr ON pr.id = c.provider_id
+       LEFT JOIN users u_staff ON u_staff.id = COALESCE(c.staff_id, c.created_by, p.created_by)
        ${where}
        ORDER BY p.start_date DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -136,6 +140,7 @@ reportsRouter.get("/staff", async (req, res, next) => {
          COUNT(DISTINCT jr.job_id)::int AS jobs_assigned,
          COUNT(DISTINCT jr.job_id) FILTER (WHERE j.status = 'open')::int AS active_jobs,
          COUNT(DISTINCT a.id)::int AS total_applications,
+         COUNT(DISTINCT c_managed.id)::int AS candidates_managed,
          COUNT(DISTINCT p.id)::int AS total_placements
        FROM users u
        LEFT JOIN job_recruiter jr ON jr.user_id = u.id
@@ -144,7 +149,14 @@ reportsRouter.get("/staff", async (req, res, next) => {
          AND ($2::date IS NULL OR j.created_at::date <= $2::date)
          ${employerCondition}
        LEFT JOIN applications a   ON a.job_id = j.id
-       LEFT JOIN placements p     ON p.job_id = j.id
+       LEFT JOIN candidates c_managed ON COALESCE(c_managed.staff_id, c_managed.created_by) = u.id
+       LEFT JOIN (
+         SELECT p_sub.id, p_sub.job_id, COALESCE(c_sub.staff_id, c_sub.created_by, p_sub.created_by) AS staff_id
+         FROM placements p_sub
+         JOIN candidates c_sub ON c_sub.id = p_sub.candidate_id
+         WHERE ($1::date IS NULL OR p_sub.start_date >= $1::date)
+           AND ($2::date IS NULL OR p_sub.start_date <= $2::date)
+       ) p ON (p.job_id = j.id OR p.staff_id = u.id)
        WHERE u.is_active = true
        GROUP BY u.id, u.name, u.role
        ORDER BY u.name

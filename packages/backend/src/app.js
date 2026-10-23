@@ -50,7 +50,10 @@ pool.query(`
 
   ALTER TABLE candidates
     ADD COLUMN IF NOT EXISTS availability TEXT,
-    ADD COLUMN IF NOT EXISTS intention_to_work TEXT DEFAULT 'suitable';
+    ADD COLUMN IF NOT EXISTS intention_to_work TEXT DEFAULT 'suitable',
+    ADD COLUMN IF NOT EXISTS staff_id UUID REFERENCES users(id) ON DELETE SET NULL;
+
+  UPDATE candidates SET staff_id = created_by WHERE staff_id IS NULL AND created_by IS NOT NULL;
 
   ALTER TABLE candidates
     ALTER COLUMN email DROP NOT NULL;
