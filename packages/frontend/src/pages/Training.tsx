@@ -30,7 +30,7 @@ export default function Training() {
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] px-4 py-4 sm:px-6 sm:py-5">
-      <div className="max-w-6xl mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
+      <div className="w-full max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1600px] mx-auto border border-slate-200 rounded-2xl shadow-sm bg-[#F8FAFC] p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Training Program</h1>

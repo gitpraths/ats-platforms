@@ -169,65 +169,76 @@ export function EnrolmentsTab({
       />
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm mt-3">
+      <div className="bg-white rounded-xl shadow-sm mt-3 overflow-x-auto border border-slate-200">
         {isLoading ? (
           <p className="p-6 text-slate-500">Loading...</p>
         ) : rows.length === 0 ? (
           <p className="p-6 text-center text-slate-400">No enrolments match these filters.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 sticky top-14 z-10 shadow-[0_1px_0_0_#f1f5f9]">
+          <table className="w-full text-sm min-w-[1020px]">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 sticky top-14 z-10 shadow-[0_1px_0_0_#f1f5f9] border-b border-slate-200 select-none">
               <tr>
-                <th className="text-left px-4 py-2.5">Candidate</th>
-                <th className="text-left px-4 py-2.5">Course</th>
-                <th className="text-left px-4 py-2.5">Provider</th>
-                <th className="text-left px-4 py-2.5">Status</th>
-                <th className="text-left px-4 py-2.5">Start</th>
-                <th className="text-left px-4 py-2.5">End</th>
-                <th className="text-left px-4 py-2.5">Cert Received</th>
-                <th className="px-4 py-2.5"></th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[220px]">Candidate</th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[260px]">Course</th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[160px]">Provider</th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[110px]">Status</th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[120px]">Start</th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[120px]">End</th>
+                <th className="text-left px-4 py-3 whitespace-nowrap min-w-[125px]">Cert Received</th>
+                <th className="px-4 py-3 text-right whitespace-nowrap min-w-[130px]"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.map((e) => (
-                <tr key={e.id}>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                <tr key={e.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap min-w-[220px]">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
                       <CandidateBadge srNo={e.candidate_sr_no} />
                       <Link
                         to={`/candidates/${e.candidate_id}`}
-                        className="text-[#e88e2e] hover:underline font-medium"
+                        className="text-[#e88e2e] hover:underline font-semibold"
                       >
                         {formatName(e.candidate_name)}
                       </Link>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-700">
-                    {e.training_name}
-                    {e.training_code && <span className="text-xs text-slate-400 ml-1">({e.training_code})</span>}
+                  <td className="px-4 py-3 text-slate-700 whitespace-nowrap min-w-[260px]">
+                    <span className="font-medium text-slate-900">{e.training_name}</span>
+                    {e.training_code && <span className="text-xs text-slate-400 ml-1.5 font-normal">({e.training_code})</span>}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.provider_name || "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs ${STATUS_BADGE[e.status]}`}>
+                  <td className="px-4 py-3 text-slate-500 whitespace-nowrap min-w-[160px]">{e.provider_name || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap min-w-[110px]">
+                    <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-medium ${STATUS_BADGE[e.status]}`}>
                       {e.status.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.start_date)}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{fmtDate(e.end_date)}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{e.certificate_received === true ? "Yes" : e.certificate_received === false ? "No" : "—"}</td>
-                  <td className="px-4 py-2.5 text-right space-x-2">
-                    <button
-                      onClick={() => setEditingEnrolment(e)}
-                      className="text-xs text-slate-500 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <Link
-                      to={`/candidates/${e.candidate_id}`}
-                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:underline"
-                    >
-                      Open <ExternalLink size={12} />
-                    </Link>
+                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap min-w-[120px] font-mono text-xs">{fmtDate(e.start_date)}</td>
+                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap min-w-[120px] font-mono text-xs">{fmtDate(e.end_date)}</td>
+                  <td className="px-4 py-3 text-slate-500 whitespace-nowrap min-w-[125px]">
+                    {e.certificate_received === true ? (
+                      <span className="inline-flex items-center text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs font-medium">Yes</span>
+                    ) : e.certificate_received === false ? (
+                      <span className="inline-flex items-center text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-xs">No</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap min-w-[130px]">
+                    <div className="inline-flex items-center justify-end gap-2.5 whitespace-nowrap">
+                      <button
+                        onClick={() => setEditingEnrolment(e)}
+                        className="text-xs text-slate-600 hover:text-slate-900 hover:underline font-medium"
+                      >
+                        Edit
+                      </button>
+                      <span className="text-slate-300">·</span>
+                      <Link
+                        to={`/candidates/${e.candidate_id}`}
+                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900 hover:underline font-medium"
+                      >
+                        Open <ExternalLink size={12} />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
