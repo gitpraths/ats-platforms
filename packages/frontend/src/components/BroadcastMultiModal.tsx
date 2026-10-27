@@ -212,8 +212,11 @@ export default function BroadcastMultiModal({ jobs, onClose, onSuccess }: Props)
       return;
     }
     setLoading(true);
-    await handleSend(effectiveAdditional);
-    setLoading(false);
+    try {
+      await handleSend(effectiveAdditional);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

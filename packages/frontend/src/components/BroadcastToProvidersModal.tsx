@@ -270,8 +270,11 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
       return;
     }
     setLoading(true);
-    await handleSend(effectiveAdditional);
-    setLoading(false);
+    try {
+      await handleSend(effectiveAdditional);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const payRateStr = formatBroadcastPayRate(job?.pay_rate, job?.pay_rate_type);

@@ -1,70 +1,92 @@
 import nodemailer from "nodemailer";
 import logger from "../config/logger.js";
 
-let transporter;
-
-async function getTransporter() {
-  if (transporter) return transporter;
-
+function createTransportForPort(port, secure) {
   const host = process.env.SMTP_HOST || "smtppro.zoho.com.au";
-  const port = Number(process.env.SMTP_PORT) || 465;
   const user = process.env.SMTP_USER || "connect@workvision.com.au";
   const pass = process.env.SMTP_PASS || "Email@WVA24";
 
-  // Port 465 requires secure: true (direct SSL). Port 587 requires secure: false (STARTTLS).
-  let secure = port === 465;
-  if (port === 465) {
-    secure = true;
-  } else if (port === 587) {
-    secure = false;
-  } else if (process.env.SMTP_SECURE !== undefined && process.env.SMTP_SECURE !== "") {
-    secure = process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === true;
-  }
-
-  transporter = nodemailer.createTransport({
+  return nodemailer.createTransport({
     host,
     port,
     secure,
     auth: { user, pass },
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 12000,
+    pool: false,
   });
-
-  logger.info(`[Email] Transporter active: ${user}@${host}:${port} (secure: ${secure})`);
-  return transporter;
 }
 
 export async function testEmailConnection() {
-  const t = await getTransporter();
-  return t.verify();
+  const primaryPort = Number(process.env.SMTP_PORT) || 465;
+  const primarySecure = primaryPort === 465;
+  const fallbackPort = primaryPort === 465 ? 587 : 465;
+  const fallbackSecure = fallbackPort === 465;
+
+  try {
+    const t = createTransportForPort(primaryPort, primarySecure);
+    const verified = await t.verify();
+    if (t && typeof t.close === "function") t.close();
+    return verified;
+  } catch (err) {
+    logger.warn(`[Email] Primary verify failed on port ${primaryPort}: ${err.message}. Trying port ${fallbackPort}...`);
+    const tFallback = createTransportForPort(fallbackPort, fallbackSecure);
+    const verified = await tFallback.verify();
+    if (tFallback && typeof tFallback.close === "function") tFallback.close();
+    return verified;
+  }
 }
 
 export async function sendEmail({ to, subject, html, text }) {
-  const t = await getTransporter();
   const defaultFrom = process.env.SMTP_USER
     ? `WorkVision Australia <${process.env.SMTP_USER}>`
     : "WorkVision Australia <connect@workvision.com.au>";
   const from = process.env.EMAIL_FROM || defaultFrom;
 
-  try {
-    const info = await t.sendMail({
-      from,
-      to,
-      subject,
-      html,
-      text,
-    });
-    logger.info(`Email sent: to=${to} subject="${subject}" messageId=${info.messageId}`);
+  const configuredPort = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : null;
+  const primaryPort = configuredPort || 465;
+  const primarySecure = primaryPort === 465;
+  const fallbackPort = primaryPort === 465 ? 587 : 465;
+  const fallbackSecure = fallbackPort === 465;
 
-    // Log Ethereal preview URL in dev
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) logger.info(`Email preview: ${previewUrl}`);
-    return info;
-  } catch (err) {
-    logger.error(`Email send failed: to=${to} subject="${subject}" error=${err.message}`);
-    throw err;
+  const portsToAttempt = [
+    { port: primaryPort, secure: primarySecure },
+    { port: fallbackPort, secure: fallbackSecure },
+  ];
+
+  let lastError = null;
+
+  for (const { port, secure } of portsToAttempt) {
+    let t;
+    try {
+      t = createTransportForPort(port, secure);
+
+      const mailOptions = { from, to, subject, html, text };
+      const sendPromise = t.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`SMTP send timed out after 12s on port ${port}`)), 12000)
+      );
+
+      const info = await Promise.race([sendPromise, timeoutPromise]);
+      logger.info(`[Email] Sent successfully via port ${port}: to=${to} subject="${subject}" messageId=${info.messageId}`);
+
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      if (previewUrl) logger.info(`[Email] preview: ${previewUrl}`);
+
+      return info;
+    } catch (err) {
+      lastError = err;
+      logger.warn(`[Email] Attempt failed on port ${port} to ${to}: ${err.message}`);
+    } finally {
+      if (t && typeof t.close === "function") {
+        try { t.close(); } catch (_) {}
+      }
+    }
   }
+
+  logger.error(`[Email] All SMTP attempts failed for to=${to} subject="${subject}": ${lastError?.message}`);
+  throw lastError || new Error("Failed to send email through all available SMTP configurations.");
 }
 
 export async function sendPlacementConfirmation({ placement, employer, candidate, job }) {
