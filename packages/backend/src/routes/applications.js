@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireAnyPermission } from "../middleware/auth.js";
 
 export const applicationsRouter = Router();
 applicationsRouter.use(requireAuth);
@@ -34,30 +34,19 @@ function formatAU(isoStr) {
 
 // ── GET /api/applications ────────────────────────────────────────────────────
 // Supports filters: job_id, candidate (name search), job_title (title search)
-applicationsRouter.get("/", async (req, res, next) => {
-  try {
-    const { candidate, job_title, job_id, candidate_id } = req.query;
-    const { rows: userRows } = await pool.query(
-      "SELECT role, permissions FROM users WHERE id = $1",
-      [req.user.id]
-    );
-    const liveRole = userRows[0]?.role || req.user.role;
-    const userPerms = userRows[0]?.permissions || req.user.permissions || [];
+applicationsRouter.get(
+  "/",
+  requireAnyPermission("candidates:view", "jobs:view", "important_updates:view"),
+  async (req, res, next) => {
+    try {
+      const { candidate, job_title, job_id, candidate_id } = req.query;
+      const params = [];
+      const conditions = [];
 
-    const canViewAll = ["super_admin", "admin", "staff", "hr"].includes(liveRole) ||
-      userPerms.some((p) => ["important_updates:view", "jobs:view", "candidates:view"].includes(p));
-
-    const params = canViewAll ? [] : [req.user.id];
-    const conditions = canViewAll ? [] : [
-      `(j.created_by = $1 OR EXISTS (
-         SELECT 1 FROM job_recruiter jr WHERE jr.job_id = j.id AND jr.user_id = $1
-       ))`
-    ];
-
-    if (job_id)      { params.push(job_id);             conditions.push(`a.job_id = $${params.length}`); }
-    if (candidate_id){ params.push(candidate_id);        conditions.push(`a.candidate_id = $${params.length}`); }
-    if (candidate)   { params.push(`%${candidate}%`);   conditions.push(`c.name ILIKE $${params.length}`); }
-    if (job_title)   { params.push(`%${job_title}%`);   conditions.push(`j.title ILIKE $${params.length}`); }
+      if (job_id)       { params.push(job_id);              conditions.push(`a.job_id = $${params.length}`); }
+      if (candidate_id) { params.push(candidate_id);         conditions.push(`a.candidate_id = $${params.length}`); }
+      if (candidate)    { params.push(`%${candidate}%`);    conditions.push(`c.name ILIKE $${params.length}`); }
+      if (job_title)    { params.push(`%${job_title}%`);    conditions.push(`j.title ILIKE $${params.length}`); }
 
     const { rows } = await pool.query(
       `SELECT
@@ -90,7 +79,10 @@ applicationsRouter.get("/", async (req, res, next) => {
 });
 
 // ── POST /api/applications ───────────────────────────────────────────────────
-applicationsRouter.post("/", async (req, res, next) => {
+applicationsRouter.post(
+  "/",
+  requireAnyPermission("candidates:create", "candidates:edit", "jobs:create", "jobs:edit"),
+  async (req, res, next) => {
   try {
     const { job_id, candidate_id, source, stage, interview_date, ets_date, placement_date, applied_at } = req.body;
     if (!job_id || !candidate_id)
@@ -133,40 +125,18 @@ applicationsRouter.post("/", async (req, res, next) => {
 });
 
 // ── PATCH /api/applications/:id ──────────────────────────────────────────────
-applicationsRouter.patch("/:id", async (req, res, next) => {
-  try {
-    const { stage, score, notes, interview_date, ets_date, placement_date, applied_at } = req.body;
+applicationsRouter.patch(
+  "/:id",
+  requireAnyPermission("candidates:edit", "jobs:edit", "important_updates:view"),
+  async (req, res, next) => {
+    try {
+      const { stage, score, notes, interview_date, ets_date, placement_date, applied_at } = req.body;
 
-    // Verify user is recruiter for this application's job
-    const { rows: appRows } = await pool.query(
-      `SELECT a.*, j.created_by FROM applications a JOIN jobs j ON a.job_id = j.id WHERE a.id = $1`,
-      [req.params.id]
-    );
-    if (!appRows[0]) return res.status(404).json({ success: false, error: "Application not found" });
-
-    const { rows: userRows } = await pool.query(
-      "SELECT role, permissions FROM users WHERE id = $1",
-      [req.user.id]
-    );
-    const liveRole = userRows[0]?.role || req.user.role;
-    const userPerms = userRows[0]?.permissions || req.user.permissions || [];
-
-    const isAdmin = ["super_admin", "admin"].includes(liveRole);
-    const isInternalStaff = ["staff", "hr"].includes(liveRole);
-    const hasEditPermission = userPerms.some((p) =>
-      ["candidates:edit", "important_updates:view", "jobs:edit", "placements:create"].includes(p)
-    );
-    const isOwner = appRows[0].created_by === req.user.id;
-    const { rows: recruiterRows } = await pool.query(
-      "SELECT 1 FROM job_recruiter WHERE job_id = $1 AND user_id = $2",
-      [appRows[0].job_id, req.user.id]
-    );
-    const isRecruiter = recruiterRows.length > 0;
-
-    const canUpdate = isAdmin || isInternalStaff || hasEditPermission || isOwner || isRecruiter;
-
-    if (!canUpdate)
-      return res.status(403).json({ success: false, error: "You are not authorized to update this application" });
+      const { rows: appRows } = await pool.query(
+        `SELECT a.*, j.created_by FROM applications a JOIN jobs j ON a.job_id = j.id WHERE a.id = $1`,
+        [req.params.id]
+      );
+      if (!appRows[0]) return res.status(404).json({ success: false, error: "Application not found" });
 
     if (stage && !VALID_STAGES.includes(stage))
       return res.status(400).json({ success: false, error: `stage must be one of: ${VALID_STAGES.join(", ")}` });
@@ -305,21 +275,11 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 });
 
 // ── DELETE /api/applications/:id ─────────────────────────────────────────────
-applicationsRouter.delete("/:id", async (req, res, next) => {
-  try {
-    const { rows: userRows } = await pool.query(
-      "SELECT role, permissions FROM users WHERE id = $1",
-      [req.user.id]
-    );
-    const liveRole = userRows[0]?.role || req.user.role;
-    const userPerms = userRows[0]?.permissions || req.user.permissions || [];
-
-    const canDelete = ["super_admin", "admin", "staff"].includes(liveRole) ||
-      userPerms.some((p) => ["candidates:edit", "candidates:delete", "jobs:delete"].includes(p));
-
-    if (!canDelete) {
-      return res.status(403).json({ success: false, error: "You are not authorized to delete this application" });
-    }
+applicationsRouter.delete(
+  "/:id",
+  requireAnyPermission("candidates:edit", "candidates:delete", "jobs:delete"),
+  async (req, res, next) => {
+    try {
 
     const { rows } = await pool.query(
       "UPDATE applications SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id",
