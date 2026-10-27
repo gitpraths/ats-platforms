@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../config/db.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 export const applicationsRouter = Router();
 applicationsRouter.use(requireAuth);
@@ -37,9 +37,18 @@ function formatAU(isoStr) {
 applicationsRouter.get("/", async (req, res, next) => {
   try {
     const { candidate, job_title, job_id, candidate_id } = req.query;
-    const isAdmin = ["super_admin", "admin"].includes(req.user.role);
-    const params = isAdmin ? [] : [req.user.id];
-    const conditions = isAdmin ? [] : [
+    const { rows: userRows } = await pool.query(
+      "SELECT role, permissions FROM users WHERE id = $1",
+      [req.user.id]
+    );
+    const liveRole = userRows[0]?.role || req.user.role;
+    const userPerms = userRows[0]?.permissions || req.user.permissions || [];
+
+    const canViewAll = ["super_admin", "admin", "staff", "hr"].includes(liveRole) ||
+      userPerms.some((p) => ["important_updates:view", "jobs:view", "candidates:view"].includes(p));
+
+    const params = canViewAll ? [] : [req.user.id];
+    const conditions = canViewAll ? [] : [
       `(j.created_by = $1 OR EXISTS (
          SELECT 1 FROM job_recruiter jr WHERE jr.job_id = j.id AND jr.user_id = $1
        ))`
@@ -135,7 +144,18 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     );
     if (!appRows[0]) return res.status(404).json({ success: false, error: "Application not found" });
 
-    const isAdmin = ["super_admin", "admin"].includes(req.user.role);
+    const { rows: userRows } = await pool.query(
+      "SELECT role, permissions FROM users WHERE id = $1",
+      [req.user.id]
+    );
+    const liveRole = userRows[0]?.role || req.user.role;
+    const userPerms = userRows[0]?.permissions || req.user.permissions || [];
+
+    const isAdmin = ["super_admin", "admin"].includes(liveRole);
+    const isInternalStaff = ["staff", "hr"].includes(liveRole);
+    const hasEditPermission = userPerms.some((p) =>
+      ["candidates:edit", "important_updates:view", "jobs:edit", "placements:create"].includes(p)
+    );
     const isOwner = appRows[0].created_by === req.user.id;
     const { rows: recruiterRows } = await pool.query(
       "SELECT 1 FROM job_recruiter WHERE job_id = $1 AND user_id = $2",
@@ -143,7 +163,9 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
     );
     const isRecruiter = recruiterRows.length > 0;
 
-    if (!isAdmin && !isOwner && !isRecruiter)
+    const canUpdate = isAdmin || isInternalStaff || hasEditPermission || isOwner || isRecruiter;
+
+    if (!canUpdate)
       return res.status(403).json({ success: false, error: "You are not authorized to update this application" });
 
     if (stage && !VALID_STAGES.includes(stage))
@@ -283,8 +305,22 @@ applicationsRouter.patch("/:id", async (req, res, next) => {
 });
 
 // ── DELETE /api/applications/:id ─────────────────────────────────────────────
-applicationsRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
+applicationsRouter.delete("/:id", async (req, res, next) => {
   try {
+    const { rows: userRows } = await pool.query(
+      "SELECT role, permissions FROM users WHERE id = $1",
+      [req.user.id]
+    );
+    const liveRole = userRows[0]?.role || req.user.role;
+    const userPerms = userRows[0]?.permissions || req.user.permissions || [];
+
+    const canDelete = ["super_admin", "admin", "staff"].includes(liveRole) ||
+      userPerms.some((p) => ["candidates:edit", "candidates:delete", "jobs:delete"].includes(p));
+
+    if (!canDelete) {
+      return res.status(403).json({ success: false, error: "You are not authorized to delete this application" });
+    }
+
     const { rows } = await pool.query(
       "UPDATE applications SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id",
       [req.params.id]
