@@ -6,39 +6,32 @@ let transporter;
 async function getTransporter() {
   if (transporter) return transporter;
 
-  if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
-    // Development fallback: Ethereal fake SMTP
-    const testAccount = await nodemailer.createTestAccount();
-    transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: { user: testAccount.user, pass: testAccount.pass },
-    });
-    logger.info(`Email: using Ethereal test account — ${testAccount.user}`);
-  } else {
-    const host = process.env.SMTP_HOST || "smtppro.zoho.com.au";
-    const port = Number(process.env.SMTP_PORT) || 465;
-    // Port 465 requires secure: true (direct SSL). Port 587 requires secure: false (STARTTLS).
-    let secure = port === 465;
-    if (port === 465) {
-      secure = true;
-    } else if (port === 587) {
-      secure = false;
-    } else if (process.env.SMTP_SECURE !== undefined && process.env.SMTP_SECURE !== "") {
-      secure = process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === true;
-    }
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: {
-        user: process.env.SMTP_USER || "connect@workvision.com.au",
-        pass: process.env.SMTP_PASS || "Email@WVA24",
-      },
-    });
+  const host = process.env.SMTP_HOST || "smtppro.zoho.com.au";
+  const port = Number(process.env.SMTP_PORT) || 465;
+  const user = process.env.SMTP_USER || "connect@workvision.com.au";
+  const pass = process.env.SMTP_PASS || "Email@WVA24";
+
+  // Port 465 requires secure: true (direct SSL). Port 587 requires secure: false (STARTTLS).
+  let secure = port === 465;
+  if (port === 465) {
+    secure = true;
+  } else if (port === 587) {
+    secure = false;
+  } else if (process.env.SMTP_SECURE !== undefined && process.env.SMTP_SECURE !== "") {
+    secure = process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === true;
   }
 
+  transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 100,
+  });
+
+  logger.info(`[Email] Transporter active: ${user}@${host}:${port} (secure: ${secure})`);
   return transporter;
 }
 
@@ -149,10 +142,11 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
   const defaultSubject = `New Vacancy Alert: ${job.title}${location ? ` (${location})` : ""} — WorkVision Australia`;
   const subject = (customSubject && customSubject.trim()) ? customSubject.trim() : defaultSubject;
 
-  const sendTasks = providers
-    .filter((p) => p.email)
-    .map(async (provider) => {
-      const html = `
+  const validRecipients = (providers || []).filter((p) => p && p.email && p.email.includes("@"));
+  const results = [];
+
+  for (const provider of validRecipients) {
+    const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -271,15 +265,20 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
       const text = `${subject}\n\nDear ${provider.contact_name || provider.name || "Partner"},\n\nWe have a new open vacancy:\nRole: ${job.title}\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${complianceList.length ? `Requirements:\n${complianceList.map((c) => `- ${c}`).join("\n")}\n` : ""}${effectiveDesc ? `\nAbout the Role:\n${effectiveDesc}\n` : ""}\nTo submit candidates, reply directly to this email.\n\nSent by ${sentByName} via WorkVision Australia ATS`;
 
       try {
-        await sendEmail({ to: provider.email, subject, html, text });
-        return { provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" };
-      } catch (err) {
-        return { provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message };
-      }
-    });
+      await sendEmail({ to: provider.email.trim(), subject, html, text });
+      logger.info(`[VacancyBroadcast] Sent to ${provider.email} for "${job.title}"`);
+      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
+    } catch (err) {
+      logger.error(`[VacancyBroadcast] Failed to send to ${provider.email}: ${err.message}`);
+      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
+    }
 
-  const settled = await Promise.allSettled(sendTasks);
-  return settled.map((r) => r.status === "fulfilled" ? r.value : { status: "failed", error: r.reason?.message });
+    if (validRecipients.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+
+  return results;
 }
 
 // ── Multi-Vacancy Broadcast to training providers ─────────────────────────────
@@ -336,10 +335,11 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
     `;
   }).join("");
 
-  const sendTasks = providers
-    .filter((p) => p.email)
-    .map(async (provider) => {
-      const defaultIntro = isSingle
+  const validRecipients = (providers || []).filter((p) => p && p.email && p.email.includes("@"));
+  const results = [];
+
+  for (const provider of validRecipients) {
+    const defaultIntro = isSingle
         ? "We are pleased to share 1 new open vacancy currently available across our employer network. Please review the role details below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us."
         : `We are pleased to share ${jobs.length} new open vacancies currently available across our employer network. Please review the roles below. If you have suitable, job-ready candidates registered with your service, please reply directly to this email or contact us.`;
 
@@ -436,14 +436,19 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
       const text = `${subject}\n\nDear ${provider.contact_name || provider.name || "Partner"},\n\n${introText}\n\n${jobs.map((j, i) => `${i + 1}. ${j.title} (${j.work_location || j.city || "Location TBA"}) - Pay: ${formatBroadcastPayRate(j.pay_rate, j.pay_rate_type) || "TBA"}`).join("\n")}\n\nTo submit candidate profiles, reply directly to this email.\n\nSent by ${sentByName} via WorkVision Australia ATS`;
 
       try {
-        await sendEmail({ to: provider.email, subject, html, text });
-        return { provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" };
-      } catch (err) {
-        return { provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message };
-      }
-    });
+      await sendEmail({ to: provider.email.trim(), subject, html, text });
+      logger.info(`[MultiVacancyBroadcast] Sent to ${provider.email} (${jobs.length} roles)`);
+      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
+    } catch (err) {
+      logger.error(`[MultiVacancyBroadcast] Failed to send to ${provider.email}: ${err.message}`);
+      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
+    }
 
-  const settled = await Promise.allSettled(sendTasks);
-  return settled.map((r) => r.status === "fulfilled" ? r.value : { status: "failed", error: r.reason?.message });
+    if (validRecipients.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+
+  return results;
 }
 

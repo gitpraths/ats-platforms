@@ -5,6 +5,7 @@ import {
   Loader2, CheckCircle2, AlertTriangle, Edit3, Eye, RotateCcw, Search, Mail, Plus
 } from "lucide-react";
 import { api, ApiError } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 import type { Job } from "../types";
 
 interface Provider {
@@ -43,11 +44,14 @@ function formatBroadcastPayRate(rate: any, type?: string) {
 }
 
 export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClose }: Props) {
+  const { user: me }                  = useAuth();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [initialized, setInitialized] = useState(false);
   const [sent, setSent]               = useState<{ count: number } | null>(null);
   const [errorMsg, setErrorMsg]       = useState<string | null>(null);
+  const [testSentMsg, setTestSentMsg] = useState<string | null>(null);
   const [loading, setLoading]         = useState(false);
+  const [testSending, setTestSending] = useState(false);
   const [activeTab, setActiveTab]     = useState<"customize" | "select">("customize");
 
   // Generate a professional, meaningful vacancy draft body
@@ -196,23 +200,25 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
 
   const totalRecipients = selectedIds.size + additionalEmails.length;
 
-  const handleSend = async () => {
+  const handleSend = async (overrideAdditional?: string[]) => {
     setErrorMsg(null);
+    setTestSentMsg(null);
     const ids = Array.from(selectedIds);
-    if (ids.length === 0 && additionalEmails.length === 0) return;
+    const emailsToSend = overrideAdditional !== undefined ? overrideAdditional : additionalEmails;
+    if (ids.length === 0 && emailsToSend.length === 0) return;
 
     try {
-      await api.post<{ sent: number; failed: number; queued?: boolean; results?: BroadcastResult[] }>(
+      const res = await api.post<{ sent: number; failed: number; results?: BroadcastResult[] }>(
         `/jobs/${jobId}/broadcast`,
         {
           provider_ids:      ids,
-          additional_emails: additionalEmails,
+          additional_emails: emailsToSend,
           custom_subject:    customSubject.trim(),
           custom_message:    customNote.trim(),
           custom_body:       customBody.trim(),
         }
       );
-      setSent({ count: ids.length + additionalEmails.length });
+      setSent({ count: res.sent || (ids.length + emailsToSend.length) });
     } catch (err) {
       const msg = err instanceof ApiError
         ? err.message
@@ -223,14 +229,48 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
     }
   };
 
+  const sendTestToMe = async () => {
+    if (!me?.email) {
+      setErrorMsg("Your user account has no email address configured.");
+      return;
+    }
+    setErrorMsg(null);
+    setTestSentMsg(null);
+    setTestSending(true);
+    try {
+      await api.post(`/jobs/${jobId}/broadcast`, {
+        provider_ids:      [],
+        additional_emails: [me.email.trim()],
+        custom_subject:    `[TEST PREVIEW] ${customSubject.trim()}`,
+        custom_message:    customNote.trim(),
+        custom_body:       customBody.trim(),
+      });
+      setTestSentMsg(`Test broadcast preview delivered to ${me.email}! Check your inbox.`);
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Failed to deliver test email.");
+    } finally {
+      setTestSending(false);
+    }
+  };
+
   const handleClick = async () => {
-    if (selectedIds.size === 0 && additionalEmails.length === 0) {
+    // If user typed an email into the custom box without clicking "+", auto-include it!
+    let effectiveAdditional = [...additionalEmails];
+    const pending = customEmailInput.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (pending && emailRegex.test(pending) && !effectiveAdditional.includes(pending)) {
+      effectiveAdditional.push(pending);
+      setAdditionalEmails(effectiveAdditional);
+      setCustomEmailInput("");
+    }
+
+    if (selectedIds.size === 0 && effectiveAdditional.length === 0) {
       setErrorMsg("Please select at least one provider or add an individual email address before sending.");
       setActiveTab("select");
       return;
     }
     setLoading(true);
-    await handleSend();
+    await handleSend(effectiveAdditional);
     setLoading(false);
   };
 
@@ -294,6 +334,20 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                   <p className="text-xs text-red-600">{errorMsg}</p>
                 </div>
                 <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-600">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* ── TEST SENT BANNER ── */}
+            {testSentMsg && (
+              <div className="mx-6 mt-4 flex items-start gap-3 p-3.5 bg-green-50 border-2 border-green-200 rounded-xl">
+                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-green-800">Preview delivered</p>
+                  <p className="text-xs text-green-700">{testSentMsg}</p>
+                </div>
+                <button onClick={() => setTestSentMsg(null)} className="text-green-500 hover:text-green-700">
                   <X size={14} />
                 </button>
               </div>
@@ -627,7 +681,19 @@ export default function BroadcastToProvidersModal({ jobId, jobTitle, job, onClos
                   </button>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                {me?.email && (
+                  <button
+                    type="button"
+                    onClick={sendTestToMe}
+                    disabled={testSending || loading}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-slate-300 text-slate-700 hover:text-slate-900 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    title={`Send a test broadcast preview directly to ${me.email}`}
+                  >
+                    {testSending ? <Loader2 size={13} className="animate-spin" /> : <Mail size={13} className="text-[#e88e2e]" />}
+                    {testSending ? "Sending Test..." : "Send Test to Me"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={onClose}

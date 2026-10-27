@@ -2,7 +2,7 @@ import { Router } from "express";
 import { pool } from "../config/db.js";
 import { requireAuth, requireRole, requirePermission } from "../middleware/auth.js";
 import { validateJobStatusTransition, toTitleCase } from "../utils/index.js";
-import { sendVacancyBroadcast, sendMultiVacancyBroadcast } from "../services/email.js";
+import { sendVacancyBroadcast, sendMultiVacancyBroadcast, sendEmail } from "../services/email.js";
 
 export const jobsRouter = Router();
 jobsRouter.use(requireAuth);
@@ -427,19 +427,7 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
     const sentByName = req.user.name || req.user.email;
     const userId     = req.user.id;
 
-    // Respond immediately — emails send in the background
-    res.json({
-      success: true,
-      data: {
-        sent:    recipients.length,
-        failed:  0,
-        queued:  true,
-        message: `Broadcast queued for ${recipients.length} recipient${recipients.length !== 1 ? "s" : ""}. Emails will arrive shortly.`,
-      },
-    });
-
-    // Fire-and-forget: send all emails in parallel, then log
-    sendVacancyBroadcast({
+    const results = await sendVacancyBroadcast({
       job:           jobRows[0],
       providers:     recipients,
       sentByName,
@@ -447,36 +435,58 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
       customSubject: custom_subject,
       customMessage: custom_message,
       customBody:    custom_body,
-    }).then((results) => {
-      const sentCount = results.filter((r) => r.status === "sent").length;
+    });
 
-      // Insert into activity_log
-      pool.query(
-        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
-         VALUES ('job', $1, 'broadcast_to_providers', $2, $3)`,
-        [
-          jobId,
-          userId,
-          JSON.stringify({
-            sent_to:        results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
-            sent_count:     sentCount,
-            custom_subject: custom_subject || null,
-          }),
-        ]
-      ).catch(() => {});
+    const sentCount = results.filter((r) => r.status === "sent").length;
+    const failedCount = results.filter((r) => r.status === "failed").length;
 
-      // Also insert into job_activity so it displays in the vacancy's History log
-      const recipientNames = results.map((r) => r.name).filter(Boolean).slice(0, 3).join(", ");
-      const moreSuffix = results.length > 3 ? ` +${results.length - 3} more` : "";
-      const comment = `Broadcast sent to ${results.length} recipient${results.length !== 1 ? "s" : ""} (${recipientNames}${moreSuffix})`;
+    // Insert into activity_log
+    pool.query(
+      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+       VALUES ('job', $1, 'broadcast_to_providers', $2, $3)`,
+      [
+        jobId,
+        userId,
+        JSON.stringify({
+          sent_to:        results.map((r) => ({ id: r.provider_id, name: r.name, email: r.email, status: r.status, error: r.error })),
+          sent_count:     sentCount,
+          failed_count:   failedCount,
+          custom_subject: custom_subject || null,
+        }),
+      ]
+    ).catch(() => {});
 
-      pool.query(
-        `INSERT INTO job_activity (job_id, user_id, job_status, comment)
-         VALUES ($1, $2, 'broadcast', $3)`,
-        [jobId, userId, comment]
-      ).catch(() => {});
-    }).catch(() => {});
+    // Also insert into job_activity so it displays in the vacancy's History log
+    const recipientNames = results.filter((r) => r.status === "sent").map((r) => r.name || r.email).slice(0, 3).join(", ");
+    const moreSuffix = sentCount > 3 ? ` +${sentCount - 3} more` : "";
+    const comment = sentCount > 0
+      ? `Broadcast sent to ${sentCount} recipient${sentCount !== 1 ? "s" : ""} (${recipientNames}${moreSuffix})`
+      : `Broadcast delivery failed for all ${recipients.length} recipients`;
 
+    pool.query(
+      `INSERT INTO job_activity (job_id, user_id, job_status, comment)
+       VALUES ($1, $2, 'broadcast', $3)`,
+      [jobId, userId, comment]
+    ).catch(() => {});
+
+    if (sentCount === 0 && recipients.length > 0) {
+      const firstError = results.find((r) => r.error)?.error || "Email delivery failed";
+      return res.status(502).json({
+        success: false,
+        error: `Could not deliver broadcast: ${firstError}. Please check SMTP configuration.`,
+        data: { sent: 0, failed: failedCount, results },
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        sent:    sentCount,
+        failed:  failedCount,
+        results,
+        message: `Broadcast successfully sent to ${sentCount} recipient${sentCount !== 1 ? "s" : ""}.${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
+      },
+    });
   } catch (err) { next(err); }
 });
 
@@ -544,19 +554,7 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
     const sentByName = req.user.name || req.user.email;
     const userId     = req.user.id;
 
-    // Respond immediately (fire-and-forget sending)
-    res.json({
-      success: true,
-      data: {
-        sent:          recipients.length,
-        jobs_count:    jobs.length,
-        queued:        true,
-        message:       `Consolidated broadcast with ${jobs.length} vacancies queued for ${recipients.length} recipient${recipients.length !== 1 ? "s" : ""}.`,
-      },
-    });
-
-    // Fire and forget emails
-    sendMultiVacancyBroadcast({
+    const results = await sendMultiVacancyBroadcast({
       jobs,
       providers:     recipients,
       sentByName,
@@ -564,39 +562,92 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
       customSubject: custom_subject,
       customMessage: custom_message,
       customIntro:   custom_intro,
-    }).then((results) => {
-      const sentCount = results.filter((r) => r.status === "sent").length;
+    });
 
-      // Log in activity_log
+    const sentCount = results.filter((r) => r.status === "sent").length;
+    const failedCount = results.filter((r) => r.status === "failed").length;
+
+    // Log in activity_log
+    pool.query(
+      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+       VALUES ('job', $1, 'broadcast_multi_to_providers', $2, $3)`,
+      [
+        jobs[0].id,
+        userId,
+        JSON.stringify({
+          job_ids:        jobs.map((j) => j.id),
+          job_titles:     jobs.map((j) => j.title),
+          sent_to:        results.map((r) => ({ id: r.provider_id, name: r.name, email: r.email, status: r.status, error: r.error })),
+          sent_count:     sentCount,
+          failed_count:   failedCount,
+          custom_subject: custom_subject || null,
+        }),
+      ]
+    ).catch(() => {});
+
+    // Add timeline entry for each individual job
+    const providerNames = results.filter((r) => r.status === "sent").map((r) => r.name || r.email).slice(0, 3).join(", ");
+    const moreSuffix = sentCount > 3 ? ` +${sentCount - 3} more` : "";
+    const comment = sentCount > 0
+      ? `Multi-vacancy broadcast (${jobs.length} roles) sent to ${sentCount} provider${sentCount !== 1 ? "s" : ""} (${providerNames}${moreSuffix})`
+      : `Multi-vacancy broadcast failed for all ${recipients.length} recipients`;
+
+    for (const j of jobs) {
       pool.query(
-        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
-         VALUES ('job', $1, 'broadcast_multi_to_providers', $2, $3)`,
-        [
-          jobs[0].id,
-          userId,
-          JSON.stringify({
-            job_ids:        jobs.map((j) => j.id),
-            job_titles:     jobs.map((j) => j.title),
-            sent_to:        results.map((r) => ({ id: r.provider_id, name: r.name, status: r.status })),
-            sent_count:     sentCount,
-            custom_subject: custom_subject || null,
-          }),
-        ]
+        `INSERT INTO job_activity (job_id, user_id, job_status, comment)
+         VALUES ($1, $2, 'broadcast', $3)`,
+        [j.id, userId, comment]
       ).catch(() => {});
+    }
 
-      // Add timeline entry for each individual job
-      const providerNames = results.map((r) => r.name).filter(Boolean).slice(0, 3).join(", ");
-      const moreSuffix = results.length > 3 ? ` +${results.length - 3} more` : "";
-      const comment = `Multi-vacancy broadcast (${jobs.length} roles) sent to ${results.length} provider${results.length !== 1 ? "s" : ""} (${providerNames}${moreSuffix})`;
+    if (sentCount === 0 && recipients.length > 0) {
+      const firstError = results.find((r) => r.error)?.error || "Email delivery failed";
+      return res.status(502).json({
+        success: false,
+        error: `Could not deliver broadcast: ${firstError}. Please check SMTP configuration.`,
+        data: { sent: 0, failed: failedCount, results },
+      });
+    }
 
-      for (const j of jobs) {
-        pool.query(
-          `INSERT INTO job_activity (job_id, user_id, job_status, comment)
-           VALUES ($1, $2, 'broadcast', $3)`,
-          [j.id, userId, comment]
-        ).catch(() => {});
-      }
-    }).catch(() => {});
-
+    res.json({
+      success: true,
+      data: {
+        sent:          sentCount,
+        failed:        failedCount,
+        jobs_count:    jobs.length,
+        results,
+        message:       `Consolidated broadcast with ${jobs.length} vacancies sent to ${sentCount} recipient${sentCount !== 1 ? "s" : ""}.${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
+      },
+    });
   } catch (err) { next(err); }
+});
+
+// ── POST /api/jobs/test-email ────────────────────────────────────────────────
+// Live diagnostic endpoint to test and verify Zoho Mail sending
+jobsRouter.post("/test-email", async (req, res, next) => {
+  try {
+    const targetEmail = (req.body.to || req.user.email || "connect@workvision.com.au").trim();
+    const info = await sendEmail({
+      to: targetEmail,
+      subject: "WorkVision Australia – Email Diagnostic Test",
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;border:1px solid #e2e8f0;border-radius:10px;max-width:520px;background:#ffffff;">
+          <h2 style="color:#0f172a;margin:0 0 12px;font-size:20px;">Email System Operational</h2>
+          <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 16px;">This is a live diagnostic verification from WorkVision Australia ATS.</p>
+          <table width="100%" style="font-size:13px;line-height:2;color:#334155;">
+            <tr><td width="130" style="color:#64748b;font-weight:600;">Recipient:</td><td><strong>${targetEmail}</strong></td></tr>
+            <tr><td style="color:#64748b;font-weight:600;">Initiated By:</td><td>${req.user.name || req.user.email}</td></tr>
+            <tr><td style="color:#64748b;font-weight:600;">SMTP Host:</td><td>smtppro.zoho.com.au:465 (SSL)</td></tr>
+            <tr><td style="color:#64748b;font-weight:600;">Timestamp:</td><td>${new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" })} (AEST)</td></tr>
+          </table>
+          <hr style="border:none;border-top:1px solid #f1f5f9;margin:18px 0 12px;" />
+          <p style="font-size:11px;color:#94a3b8;margin:0;">WorkVision Australia &bull; connect@workvision.com.au</p>
+        </div>
+      `,
+      text: `WorkVision Australia – Email Diagnostic Test\nRecipient: ${targetEmail}\nInitiated by: ${req.user.name || req.user.email}\nTimestamp: ${new Date().toISOString()}`,
+    });
+    res.json({ success: true, data: { messageId: info.messageId, to: targetEmail, accepted: info.accepted } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
