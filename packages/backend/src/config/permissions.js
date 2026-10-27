@@ -5,6 +5,13 @@ export const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "kavil@work
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
+// Accounts permanently protected from deletion (Super Admins + system/dev accounts)
+export const PROTECTED_USER_EMAILS = [
+  ...SUPER_ADMIN_EMAILS,
+  "admin@workvision.com.au",
+  "test.staff@workvision.com.au",
+];
+
 export const PERMISSIONS_CATALOG = [
   {
     module: "employers",

@@ -293,28 +293,64 @@ usersRouter.put("/:id/permissions", requireRole("admin"), async (req, res, next)
   } catch (err) { next(err); }
 });
 
-// ── DELETE /api/users/:id (Super Admin Protected) ─────────────────────────────
+// ── DELETE /api/users/:id (Protected Account Guarded) ─────────────────────────────
 usersRouter.delete("/:id", requireRole("admin"), async (req, res, next) => {
+  const client = await pool.connect();
   try {
     if (req.params.id === req.user.id)
       return res.status(400).json({ success: false, error: "You cannot delete your own account" });
 
-    const target = await pool.query("SELECT id, email, role FROM users WHERE id = $1", [req.params.id]);
+    const target = await client.query("SELECT id, email, role FROM users WHERE id = $1", [req.params.id]);
     if (!target.rows[0]) return res.status(404).json({ success: false, error: "User not found" });
 
-    // Hard-lock: Super Admins (kavil@workvision.com.au & dhaval@workvision.com.au) cannot be deleted
-    const { SUPER_ADMIN_EMAILS } = await import("../config/permissions.js");
-    const isTargetSuperAdmin = target.rows[0].role === "super_admin" ||
-      SUPER_ADMIN_EMAILS.some((e) => e.toLowerCase() === target.rows[0].email.toLowerCase());
+    // Hard-lock: Super Admins & Protected Accounts cannot be deleted
+    const { SUPER_ADMIN_EMAILS, PROTECTED_USER_EMAILS } = await import("../config/permissions.js");
+    const protectedList = PROTECTED_USER_EMAILS || SUPER_ADMIN_EMAILS;
+    const isTargetProtected = target.rows[0].role === "super_admin" ||
+      protectedList.some((e) => e.toLowerCase() === (target.rows[0].email || "").toLowerCase().trim());
 
-    if (isTargetSuperAdmin) {
+    if (isTargetProtected) {
       return res.status(403).json({
         success: false,
-        error: "Super Admin accounts are permanently protected and cannot be deleted.",
+        error: "This account is permanently protected and cannot be deleted.",
       });
     }
 
-    const { rows } = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [req.params.id]);
+    await client.query("BEGIN");
+    const userId = req.params.id;
+
+    // 1. Jobs: nullify user references and remove recruiter links
+    await client.query("UPDATE jobs SET sourced_by_user_id = NULL WHERE sourced_by_user_id = $1", [userId]);
+    await client.query("UPDATE jobs SET created_by = NULL WHERE created_by = $1", [userId]);
+    await client.query("UPDATE jobs SET updated_by = NULL WHERE updated_by = $1", [userId]);
+    await client.query("DELETE FROM job_recruiter WHERE user_id = $1", [userId]);
+    await client.query("UPDATE job_activity SET user_id = NULL WHERE user_id = $1", [userId]);
+
+    // 2. Candidates: nullify staff and audit links
+    await client.query("UPDATE candidates SET staff_id = NULL WHERE staff_id = $1", [userId]);
+    await client.query("UPDATE candidates SET created_by = NULL WHERE created_by = $1", [userId]);
+    await client.query("UPDATE candidates SET updated_by = NULL WHERE updated_by = $1", [userId]);
+    await client.query("UPDATE candidate_documents SET uploaded_by = NULL WHERE uploaded_by = $1", [userId]);
+    await client.query("UPDATE candidate_notes SET created_by = NULL WHERE created_by = $1", [userId]);
+
+    // 3. Training & Placements: nullify creator links
+    await client.query("UPDATE candidate_trainings SET created_by = NULL WHERE created_by = $1", [userId]);
+    await client.query("UPDATE placements SET created_by = NULL WHERE created_by = $1", [userId]);
+
+    // 4. Integrations & Activity logs
+    await client.query("UPDATE xero_connection SET connected_by = NULL WHERE connected_by = $1", [userId]);
+    await client.query("UPDATE xero_invoices SET created_by = NULL WHERE created_by = $1", [userId]);
+    await client.query("UPDATE activity_log SET performed_by = NULL WHERE performed_by = $1", [userId]);
+
+    // 5. Delete the user
+    const { rows } = await client.query("DELETE FROM users WHERE id = $1 RETURNING id", [userId]);
+    await client.query("COMMIT");
+
     res.json({ success: true, data: { id: rows[0].id } });
-  } catch (err) { next(err); }
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    next(err);
+  } finally {
+    client.release();
+  }
 });

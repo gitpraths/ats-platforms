@@ -58,6 +58,9 @@ pool.query(`
   ALTER TABLE candidates
     ALTER COLUMN email DROP NOT NULL;
 
+  ALTER TABLE candidate_notes
+    ALTER COLUMN created_by DROP NOT NULL;
+
   ALTER TABLE employers
     ADD COLUMN IF NOT EXISTS postcode VARCHAR(10),
     ADD COLUMN IF NOT EXISTS suburb   VARCHAR(255),

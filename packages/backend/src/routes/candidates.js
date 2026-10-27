@@ -517,9 +517,9 @@ candidatesRouter.get("/:id/notes", requirePermission("candidates:view"), async (
   try {
     const { rows } = await pool.query(
       `SELECT n.id, n.candidate_id, n.body, n.created_at, n.updated_at,
-              u.id AS author_id, u.name AS author_name, u.email AS author_email
+              u.id AS author_id, COALESCE(u.name, 'Staff Member') AS author_name, u.email AS author_email
          FROM candidate_notes n
-         JOIN users u ON u.id = n.created_by
+         LEFT JOIN users u ON u.id = n.created_by
         WHERE n.candidate_id = $1
         ORDER BY n.created_at DESC`,
       [req.params.id]
@@ -545,9 +545,9 @@ candidatesRouter.post("/:id/notes", requirePermission("candidates:edit"), async 
     // Return with author info
     const { rows: full } = await pool.query(
       `SELECT n.id, n.candidate_id, n.body, n.created_at, n.updated_at,
-              u.id AS author_id, u.name AS author_name, u.email AS author_email
+              u.id AS author_id, COALESCE(u.name, 'Staff Member') AS author_name, u.email AS author_email
          FROM candidate_notes n
-         JOIN users u ON u.id = n.created_by
+         LEFT JOIN users u ON u.id = n.created_by
         WHERE n.id = $1`,
       [rows[0].id]
     );

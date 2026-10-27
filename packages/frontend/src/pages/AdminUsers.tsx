@@ -66,13 +66,15 @@ function ActionIconSpan({
   );
 }
 
-const SUPER_ADMIN_EMAILS = [
+const PROTECTED_EMAILS = [
   "kavil@workvision.com.au",
-  "dhaval@workvision.com.au"
+  "dhaval@workvision.com.au",
+  "admin@workvision.com.au",
+  "test.staff@workvision.com.au",
 ];
 
-function isSuperAdminUser(u: User) {
-  return u.role === "super_admin" || SUPER_ADMIN_EMAILS.includes((u.email || "").toLowerCase().trim());
+function isProtectedUser(u: User) {
+  return u.role === "super_admin" || PROTECTED_EMAILS.includes((u.email || "").toLowerCase().trim());
 }
 
 const ROLES: { value: UserRole; label: string; badge: string }[] = [
@@ -130,6 +132,9 @@ export default function AdminUsers() {
   const deleteUser = useMutation({
     mutationFn: (id: string) => api.delete(`/users/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-users"] }),
+    onError: (err: any) => {
+      alert(err?.message || err?.error || "Failed to delete user");
+    },
   });
 
   function startEdit(u: User) {
@@ -339,9 +344,9 @@ export default function AdminUsers() {
                           >
                             <KeyRound size={14} />
                           </ActionIconBtn>
-                          {isSuperAdminUser(u) ? (
+                          {isProtectedUser(u) ? (
                             <ActionIconSpan
-                              tooltip="Protected Super Admin (cannot be deleted)"
+                              tooltip="Protected Account (cannot be deleted)"
                               className="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center"
                             >
                               <Lock size={14} />
