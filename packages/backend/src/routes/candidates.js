@@ -205,7 +205,7 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
       date_referred, benchmark_hours, availability,
       industry_preference, car, police_check, wwc,
       comments, notes,
-      wage_subsidy, wage_subsidy_amount, interested_job, intention_to_work,
+      wage_subsidy, wage_subsidy_amount, interested_job, intention_to_work, work_status,
     } = req.body;
 
     const cleanFirst = first_name ? toTitleCase(first_name.trim()) : null;
@@ -277,7 +277,7 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
         car || null, police_check || null, wwc || null,
         comments || notes || null, notes || comments || null, interested_job || null,
         wage_subsidy ?? false, wage_subsidy_amount || null,
-        intention_to_work === "remove_from_main_list" ? "inactive" : "job_seeking",
+        intention_to_work === "remove_from_main_list" ? "inactive" : (work_status || "job_seeking"),
         intention_to_work || "suitable",
         req.user.id
       ]

@@ -463,10 +463,11 @@ export function CandidateFormPanel({
               value={form.intention_to_work}
               onChange={(e) => {
                 const val = e.target.value;
-                set("intention_to_work", val);
-                if (val === "remove_from_main_list") {
-                  set("work_status", "inactive");
-                }
+                setForm((f) => ({
+                  ...f,
+                  intention_to_work: val,
+                  work_status: val === "remove_from_main_list" ? "inactive" : (f.work_status === "inactive" ? "job_seeking" : f.work_status)
+                }));
               }}
               className={CLS}
             >
@@ -479,6 +480,19 @@ export function CandidateFormPanel({
                 Candidate will be auto-archived and removed from the active candidate pool.
               </p>
             )}
+          </div>
+          <div>
+            <Label>Work Status</Label>
+            <select
+              value={form.work_status || "job_seeking"}
+              onChange={(e) => set("work_status", e.target.value)}
+              className={CLS}
+            >
+              <option value="job_seeking">Job Seeking</option>
+              <option value="employed">Employed</option>
+              <option value="placed">Placed</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
         </div>
       </div>
