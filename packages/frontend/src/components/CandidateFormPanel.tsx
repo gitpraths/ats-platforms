@@ -455,7 +455,7 @@ export function CandidateFormPanel({
           </div>
         </div>
 
-        {/* Job Seeker Intention to Work + Work Status */}
+        {/* Job Seeker Intention to Work */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Job Seeker Intention to Work</Label>
@@ -480,19 +480,6 @@ export function CandidateFormPanel({
                 Candidate will be auto-archived and removed from the active candidate pool.
               </p>
             )}
-          </div>
-          <div>
-            <Label>Work Status</Label>
-            <select
-              value={form.work_status || "job_seeking"}
-              onChange={(e) => set("work_status", e.target.value)}
-              className={CLS}
-            >
-              <option value="job_seeking">Job Seeking</option>
-              <option value="employed">Employed</option>
-              <option value="placed">Placed</option>
-              <option value="inactive">Inactive</option>
-            </select>
           </div>
         </div>
       </div>
