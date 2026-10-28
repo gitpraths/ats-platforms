@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { toTitleCase } from "../lib/utils";
-import { CandidateFormPanel, EMPTY_FORM } from "./CandidateFormPanel";
+import { CandidateFormPanel, EMPTY_FORM, sanitizePhone } from "./CandidateFormPanel";
 import type { CandidateFormData } from "./CandidateFormPanel";
 
 interface Props {
@@ -116,12 +116,13 @@ export default function AddCandidateDialog({ isOpen, onClose }: Props) {
     const cleanSuburb = toTitleCase(form.suburb);
     const fullName = [cleanFirst, cleanLast].filter(Boolean).join(" ");
     if (!fullName.trim())      { setError("First name is required."); return; }
-    if (!form.phone)           { setError("Phone is required."); return; }
-    if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) { setError("Phone must be 10 digits."); return; }
+    const cleanPhone = sanitizePhone(form.phone);
+    if (!cleanPhone)           { setError("Phone is required."); return; }
+    if (cleanPhone.length !== 10) { setError("Phone must be a valid 10-digit number."); return; }
     if (!form.provider_id)     { setError("Provider is required."); return; }
     if (!form.benchmark_hours) { setError("Benchmark hours is required."); return; }
     if (!form.car)             { setError("Car preference is required."); return; }
-    create.mutate({ ...form, first_name: cleanFirst, last_name: cleanLast, suburb: cleanSuburb });
+    create.mutate({ ...form, phone: cleanPhone, first_name: cleanFirst, last_name: cleanLast, suburb: cleanSuburb });
   }
 
   if (!isOpen) return null;

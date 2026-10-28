@@ -46,6 +46,16 @@ export const EMPTY_FORM: CandidateFormData = {
   staff_id: "",
 };
 
+export function sanitizePhone(input: string): string {
+  if (!input) return "";
+  let digits = input.replace(/\D/g, "");
+  // Australian international prefix: +61 4xx xxx xxx or 614xx xxx xxx -> 04xx xxx xxx
+  if (digits.startsWith("61") && digits.length >= 11) {
+    digits = "0" + digits.slice(2);
+  }
+  return digits.slice(0, 10);
+}
+
 // ── Shared Styles ──────────────────────────────────────────────────────────────
 const CLS = "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e88e2e] focus:border-transparent bg-white";
 const sectionCls = "bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4";
@@ -384,14 +394,14 @@ export function CandidateFormPanel({
               className={CLS} placeholder="Smith" />
           </div>
           <div>
-            <Label required>Phone (10 digits)</Label>
+            <Label required>Phone</Label>
             <input type="tel" value={form.phone}
-              onChange={(e) => set("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+              onChange={(e) => set("phone", sanitizePhone(e.target.value))}
               onBlur={() => checkDuplicatePhone(form.phone)}
               className={`${CLS} ${dupPhone ? "border-amber-400" : ""}`}
-              placeholder="0412 345 678" maxLength={10} />
+              placeholder="0412 345 678" />
             {form.phone && form.phone.length > 0 && form.phone.length !== 10 && (
-              <p className="text-xs text-red-500 mt-1">Must be exactly 10 digits</p>
+              <p className="text-xs text-red-500 mt-1">Must be a valid 10-digit number (e.g. 0412 345 678)</p>
             )}
           </div>
           <div>

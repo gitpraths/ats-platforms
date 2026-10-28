@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Phone, MapPin, Edit2, Upload, Download, Trash2, FileText, Eye, ExternalLink, Car, Shield, Users, DollarSign, Building2, Calendar, CheckCircle, XCircle, User, Briefcase, Clock, Pencil, X, ChevronDown } from "lucide-react";
 import { api } from "../lib/api";
 import SearchableSelect from "../components/SearchableSelect";
-import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
+import { CandidateFormPanel, EMPTY_FORM, sanitizePhone } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
 import { CandidateBadge } from "../components/CandidateBadge";
 import { useToast } from "../components/ui/use-toast";
@@ -210,14 +210,15 @@ export default function CandidateDetail() {
     const cleanSuburb = toTitleCase(editForm.suburb);
     const fullName = [cleanFirst, cleanLast].filter(Boolean).join(" ");
     if (!fullName.trim()) { setSaveError("First name is required."); return; }
-    if (!editForm.phone)   { setSaveError("Phone is required."); return; }
-    if (!/^\d{10}$/.test(editForm.phone.replace(/\s/g, ""))) {
-      setSaveError("Phone must be 10 digits."); return;
+    const cleanPhone = sanitizePhone(editForm.phone);
+    if (!cleanPhone)      { setSaveError("Phone is required."); return; }
+    if (cleanPhone.length !== 10) {
+      setSaveError("Phone must be a valid 10-digit number."); return;
     }
     updateCandidate.mutate({
       name:                fullName,
       email:               editForm.email,
-      phone:               editForm.phone,
+      phone:               cleanPhone,
       city:                cleanSuburb,
       state:               editForm.state,
       postcode:            editForm.postcode,

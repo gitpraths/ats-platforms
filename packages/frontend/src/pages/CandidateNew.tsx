@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../lib/api";
-import { CandidateFormPanel, EMPTY_FORM } from "../components/CandidateFormPanel";
+import { CandidateFormPanel, EMPTY_FORM, sanitizePhone } from "../components/CandidateFormPanel";
 import type { CandidateFormData } from "../components/CandidateFormPanel";
 
 export default function CandidateNew() {
@@ -101,12 +101,13 @@ export default function CandidateNew() {
     setExistingCandidateId(undefined);
     const fullName = [form.first_name, form.last_name].filter(Boolean).join(" ");
     if (!fullName.trim())      { setError("First name is required."); return; }
-    if (!form.phone)           { setError("Phone is required."); return; }
-    if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) { setError("Phone must be 10 digits."); return; }
+    const cleanPhone = sanitizePhone(form.phone);
+    if (!cleanPhone)           { setError("Phone is required."); return; }
+    if (cleanPhone.length !== 10) { setError("Phone must be a valid 10-digit number."); return; }
     if (!form.provider_id)     { setError("Provider is required."); return; }
     if (!form.benchmark_hours) { setError("Benchmark hours is required."); return; }
     // Pass a frozen snapshot of the form — no stale-closure risk inside mutationFn
-    create.mutate({ ...form });
+    create.mutate({ ...form, phone: cleanPhone });
   }
 
   return (
