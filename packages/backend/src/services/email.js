@@ -6,15 +6,20 @@ function getResendApiKey() {
 
 async function sendViaResend({ to, subject, html, text }) {
   const apiKey = getResendApiKey();
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY environment variable is not configured. Please add RESEND_API_KEY to your environment.");
-  }
-
   const defaultFrom = "WorkVision Australia <connect@workvision.com.au>";
   const from = process.env.EMAIL_FROM || defaultFrom;
   const replyTo = process.env.EMAIL_REPLY_TO || "connect@workvision.com.au";
-
   const toList = Array.isArray(to) ? to : [to];
+
+  console.log(`[Email DEBUG] sendViaResend invoked: to=${JSON.stringify(toList)}, subject="${subject}"`);
+  console.log(`[Email DEBUG] API Key present: ${!!apiKey} (prefix: ${apiKey ? apiKey.slice(0, 8) + "..." : "NONE"})`);
+  console.log(`[Email DEBUG] From: "${from}", Reply-To: "${replyTo}"`);
+
+  if (!apiKey) {
+    const msg = "RESEND_API_KEY environment variable is not configured. Please add RESEND_API_KEY to your environment.";
+    console.error(`[Email DEBUG ERROR] ${msg}`);
+    throw new Error(msg);
+  }
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -33,9 +38,11 @@ async function sendViaResend({ to, subject, html, text }) {
   });
 
   const data = await response.json().catch(() => ({}));
+  console.log(`[Email DEBUG] Resend HTTP Status: ${response.status} ${response.statusText}, body:`, JSON.stringify(data));
 
   if (!response.ok) {
     const errorMsg = data?.message || data?.error || `HTTP ${response.status} ${response.statusText}`;
+    console.error(`[Email DEBUG ERROR] Resend rejected email: ${errorMsg}`);
     throw new Error(`Resend delivery failed: ${errorMsg}`);
   }
 
@@ -143,6 +150,8 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
   const subject = (customSubject && customSubject.trim()) ? customSubject.trim() : defaultSubject;
 
   const validRecipients = (providers || []).filter((p) => p && p.email && p.email.includes("@"));
+  console.log(`[VacancyBroadcast DEBUG] Starting sendVacancyBroadcast for "${job?.title}" (id: ${job?.id}). Total recipients passed: ${(providers || []).length}, valid with email: ${validRecipients.length}`);
+  validRecipients.forEach((p, i) => console.log(`  [VacancyBroadcast Recipient #${i + 1}] ${p.name || p.contact_name || "Provider"} <${p.email}>`));
   const results = [];
 
   for (const provider of validRecipients) {
@@ -265,13 +274,16 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
       const text = `${subject}\n\nDear ${provider.contact_name || provider.name || "Partner"},\n\nWe have a new open vacancy:\nRole: ${job.title}\n${job.employer_name ? `Employer: ${job.employer_name}\n` : ""}${location ? `Location: ${location}\n` : ""}${payStr ? `Pay: ${payStr}\n` : ""}${complianceList.length ? `Requirements:\n${complianceList.map((c) => `- ${c}`).join("\n")}\n` : ""}${effectiveDesc ? `\nAbout the Role:\n${effectiveDesc}\n` : ""}\nTo submit candidates, reply directly to this email.\n\nSent by ${sentByName} via WorkVision Australia ATS`;
 
       try {
-      await sendEmail({ to: provider.email.trim(), subject, html, text });
-      logger.info(`[VacancyBroadcast] Sent to ${provider.email} for "${job.title}"`);
-      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
-    } catch (err) {
-      logger.error(`[VacancyBroadcast] Failed to send to ${provider.email}: ${err.message}`);
-      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
-    }
+        console.log(`[VacancyBroadcast DEBUG] Calling sendEmail to ${provider.email}...`);
+        await sendEmail({ to: provider.email.trim(), subject, html, text });
+        console.log(`[VacancyBroadcast DEBUG] SUCCESS: Email delivered to ${provider.email}`);
+        logger.info(`[VacancyBroadcast] Sent to ${provider.email} for "${job.title}"`);
+        results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
+      } catch (err) {
+        console.error(`[VacancyBroadcast DEBUG ERROR] FAILED sending to ${provider.email}: ${err.message}`);
+        logger.error(`[VacancyBroadcast] Failed to send to ${provider.email}: ${err.message}`);
+        results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
+      }
 
     if (validRecipients.length > 1) {
       await new Promise((resolve) => setTimeout(resolve, 600));
@@ -336,6 +348,8 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
   }).join("");
 
   const validRecipients = (providers || []).filter((p) => p && p.email && p.email.includes("@"));
+  console.log(`[MultiVacancyBroadcast DEBUG] Starting broadcast for ${jobs.length} jobs. Total recipients passed: ${(providers || []).length}, valid with email: ${validRecipients.length}`);
+  validRecipients.forEach((p, i) => console.log(`  [MultiVacancyBroadcast Recipient #${i + 1}] ${p.name || p.contact_name || "Provider"} <${p.email}>`));
   const results = [];
 
   for (const provider of validRecipients) {
@@ -436,13 +450,16 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
       const text = `${subject}\n\nDear ${provider.contact_name || provider.name || "Partner"},\n\n${introText}\n\n${jobs.map((j, i) => `${i + 1}. ${j.title} (${j.work_location || j.city || "Location TBA"}) - Pay: ${formatBroadcastPayRate(j.pay_rate, j.pay_rate_type) || "TBA"}`).join("\n")}\n\nTo submit candidate profiles, reply directly to this email.\n\nSent by ${sentByName} via WorkVision Australia ATS`;
 
       try {
-      await sendEmail({ to: provider.email.trim(), subject, html, text });
-      logger.info(`[MultiVacancyBroadcast] Sent to ${provider.email} (${jobs.length} roles)`);
-      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
-    } catch (err) {
-      logger.error(`[MultiVacancyBroadcast] Failed to send to ${provider.email}: ${err.message}`);
-      results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
-    }
+        console.log(`[MultiVacancyBroadcast DEBUG] Calling sendEmail to ${provider.email}...`);
+        await sendEmail({ to: provider.email.trim(), subject, html, text });
+        console.log(`[MultiVacancyBroadcast DEBUG] SUCCESS: Email delivered to ${provider.email}`);
+        logger.info(`[MultiVacancyBroadcast] Sent to ${provider.email} (${jobs.length} roles)`);
+        results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "sent" });
+      } catch (err) {
+        console.error(`[MultiVacancyBroadcast DEBUG ERROR] FAILED sending to ${provider.email}: ${err.message}`);
+        logger.error(`[MultiVacancyBroadcast] Failed to send to ${provider.email}: ${err.message}`);
+        results.push({ provider_id: provider.id, name: provider.name, email: provider.email, status: "failed", error: err.message });
+      }
 
     if (validRecipients.length > 1) {
       await new Promise((resolve) => setTimeout(resolve, 600));

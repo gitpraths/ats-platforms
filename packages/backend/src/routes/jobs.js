@@ -427,6 +427,10 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
     const sentByName = req.user.name || req.user.email;
     const userId     = req.user.id;
 
+    console.log(`[POST /jobs/:id/broadcast DEBUG] Triggered by ${sentByName} (${userId}) for jobId ${jobId}`);
+    console.log(`[POST /jobs/:id/broadcast DEBUG] Received provider_ids count: ${Array.isArray(provider_ids) ? provider_ids.length : 0}, additional_emails: ${JSON.stringify(additional_emails)}`);
+    console.log(`[POST /jobs/:id/broadcast DEBUG] Total resolved recipients (${recipients.length}):`, recipients.map(r => r.email));
+
     const results = await sendVacancyBroadcast({
       job:           jobRows[0],
       providers:     recipients,
@@ -439,6 +443,7 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
 
     const sentCount = results.filter((r) => r.status === "sent").length;
     const failedCount = results.filter((r) => r.status === "failed").length;
+    console.log(`[POST /jobs/:id/broadcast DEBUG] Completed: sentCount=${sentCount}, failedCount=${failedCount}, results:`, JSON.stringify(results));
 
     // Insert into activity_log
     pool.query(
@@ -554,6 +559,10 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
     const sentByName = req.user.name || req.user.email;
     const userId     = req.user.id;
 
+    console.log(`[POST /jobs/broadcast-multi DEBUG] Triggered by ${sentByName} (${userId}) for ${jobs.length} jobs`);
+    console.log(`[POST /jobs/broadcast-multi DEBUG] Received provider_ids count: ${Array.isArray(provider_ids) ? provider_ids.length : 0}, additional_emails: ${JSON.stringify(additional_emails)}`);
+    console.log(`[POST /jobs/broadcast-multi DEBUG] Total resolved recipients (${recipients.length}):`, recipients.map(r => r.email));
+
     const results = await sendMultiVacancyBroadcast({
       jobs,
       providers:     recipients,
@@ -566,6 +575,7 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
 
     const sentCount = results.filter((r) => r.status === "sent").length;
     const failedCount = results.filter((r) => r.status === "failed").length;
+    console.log(`[POST /jobs/broadcast-multi DEBUG] Completed: sentCount=${sentCount}, failedCount=${failedCount}, results:`, JSON.stringify(results));
 
     // Log in activity_log
     pool.query(
