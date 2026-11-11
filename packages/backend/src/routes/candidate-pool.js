@@ -60,6 +60,11 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       interview_date = "",
       ets_date       = "",
       placement_date = "",
+      referral_date_to  = "",
+      training_date_to  = "",
+      interview_date_to = "",
+      ets_date_to       = "",
+      placement_date_to = "",
     } = req.query;
 
     const page   = Math.max(1, Number(rawPage));
@@ -116,12 +121,17 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       params.push(intention_to_work);
     }
 
-    // Date column filters (exact date match)
-    if (referral_date)  { conditions.push(`c.date_referred = $${idx++}`);       params.push(referral_date); }
-    if (training_date)  { conditions.push(`c.training_start_date = $${idx++}`); params.push(training_date); }
-    if (interview_date) { conditions.push(`la.interview_date = $${idx++}`);     params.push(interview_date); }
-    if (ets_date)       { conditions.push(`la.ets_date = $${idx++}`);           params.push(ets_date); }
-    if (placement_date) { conditions.push(`la.placement_date = $${idx++}`);     params.push(placement_date); }
+    // Date column filters: inclusive range. "from" only => on/after, "to" only => on/before,
+    // both => between, same value in both => exact day.
+    const addDateRange = (col, from, to) => {
+      if (from) { conditions.push(`${col}::date >= $${idx++}::date`); params.push(from); }
+      if (to)   { conditions.push(`${col}::date <= $${idx++}::date`); params.push(to); }
+    };
+    addDateRange("c.date_referred",       referral_date,  referral_date_to);
+    addDateRange("c.training_start_date", training_date,  training_date_to);
+    addDateRange("la.interview_date",     interview_date, interview_date_to);
+    addDateRange("la.ets_date",           ets_date,       ets_date_to);
+    addDateRange("la.placement_date",     placement_date, placement_date_to);
 
     const colWhere = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
 

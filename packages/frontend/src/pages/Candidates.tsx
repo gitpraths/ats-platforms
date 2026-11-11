@@ -26,11 +26,26 @@ type ColFilters = {
   name: string; email: string; phone: string; provider: string; industry: string; comments: string;
   referral_date: string; training_date: string; interview_date: string;
   ets_date: string; placement_date: string;
+  referral_date_to: string; training_date_to: string; interview_date_to: string;
+  ets_date_to: string; placement_date_to: string;
 };
 const EMPTY_FILTERS: ColFilters = {
   name: "", email: "", phone: "", provider: "", industry: "", comments: "",
   referral_date: "", training_date: "", interview_date: "", ets_date: "", placement_date: "",
+  referral_date_to: "", training_date_to: "", interview_date_to: "", ets_date_to: "", placement_date_to: "",
 };
+
+const DATE_FILTER_KEYS = [
+  "referral_date", "training_date", "interview_date", "ets_date", "placement_date",
+  "referral_date_to", "training_date_to", "interview_date_to", "ets_date_to", "placement_date_to",
+] as const;
+
+// Ignore half-typed dates (e.g. year "0002" while typing) so we only query on a complete, sensible date
+function validDate(v: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "";
+  const y = Number(v.slice(0, 4));
+  return y >= 1900 && y <= 2100 ? v : "";
+}
 
 type Tab        = "all" | "in_progress" | "placed" | "not_successful" | "inactive";
 type View       = "list" | "card";
@@ -317,20 +332,20 @@ function ColInput({ value, onChange, placeholder }: { value: string; onChange: (
     </div>
   );
 }
-function ColDate({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ColDate({ from, to, onFrom, onTo }: {
+  from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void;
+}) {
+  const cls = "w-full min-w-[120px] px-1.5 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#e88e2e] focus:border-[#e88e2e] bg-white text-slate-600 font-normal";
   return (
-    <div className="relative">
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full pl-2 pr-6 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#e88e2e] focus:border-[#e88e2e] bg-white text-slate-600 font-normal"
-      />
-      {value && (
-        <button onClick={() => onChange("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
-          <X size={10} />
-        </button>
-      )}
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] text-slate-400 w-7 flex-shrink-0 normal-case">From</span>
+        <input type="date" value={from} onChange={(e) => onFrom(e.target.value)} className={cls} />
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] text-slate-400 w-7 flex-shrink-0 normal-case">To</span>
+        <input type="date" value={to} onChange={(e) => onTo(e.target.value)} className={cls} />
+      </div>
     </div>
   );
 }
@@ -376,16 +391,13 @@ export default function Candidates() {
 
   // Date filters apply immediately
   useEffect(() => {
-    setDebounced((prev) => ({
-      ...prev,
-      referral_date:  colFilters.referral_date,
-      training_date:  colFilters.training_date,
-      interview_date: colFilters.interview_date,
-      ets_date:       colFilters.ets_date,
-      placement_date: colFilters.placement_date,
-    }));
+    setDebounced((prev) => {
+      const next = { ...prev };
+      for (const k of DATE_FILTER_KEYS) next[k] = validDate(colFilters[k]);
+      return next;
+    });
     setPage(1);
-  }, [colFilters.referral_date, colFilters.training_date, colFilters.interview_date, colFilters.ets_date, colFilters.placement_date]);
+  }, DATE_FILTER_KEYS.map((k) => colFilters[k]));
 
   function setCol(key: keyof ColFilters, val: string) {
     setColFilters((prev) => ({ ...prev, [key]: val }));
@@ -446,6 +458,11 @@ export default function Candidates() {
     interview_date:    debounced.interview_date,
     ets_date:          debounced.ets_date,
     placement_date:    debounced.placement_date,
+    referral_date_to:  debounced.referral_date_to,
+    training_date_to:  debounced.training_date_to,
+    interview_date_to: debounced.interview_date_to,
+    ets_date_to:       debounced.ets_date_to,
+    placement_date_to: debounced.placement_date_to,
     enabled:           canView,
   });
 
@@ -705,23 +722,23 @@ export default function Candidates() {
                 </th>
                 {/* Referral Date */}
                 <th className="px-3 pb-2 pt-1">
-                  <ColDate value={colFilters.referral_date}  onChange={(v) => setCol("referral_date", v)} />
+                  <ColDate from={colFilters.referral_date} to={colFilters.referral_date_to} onFrom={(v) => setCol("referral_date", v)} onTo={(v) => setCol("referral_date_to", v)} />
                 </th>
                 {/* Training Date */}
                 <th className="px-3 pb-2 pt-1">
-                  <ColDate value={colFilters.training_date}  onChange={(v) => setCol("training_date", v)} />
+                  <ColDate from={colFilters.training_date} to={colFilters.training_date_to} onFrom={(v) => setCol("training_date", v)} onTo={(v) => setCol("training_date_to", v)} />
                 </th>
                 {/* Interview Date */}
                 <th className="px-3 pb-2 pt-1">
-                  <ColDate value={colFilters.interview_date} onChange={(v) => setCol("interview_date", v)} />
+                  <ColDate from={colFilters.interview_date} to={colFilters.interview_date_to} onFrom={(v) => setCol("interview_date", v)} onTo={(v) => setCol("interview_date_to", v)} />
                 </th>
                 {/* ETS Date */}
                 <th className="px-3 pb-2 pt-1">
-                  <ColDate value={colFilters.ets_date}       onChange={(v) => setCol("ets_date", v)} />
+                  <ColDate from={colFilters.ets_date} to={colFilters.ets_date_to} onFrom={(v) => setCol("ets_date", v)} onTo={(v) => setCol("ets_date_to", v)} />
                 </th>
                 {/* Placement Date */}
                 <th className="px-3 pb-2 pt-1">
-                  <ColDate value={colFilters.placement_date} onChange={(v) => setCol("placement_date", v)} />
+                  <ColDate from={colFilters.placement_date} to={colFilters.placement_date_to} onFrom={(v) => setCol("placement_date", v)} onTo={(v) => setCol("placement_date_to", v)} />
                 </th>
                 {/* Comments */}
                 <th className="px-3 pb-2 pt-1">

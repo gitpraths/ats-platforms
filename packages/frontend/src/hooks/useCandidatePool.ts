@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import type { CandidatePoolRow, CandidatePoolMeta } from "../types";
 
@@ -18,14 +18,24 @@ export interface UseCandidatePoolOptions {
   staff_id?:        string;
   consultant_id?:   string;
   intention_to_work?: string;
-  // Per-column date filters
-  referral_date?:   string;
-  training_date?:   string;
-  interview_date?:  string;
-  ets_date?:        string;
-  placement_date?:  string;
+  // Per-column date range filters (inclusive): "<x>" = from, "<x>_to" = to
+  referral_date?:      string;
+  training_date?:      string;
+  interview_date?:     string;
+  ets_date?:           string;
+  placement_date?:     string;
+  referral_date_to?:   string;
+  training_date_to?:   string;
+  interview_date_to?:  string;
+  ets_date_to?:        string;
+  placement_date_to?:  string;
   enabled?:         boolean;
 }
+
+const DATE_KEYS = [
+  "referral_date", "training_date", "interview_date", "ets_date", "placement_date",
+  "referral_date_to", "training_date_to", "interview_date_to", "ets_date_to", "placement_date_to",
+] as const;
 
 export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
   const {
@@ -33,18 +43,21 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
     q = "", date_from = "",
     name_q = "", email_q = "", phone_q = "", provider_q = "", industry_q = "", comments_q = "",
     staff_id = "", consultant_id = "", intention_to_work = "",
-    referral_date = "", training_date = "",
-    interview_date = "", ets_date = "", placement_date = "",
     enabled = true,
   } = options;
 
+  const dates = Object.fromEntries(DATE_KEYS.map((k) => [k, options[k] ?? ""])) as Record<typeof DATE_KEYS[number], string>;
+
   return useQuery<{ data: CandidatePoolRow[]; meta: CandidatePoolMeta }>({
     enabled,
+    // Keep the previous result visible while refetching so the table (and the
+    // filter inputs/date pickers in its header) is not unmounted on every change.
+    placeholderData: keepPreviousData,
     queryKey: ["candidate-pool", {
       tab, page, q, date_from,
       name_q, email_q, phone_q, provider_q, industry_q, comments_q,
       staff_id, consultant_id, intention_to_work,
-      referral_date, training_date, interview_date, ets_date, placement_date,
+      ...dates,
     }],
     queryFn: async () => {
       const params = new URLSearchParams({ tab, page: String(page), limit: String(limit) });
@@ -59,11 +72,9 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
       if (staff_id)          params.set("staff_id",          staff_id);
       if (consultant_id)     params.set("consultant_id",     consultant_id);
       if (intention_to_work) params.set("intention_to_work", intention_to_work);
-      if (referral_date)     params.set("referral_date",     referral_date);
-      if (training_date)     params.set("training_date",     training_date);
-      if (interview_date)    params.set("interview_date",    interview_date);
-      if (ets_date)          params.set("ets_date",          ets_date);
-      if (placement_date)    params.set("placement_date",    placement_date);
+      for (const k of DATE_KEYS) {
+        if (dates[k]) params.set(k, dates[k]);
+      }
       const result = await api.list<CandidatePoolRow>(`/candidate-pool?${params}`);
       return result as { data: CandidatePoolRow[]; meta: CandidatePoolMeta };
     },
