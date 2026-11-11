@@ -1,6 +1,48 @@
 import nodemailer from "nodemailer";
 import logger from "../config/logger.js";
 
+function getResendApiKey() {
+  return (process.env.RESEND_API_KEY || "").trim();
+}
+
+async function sendViaResend({ to, subject, html, text }) {
+  const apiKey = getResendApiKey();
+  if (!apiKey) {
+    throw new Error("No Resend API key configured");
+  }
+
+  const defaultFrom = "WorkVision Australia <connect@workvision.com.au>";
+  const from = process.env.EMAIL_FROM || defaultFrom;
+  const replyTo = process.env.EMAIL_REPLY_TO || "connect@workvision.com.au";
+
+  const toList = Array.isArray(to) ? to : [to];
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: toList,
+      reply_to: replyTo,
+      subject,
+      ...(html ? { html } : {}),
+      ...(text ? { text } : {}),
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorMsg = data?.message || data?.error || `HTTP ${response.status} ${response.statusText}`;
+    throw new Error(`Resend delivery failed: ${errorMsg}`);
+  }
+
+  return { messageId: data.id, resendId: data.id, accepted: toList };
+}
+
 function createTransportForPort(port, secure) {
   const host = process.env.SMTP_HOST || "smtppro.zoho.com.au";
   const user = process.env.SMTP_USER || "connect@workvision.com.au";
@@ -19,6 +61,22 @@ function createTransportForPort(port, secure) {
 }
 
 export async function testEmailConnection() {
+  const apiKey = getResendApiKey();
+  if (apiKey) {
+    try {
+      const res = await fetch("https://api.resend.com/domains", {
+        headers: { "Authorization": `Bearer ${apiKey}` },
+      });
+      if (res.ok) {
+        logger.info("[Email] Resend API connection verified successfully");
+        return true;
+      }
+      logger.warn(`[Email] Resend API verification returned status ${res.status}. Falling back to SMTP check...`);
+    } catch (err) {
+      logger.warn(`[Email] Resend API verification failed: ${err.message}. Falling back to SMTP check...`);
+    }
+  }
+
   const primaryPort = Number(process.env.SMTP_PORT) || 465;
   const primarySecure = primaryPort === 465;
   const fallbackPort = primaryPort === 465 ? 587 : 465;
@@ -39,6 +97,20 @@ export async function testEmailConnection() {
 }
 
 export async function sendEmail({ to, subject, html, text }) {
+  const apiKey = getResendApiKey();
+
+  // Primary: Use Resend HTTPS API (reliable over port 443, no SMTP port blocking)
+  if (apiKey) {
+    try {
+      const info = await sendViaResend({ to, subject, html, text });
+      logger.info(`[Email] Sent successfully via Resend HTTPS: to=${Array.isArray(to) ? to.join(",") : to} subject="${subject}" messageId=${info.messageId}`);
+      return info;
+    } catch (err) {
+      logger.warn(`[Email] Resend attempt failed for ${to}: ${err.message}. Falling back to SMTP...`);
+    }
+  }
+
+  // Fallback: SMTP via Nodemailer
   const defaultFrom = process.env.SMTP_USER
     ? `WorkVision Australia <${process.env.SMTP_USER}>`
     : "WorkVision Australia <connect@workvision.com.au>";
@@ -85,8 +157,8 @@ export async function sendEmail({ to, subject, html, text }) {
     }
   }
 
-  logger.error(`[Email] All SMTP attempts failed for to=${to} subject="${subject}": ${lastError?.message}`);
-  throw lastError || new Error("Failed to send email through all available SMTP configurations.");
+  logger.error(`[Email] All email delivery attempts failed for to=${to} subject="${subject}": ${lastError?.message}`);
+  throw lastError || new Error("Failed to send email through all available email configurations.");
 }
 
 export async function sendPlacementConfirmation({ placement, employer, candidate, job }) {
@@ -296,7 +368,7 @@ export async function sendVacancyBroadcast({ job, providers, sentByName, appUrl,
     }
 
     if (validRecipients.length > 1) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 600));
     }
   }
 
@@ -467,7 +539,7 @@ export async function sendMultiVacancyBroadcast({ jobs, providers, sentByName, a
     }
 
     if (validRecipients.length > 1) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 600));
     }
   }
 

@@ -473,7 +473,7 @@ jobsRouter.post("/:id/broadcast", async (req, res, next) => {
       const firstError = results.find((r) => r.error)?.error || "Email delivery failed";
       return res.status(502).json({
         success: false,
-        error: `Could not deliver broadcast: ${firstError}. Please check SMTP configuration.`,
+        error: `Could not deliver broadcast: ${firstError}`,
         data: { sent: 0, failed: failedCount, results },
       });
     }
@@ -604,7 +604,7 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
       const firstError = results.find((r) => r.error)?.error || "Email delivery failed";
       return res.status(502).json({
         success: false,
-        error: `Could not deliver broadcast: ${firstError}. Please check SMTP configuration.`,
+        error: `Could not deliver broadcast: ${firstError}`,
         data: { sent: 0, failed: failedCount, results },
       });
     }
