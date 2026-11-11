@@ -623,7 +623,7 @@ jobsRouter.post("/broadcast-multi", async (req, res, next) => {
 });
 
 // ── POST /api/jobs/test-email ────────────────────────────────────────────────
-// Live diagnostic endpoint to test and verify Zoho Mail sending
+// Live diagnostic endpoint to test and verify Resend email sending
 jobsRouter.post("/test-email", async (req, res, next) => {
   try {
     const targetEmail = (req.body.to || req.user.email || "connect@workvision.com.au").trim();
@@ -637,7 +637,7 @@ jobsRouter.post("/test-email", async (req, res, next) => {
           <table width="100%" style="font-size:13px;line-height:2;color:#334155;">
             <tr><td width="130" style="color:#64748b;font-weight:600;">Recipient:</td><td><strong>${targetEmail}</strong></td></tr>
             <tr><td style="color:#64748b;font-weight:600;">Initiated By:</td><td>${req.user.name || req.user.email}</td></tr>
-            <tr><td style="color:#64748b;font-weight:600;">SMTP Host:</td><td>smtppro.zoho.com.au:465 (SSL)</td></tr>
+            <tr><td style="color:#64748b;font-weight:600;">Delivery Method:</td><td>Resend HTTPS API (Port 443)</td></tr>
             <tr><td style="color:#64748b;font-weight:600;">Timestamp:</td><td>${new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" })} (AEST)</td></tr>
           </table>
           <hr style="border:none;border-top:1px solid #f1f5f9;margin:18px 0 12px;" />

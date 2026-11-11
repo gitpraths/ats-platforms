@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import logger from "../config/logger.js";
 
 function getResendApiKey() {
@@ -8,7 +7,7 @@ function getResendApiKey() {
 async function sendViaResend({ to, subject, html, text }) {
   const apiKey = getResendApiKey();
   if (!apiKey) {
-    throw new Error("No Resend API key configured");
+    throw new Error("RESEND_API_KEY environment variable is not configured. Please add RESEND_API_KEY to your environment.");
   }
 
   const defaultFrom = "WorkVision Australia <connect@workvision.com.au>";
@@ -43,122 +42,29 @@ async function sendViaResend({ to, subject, html, text }) {
   return { messageId: data.id, resendId: data.id, accepted: toList };
 }
 
-function createTransportForPort(port, secure) {
-  const host = process.env.SMTP_HOST || "smtppro.zoho.com.au";
-  const user = process.env.SMTP_USER || "connect@workvision.com.au";
-  const pass = process.env.SMTP_PASS || "Email@WVA24";
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 12000,
-    pool: false,
-  });
-}
-
 export async function testEmailConnection() {
   const apiKey = getResendApiKey();
-  if (apiKey) {
-    try {
-      const res = await fetch("https://api.resend.com/domains", {
-        headers: { "Authorization": `Bearer ${apiKey}` },
-      });
-      if (res.ok) {
-        logger.info("[Email] Resend API connection verified successfully");
-        return true;
-      }
-      logger.warn(`[Email] Resend API verification returned status ${res.status}. Falling back to SMTP check...`);
-    } catch (err) {
-      logger.warn(`[Email] Resend API verification failed: ${err.message}. Falling back to SMTP check...`);
-    }
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY environment variable is not configured.");
   }
 
-  const primaryPort = Number(process.env.SMTP_PORT) || 465;
-  const primarySecure = primaryPort === 465;
-  const fallbackPort = primaryPort === 465 ? 587 : 465;
-  const fallbackSecure = fallbackPort === 465;
+  const res = await fetch("https://api.resend.com/domains", {
+    headers: { "Authorization": `Bearer ${apiKey}` },
+  });
 
-  try {
-    const t = createTransportForPort(primaryPort, primarySecure);
-    const verified = await t.verify();
-    if (t && typeof t.close === "function") t.close();
-    return verified;
-  } catch (err) {
-    logger.warn(`[Email] Primary verify failed on port ${primaryPort}: ${err.message}. Trying port ${fallbackPort}...`);
-    const tFallback = createTransportForPort(fallbackPort, fallbackSecure);
-    const verified = await tFallback.verify();
-    if (tFallback && typeof tFallback.close === "function") tFallback.close();
-    return verified;
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(`Resend API check failed with status ${res.status}: ${data?.message || res.statusText}`);
   }
+
+  logger.info("[Email] Resend API connection verified successfully");
+  return true;
 }
 
 export async function sendEmail({ to, subject, html, text }) {
-  const apiKey = getResendApiKey();
-
-  // Primary: Use Resend HTTPS API (reliable over port 443, no SMTP port blocking)
-  if (apiKey) {
-    try {
-      const info = await sendViaResend({ to, subject, html, text });
-      logger.info(`[Email] Sent successfully via Resend HTTPS: to=${Array.isArray(to) ? to.join(",") : to} subject="${subject}" messageId=${info.messageId}`);
-      return info;
-    } catch (err) {
-      logger.warn(`[Email] Resend attempt failed for ${to}: ${err.message}. Falling back to SMTP...`);
-    }
-  }
-
-  // Fallback: SMTP via Nodemailer
-  const defaultFrom = process.env.SMTP_USER
-    ? `WorkVision Australia <${process.env.SMTP_USER}>`
-    : "WorkVision Australia <connect@workvision.com.au>";
-  const from = process.env.EMAIL_FROM || defaultFrom;
-
-  const configuredPort = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : null;
-  const primaryPort = configuredPort || 465;
-  const primarySecure = primaryPort === 465;
-  const fallbackPort = primaryPort === 465 ? 587 : 465;
-  const fallbackSecure = fallbackPort === 465;
-
-  const portsToAttempt = [
-    { port: primaryPort, secure: primarySecure },
-    { port: fallbackPort, secure: fallbackSecure },
-  ];
-
-  let lastError = null;
-
-  for (const { port, secure } of portsToAttempt) {
-    let t;
-    try {
-      t = createTransportForPort(port, secure);
-
-      const mailOptions = { from, to, subject, html, text };
-      const sendPromise = t.sendMail(mailOptions);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`SMTP send timed out after 12s on port ${port}`)), 12000)
-      );
-
-      const info = await Promise.race([sendPromise, timeoutPromise]);
-      logger.info(`[Email] Sent successfully via port ${port}: to=${to} subject="${subject}" messageId=${info.messageId}`);
-
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      if (previewUrl) logger.info(`[Email] preview: ${previewUrl}`);
-
-      return info;
-    } catch (err) {
-      lastError = err;
-      logger.warn(`[Email] Attempt failed on port ${port} to ${to}: ${err.message}`);
-    } finally {
-      if (t && typeof t.close === "function") {
-        try { t.close(); } catch (_) {}
-      }
-    }
-  }
-
-  logger.error(`[Email] All email delivery attempts failed for to=${to} subject="${subject}": ${lastError?.message}`);
-  throw lastError || new Error("Failed to send email through all available email configurations.");
+  const info = await sendViaResend({ to, subject, html, text });
+  logger.info(`[Email] Sent successfully via Resend HTTPS: to=${Array.isArray(to) ? to.join(",") : to} subject="${subject}" messageId=${info.messageId}`);
+  return info;
 }
 
 export async function sendPlacementConfirmation({ placement, employer, candidate, job }) {
