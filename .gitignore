@@ -19,3 +19,7 @@ coverage/
 !packages/frontend/public/*.png
 .worktrees/
 CRM Portal.docx
+database/backups/
+scratch/
+doc/*.xlsx
+doc/*.csv
