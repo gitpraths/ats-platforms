@@ -7,6 +7,8 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { mountCandidateTrainingsList } from "./candidate-trainings.js";
 import { toTitleCase } from "../utils/toTitleCase.js";
+import { uploadToR2, getFromR2, deleteFromR2 } from "../services/r2Storage.js";
+import logger from "../config/logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -449,6 +451,15 @@ candidatesRouter.post("/:id/documents", requirePermission("candidates:edit"), as
         [req.params.id, req.user.id, JSON.stringify({ document_type, file_name: req.file.originalname })]
       ).catch(() => {});
 
+      // Asynchronously mirror uploaded document to Cloudflare R2 backup storage
+      uploadToR2({
+        key: relativePath,
+        filePath: req.file.path,
+        contentType: req.file.mimetype,
+      }).catch((err) => {
+        logger.error(`[R2 Background Upload Error] ${err.message}`);
+      });
+
       res.status(201).json({ success: true, data: rows[0] });
     } catch (dbErr) { next(dbErr); }
   });
@@ -463,9 +474,26 @@ candidatesRouter.get("/:id/documents/:doc_id/download", requirePermission("candi
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
     const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
-    res.download(filePath, rows[0].file_name, (err) => {
-      if (err && !res.headersSent) next(err);
-    });
+
+    if (fs.existsSync(filePath)) {
+      return res.download(filePath, rows[0].file_name, (err) => {
+        if (err && !res.headersSent) next(err);
+      });
+    }
+
+    // Fallback: fetch from Cloudflare R2 backup storage
+    const r2File = await getFromR2({ key: rows[0].file_path });
+    if (r2File) {
+      const safeName = encodeURIComponent(rows[0].file_name);
+      res.setHeader("Content-Type", rows[0].mime_type || r2File.contentType || "application/octet-stream");
+      res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${safeName}`);
+      if (r2File.contentLength) {
+        res.setHeader("Content-Length", r2File.contentLength);
+      }
+      return r2File.stream.pipe(res);
+    }
+
+    return res.status(404).json({ success: false, error: "Document file not found on disk or backup storage" });
   } catch (err) { next(err); }
 });
 
@@ -480,16 +508,33 @@ candidatesRouter.get("/:id/documents/:doc_id/view", requirePermission("candidate
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
     const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
 
-    const mimeType = rows[0].mime_type || "application/octet-stream";
-    const safeName = encodeURIComponent(rows[0].file_name);
-    res.sendFile(path.resolve(filePath), {
-      headers: {
-        "Content-Type": mimeType,
-        "Content-Disposition": `inline; filename*=UTF-8''${safeName}`
+    if (fs.existsSync(filePath)) {
+      const mimeType = rows[0].mime_type || "application/octet-stream";
+      const safeName = encodeURIComponent(rows[0].file_name);
+      return res.sendFile(path.resolve(filePath), {
+        headers: {
+          "Content-Type": mimeType,
+          "Content-Disposition": `inline; filename*=UTF-8''${safeName}`
+        }
+      }, (err) => {
+        if (err) next(err);
+      });
+    }
+
+    // Fallback: fetch from Cloudflare R2 backup storage
+    const r2File = await getFromR2({ key: rows[0].file_path });
+    if (r2File) {
+      const mimeType = rows[0].mime_type || r2File.contentType || "application/octet-stream";
+      const safeName = encodeURIComponent(rows[0].file_name);
+      res.setHeader("Content-Type", mimeType);
+      res.setHeader("Content-Disposition", `inline; filename*=UTF-8''${safeName}`);
+      if (r2File.contentLength) {
+        res.setHeader("Content-Length", r2File.contentLength);
       }
-    }, (err) => {
-      if (err) next(err);
-    });
+      return r2File.stream.pipe(res);
+    }
+
+    return res.status(404).json({ success: false, error: "Document file not found on disk or backup storage" });
   } catch (err) { next(err); }
 });
 
@@ -503,8 +548,10 @@ candidatesRouter.delete("/:id/documents/:doc_id", requirePermission("candidates:
     if (!rows[0]) return res.status(404).json({ success: false, error: "Document not found" });
 
     const filePath = path.join(UPLOADS_ROOT, rows[0].file_path.replace(/^\/uploads\//, ""));
-
     fs.unlink(filePath, () => {});
+
+    // Delete mirrored copy from Cloudflare R2
+    deleteFromR2({ key: rows[0].file_path }).catch(() => {});
 
     res.json({ success: true });
   } catch (err) { next(err); }

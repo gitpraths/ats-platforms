@@ -26,6 +26,7 @@ import { candidatePoolRouter } from "./routes/candidate-pool.js";
 import { msAuthRouter }        from "./routes/ms-auth.js";
 import { industriesRouter, workTypesRouter, workStatusRouter } from "./routes/master.js";
 import { consultantsRouter }  from "./routes/consultants.js";
+import { getFromR2 }          from "./services/r2Storage.js";
 
 import { errorHandler }       from "./middleware/errorHandler.js";
 import { requestLogger }      from "./middleware/requestLogger.js";
@@ -139,6 +140,20 @@ const UPLOADS_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads"
 mkdirSync(path.join(UPLOADS_DIR, "candidates"), { recursive: true });
 mkdirSync(path.join(UPLOADS_DIR, "avatars"),    { recursive: true });
 app.use("/uploads", express.static(UPLOADS_DIR));
+
+// Fallback for missing local files: fetch from Cloudflare R2 backup storage
+app.use("/uploads", async (req, res, next) => {
+  try {
+    const r2Key = `uploads${req.path}`;
+    const r2File = await getFromR2({ key: r2Key });
+    if (r2File) {
+      if (r2File.contentType) res.setHeader("Content-Type", r2File.contentType);
+      if (r2File.contentLength) res.setHeader("Content-Length", r2File.contentLength);
+      return r2File.stream.pipe(res);
+    }
+  } catch (_e) {}
+  next();
+});
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => res.json({ success: true, status: "ok" }));
