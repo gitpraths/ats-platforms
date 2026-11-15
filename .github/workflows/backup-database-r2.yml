@@ -1,0 +1,48 @@
+name: Weekend Database Backup to Cloudflare R2
+
+on:
+  schedule:
+    # Run every Sunday at 02:00 UTC (13:00 AEDT / 12:00 AEST)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    # Allows manual trigger at any time from the GitHub Actions tab
+
+jobs:
+  backup:
+    name: Backup PostgreSQL to Cloudflare R2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL Client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Dump and Compress Database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Error: DATABASE_URL secret is not set in repository settings."
+            exit 1
+          fi
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          BACKUP_FILENAME="workvision_production_${TIMESTAMP}.sql.gz"
+          echo "Dumping database to ${BACKUP_FILENAME}..."
+          pg_dump "$DATABASE_URL" | gzip > "${BACKUP_FILENAME}"
+          echo "Dump completed. Size: $(du -h "${BACKUP_FILENAME}" | cut -f1)"
+          echo "BACKUP_FILENAME=${BACKUP_FILENAME}" >> $GITHUB_ENV
+
+      - name: Setup AWS CLI for Cloudflare R2
+        run: |
+          aws configure set aws_access_key_id "${{ secrets.R2_ACCESS_KEY_ID }}"
+          aws configure set aws_secret_access_key "${{ secrets.R2_SECRET_ACCESS_KEY }}"
+          aws configure set default.region auto
+
+      - name: Upload Backup to Cloudflare R2
+        env:
+          ENDPOINT_URL: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME || 'workvision-backups' }}
+        run: |
+          echo "Uploading ${BACKUP_FILENAME} to Cloudflare R2 bucket: ${BUCKET_NAME}..."
+          aws s3 cp "${BACKUP_FILENAME}" "s3://${BUCKET_NAME}/database/${BACKUP_FILENAME}" --endpoint-url "${ENDPOINT_URL}"
+          echo "Successfully uploaded backup to Cloudflare R2."
