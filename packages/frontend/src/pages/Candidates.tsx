@@ -1,4 +1,5 @@
-import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Fragment, useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD, formatName } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock, User, Users, Briefcase } from "lucide-react";
@@ -87,18 +88,62 @@ function getPipelineStage(row: CandidatePoolRow): { label: string; color: string
 
 
 function InfoTooltip({ row }: { row: CandidatePoolRow }) {
+  const [show, setShow] = useState(false);
+  const [style, setStyle] = useState<{ left: number; top: number; ready: boolean }>({
+    left: 0,
+    top: 0,
+    ready: false,
+  });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
 
-  const [show, setShow]   = useState(false);
-  const [pos,  setPos]    = useState({ x: 0, y: 0 });
-  const btnRef            = useRef<HTMLButtonElement>(null);
+  const updatePosition = useCallback(() => {
+    const btn = btnRef.current;
+    const tip = tipRef.current;
+    if (!btn || !tip) return;
 
-  function handleEnter() {
-    if (btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      setPos({ x: r.right + 10, y: r.top - 8 });
+    const r = btn.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 288;
+    const tipH = tip.offsetHeight || 220;
+    const margin = 12;
+    const gap = 8;
+
+    let left = Math.max(margin, Math.min(r.left - 24, window.innerWidth - tipW - margin));
+    let top: number;
+
+    if (r.top - tipH - gap >= margin) {
+      // Default: position on top of the hovered icon
+      top = r.top - tipH - gap;
+    } else if (r.bottom + tipH + gap <= window.innerHeight - margin) {
+      // Flip below if too close to the top of the viewport
+      top = r.bottom + gap;
+    } else {
+      // Fallback for very short viewports: place to the side and clamp vertically
+      left = Math.max(margin, Math.min(r.right + 10, window.innerWidth - tipW - margin));
+      top = Math.max(margin, Math.min(r.top - 12, window.innerHeight - tipH - margin));
     }
-    setShow(true);
-  }
+
+    setStyle({ left, top, ready: true });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!show) {
+      setStyle((prev) => (prev.ready ? { ...prev, ready: false } : prev));
+      return;
+    }
+    updatePosition();
+  }, [show, updatePosition]);
+
+  useEffect(() => {
+    if (!show) return;
+    const close = () => setShow(false);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [show]);
 
   const yesNo = (v?: string | null) =>
     v === "yes" ? <span className="text-green-600 font-semibold">Yes</span>
@@ -109,85 +154,95 @@ function InfoTooltip({ row }: { row: CandidatePoolRow }) {
     <div className="relative inline-block">
       <button
         ref={btnRef}
-        onMouseEnter={handleEnter}
+        type="button"
+        onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
         onClick={(e) => e.stopPropagation()}
         className="ml-1.5 text-slate-300 hover:text-[#e88e2e] transition-colors"
       >
         <Info size={12} />
       </button>
-      {show && (
-        <div
-          className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-64 text-xs"
-          style={{ left: pos.x, top: pos.y }}
-          onMouseEnter={() => setShow(true)}
-          onMouseLeave={() => setShow(false)}
-        >
-          <p className="font-semibold text-slate-700 mb-2 border-b pb-1.5">Extra Details</p>
-          <div className="space-y-1.5">
-            {(row.suburb || row.state) && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Location</span>
-                <span className="font-medium text-slate-700">{[row.suburb || row.city, row.state].filter(Boolean).join(", ")}</span>
+      {show &&
+        createPortal(
+          <div
+            ref={tipRef}
+            className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-72 text-xs whitespace-normal pointer-events-none"
+            style={{
+              left: style.left,
+              top: style.top,
+              visibility: style.ready ? "visible" : "hidden",
+            }}
+          >
+            <p className="font-semibold text-slate-700 mb-2 border-b pb-1.5">Extra Details</p>
+            <div className="space-y-1.5">
+              {(row.suburb || row.state) && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Location</span>
+                  <span className="font-medium text-slate-700 text-right break-words min-w-0">
+                    {[row.suburb || row.city, row.state].filter(Boolean).join(", ")}
+                  </span>
+                </div>
+              )}
+              {row.staff_name && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Staff</span>
+                  <span className="font-medium text-slate-700 text-right break-words min-w-0">{row.staff_name}</span>
+                </div>
+              )}
+              {row.consultant_name && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Consultant</span>
+                  <span className="font-medium text-slate-700 text-right break-words min-w-0">{row.consultant_name}</span>
+                </div>
+              )}
+              {row.benchmark_hours && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Benchmark</span>
+                  <span className="font-medium text-slate-700 text-right">{row.benchmark_hours}h / week</span>
+                </div>
+              )}
+              {(row.industry_preference ?? []).length > 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Industry</span>
+                  <span className="font-medium text-slate-700 text-right break-words min-w-0">
+                    {row.industry_preference!.join(", ")}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-400 flex-shrink-0">Car</span>
+                {yesNo(row.car)}
               </div>
-            )}
-            {row.staff_name && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Staff</span>
-                <span className="font-medium text-slate-700">{row.staff_name}</span>
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-400 flex-shrink-0">Police Check</span>
+                {yesNo(row.police_check)}
               </div>
-            )}
-            {row.consultant_name && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Consultant</span>
-                <span className="font-medium text-slate-700">{row.consultant_name}</span>
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-400 flex-shrink-0">WWC</span>
+                {yesNo(row.wwc)}
               </div>
-            )}
-            {row.benchmark_hours && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Benchmark</span>
-                <span className="font-medium text-slate-700">{row.benchmark_hours}h / week</span>
-              </div>
-            )}
-            {(row.industry_preference ?? []).length > 0 && (
-              <div className="flex justify-between gap-2">
-                <span className="text-slate-400 flex-shrink-0">Industry</span>
-                <span className="font-medium text-slate-700 text-right">{row.industry_preference!.join(", ")}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-slate-400">Car</span>
-              {yesNo(row.car)}
+              {row.wage_subsidy && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Wage Subsidy</span>
+                  <span className="font-semibold text-green-600">Yes</span>
+                </div>
+              )}
+              {row.employer_name && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Employer</span>
+                  <span className="font-medium text-slate-700 text-right break-words min-w-0">{row.employer_name}</span>
+                </div>
+              )}
+              {row.job_title && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-400 flex-shrink-0">Job Role</span>
+                  <span className="font-medium text-slate-700 text-right break-words min-w-0">{row.job_title}</span>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Police Check</span>
-              {yesNo(row.police_check)}
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">WWC</span>
-              {yesNo(row.wwc)}
-            </div>
-            {row.wage_subsidy && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Wage Subsidy</span>
-                <span className="font-semibold text-green-600">Yes</span>
-              </div>
-            )}
-            {row.employer_name && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Employer</span>
-                <span className="font-medium text-slate-700">{row.employer_name}</span>
-              </div>
-            )}
-            {row.job_title && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Job Role</span>
-                <span className="font-medium text-slate-700">{row.job_title}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -763,19 +818,19 @@ export default function Candidates() {
                     <tr onClick={() => navigate(`/candidates/${row.id}`)}
                       className={`cursor-pointer border-b transition group ${
                         row.intention_to_work === "not_suitable"
-                          ? "bg-red-50/60 hover:bg-red-50"
+                          ? "bg-red-50 hover:bg-red-100"
                           : row.intention_to_work === "remove_from_main_list"
-                          ? "bg-slate-50/80 hover:bg-slate-100 opacity-75"
-                          : "bg-white hover:bg-orange-50/40"
+                          ? "bg-slate-50 hover:bg-slate-100 text-slate-500"
+                          : "bg-white hover:bg-[#fff7ed]"
                       }`}>
 
                       {/* SR # */}
                       <td className={`sticky left-0 z-10 w-[90px] min-w-[90px] max-w-[90px] px-3 py-3 text-xs text-slate-500 font-mono font-semibold whitespace-nowrap transition-colors ${
                         row.intention_to_work === "not_suitable"
-                          ? "bg-red-50/90 group-hover:bg-red-100/90"
+                          ? "bg-red-50 group-hover:bg-red-100"
                           : row.intention_to_work === "remove_from_main_list"
-                          ? "bg-slate-50/90 group-hover:bg-slate-100"
-                          : "bg-white group-hover:bg-orange-50/60"
+                          ? "bg-slate-50 group-hover:bg-slate-100"
+                          : "bg-white group-hover:bg-[#fff7ed]"
                       }`}>
                         {row.sr_no ? (
                           <span className="inline-flex items-center bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-mono font-semibold text-slate-700 whitespace-nowrap select-none">
@@ -787,10 +842,10 @@ export default function Candidates() {
                       {/* Candidate name + pipeline dot + info icon */}
                       <td className={`sticky left-[90px] z-10 min-w-[240px] px-3 py-3 border-r border-slate-200 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.06)] transition-colors ${
                         row.intention_to_work === "not_suitable"
-                          ? "bg-red-50/90 group-hover:bg-red-100/90"
+                          ? "bg-red-50 group-hover:bg-red-100"
                           : row.intention_to_work === "remove_from_main_list"
-                          ? "bg-slate-50/90 group-hover:bg-slate-100"
-                          : "bg-white group-hover:bg-orange-50/60"
+                          ? "bg-slate-50 group-hover:bg-slate-100"
+                          : "bg-white group-hover:bg-[#fff7ed]"
                       }`}>
                         <div className="min-w-0">
                           {/* Line 1: Candidate Name + Info Tooltip */}
