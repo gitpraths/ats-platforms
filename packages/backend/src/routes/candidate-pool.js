@@ -46,6 +46,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       limit: rawLimit = 20,
       q = "",
       date_from      = "",
+      date_to        = "",
       name_q         = "",
       email_q        = "",
       phone_q        = "",
@@ -85,7 +86,8 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     }
 
     // Referral date range (All Time / This Week / This Month pills)
-    if (date_from) { conditions.push(`c.date_referred >= $${idx++}`); params.push(date_from); }
+    if (date_from) { conditions.push(`c.date_referred::date >= $${idx++}::date`); params.push(date_from); }
+    if (date_to)   { conditions.push(`c.date_referred::date <= $${idx++}::date`); params.push(date_to); }
 
     // Text column filters
     if (name_q)     { conditions.push(`c.name ILIKE $${idx++}`);                        params.push(`%${name_q}%`); }
@@ -127,11 +129,11 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       if (from) { conditions.push(`${col}::date >= $${idx++}::date`); params.push(from); }
       if (to)   { conditions.push(`${col}::date <= $${idx++}::date`); params.push(to); }
     };
-    addDateRange("c.date_referred",       referral_date,  referral_date_to);
-    addDateRange("c.training_start_date", training_date,  training_date_to);
-    addDateRange("la.interview_date",     interview_date, interview_date_to);
-    addDateRange("la.ets_date",           ets_date,       ets_date_to);
-    addDateRange("la.placement_date",     placement_date, placement_date_to);
+    addDateRange("c.date_referred",                          referral_date,  referral_date_to);
+    addDateRange("c.training_start_date",                    training_date,  training_date_to);
+    addDateRange("la.interview_date",                        interview_date, interview_date_to);
+    addDateRange("la.ets_date",                              ets_date,       ets_date_to);
+    addDateRange("COALESCE(lp.start_date, la.placement_date)", placement_date, placement_date_to);
 
     const colWhere = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
 
@@ -229,31 +231,18 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     );
     const total = totalRows[0].total;
 
-    // ── Tab counts (unfiltered — always show overall tab totals) ──
+    // ── Tab counts (respect active filters so tab badges match the filtered table) ──
     const { rows: countRows } = await pool.query(
       `SELECT
-         COUNT(*) FILTER (WHERE c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list')::int AS all_count,
-         COUNT(*) FILTER (WHERE EXISTS (
-           SELECT 1 FROM applications a
-           WHERE a.candidate_id = c.id
-             AND a.stage IN ('applied','screening','interview','ets')
-         ) AND c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list')::int AS in_progress_count,
-         COUNT(*) FILTER (WHERE c.work_status = 'placed')::int AS placed_count,
-         COUNT(*) FILTER (WHERE
-           NOT EXISTS (
-             SELECT 1 FROM applications a
-             WHERE a.candidate_id = c.id
-               AND a.stage IN ('applied','screening','interview','ets')
-           )
-           AND EXISTS (
-             SELECT 1 FROM applications a2
-             WHERE a2.candidate_id = c.id AND a2.stage = 'rejected'
-           )
-           AND c.work_status NOT IN ('placed','inactive')
-           AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list'
-         )::int AS not_successful_count,
-         COUNT(*) FILTER (WHERE c.work_status = 'inactive' OR c.intention_to_work = 'remove_from_main_list')::int AS inactive_count
-       FROM candidates c`
+         COUNT(*) FILTER (WHERE ${tabCondition("all", intention_to_work)})::int AS all_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("in_progress", intention_to_work)})::int AS in_progress_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("placed", intention_to_work)})::int AS placed_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("not_successful", intention_to_work)})::int AS not_successful_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("inactive", intention_to_work)})::int AS inactive_count
+       FROM candidates c
+       ${lateralJoins}
+       WHERE 1=1 ${colWhere}`,
+      params
     );
 
     const tabCounts = {

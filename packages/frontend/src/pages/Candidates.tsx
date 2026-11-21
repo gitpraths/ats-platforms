@@ -3,7 +3,7 @@ import { displayEmail, fmtDate, validateNotBeforeApplied, toYYYYMMDD, formatName
 import { useNavigate } from "react-router-dom";
 import { List, Grid, Calendar, X, Pencil, Info, FilterX, Lock, User, Users, Briefcase } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { format, startOfWeek, startOfMonth } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { useCandidatePool } from "../hooks/useCandidatePool";
 import { useAuth } from "../contexts/AuthContext";
 import { usePermissions } from "../hooks/usePermissions";
@@ -256,7 +256,8 @@ function InlineDateCell({
         <input
           type="date"
           autoFocus
-          min={min}
+          min={min || "2000-01-01"}
+          max="2099-12-31"
           defaultValue={value ? (toYYYYMMDD(value) || "") : ""}
           onBlur={() => { setEditing(false); setError(null); }}
           onChange={handleChange}
@@ -306,10 +307,15 @@ function getStatusLabel(row: CandidatePoolRow): string {
   return "Job Seeking";
 }
 
-// Date range helper
+// Date range helpers (formatted in local timezone so UTC conversion never shifts the day)
 function getDateFrom(filter: DateFilter): string | undefined {
-  if (filter === "this_week")  return startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString().split("T")[0];
-  if (filter === "this_month") return startOfMonth(new Date()).toISOString().split("T")[0];
+  if (filter === "this_week")  return format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  if (filter === "this_month") return format(startOfMonth(new Date()), "yyyy-MM-dd");
+  return undefined;
+}
+function getDateTo(filter: DateFilter): string | undefined {
+  if (filter === "this_week")  return format(endOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  if (filter === "this_month") return format(endOfMonth(new Date()), "yyyy-MM-dd");
   return undefined;
 }
 
@@ -340,11 +346,11 @@ function ColDate({ from, to, onFrom, onTo }: {
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1">
         <span className="text-[9px] text-slate-400 w-7 flex-shrink-0 normal-case">From</span>
-        <input type="date" value={from} onChange={(e) => onFrom(e.target.value)} className={cls} />
+        <input type="date" min="2000-01-01" max="2099-12-31" value={from} onChange={(e) => onFrom(e.target.value)} className={cls} />
       </div>
       <div className="flex items-center gap-1">
         <span className="text-[9px] text-slate-400 w-7 flex-shrink-0 normal-case">To</span>
-        <input type="date" value={to} onChange={(e) => onTo(e.target.value)} className={cls} />
+        <input type="date" min="2000-01-01" max="2099-12-31" value={to} onChange={(e) => onTo(e.target.value)} className={cls} />
       </div>
     </div>
   );
@@ -444,6 +450,7 @@ export default function Candidates() {
   const { data, isLoading } = useCandidatePool({
     tab, page,
     date_from:         getDateFrom(dateFilter),
+    date_to:           getDateTo(dateFilter),
     name_q:            debounced.name,
     email_q:           debounced.email,
     phone_q:           debounced.phone,

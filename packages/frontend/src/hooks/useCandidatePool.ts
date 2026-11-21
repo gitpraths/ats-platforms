@@ -8,6 +8,7 @@ export interface UseCandidatePoolOptions {
   limit?:           number;
   q?:               string;
   date_from?:       string;
+  date_to?:         string;
   // Per-column text filters
   name_q?:          string;
   email_q?:         string;
@@ -40,7 +41,7 @@ const DATE_KEYS = [
 export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
   const {
     tab = "all", page = 1, limit = 20,
-    q = "", date_from = "",
+    q = "", date_from = "", date_to = "",
     name_q = "", email_q = "", phone_q = "", provider_q = "", industry_q = "", comments_q = "",
     staff_id = "", consultant_id = "", intention_to_work = "",
     enabled = true,
@@ -54,7 +55,7 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
     // filter inputs/date pickers in its header) is not unmounted on every change.
     placeholderData: keepPreviousData,
     queryKey: ["candidate-pool", {
-      tab, page, q, date_from,
+      tab, page, q, date_from, date_to,
       name_q, email_q, phone_q, provider_q, industry_q, comments_q,
       staff_id, consultant_id, intention_to_work,
       ...dates,
@@ -63,6 +64,7 @@ export function useCandidatePool(options: UseCandidatePoolOptions = {}) {
       const params = new URLSearchParams({ tab, page: String(page), limit: String(limit) });
       if (q)                 params.set("q",                 q);
       if (date_from)         params.set("date_from",         date_from);
+      if (date_to)           params.set("date_to",           date_to);
       if (name_q)            params.set("name_q",            name_q);
       if (email_q)           params.set("email_q",           email_q);
       if (phone_q)           params.set("phone_q",           phone_q);

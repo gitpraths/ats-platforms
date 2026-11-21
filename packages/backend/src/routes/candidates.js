@@ -197,6 +197,16 @@ candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, r
   } catch (err) { next(err); }
 });
 
+function validateCandidateDate(val, label) {
+  if (val === undefined || val === null || val === "") return null;
+  const s = String(val).trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (!m) return `${label} must be a valid YYYY-MM-DD date`;
+  const year = Number(m[1]);
+  if (year < 1900 || year > 2100) return `${label} year must be between 1900 and 2100`;
+  return null;
+}
+
 // ── POST /api/candidates ─────────────────────────────────
 candidatesRouter.post("/", requirePermission("candidates:create"), async (req, res, next) => {
   try {
@@ -209,6 +219,9 @@ candidatesRouter.post("/", requirePermission("candidates:create"), async (req, r
       comments, notes,
       wage_subsidy, wage_subsidy_amount, interested_job, intention_to_work, work_status,
     } = req.body;
+
+    const dateErr = validateCandidateDate(date_referred, "Date referred");
+    if (dateErr) return res.status(400).json({ success: false, error: dateErr });
 
     const cleanFirst = first_name ? toTitleCase(first_name.trim()) : null;
     const cleanLast = last_name ? toTitleCase(last_name.trim()) : null;
@@ -316,6 +329,9 @@ candidatesRouter.put("/:id", requirePermission("candidates:edit"), async (req, r
       comments, notes, interested_job,
       wage_subsidy, wage_subsidy_amount, work_status, intention_to_work,
     } = req.body;
+
+    const dateErr = validateCandidateDate(date_referred, "Date referred");
+    if (dateErr) return res.status(400).json({ success: false, error: dateErr });
 
     const cleanFirst = first_name !== undefined ? (first_name ? toTitleCase(first_name.trim()) : null) : undefined;
     const cleanLast = last_name !== undefined ? (last_name ? toTitleCase(last_name.trim()) : null) : undefined;

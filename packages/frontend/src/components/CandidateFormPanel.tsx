@@ -360,7 +360,7 @@ export function CandidateFormPanel({
           </div>
           <div>
             <Label>Date Referred</Label>
-            <input type="date" value={form.date_referred}
+            <input type="date" min="2000-01-01" max="2099-12-31" value={form.date_referred}
               onChange={(e) => set("date_referred", e.target.value)} className={CLS} />
             <p className="text-xs text-slate-400 mt-1">From Provider referral or Excel sync</p>
           </div>
