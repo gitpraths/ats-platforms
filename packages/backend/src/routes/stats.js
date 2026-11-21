@@ -11,11 +11,12 @@ statsRouter.get("/", async (req, res, next) => {
     const userId  = req.user.id;
     const isAdmin = ["super_admin", "admin"].includes(req.user.role);
 
-    // Applications scope: admins see all, others see only their jobs
+    // Applications scope: exclude soft-deleted applications; admins see all, others see only their jobs
     const appScopeWhere = isAdmin
-      ? ""
-      : `WHERE j.created_by = $1
-           OR EXISTS (SELECT 1 FROM job_recruiter jr WHERE jr.job_id = j.id AND jr.user_id = $1)`;
+      ? "WHERE a.deleted_at IS NULL"
+      : `WHERE a.deleted_at IS NULL
+           AND (j.created_by = $1
+                OR EXISTS (SELECT 1 FROM job_recruiter jr WHERE jr.job_id = j.id AND jr.user_id = $1))`;
 
     const appParams = isAdmin ? [] : [userId];
 
