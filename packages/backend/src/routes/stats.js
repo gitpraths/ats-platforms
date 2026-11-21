@@ -65,7 +65,9 @@ statsRouter.get("/", async (req, res, next) => {
         `SELECT
            COUNT(*)                                                        AS total_placements,
            COUNT(*) FILTER (WHERE confirmed_by_employer = true)           AS confirmed_placements,
-           COUNT(*) FILTER (WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())) AS placements_this_month
+           COUNT(*) FILTER (
+             WHERE DATE_TRUNC('month', COALESCE(start_date, created_at::date)) = DATE_TRUNC('month', NOW())
+           ) AS placements_this_month
          FROM placements`
       ),
       pool.query(
@@ -86,10 +88,15 @@ statsRouter.get("/", async (req, res, next) => {
            u.name,
            COUNT(p.id)::int AS total_placements,
            COUNT(p.id) FILTER (
-             WHERE DATE_TRUNC('month', p.created_at) = DATE_TRUNC('month', NOW())
+             WHERE DATE_TRUNC('month', COALESCE(p.start_date, p.created_at::date)) = DATE_TRUNC('month', NOW())
            )::int AS placements_this_month
          FROM users u
-         LEFT JOIN placements p ON p.created_by = u.id
+         LEFT JOIN (
+           SELECT pl.id, pl.start_date, pl.created_at,
+                  COALESCE(c.staff_id, c.created_by, pl.created_by) AS owner_id
+           FROM placements pl
+           LEFT JOIN candidates c ON c.id = pl.candidate_id
+         ) p ON p.owner_id = u.id
          WHERE u.is_active = true
            ${staffScope}
          GROUP BY u.id, u.name
@@ -231,20 +238,20 @@ statsRouter.get("/candidates-by-provider", async (_req, res, next) => {
 });
 
 // GET /api/stats/placements-by-provider
-// Placements grouped by provider name, last 6 months
+// Placements grouped by provider name, last 6 months (by placement start_date)
 statsRouter.get("/placements-by-provider", async (_req, res, next) => {
   try {
     const months = last6MonthLabels();
     const { rows } = await pool.query(`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', pl.created_at), 'Mon YYYY') AS month,
+        TO_CHAR(DATE_TRUNC('month', COALESCE(pl.start_date, pl.created_at::date)), 'Mon YYYY') AS month,
         COALESCE(pr.name, 'No Provider')                         AS group_key,
         COUNT(pl.id)::int                                         AS count
       FROM placements pl
       JOIN candidates c  ON c.id  = pl.candidate_id
       LEFT JOIN providers pr ON pr.id = c.provider_id
-      WHERE pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
-        AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      WHERE COALESCE(pl.start_date, pl.created_at::date) >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND COALESCE(pl.start_date, pl.created_at::date) <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
       ORDER BY 1, 2
     `);
@@ -253,21 +260,21 @@ statsRouter.get("/placements-by-provider", async (_req, res, next) => {
 });
 
 // GET /api/stats/placements-by-staff
-// Placements grouped by staff member (KPI), last 6 months
+// Placements grouped by staff member (KPI), last 6 months (by placement start_date)
 statsRouter.get("/placements-by-staff", async (_req, res, next) => {
   try {
     const months = last6MonthLabels();
     const { rows } = await pool.query(`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', pl.created_at), 'Mon YYYY') AS month,
+        TO_CHAR(DATE_TRUNC('month', COALESCE(pl.start_date, pl.created_at::date)), 'Mon YYYY') AS month,
         u.name                                                    AS group_key,
         COUNT(pl.id)::int                                         AS count
       FROM placements pl
       LEFT JOIN candidates c ON c.id = pl.candidate_id
       JOIN users u ON u.id = COALESCE(c.staff_id, c.created_by, pl.created_by)
       WHERE u.is_active = true
-        AND pl.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
-        AND pl.created_at <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+        AND COALESCE(pl.start_date, pl.created_at::date) >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND COALESCE(pl.start_date, pl.created_at::date) <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
       GROUP BY 1, 2
       ORDER BY 1, 2
     `);
