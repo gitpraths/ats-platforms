@@ -85,9 +85,23 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       params.push(`%${q}%`); idx++;
     }
 
-    // Referral date range (All Time / This Week / This Month pills)
-    if (date_from) { conditions.push(`c.date_referred::date >= $${idx++}::date`); params.push(date_from); }
-    if (date_to)   { conditions.push(`c.date_referred::date <= $${idx++}::date`); params.push(date_to); }
+    // Preset date range (All Time / This Week / This Month pills):
+    // Filters by placement date on the Placed tab and by referral date on all other tabs.
+    let dateFromParam = null;
+    let dateToParam = null;
+    if (date_from) { dateFromParam = `$${idx++}`; params.push(date_from); }
+    if (date_to)   { dateToParam = `$${idx++}`; params.push(date_to); }
+
+    const buildDateCond = (col) => {
+      const parts = [];
+      if (dateFromParam) parts.push(`${col}::date >= ${dateFromParam}::date`);
+      if (dateToParam)   parts.push(`${col}::date <= ${dateToParam}::date`);
+      return parts.length > 0 ? parts.join(" AND ") : "1=1";
+    };
+
+    const referredDateCond = buildDateCond("c.date_referred");
+    const placedDateCond   = buildDateCond("COALESCE(lp.start_date, la.placement_date, lp.created_at::date)");
+    const activeDateCond   = tab === "placed" ? placedDateCond : referredDateCond;
 
     // Text column filters
     if (name_q)     { conditions.push(`c.name ILIKE $${idx++}`);                        params.push(`%${name_q}%`); }
@@ -133,7 +147,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     addDateRange("c.training_start_date",                    training_date,  training_date_to);
     addDateRange("la.interview_date",                        interview_date, interview_date_to);
     addDateRange("la.ets_date",                              ets_date,       ets_date_to);
-    addDateRange("COALESCE(lp.start_date, la.placement_date)", placement_date, placement_date_to);
+    addDateRange("COALESCE(lp.start_date, la.placement_date, lp.created_at::date)", placement_date, placement_date_to);
 
     const colWhere = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
 
@@ -143,7 +157,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
        LEFT JOIN consultants con ON con.id = c.consultant_id
        LEFT JOIN users u_staff   ON u_staff.id = COALESCE(c.staff_id, c.created_by)
        LEFT JOIN LATERAL (
-         SELECT id, job_id, employer_id, start_date, confirmed_by_employer
+         SELECT id, job_id, employer_id, start_date, created_at, confirmed_by_employer
          FROM placements
          WHERE candidate_id = c.id
          ORDER BY created_at DESC
@@ -161,6 +175,10 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          ORDER BY a.updated_at DESC
          LIMIT 1
        ) la ON true`;
+
+    const orderBy = tab === "placed"
+      ? "COALESCE(lp.start_date, la.placement_date, lp.created_at::date, c.date_referred, c.created_at::date) DESC"
+      : "COALESCE(c.date_referred, c.created_at::date) DESC";
 
     // ── Main data query ─────────────────────────────────
     const { rows } = await pool.query(
@@ -195,8 +213,8 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          la.placement_date AS latest_placement_date
        FROM candidates c
        ${lateralJoins}
-       WHERE ${tabCondition(tab, intention_to_work)} ${colWhere}
-       ORDER BY COALESCE(c.date_referred, c.created_at::date) DESC
+       WHERE ${tabCondition(tab, intention_to_work)} AND ${activeDateCond} ${colWhere}
+       ORDER BY ${orderBy}
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, limit, offset]
     );
@@ -226,7 +244,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
       `SELECT COUNT(*)::int AS total
        FROM candidates c
        ${lateralJoins}
-       WHERE ${tabCondition(tab, intention_to_work)} ${colWhere}`,
+       WHERE ${tabCondition(tab, intention_to_work)} AND ${activeDateCond} ${colWhere}`,
       params
     );
     const total = totalRows[0].total;
@@ -234,11 +252,11 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
     // ── Tab counts (respect active filters so tab badges match the filtered table) ──
     const { rows: countRows } = await pool.query(
       `SELECT
-         COUNT(*) FILTER (WHERE ${tabCondition("all", intention_to_work)})::int AS all_count,
-         COUNT(*) FILTER (WHERE ${tabCondition("in_progress", intention_to_work)})::int AS in_progress_count,
-         COUNT(*) FILTER (WHERE ${tabCondition("placed", intention_to_work)})::int AS placed_count,
-         COUNT(*) FILTER (WHERE ${tabCondition("not_successful", intention_to_work)})::int AS not_successful_count,
-         COUNT(*) FILTER (WHERE ${tabCondition("inactive", intention_to_work)})::int AS inactive_count
+         COUNT(*) FILTER (WHERE ${tabCondition("all", intention_to_work)} AND ${referredDateCond})::int AS all_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("in_progress", intention_to_work)} AND ${referredDateCond})::int AS in_progress_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("placed", intention_to_work)} AND ${placedDateCond})::int AS placed_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("not_successful", intention_to_work)} AND ${referredDateCond})::int AS not_successful_count,
+         COUNT(*) FILTER (WHERE ${tabCondition("inactive", intention_to_work)} AND ${referredDateCond})::int AS inactive_count
        FROM candidates c
        ${lateralJoins}
        WHERE 1=1 ${colWhere}`,

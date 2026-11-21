@@ -556,10 +556,10 @@ export default function Candidates() {
 
       {/* ── Top bar: date pills + staff & intention filters + clear all ──────────────────── */}
       <div className="flex flex-wrap gap-3 mb-3 items-center">
-        {/* Referral date filter pills */}
+        {/* Date filter pills (Placement date on Placed tab, Referral date otherwise) */}
         <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
           <Calendar size={13} className="text-slate-400 ml-1.5" />
-          <span className="text-xs text-slate-400 mr-1">Referred:</span>
+          <span className="text-xs text-slate-400 mr-1">{tab === "placed" ? "Placed:" : "Referred:"}</span>
           {DATE_FILTERS.map((df) => (
             <button key={df.id} onClick={() => { setDateFilter(df.id); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
