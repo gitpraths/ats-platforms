@@ -59,7 +59,7 @@ async function generateWelfareChecks(client, placementId, startDate) {
 // ── GET /api/placements ──────────────────────────────────
 placementsRouter.get("/", requirePermission("placements:view"), async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, employer_id, provider_id, job_id, candidate_id } = req.query;
+    const { page = 1, limit = 20, employer_id, provider_id, job_id, candidate_id, from, to } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
     const conditions = [];
@@ -78,6 +78,11 @@ placementsRouter.get("/", requirePermission("placements:view"), async (req, res,
     if (employer_id) { conditions.push(`p.employer_id = $${idx}`); params.push(employer_id); idx++; }
     if (job_id)      { conditions.push(`p.job_id = $${idx}`);      params.push(job_id);      idx++; }
     if (candidate_id){ conditions.push(`p.candidate_id = $${idx}`);params.push(candidate_id);idx++; }
+
+    const fromDate = toDateOnly(from);
+    const toDate   = toDateOnly(to);
+    if (fromDate) { conditions.push(`p.start_date::date >= $${idx}::date`); params.push(fromDate); idx++; }
+    if (toDate)   { conditions.push(`p.start_date::date <= $${idx}::date`); params.push(toDate);   idx++; }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
@@ -98,7 +103,7 @@ placementsRouter.get("/", requirePermission("placements:view"), async (req, res,
        LEFT JOIN employers e  ON e.id = p.employer_id
        LEFT JOIN providers pr ON pr.id = c.provider_id
        ${where}
-       ORDER BY p.created_at DESC
+       ORDER BY p.start_date DESC NULLS LAST, p.created_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, Number(limit), offset]
     );

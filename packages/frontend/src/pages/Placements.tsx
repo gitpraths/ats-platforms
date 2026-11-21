@@ -26,6 +26,13 @@ interface CreateForm {
   wagesub_status?: string;
 }
 
+/** Ignore half-typed dates (e.g. year "0002" while typing) so we only query on complete dates. */
+function validDate(v: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "";
+  const y = Number(v.slice(0, 4));
+  return y >= 1900 && y <= 2100 ? v : "";
+}
+
 /** Calculate full weeks elapsed since a YYYY-MM-DD date string. Returns -1 if invalid. */
 function weeksOnPlacement(startDate: string): number {
   if (!startDate) return -1;
@@ -56,17 +63,21 @@ export default function Placements() {
   });
   const [createError, setCreateError] = useState("");
 
-  const PER_PAGE = perPage;
+  const PER_PAGE  = perPage;
+  const validFrom = validDate(from);
+  const validTo   = validDate(to);
+  const hasActiveFilters = Boolean(from || to || filterEmployer || filterProvider);
+
   const params = new URLSearchParams({
     page: String(page), limit: String(PER_PAGE),
     ...(filterEmployer && { employer_id: filterEmployer }),
     ...(filterProvider && { provider_id: filterProvider }),
-    ...(from && { from }),
-    ...(to && { to }),
+    ...(validFrom && { from: validFrom }),
+    ...(validTo && { to: validTo }),
   });
 
   const { data: placementsData, isLoading } = useQuery({
-    queryKey: ["placements", filterEmployer, filterProvider, from, to, page],
+    queryKey: ["placements", filterEmployer, filterProvider, validFrom, validTo, page, PER_PAGE],
     queryFn: () => api.list<Placement>(`/placements?${params}`),
     enabled: canView,
   });
@@ -216,13 +227,19 @@ export default function Placements() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <input value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }}
-          type="date" placeholder="From"
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-        <input value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }}
-          type="date" placeholder="To"
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5">
+          <span className="text-xs text-slate-400">From</span>
+          <input value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }}
+            type="date" aria-label="Start date from"
+            className="text-sm text-slate-700 bg-transparent focus:outline-none" />
+        </div>
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5">
+          <span className="text-xs text-slate-400">To</span>
+          <input value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }}
+            type="date" aria-label="Start date to"
+            className="text-sm text-slate-700 bg-transparent focus:outline-none" />
+        </div>
         <SearchableSelect
           options={employers.map((e) => ({ value: e.id, label: e.name }))}
           value={filterEmployer}
@@ -237,6 +254,15 @@ export default function Placements() {
           allLabel="All Providers"
           placeholder="Search provider..."
         />
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={() => { setFrom(""); setTo(""); setFilterEmployer(""); setFilterProvider(""); setPage(1); }}
+            className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+          >
+            <X size={13} /> Clear Filters
+          </button>
+        )}
       </div>
 
       {/* ── Pagination toolbar ── */}
