@@ -223,10 +223,14 @@ placementsRouter.post("/", requirePermission("placements:create"), async (req, r
     // Auto-generate 5 welfare checks
     await generateWelfareChecks(client, placement.id, start_date);
 
-    // Update application stage to hired
+    // Update application stage to hired and sync placement_date
     await client.query(
-      `UPDATE applications SET stage = 'hired', updated_at = NOW() WHERE id = $1 AND stage != 'hired'`,
-      [application_id]
+      `UPDATE applications
+       SET stage = 'hired',
+           placement_date = COALESCE(placement_date, $2::date),
+           updated_at = NOW()
+       WHERE id = $1`,
+      [application_id, start_date]
     );
 
     // Update candidate work_status to placed
@@ -290,7 +294,7 @@ placementsRouter.put("/:id", requirePermission("placements:create"), async (req,
       [start_date, notes, confirmed_by_employer, employer_id, req.params.id]
     );
 
-    // If start_date changed, recalculate uncompleted welfare check due dates
+    // If start_date changed, recalculate uncompleted welfare check due dates and sync linked application
     if (start_date && start_date !== existing[0].start_date) {
       for (const offset of WELFARE_OFFSETS) {
         const dueDate = welfareCheckDueDate(start_date, offset);
@@ -298,6 +302,13 @@ placementsRouter.put("/:id", requirePermission("placements:create"), async (req,
           `UPDATE welfare_checks SET due_date = $1
            WHERE placement_id = $2 AND check_type = $3 AND completed_at IS NULL`,
           [dueDate, req.params.id, offset.check_type]
+        );
+      }
+      if (existing[0].application_id) {
+        await client.query(
+          `UPDATE applications SET placement_date = $1::date, stage = 'hired', updated_at = NOW()
+           WHERE id = $2 AND deleted_at IS NULL`,
+          [start_date, existing[0].application_id]
         );
       }
     }
@@ -378,11 +389,20 @@ placementsRouter.patch("/:id", requirePermission("placements:create"), async (re
       ]
     );
 
-    // Sync candidate work_status: if placement ended/terminated/resigned/completed or end_date set -> job_seeking, else placed
-    const isEnded = (newStatus && ["terminated", "resigned", "completed"].includes(newStatus)) || !!newEndDate;
-    const targetWorkStatus = isEnded ? "job_seeking" : "placed";
+    // Sync candidate work_status based on whether the candidate has ANY active placement
+    const { rows: activePlacements } = await client.query(
+      `SELECT 1 FROM placements
+       WHERE candidate_id = $1
+         AND end_date IS NULL
+         AND COALESCE(employment_status, 'active') = 'active'
+       LIMIT 1`,
+      [existing[0].candidate_id]
+    );
+    const targetWorkStatus = activePlacements.length > 0 ? "placed" : "job_seeking";
     await client.query(
-      `UPDATE candidates SET work_status = $1, updated_at = NOW(), updated_by = $3 WHERE id = $2`,
+      `UPDATE candidates
+       SET work_status = $1, updated_at = NOW(), updated_by = $3
+       WHERE id = $2 AND (work_status != 'inactive' OR $1 = 'placed')`,
       [targetWorkStatus, existing[0].candidate_id, req.user.id]
     );
 
@@ -409,10 +429,54 @@ placementsRouter.delete("/:id", requireRole("admin"), async (req, res, next) => 
 
     await client.query("BEGIN");
     await client.query("DELETE FROM placements WHERE id = $1", [req.params.id]);
-    await client.query(
-      `UPDATE candidates SET work_status = 'job_seeking', updated_at = NOW(), updated_by = $2 WHERE id = $1`,
-      [rows[0].candidate_id, req.user.id]
+
+    if (rows[0].application_id) {
+      await client.query(
+        `UPDATE applications
+         SET placement_date = NULL,
+             stage = CASE
+               WHEN stage = 'rejected' THEN 'rejected'
+               WHEN ets_date IS NOT NULL THEN 'ets'
+               WHEN interview_date IS NOT NULL THEN 'interview'
+               ELSE 'applied'
+             END,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [rows[0].application_id]
+      );
+    }
+
+    const { rows: activeOther } = await client.query(
+      `SELECT 1 FROM placements
+       WHERE candidate_id = $1
+         AND end_date IS NULL
+         AND COALESCE(employment_status, 'active') = 'active'
+       LIMIT 1`,
+      [rows[0].candidate_id]
     );
+    if (activeOther.length === 0) {
+      await client.query(
+        `UPDATE candidates
+         SET work_status = 'job_seeking', updated_at = NOW(), updated_by = $2
+         WHERE id = $1 AND work_status != 'inactive'`,
+        [rows[0].candidate_id, req.user.id]
+      );
+    }
+
+    await client.query(
+      `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+       VALUES ('placement', $1, 'removed', $2, $3)`,
+      [
+        rows[0].id,
+        req.user.id,
+        JSON.stringify({
+          candidate_id: rows[0].candidate_id,
+          application_id: rows[0].application_id,
+          job_id: rows[0].job_id,
+        }),
+      ]
+    );
+
     await client.query("COMMIT");
 
     res.json({ success: true });

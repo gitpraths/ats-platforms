@@ -102,6 +102,13 @@ export async function initDatabase() {
       logger.warn("[DB Init] Notice on placement cleanup: " + err.message);
     });
 
+    // 9. Ensure applications.deleted_by exists to log which staff removed an application/placement
+    await pool.query(`
+      ALTER TABLE applications ADD COLUMN IF NOT EXISTS deleted_by UUID REFERENCES users(id);
+    `).catch((err) => {
+      logger.warn("[DB Init] Notice on applications.deleted_by column addition: " + err.message);
+    });
+
   } catch (err) {
     logger.error("[DB Init] Error during database initialization: " + err.message);
   }

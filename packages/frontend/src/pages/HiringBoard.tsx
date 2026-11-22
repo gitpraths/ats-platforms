@@ -425,14 +425,24 @@ export default function HiringBoard() {
 
   const deleteApp = useMutation({
     mutationFn: (id: string) => api.delete(`/applications/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["applications"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+      queryClient.invalidateQueries({ queryKey: ["placements"] });
+      queryClient.invalidateQueries({ queryKey: ["candidate-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      setUpdateError(null);
+    },
     onError: (err: Error) => setUpdateError(err.message),
   });
 
   const updateApp = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: { stage?: ApplicationStage; score?: number | null; notes?: string } }) =>
       api.patch(`/applications/${id}`, payload),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["applications"] }); setUpdateError(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+      queryClient.invalidateQueries({ queryKey: ["placements"] });
+      setUpdateError(null);
+    },
     onError: (err: Error) => setUpdateError(err.message),
   });
 

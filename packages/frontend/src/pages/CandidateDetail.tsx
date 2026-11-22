@@ -707,7 +707,7 @@ export default function CandidateDetail() {
                               <p className="text-xs text-slate-400 mt-0.5">
                                 Applied {fmtDate(app.applied_at)}
                                 {app.source && ` · ${app.source}`}
-                                {app.deleted_at && ` · Removed ${fmtDate(app.deleted_at)}`}
+                                {app.deleted_at && ` · Removed ${fmtDate(app.deleted_at)}${app.deleted_by_name ? ` by ${app.deleted_by_name}` : ""}`}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-4">
@@ -1101,9 +1101,15 @@ function InlineDateCellDetail({
         </button>
         {allowClear && value && !saving && (
           <button
-            onClick={() => { if (confirm("Remove this placement date?")) clearValue(); }}
+            onClick={() => {
+              const msg =
+                field === "placement_date"
+                  ? "Remove this placement date and its linked placement record?"
+                  : "Clear this date?";
+              if (confirm(msg)) clearValue();
+            }}
             className="text-slate-300 hover:text-red-500 transition-colors"
-            title="Clear placement date"
+            title={field === "placement_date" ? "Clear placement date" : "Clear date"}
           >
             <X size={10} />
           </button>
@@ -1158,7 +1164,13 @@ export function VacanciesTab({
 
   const deleteApplication = useMutation({
     mutationFn: (appId: string) => api.delete(`/applications/${appId}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] });
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+      queryClient.invalidateQueries({ queryKey: ["placements"] });
+      queryClient.invalidateQueries({ queryKey: ["candidate-pool"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 
   function handleAdd() {
@@ -1315,7 +1327,12 @@ export function VacanciesTab({
                           appId={app.id}
                           field="placement_date"
                           value={app.placement_date}
-                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+                          onSaved={() => {
+                            queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] });
+                            queryClient.invalidateQueries({ queryKey: ["placements"] });
+                            queryClient.invalidateQueries({ queryKey: ["candidate-pool"] });
+                            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+                          }}
                           allowClear
                           min={toYYYYMMDD(app.applied_at) || undefined}
                           validate={(d) => validateNotBeforeApplied(d, app.applied_at)}
@@ -1381,7 +1398,11 @@ export function VacanciesTab({
           app={editingPlacement}
           candidateId={candidateId}
           onClose={() => setEditingPlacement(null)}
-          onSaved={() => queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] })}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ["candidate", candidateId] });
+            queryClient.invalidateQueries({ queryKey: ["placements"] });
+            queryClient.invalidateQueries({ queryKey: ["candidate-pool"] });
+          }}
         />
       )}
     </div>

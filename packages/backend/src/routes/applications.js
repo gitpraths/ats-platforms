@@ -41,7 +41,7 @@ applicationsRouter.get(
     try {
       const { candidate, job_title, job_id, candidate_id } = req.query;
       const params = [];
-      const conditions = [];
+      const conditions = ["a.deleted_at IS NULL"];
 
       if (job_id)       { params.push(job_id);              conditions.push(`a.job_id = $${params.length}`); }
       if (candidate_id) { params.push(candidate_id);         conditions.push(`a.candidate_id = $${params.length}`); }
@@ -252,7 +252,10 @@ applicationsRouter.patch(
     // If placement_date was updated and is not null, ensure a placement record exists in placements table
     if (placement_date) {
       const appData = rows[0];
-      const { rows: plc } = await pool.query(`SELECT id FROM placements WHERE application_id = $1`, [appData.id]);
+      const { rows: plc } = await pool.query(
+        `SELECT id, employment_status, end_date FROM placements WHERE application_id = $1`,
+        [appData.id]
+      );
       if (plc.length === 0) {
         const { rows: jb } = await pool.query(`SELECT employer_id FROM jobs WHERE id = $1`, [appData.job_id]);
         const employerId = jb[0]?.employer_id || null;
@@ -261,12 +264,60 @@ applicationsRouter.patch(
            VALUES ($1, $2, $3, $4, $5, 'active', $6)`,
           [appData.id, appData.candidate_id, appData.job_id, employerId, placement_date, req.user?.id || null]
         );
-        await pool.query(`UPDATE candidates SET work_status = 'placed', updated_at = NOW(), updated_by = $2 WHERE id = $1`, [appData.candidate_id, req.user?.id || null]);
+        await pool.query(
+          `UPDATE candidates SET work_status = 'placed', updated_at = NOW(), updated_by = $2 WHERE id = $1`,
+          [appData.candidate_id, req.user?.id || null]
+        );
       } else {
         await pool.query(
           `UPDATE placements SET start_date = $1, updated_at = NOW() WHERE id = $2`,
           [placement_date, plc[0].id]
         );
+        const isActive = !plc[0].end_date && (!plc[0].employment_status || plc[0].employment_status === "active");
+        if (isActive) {
+          await pool.query(
+            `UPDATE candidates SET work_status = 'placed', updated_at = NOW(), updated_by = $2 WHERE id = $1`,
+            [appData.candidate_id, req.user?.id || null]
+          );
+        }
+      }
+    } else if (placement_date === null) {
+      // Explicit removal of placement_date: remove linked placement and recalculate candidate work_status
+      const appData = rows[0];
+      const { rows: removedPlc } = await pool.query(
+        `DELETE FROM placements WHERE application_id = $1 RETURNING id, start_date, employer_id`,
+        [appData.id]
+      );
+      if (removedPlc.length > 0) {
+        const { rows: activeOther } = await pool.query(
+          `SELECT 1 FROM placements
+           WHERE candidate_id = $1
+             AND end_date IS NULL
+             AND COALESCE(employment_status, 'active') = 'active'
+           LIMIT 1`,
+          [appData.candidate_id]
+        );
+        if (activeOther.length === 0) {
+          await pool.query(
+            `UPDATE candidates
+             SET work_status = 'job_seeking', updated_at = NOW(), updated_by = $2
+             WHERE id = $1 AND work_status != 'inactive'`,
+            [appData.candidate_id, req.user?.id || null]
+          );
+        }
+        await pool.query(
+          `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+           VALUES ('placement', $1, 'removed', $2, $3)`,
+          [
+            removedPlc[0].id,
+            req.user?.id || null,
+            JSON.stringify({
+              candidate_id: appData.candidate_id,
+              application_id: appData.id,
+              reason: "placement_date_cleared",
+            }),
+          ]
+        ).catch(() => {});
       }
     }
 
@@ -277,15 +328,83 @@ applicationsRouter.patch(
 // ── DELETE /api/applications/:id ─────────────────────────────────────────────
 applicationsRouter.delete(
   "/:id",
-  requireAnyPermission("candidates:edit", "candidates:delete", "jobs:delete"),
+  requireAnyPermission("candidates:edit", "candidates:delete", "jobs:delete", "placements:create"),
   async (req, res, next) => {
+    const client = await pool.connect();
     try {
+      await client.query("BEGIN");
 
-    const { rows } = await pool.query(
-      "UPDATE applications SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id",
-      [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ success: false, error: "Application not found" });
-    res.json({ success: true, data: { id: rows[0].id, status: "DELETED" } });
-  } catch (err) { next(err); }
-});
+      const { rows } = await client.query(
+        `UPDATE applications
+         SET deleted_at = NOW(), deleted_by = $2, updated_at = NOW()
+         WHERE id = $1 AND deleted_at IS NULL
+         RETURNING id, candidate_id, job_id, stage`,
+        [req.params.id, req.user?.id || null]
+      );
+      if (!rows[0]) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ success: false, error: "Application not found" });
+      }
+
+      const app = rows[0];
+
+      // Delete any placement linked to this application (welfare_checks cascade via FK)
+      const { rows: removedPlacements } = await client.query(
+        `DELETE FROM placements WHERE application_id = $1 RETURNING id, start_date, employer_id`,
+        [app.id]
+      );
+
+      // Recalculate candidate work_status if a placement was removed
+      if (removedPlacements.length > 0) {
+        const { rows: activeOther } = await client.query(
+          `SELECT 1 FROM placements
+           WHERE candidate_id = $1
+             AND end_date IS NULL
+             AND COALESCE(employment_status, 'active') = 'active'
+           LIMIT 1`,
+          [app.candidate_id]
+        );
+        if (activeOther.length === 0) {
+          await client.query(
+            `UPDATE candidates
+             SET work_status = 'job_seeking', updated_at = NOW(), updated_by = $2
+             WHERE id = $1 AND work_status != 'inactive'`,
+            [app.candidate_id, req.user?.id || null]
+          );
+        }
+      }
+
+      // Log who removed the application / placement
+      await client.query(
+        `INSERT INTO activity_log (entity_type, entity_id, action, performed_by, metadata)
+         VALUES ('application', $1, 'removed', $2, $3)`,
+        [
+          app.id,
+          req.user?.id || null,
+          JSON.stringify({
+            candidate_id: app.candidate_id,
+            job_id: app.job_id,
+            previous_stage: app.stage,
+            placement_removed: removedPlacements.length > 0,
+            removed_placement_ids: removedPlacements.map((p) => p.id),
+          }),
+        ]
+      );
+
+      await client.query("COMMIT");
+      res.json({
+        success: true,
+        data: {
+          id: app.id,
+          status: "DELETED",
+          placement_removed: removedPlacements.length > 0,
+        },
+      });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      next(err);
+    } finally {
+      client.release();
+    }
+  }
+);

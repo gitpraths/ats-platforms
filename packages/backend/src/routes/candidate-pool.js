@@ -11,6 +11,7 @@ function tabCondition(tab, intentionFilter = "") {
       return `EXISTS (
         SELECT 1 FROM applications a
         WHERE a.candidate_id = c.id
+          AND a.deleted_at IS NULL
           AND a.stage IN ('applied','screening','interview','ets')
       ) AND c.work_status != 'inactive' AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list'`;
     case "placed":
@@ -19,11 +20,14 @@ function tabCondition(tab, intentionFilter = "") {
       return `NOT EXISTS (
           SELECT 1 FROM applications a
           WHERE a.candidate_id = c.id
+            AND a.deleted_at IS NULL
             AND a.stage IN ('applied','screening','interview','ets')
         )
         AND EXISTS (
           SELECT 1 FROM applications a2
-          WHERE a2.candidate_id = c.id AND a2.stage = 'rejected'
+          WHERE a2.candidate_id = c.id
+            AND a2.deleted_at IS NULL
+            AND a2.stage = 'rejected'
         )
         AND c.work_status NOT IN ('placed','inactive')
         AND COALESCE(c.intention_to_work, '') != 'remove_from_main_list'`;
@@ -172,6 +176,7 @@ candidatePoolRouter.get("/", requirePermission("candidates:view"), async (req, r
          LEFT JOIN jobs j2 ON a.job_id = j2.id
          LEFT JOIN employers e2 ON j2.employer_id = e2.id
          WHERE a.candidate_id = c.id
+           AND a.deleted_at IS NULL
          ORDER BY a.updated_at DESC
          LIMIT 1
        ) la ON true`;

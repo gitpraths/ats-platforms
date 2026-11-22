@@ -177,9 +177,10 @@ candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, r
       [req.params.id]
     );
 
-    // Full application history (including soft-deleted applications)
+    // Full application history (including soft-deleted applications + who removed them)
     const { rows: appHistory } = await pool.query(
       `SELECT a.id, a.job_id, a.stage, a.source, a.applied_at, a.deleted_at,
+              a.deleted_by, u_del.name AS deleted_by_name,
               a.interview_date, a.ets_date, a.placement_date,
               j.title AS job_title,
               p.id AS placement_id,
@@ -188,6 +189,7 @@ candidatesRouter.get("/:id", requirePermission("candidates:view"), async (req, r
        FROM applications a
        JOIN jobs j ON a.job_id = j.id
        LEFT JOIN placements p ON p.application_id = a.id
+       LEFT JOIN users u_del ON u_del.id = a.deleted_by
        WHERE a.candidate_id = $1
        ORDER BY a.applied_at DESC`,
       [req.params.id]

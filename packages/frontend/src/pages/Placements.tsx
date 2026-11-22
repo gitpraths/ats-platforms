@@ -422,9 +422,21 @@ export default function Placements() {
                         >
                           {formatName(p.candidate_name)}
                         </Link>
-                        {p.candidate_work_status && (
-                          <span className="text-xs text-purple-600 block mt-0.5">{p.candidate_work_status.replace("_", " ")}</span>
-                        )}
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                          {p.employment_status && p.employment_status !== "active" && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${
+                              p.employment_status === "terminated" ? "bg-red-100 text-red-700" :
+                              p.employment_status === "resigned"   ? "bg-orange-100 text-orange-700" :
+                              p.employment_status === "completed"  ? "bg-blue-100 text-blue-700" :
+                              "bg-slate-100 text-slate-600"
+                            }`}>
+                              {p.employment_status}
+                            </span>
+                          )}
+                          {p.candidate_work_status && (
+                            <span className="text-xs text-purple-600">{p.candidate_work_status.replace("_", " ")}</span>
+                          )}
+                        </div>
                         {(p as any).wage_subsidy && (
                           <span className="text-[10px] text-emerald-600 font-medium block">
                             Wage Sub Eligible {(p as any).wage_subsidy_amount ? `($${Number((p as any).wage_subsidy_amount).toLocaleString()})` : ""}
